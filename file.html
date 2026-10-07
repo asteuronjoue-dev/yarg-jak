@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>File de la soirée — Party YARG</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --bg:#101214; --panel:#181c1f; --panel2:#20262a; --text:#f5f7f8; --muted:#aeb8bd;
+      --line:#30383d; --orange:#ff8a24; --orange2:#ffad42; --teal:#1fc8bd; --teal2:#78eee5;
+      --good:#77df9a; --danger:#ff6b6b; --shadow:0 16px 45px rgba(0,0,0,.25);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    a{color:inherit}
+    button{font:inherit}
+    .wrap{width:min(1100px,calc(100% - 28px));margin:0 auto}
+    header{padding:28px 0 20px;border-bottom:1px solid var(--line);background:
+      radial-gradient(circle at 10% 0%,rgba(255,138,36,.16),transparent 34%),
+      radial-gradient(circle at 90% 0%,rgba(31,200,189,.14),transparent 34%)}
+    .topline{display:flex;gap:16px;justify-content:space-between;align-items:flex-start}
+    h1{font-size:clamp(28px,5vw,48px);line-height:1;margin:0 0 10px}
+    .mc{color:var(--muted);font-weight:700}
+    .mc strong{color:var(--teal2)}
+    .back{display:inline-flex;text-decoration:none;border:1px solid var(--line);padding:10px 14px;border-radius:12px;background:var(--panel)}
+    .party-pill{display:inline-block;margin-top:14px;padding:7px 11px;border-radius:999px;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+    .party-pill.on{background:rgba(31,200,189,.14);color:var(--teal2);border:1px solid rgba(31,200,189,.35)}
+    .party-pill.off{background:rgba(255,107,107,.12);color:#ffb2b2;border:1px solid rgba(255,107,107,.3)}
+    main{padding:26px 0 70px}
+    section{margin-bottom:34px}
+    .section-head{display:flex;gap:14px;align-items:end;justify-content:space-between;margin-bottom:14px}
+    h2{font-size:24px;margin:0}
+    .hint{color:var(--muted);font-size:14px;margin-top:5px}
+    .notify{border:1px solid rgba(255,138,36,.5);background:rgba(255,138,36,.1);color:#ffd6ad;border-radius:12px;padding:10px 13px;cursor:pointer;font-weight:800}
+    .notify:disabled{opacity:.55;cursor:default}
+    .cards{display:grid;gap:12px}
+    .card{position:relative;background:linear-gradient(180deg,var(--panel),#15191b);border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:var(--shadow);overflow:hidden}
+    .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--teal)}
+    .mine::before{background:var(--orange)}
+    .playing::before{background:var(--orange)}
+    .songline{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
+    .song{font-size:19px;font-weight:900}
+    .artist{color:var(--muted);font-weight:650;margin-top:2px}
+    .eta{text-align:right;white-space:nowrap}
+    .eta strong{display:block;color:var(--orange2);font-size:16px}
+    .eta span{color:var(--muted);font-size:12px}
+    .status{display:inline-flex;margin-top:10px;padding:5px 9px;border-radius:999px;background:rgba(31,200,189,.12);border:1px solid rgba(31,200,189,.28);color:var(--teal2);font-size:12px;font-weight:900;text-transform:uppercase}
+    .status.playing{background:rgba(255,138,36,.13);border-color:rgba(255,138,36,.35);color:#ffd0a2}
+    .band{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+    .band-name{font-weight:900;margin-bottom:8px}
+    .member{display:flex;gap:8px;flex-wrap:wrap;color:#dce2e5;margin:5px 0;font-size:14px}
+    .member b{color:#fff}
+    .open-slots{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+    .slot{padding:5px 8px;border-radius:999px;background:rgba(31,200,189,.1);color:var(--teal2);border:1px dashed rgba(31,200,189,.42);font-size:12px;font-weight:800}
+    .empty{border:1px dashed var(--line);border-radius:18px;padding:28px;text-align:center;color:var(--muted);background:rgba(255,255,255,.015)}
+    .livebar{display:none;margin-bottom:16px;padding:12px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(255,138,36,.16),rgba(31,200,189,.13));border:1px solid rgba(255,138,36,.28);font-weight:850}
+    .livebar.show{display:block}
+    .skittles{border:3px solid transparent;background:
+      linear-gradient(var(--panel),var(--panel)) padding-box,
+      linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e) border-box;
+      animation:skittlePulse .7s ease-in-out infinite alternate}
+    .skittles::before{width:0}
+    .skittle-banner{font-size:clamp(20px,5vw,34px);font-weight:1000;text-align:center;padding:8px 4px 13px;
+      background:linear-gradient(90deg,#ff5577,#ffad42,#ffe66d,#54e0a2,#54c7ff,#b889ff,#ff5577);
+      background-size:250% auto;color:transparent;background-clip:text;-webkit-background-clip:text;animation:rainbow 1.5s linear infinite}
+    @keyframes rainbow{to{background-position:250% center}}
+    @keyframes skittlePulse{from{transform:scale(1);box-shadow:0 0 15px rgba(255,138,36,.16)}to{transform:scale(1.008);box-shadow:0 0 35px rgba(31,200,189,.23)}}
+    .error{display:none;margin:0 0 18px;padding:12px;border-radius:12px;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:#ffc1c1}
+    .error.show{display:block}
+    @media(max-width:650px){
+      .topline,.section-head,.songline{align-items:stretch;flex-direction:column}
+      .back,.notify{width:100%;justify-content:center;text-align:center}
+      .eta{text-align:left}
+      header{padding-top:20px}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="topline">
+      <div>
+        <h1 id="partyTitle">File de la soirée</h1>
+        <div class="mc">🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
+        <span class="party-pill" id="partyPill">Chargement…</span>
+      </div>
+      <a class="back" href="index.html">← Retour au catalogue</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="error" id="errorBox"></div>
+  <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
+
+  <section>
+    <div class="section-head">
+      <div>
+        <h2>🎸 Mes demandes</h2>
+        <div class="hint">Les demandes faites avec ce navigateur apparaissent ici.</div>
+      </div>
+      <button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button>
+    </div>
+    <div class="cards" id="myRequests"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div>
+        <h2>🎤 File de la soirée</h2>
+        <div class="hint">Toutes les chansons demandées pour ce party, mises à jour en direct.</div>
+      </div>
+    </div>
+    <div class="cards" id="publicQueue"></div>
+  </section>
+</main>
+
+<script>
+/* Colle ici les MÊMES valeurs que dans demande.html / index.html. */
+const SUPABASE_URL = "https://xbhfjzurytdknbqvksjq.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM";
+
+const TURNOVER_SECONDS = 120;
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+let currentUserId = null;
+let settings = null;
+let requests = [];
+let members = [];
+let previousStates = new Map();
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const instruments = {vocals:"Voix",guitar:"Guitare",bass:"Basse",drums:"Batterie",keys:"Clavier"};
+const difficulties = {any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
+
+function showError(message){
+  $("#errorBox").textContent = message;
+  $("#errorBox").classList.toggle("show", !!message);
+}
+
+function formatClock(date){
+  return new Intl.DateTimeFormat("fr-CA",{hour:"2-digit",minute:"2-digit"}).format(date);
+}
+function relativeMinutes(date){
+  const mins = Math.round((date.getTime()-Date.now())/60000);
+  if (mins <= 0) return "Très bientôt";
+  if (mins === 1) return "Dans environ 1 min";
+  return `Dans environ ${mins} min`;
+}
+function durationSeconds(r){ return Math.max(0, Number(r.song_duration_seconds)||0); }
+
+function sortedActive(){
+  return requests
+    .filter(r => ["waiting","full","playing"].includes(r.status))
+    .sort((a,b) => {
+      if (a.status === "playing" && b.status !== "playing") return -1;
+      if (b.status === "playing" && a.status !== "playing") return 1;
+      const ap = a.queue_position ?? 999999, bp = b.queue_position ?? 999999;
+      return ap-bp || new Date(a.created_at)-new Date(b.created_at);
+    });
+}
+
+/* Re-anchor estimates to the actual start time whenever the MC marks a song En cours. */
+function calculateEtas(queue){
+  const etas = new Map();
+  if (!queue.length) return etas;
+
+  const playingIndex = queue.findIndex(r => r.status === "playing");
+  let cursor;
+
+  if (playingIndex >= 0) {
+    const playing = queue[playingIndex];
+    cursor = playing.started_at ? new Date(playing.started_at) : new Date();
+    etas.set(playing.id, {playing:true, at:cursor});
+
+    cursor = new Date(cursor.getTime() + (durationSeconds(playing)+TURNOVER_SECONDS)*1000);
+    for (let i=playingIndex+1;i<queue.length;i++){
+      etas.set(queue[i].id,{playing:false,at:new Date(cursor)});
+      cursor = new Date(cursor.getTime()+(durationSeconds(queue[i])+TURNOVER_SECONDS)*1000);
+    }
+    /* Items sorted ahead of the current performance are historical/odd data; no ETA. */
+  } else {
+    cursor = new Date();
+    for (const r of queue){
+      etas.set(r.id,{playing:false,at:new Date(cursor)});
+      cursor = new Date(cursor.getTime()+(durationSeconds(r)+TURNOVER_SECONDS)*1000);
+    }
+  }
+  return etas;
+}
+
+function membersFor(id){ return members.filter(m => m.performance_request_id === id); }
+
+function memberLine(name,instrument,difficulty,microphone){
+  const inst = instruments[instrument] || instrument || "—";
+  const mic = microphone ? " + Voix" : "";
+  const diff = difficulties[difficulty] || difficulty || "—";
+  return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+mic)} · ${esc(diff)}</div>`;
+}
+
+function cardHtml(r, eta, mine=false){
+  const bandMembers = membersFor(r.id);
+  const own = memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone);
+  const extras = bandMembers.map(m => memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone)).join("");
+  const open = (r.allow_band_fill ? (r.fillable_instruments || []) : [])
+    .map(i => `<span class="slot">+ ${esc(instruments[i] || i)}</span>`).join("");
+
+  const isPlaying = r.status === "playing";
+  const classes = ["card",mine?"mine":"",isPlaying?"playing":"",mine&&isPlaying?"skittles":""].filter(Boolean).join(" ");
+  const etaHtml = isPlaying
+    ? `<div class="eta"><strong>🔥 EN COURS</strong><span>Sur scène maintenant</span></div>`
+    : eta?.at
+      ? `<div class="eta"><strong>⏱ ${formatClock(eta.at)}</strong><span>${relativeMinutes(eta.at)}</span></div>`
+      : `<div class="eta"><strong>⏱ —</strong><span>Estimation à venir</span></div>`;
+
+  const skittles = mine && isPlaying
+    ? `<div class="skittle-banner">🌈🔥 EN COURS — C'EST À TOI! 🔥🌈</div>`
+    : "";
+
+  return `<article class="${classes}" data-request-id="${esc(r.id)}">
+    ${skittles}
+    <div class="songline">
+      <div>
+        <div class="song">${esc(r.song_title || "Chanson")}</div>
+        <div class="artist">${esc(r.song_artist || "")}</div>
+        <span class="status ${isPlaying?"playing":""}">${isPlaying?"En cours":r.status==="full"?"Groupe complet":"En attente"}</span>
+      </div>
+      ${etaHtml}
+    </div>
+    <div class="band">
+      ${r.band_name ? `<div class="band-name">🤘 ${esc(r.band_name)}</div>` : ""}
+      ${own}${extras}
+      ${open ? `<div class="open-slots">${open}</div>` : ""}
+    </div>
+  </article>`;
+}
+
+function render(){
+  const queue = sortedActive();
+  const etas = calculateEtas(queue);
+
+  const mine = currentUserId ? queue.filter(r => r.guest_user_id === currentUserId) : [];
+  $("#myRequests").innerHTML = mine.length
+    ? mine.map(r => cardHtml(r,etas.get(r.id),true)).join("")
+    : `<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment.</div>`;
+
+  $("#publicQueue").innerHTML = queue.length
+    ? queue.map(r => cardHtml(r,etas.get(r.id),false)).join("")
+    : `<div class="empty">La file est vide. Quelqu'un doit bien avoir envie de massacrer une chanson. 🎸</div>`;
+
+  maybeNotify(queue, etas);
+}
+
+async function loadSettings(){
+  const {data,error} = await sb.from("party_settings")
+    .select("party_name,mc_name,performance_requests_enabled")
+    .eq("id",1).single();
+  if(error) throw error;
+  settings=data;
+  $("#partyTitle").textContent = data.party_name || "Party YARG";
+  $("#mcName").textContent = data.mc_name || "Mystère";
+  const pill=$("#partyPill");
+  pill.textContent=data.performance_requests_enabled ? "● Party en cours" : "Party fermé";
+  pill.className="party-pill "+(data.performance_requests_enabled?"on":"off");
+}
+
+async function loadUser(){
+  const {data:{session}} = await sb.auth.getSession();
+  currentUserId = session?.user?.id || null;
+}
+
+async function loadQueue(){
+  const {data:r,error:e1}=await sb.from("performance_requests")
+    .select("id,guest_user_id,song_id,song_title,song_artist,song_duration_seconds,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,queue_position,started_at,created_at")
+    .in("status",["waiting","full","playing"])
+    .order("queue_position",{ascending:true,nullsFirst:false});
+  if(e1) throw e1;
+  requests=r||[];
+
+  const ids=requests.map(x=>x.id);
+  if(!ids.length){ members=[]; render(); return; }
+
+  const {data:m,error:e2}=await sb.from("performance_members")
+    .select("id,performance_request_id,rockstar_name,instrument,difficulty,microphone,created_at")
+    .in("performance_request_id",ids);
+  if(e2) throw e2;
+  members=m||[];
+  render();
+}
+
+function maybeNotify(queue,etas){
+  if (!("Notification" in window) || Notification.permission!=="granted" || !currentUserId) return;
+  const mine=queue.filter(r=>r.guest_user_id===currentUserId);
+  for(const r of mine){
+    const old=previousStates.get(r.id);
+    const eta=etas.get(r.id);
+    const mins=eta?.at ? Math.round((eta.at-Date.now())/60000) : null;
+
+    if(r.status==="playing" && old!=="playing"){
+      new Notification("🎸 C'EST À TOI!",{body:`${r.song_title} — ${r.song_artist}. Ramène ton groupe sur le stage!`});
+    } else if(r.status!=="playing" && mins!==null && mins<=10 && mins>0 && old!=="soon"){
+      new Notification("🍺 Tu passes bientôt!",{body:`${r.song_title} devrait passer dans environ ${mins} min.`});
+      previousStates.set(r.id,"soon");
+      continue;
+    }
+    previousStates.set(r.id,r.status);
+  }
+}
+
+$("#notifyBtn").addEventListener("click",async()=>{
+  if(!("Notification" in window)){
+    alert("Ce navigateur ne prend pas en charge les notifications.");
+    return;
+  }
+  const p=await Notification.requestPermission();
+  $("#notifyBtn").textContent = p==="granted" ? "🔔 Notifications activées" : "🔕 Notifications refusées";
+  $("#notifyBtn").disabled = p==="granted";
+});
+
+function flashLive(){
+  $("#liveBar").classList.add("show");
+  setTimeout(()=>$("#liveBar").classList.remove("show"),900);
+}
+
+async function refresh(){
+  try{ showError(""); await loadSettings(); await loadUser(); await loadQueue(); }
+  catch(err){ console.error(err); showError("Impossible de charger la file pour le moment. Vérifie la configuration Supabase."); }
+}
+
+async function startRealtime(){
+  sb.channel("yarg-party-queue")
+    .on("postgres_changes",{event:"*",schema:"public",table:"performance_requests"},async()=>{flashLive();await loadQueue();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"performance_members"},async()=>{flashLive();await loadQueue();})
+    .on("postgres_changes",{event:"UPDATE",schema:"public",table:"party_settings",filter:"id=eq.1"},async()=>{flashLive();await loadSettings();})
+    .subscribe();
+}
+
+/* Refresh relative countdown text even if no database event occurs. */
+setInterval(()=>render(),30000);
+
+(async()=>{ await refresh(); await startRealtime(); })();
+</script>
+</body>
+</html>
