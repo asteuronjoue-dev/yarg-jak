@@ -668,6 +668,67 @@
             border-radius:50%;
         }
 
+
+        .performance-request-zone{
+            display:block;
+            width:100%;
+            margin-top:1.1rem;
+        }
+        .performance-rainbow-button{
+            width:100%;
+            min-height:54px;
+            box-sizing:border-box;
+            border:0;
+            border-radius:9px;
+            padding:.75rem .9rem;
+            cursor:pointer;
+            background:linear-gradient(90deg,#ff315a,#ff8a24,#ffe21c,#25d7cf,#369cff,#a45cff,#ff4fb8,#ff315a);
+            background-size:300% 100%;
+            animation:performanceRainbow 5s linear infinite;
+            box-shadow:0 0 22px rgba(164,92,255,.20);
+            font:inherit;
+            font-weight:950;
+            text-align:center;
+            transition:transform .15s ease,box-shadow .15s ease;
+        }
+        .performance-rainbow-button span{
+            display:inline;
+            padding:0;
+            color:#050607;
+            background:none;
+            text-shadow:none;
+        }
+        .performance-rainbow-button:hover{
+            transform:translateY(-1px);
+            box-shadow:0 0 30px rgba(37,215,207,.30);
+        }
+
+        @keyframes performanceRainbow{to{background-position:300% 0}}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.performance-form-status.ok{color:#5be0c9}
+
     </style>
 </head>
 <body>
@@ -759,6 +820,12 @@
                 <div class="sheet-diff-title">Difficultés</div>
                 <div id="sheet-diffs"></div>
             </div>
+            <div id="performance-request-zone" class="performance-request-zone" hidden>
+                <button type="button" id="performance-request-button" class="performance-rainbow-button">
+                    <span>✨Demander cette chanson pour ce soir!✨</span>
+                </button>
+            </div>
+
             <div id="sheet-queue-hook" class="party-flavor-wrap">
                 <span id="party-flavor"></span>
             </div>
@@ -770,6 +837,17 @@
         // Colle ici les MÊMES valeurs que dans demande.html.
         const PARTY_SUPABASE_URL = "https://xbhfjzurytdknbqvksjq.supabase.co";
         const PARTY_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM";
+
+        let PARTY_REQUESTS_ENABLED = false;
+        let PARTY_CLIENT = null;
+        let CURRENT_SHEET_SONG = null;
+
+        function getPartyClient() {
+            if (PARTY_CLIENT) return PARTY_CLIENT;
+            if (!window.supabase || PARTY_SUPABASE_URL.includes('COLLE_TON_') || PARTY_SUPABASE_PUBLISHABLE_KEY.includes('COLLE_TA_')) return null;
+            PARTY_CLIENT = window.supabase.createClient(PARTY_SUPABASE_URL, PARTY_SUPABASE_PUBLISHABLE_KEY);
+            return PARTY_CLIENT;
+        }
 
         async function loadPartyMode() {
             const normalTitle = 'Librairie de chansons YARG à Jak';
@@ -783,7 +861,7 @@
                 return;
             }
             try {
-                const client = window.supabase.createClient(PARTY_SUPABASE_URL, PARTY_SUPABASE_PUBLISHABLE_KEY);
+                const client = getPartyClient();
                 const { data, error } = await client
                     .from('party_settings')
                     .select('party_name, mc_name, performance_requests_enabled')
@@ -791,7 +869,8 @@
                     .single();
                 if (error) throw error;
 
-                if (data && data.performance_requests_enabled) {
+                PARTY_REQUESTS_ENABLED = !!(data && data.performance_requests_enabled);
+                if (PARTY_REQUESTS_ENABLED) {
                     document.body.classList.add('party-mode');
                     catalogTitle.style.display = 'none';
                     partyTitle.textContent = (data.party_name || 'Party YARG').trim();
@@ -799,6 +878,7 @@
                     partyInfo.classList.add('active');
                     document.title = `${partyTitle.textContent} — YARG`;
                 } else {
+                    PARTY_REQUESTS_ENABLED = false;
                     document.body.classList.remove('party-mode');
                     catalogTitle.style.display = '';
                     catalogTitle.textContent = normalTitle;
@@ -1060,7 +1140,30 @@
         });
 
         // Helper functions
-        const PARTY_FLAVORS = ["Hydrate-toi. Les solos durent plus longtemps quand tu vois encore clair.", "Petit rappel : personne n’a jamais regretté un bon gros refrain chanté trop fort.", "Si tu rates une note, fais comme si c’était du jazz.", "Le prochain solo est peut-être légalement considéré comme une séance de cardio.", "Conseil de pro : le air guitar compte comme échauffement.", "Cette chanson approuve officiellement les high-fives mal synchronisés.", "Un bon party commence par une toune. Un excellent party finit beaucoup trop tard.", "Le groove est gratuit. Les courbatures demain matin le sont aussi.", "Si tout le monde chante faux ensemble, ça devient presque une harmonie.", "Les voisins n’ont rien demandé, mais ils auront le show pareil.", "Tu n’as pas besoin d’être bon. Tu dois juste avoir l’air convaincu.", "Règle non écrite : plus le refrain est connu, moins la justesse est importante.", "Si tu hésites entre deux chansons, choisis celle avec le plus de chances de faire crier le salon.", "Moment idéal pour pratiquer ton regard de rockstar vers un public imaginaire.", "Aucune batterie n’a été blessée pendant la consultation de cette fiche.", "Le bouton volume existe surtout pour être tourné vers la droite.", "Cette chanson est certifiée compatible avec les bras en l’air.", "Si quelqu’un demande encore Free Bird, faites semblant de ne pas avoir entendu.", "Les erreurs de rythme deviennent du style si tu les assumes assez fort.", "Bienvenue dans la zone où les refrains deviennent des décisions collectives."];
+        const PARTY_FLAVORS = ["Hydrate-toi. Les solos durent plus longtemps quand tu vois encore clair.", "Petit rappel : personne n’a jamais regretté un bon gros refrain chanté trop fort.", "Si tu rates une note, fais comme si c’était du jazz.", "Le prochain solo est peut-être légalement considéré comme une séance de cardio.", "Conseil de pro : le air guitar compte comme échauffement.", "Cette chanson approuve officiellement les high-fives mal synchronisés.", "Un bon party commence par une toune. Un excellent party finit beaucoup trop tard.", "Le groove est gratuit. Les courbatures demain matin le sont aussi.", "Si tout le monde chante faux ensemble, ça devient presque une harmonie.", "Les voisins n’ont rien demandé, mais ils auront le show pareil.", "Tu n’as pas besoin d’être bon. Tu dois juste avoir l’air convaincu.", "Règle non écrite : plus le refrain est connu, moins la justesse est importante.", "Si tu hésites entre deux chansons, choisis celle avec le plus de chances de faire crier le salon.", "Moment idéal pour pratiquer ton regard de rockstar vers un public imaginaire.", "Aucune batterie n’a été blessée pendant la consultation de cette fiche.", "Le bouton volume existe surtout pour être tourné vers la droite.", "Cette chanson est certifiée compatible avec les bras en l’air.", "Si quelqu’un demande encore Free Bird, faites semblant de ne pas avoir entendu.",
+            "Si quelqu’un demande Bohemian Rhapsody, faites semblant de ne pas savoir c’est quoi.", "Les erreurs de rythme deviennent du style si tu les assumes assez fort.", "Bienvenue dans la zone où les refrains deviennent des décisions collectives.",
+            "Faites attention, Jak essaie des fois de vous faire jouer des tounes de 13 minutes quand vous n'êtes pas attentif.",
+            "I swear to God, si Jak met encore une toune de Ninja Sex Party, je vais le \"FYA\" avec mon poing",
+            "On vas-tu jouer à Overwatch à place?",
+            "Bon il est déjà passer mon heure de dodo moi.",
+            "On vas-tu vape?",
+            "J'mets du Bailey's dans mon orangeade.",
+            "On vas-tu dans l'garage?",
+            "As-tu bu un peu d'eau dernièrement? Un café ça compte pas.",
+            "Voyons les notes vont ben vite bout d'criss.",
+            "Si quelqu'un dit que les notes ont l'air d'être pas on time: skill issue",
+            "J'ai hâte de vous entendre massacrer c'te belle chanson-là",
+            "Ah oui je l'aime celle-là",
+            "Nya nya nyaa nyAA nya by the way by the way *TOUSSE TOUSSE TOUSSE* s'cusez",
+            "Tu penses être à la hauteur de cette toune-là? Pourquoi pas Hit Me With Your Best Shot à Facile à place?",
+            "Jouer avec les mains c'est bien, mais les pieds c'est crissement plus cool.",
+            " :) ",
+            "T'es beau.",
+            "Si quelqu'un demande à avoir deux micro en même temps, j'le fesse.",
+            "J'ai refusé ma troisième greffe de foi.",
+            "À 4h au rack à bécyk.",
+            "Joue du Green Day, Nat va être contente."
+        ];
         function setPartyFlavor() {
             const el = document.getElementById('party-flavor');
             if (!el) return;
@@ -1198,6 +1301,9 @@
         }
 
         function openSheet(r) {
+            CURRENT_SHEET_SONG = r;
+            const requestZone = document.getElementById('performance-request-zone');
+            if (requestZone) requestZone.hidden = !PARTY_REQUESTS_ENABLED;
             document.getElementById('sheet-title').textContent = r.t;
             document.getElementById('sheet-artist').textContent = r.a;
             document.getElementById('sheet-album').textContent = r.al || '—';
@@ -1231,6 +1337,18 @@
             sheetBackdrop.classList.add('open');
             sheet.classList.add('open');
         }
+
+
+        document.getElementById('performance-request-button').addEventListener('click', () => {
+            if (!PARTY_REQUESTS_ENABLED || !CURRENT_SHEET_SONG) return;
+            const params = new URLSearchParams({
+                song_id: CURRENT_SHEET_SONG.id,
+                title: CURRENT_SHEET_SONG.t || '',
+                artist: CURRENT_SHEET_SONG.a || '',
+                album: CURRENT_SHEET_SONG.al || ''
+            });
+            window.location.href = `demande-soiree.html?${params.toString()}`;
+        });
 
         function closeSheet() {
             sheetBackdrop.classList.remove('open');
