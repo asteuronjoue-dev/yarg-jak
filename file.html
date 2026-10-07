@@ -27,6 +27,28 @@
     .party-pill{display:inline-block;margin-top:14px;padding:7px 11px;border-radius:999px;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
     .party-pill.on{background:rgba(31,200,189,.14);color:var(--teal2);border:1px solid rgba(31,200,189,.35)}
     .party-pill.off{background:rgba(255,107,107,.12);color:#ffb2b2;border:1px solid rgba(255,107,107,.3)}
+    .party-pill.on{
+      color:#fff;
+      border-color:transparent;
+      background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);
+      background-size:300% 100%;
+      animation:partyRainbowBg 5s linear infinite;
+      box-shadow:0 0 18px rgba(255,255,255,.12);
+    }
+    .mc strong{
+      background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);
+      background-size:300% auto;
+      color:transparent;
+      background-clip:text;
+      -webkit-background-clip:text;
+      animation:partyRainbowText 5s linear infinite;
+    }
+    @keyframes partyRainbowBg{
+      to{background-position:300% center}
+    }
+    @keyframes partyRainbowText{
+      to{background-position:300% center}
+    }
     main{padding:26px 0 70px}
     section{margin-bottom:34px}
     .section-head{display:flex;gap:14px;align-items:end;justify-content:space-between;margin-bottom:14px}
@@ -244,11 +266,11 @@ function render(){
   const mine = currentUserId ? queue.filter(r => r.guest_user_id === currentUserId) : [];
   $("#myRequests").innerHTML = mine.length
     ? mine.map(r => cardHtml(r,etas.get(r.id),true)).join("")
-    : `<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment.</div>`;
+    : `<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment. Va donc nous en pousser une p'tite.</div>`;
 
   $("#publicQueue").innerHTML = queue.length
     ? queue.map(r => cardHtml(r,etas.get(r.id),false)).join("")
-    : `<div class="empty">La file est vide. Quelqu'un doit bien avoir envie de massacrer une chanson. 🎸</div>`;
+    : `<div class="empty">La file est vide. Quelqu'un doit bien avoir envie de massacrer une chanson, non? 🎸</div>`;
 
   maybeNotify(queue, etas);
 }
