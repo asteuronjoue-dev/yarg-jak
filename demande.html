@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demander l'ajout d'une chanson — PARTY YARG</title>
+  <meta name="description" content="Demandez l'ajout d'une chanson à la bibliothèque PARTY YARG.">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d0f12;
+      --panel: #171a20;
+      --panel2: #1e222a;
+      --text: #f4f5f7;
+      --muted: #a7adb8;
+      --border: #303640;
+      --accent: #7c5cff;
+      --accent2: #947cff;
+      --danger: #ff6b6b;
+      --success: #5bd68a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #1a1730 0, var(--bg) 42%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    .wrap { width: min(760px, calc(100% - 28px)); margin: 0 auto; padding: 34px 0 60px; }
+    .top { margin-bottom: 24px; }
+    .back { color: var(--muted); text-decoration: none; font-size: .92rem; }
+    .back:hover { color: var(--text); }
+    h1 { font-size: clamp(1.8rem, 5vw, 2.7rem); margin: 18px 0 8px; line-height: 1.08; }
+    .intro { color: var(--muted); line-height: 1.55; margin: 0; }
+    .party-notice {
+      margin-top: 16px;
+      padding: 13px 15px;
+      border: 1px solid rgba(124,92,255,.35);
+      background: rgba(124,92,255,.10);
+      border-radius: 12px;
+      color: #ddd8ff;
+      line-height: 1.5;
+      font-size: .92rem;
+    }
+    .party-notice strong:first-child { color: #fff; }
+    .card {
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .full { grid-column: 1 / -1; }
+    label { display: block; font-weight: 650; margin-bottom: 8px; }
+    .required::after { content: " *"; color: var(--accent2); }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 12px 13px;
+      font: inherit;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,92,255,.15);
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    .help { color: var(--muted); font-size: .86rem; line-height: 1.4; margin: 6px 0 0; }
+    .section { margin-top: 22px; }
+    .choices { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .check-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+    .choice {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .choice input { width: auto; margin: 0; accent-color: var(--accent); }
+    .choice:has(input:checked) { border-color: var(--accent); background: rgba(124,92,255,.13); }
+    .actions { margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px; align-items: center; }
+    button {
+      border: 0;
+      border-radius: 11px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      color: white;
+      background: var(--accent);
+    }
+    button:hover { background: var(--accent2); }
+    button:disabled { opacity: .55; cursor: wait; }
+    .status { margin-top: 18px; border-radius: 11px; padding: 12px 14px; line-height: 1.45; display: none; }
+    .status.success { display: block; background: rgba(91,214,138,.12); border: 1px solid rgba(91,214,138,.35); color: #b8f3ce; }
+    .status.error { display: block; background: rgba(255,107,107,.12); border: 1px solid rgba(255,107,107,.35); color: #ffc0c0; }
+    @media (max-width: 650px) {
+      .grid { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+      .choices { grid-template-columns: repeat(2, 1fr); }
+      .check-grid { grid-template-columns: 1fr; }
+      .card { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <a class="back" href="index.html">← Retour au catalogue</a>
+      <h1>Demander l'ajout d'une chanson</h1>
+      <p class="intro">
+        Tu cherches une chanson qui n'est pas encore dans la bibliothèque?
+        Donne-nous les détails et le MC pourra essayer de la trouver.
+      </p>
+      <div class="party-notice">
+        <strong>🎸 Important!</strong>
+        Les demandes d'ajout à la bibliothèque sont traitées <strong>entre les soirées</strong>.
+        Pendant un party, le MC se concentre sur les chansons déjà disponibles et sur la file de la soirée.
+        Ta demande pourra donc être traitée après le party.
+      </div>
+    </header>
+
+    <form class="card" id="requestForm">
+      <div class="grid">
+        <div>
+          <label class="required" for="name">Nom</label>
+          <input id="name" name="name" autocomplete="name" required maxlength="120">
+        </div>
+
+        <div>
+          <label class="required" for="email">Courriel</label>
+          <input id="email" name="email" type="email" autocomplete="email" required maxlength="320">
+          <p class="help">On utilisera cette adresse pour te tenir au courant du résultat de la recherche.</p>
+        </div>
+
+        <div>
+          <label class="required" for="title">Titre de la chanson</label>
+          <input id="title" name="title" required maxlength="200">
+        </div>
+
+        <div>
+          <label class="required" for="artist">Artiste</label>
+          <input id="artist" name="artist" required maxlength="200">
+        </div>
+
+        <div class="full">
+          <label for="album">Album</label>
+          <input id="album" name="album" maxlength="200">
+        </div>
+      </div>
+
+      <div class="section">
+        <label>Difficulté souhaitée</label>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="difficulty" value="any" checked> Peu importe</label>
+          <label class="choice"><input type="radio" name="difficulty" value="easy"> Facile</label>
+          <label class="choice"><input type="radio" name="difficulty" value="medium"> Moyen</label>
+          <label class="choice"><input type="radio" name="difficulty" value="hard"> Difficile</label>
+          <label class="choice"><input type="radio" name="difficulty" value="expert"> Expert</label>
+        </div>
+      </div>
+
+      <div class="section">
+        <label>Instruments souhaités</label>
+        <p class="help">Sélectionne les instruments que tu aimerais pouvoir jouer sur cette chanson.</p>
+        <div class="check-grid" style="margin-top:9px">
+          <label class="choice"><input type="checkbox" name="instrument" value="vocals"> 🎤 Voix</label>
+          <label class="choice"><input type="checkbox" name="instrument" value="guitar"> 🎸 Guitare</label>
+          <label class="choice"><input type="checkbox" name="instrument" value="bass"> 🎸 Basse</label>
+          <label class="choice"><input type="checkbox" name="instrument" value="drums"> 🥁 Batterie</label>
+          <label class="choice"><input type="checkbox" name="instrument" value="keys"> 🎹 Clavier</label>
+        </div>
+      </div>
+
+      <div class="section">
+        <label for="download">Lien de téléchargement</label>
+        <input id="download" name="download" type="url" maxlength="1000" placeholder="https://...">
+        <p class="help">Got a source for this song? Paste it here to save the host some hunting.</p>
+      </div>
+
+      <div class="section">
+        <label for="message">Message personnel</label>
+        <textarea id="message" name="message" maxlength="2000" placeholder="Un détail qui pourrait aider le MC à trouver la bonne version?"></textarea>
+      </div>
+
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+
+      <div class="actions">
+        <button id="submitButton" type="submit">Envoyer la demande</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    // ============================================================
+    // PARTY YARG — SUPABASE CONFIGURATION
+    // Paste your Project URL and Publishable key below.
+    // NEVER put a Supabase Secret / service_role key here.
+    // ============================================================
+    const SUPABASE_URL = "https://xbhfjzurytdknbqvksjq.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM";
+
+    const form = document.getElementById("requestForm");
+    const button = document.getElementById("submitButton");
+    const statusBox = document.getElementById("status");
+
+    function showStatus(type, message) {
+      statusBox.className = "status " + type;
+      statusBox.textContent = message;
+    }
+
+    function clean(value) {
+      return value.trim();
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (SUPABASE_URL.includes("COLLE_TON_") || SUPABASE_PUBLISHABLE_KEY.includes("COLLE_TA_")) {
+        showStatus("error", "La connexion à Supabase n'est pas encore configurée dans cette page.");
+        return;
+      }
+
+      const instruments = [...document.querySelectorAll('input[name="instrument"]:checked')]
+        .map(input => input.value);
+
+      const data = {
+        requester_name: clean(document.getElementById("name").value),
+        requester_email: clean(document.getElementById("email").value),
+        song_title: clean(document.getElementById("title").value),
+        artist: clean(document.getElementById("artist").value),
+        album: clean(document.getElementById("album").value) || null,
+        desired_difficulty: document.querySelector('input[name="difficulty"]:checked')?.value || "any",
+        desired_instruments: instruments,
+        personal_message: clean(document.getElementById("message").value) || null,
+        download_url: clean(document.getElementById("download").value) || null
+      };
+
+      if (!data.requester_name || !data.requester_email || !data.song_title || !data.artist) {
+        showStatus("error", "Merci de remplir tous les champs obligatoires.");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Envoi en cours…";
+      statusBox.className = "status";
+
+      try {
+        const { createClient } = window.supabase;
+        const client = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+        const { error } = await client
+          .from("library_requests")
+          .insert(data);
+
+        if (error) throw error;
+
+        form.reset();
+        document.querySelector('input[name="difficulty"][value="any"]').checked = true;
+        showStatus(
+          "success",
+          "Demande envoyée! 🎸 Le MC pourra maintenant faire ses recherches et te tenir au courant par courriel."
+        );
+      } catch (error) {
+        console.error(error);
+        showStatus(
+          "error",
+          "Impossible d'envoyer la demande pour le moment. Vérifie la configuration Supabase et réessaie."
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = "Envoyer la demande";
+      }
+    });
+  </script>
+</body>
+</html>
