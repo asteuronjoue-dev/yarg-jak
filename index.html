@@ -669,6 +669,7 @@
         }
 
 
+        .performance-request-zone[hidden]{display:none!important}
         .performance-request-zone{
             display:block;
             width:100%;
@@ -1345,7 +1346,11 @@
                 song_id: CURRENT_SHEET_SONG.id,
                 title: CURRENT_SHEET_SONG.t || '',
                 artist: CURRENT_SHEET_SONG.a || '',
-                album: CURRENT_SHEET_SONG.al || ''
+                album: CURRENT_SHEET_SONG.al || '',
+                parts: CURRENT_SHEET_SONG.p || '',
+                vocal_parts: CURRENT_SHEET_SONG.vp || 0,
+                difficulties: CURRENT_SHEET_SONG.d || '',
+                charts: CURRENT_SHEET_SONG.charts || ''
             });
             window.location.href = `demande-soiree.html?${params.toString()}`;
         });
