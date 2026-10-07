@@ -17,7 +17,7 @@ input,select{width:100%;background:#101d24;color:#fff;border:1px solid #314650;b
 .check{display:flex;gap:.55rem;align-items:flex-start;margin:.7rem 0;font-weight:700}.check input{width:auto;margin-top:.25rem}
 fieldset{border:1px solid var(--line);border-radius:12px;padding:.85rem 1rem;margin:1.1rem 0}.fills{display:flex;flex-wrap:wrap;gap:.4rem}.fills label{border:1px solid #30434c;border-radius:8px;padding:.42rem .58rem;font-size:.86rem}.fills input{width:auto}
 .submit{width:100%;border:0;border-radius:12px;padding:1rem;color:#050607;font-weight:950;font-size:1.03rem;cursor:pointer;background:linear-gradient(90deg,#ff315a,#ff8a24,#ffe21c,#25d7cf,#369cff,#a45cff,#ff4fb8,#ff315a);background-size:300% 100%;animation:rainbow 5s linear infinite}@keyframes rainbow{to{background-position:300% 0}}
-.status{min-height:1.3rem;margin:.7rem 0;color:var(--muted)}.status.error{color:#ff7c8a}.status.ok{color:#5be0c9}
+.difficulty-lines{display:grid;gap:.4rem;margin:.3rem 0 .8rem}.difficulty-lines div{line-height:1.45}.difficulty-lines strong{color:#e4f4f4}.status{min-height:1.3rem;margin:.7rem 0;color:var(--muted)}.status.error{color:#ff7c8a}.status.ok{color:#5be0c9}
 </style>
 </head>
 <body>
@@ -33,7 +33,7 @@ fieldset{border:1px solid var(--line);border-radius:12px;padding:.85rem 1rem;mar
 <div id="instrument-variant" class="field" hidden></div>
 <label class="check" id="mic-wrap" hidden><input type="checkbox" id="mic"><span>Je veux aussi chanter au micro</span></label>
 
-<div class="field" id="difficulty-field" hidden><span>Difficulté souhaitée *</span><small id="difficulty-help"></small><select id="difficulty">
+<div class="field" id="difficulty-field" hidden><span>Difficulté souhaitée *</span><div id="difficulty-help" class="difficulty-lines"></div><select id="difficulty">
 <option value="beginner">Débutant</option>
 <option value="easy">Facile</option>
 <option value="medium">Moyen</option>
@@ -65,11 +65,11 @@ const partDefs=[
 ];
 const map={G:'guitar',B:'bass',D:'drums',K:'keys',V:'vocals'};
 const diffHelp={
- G:"Débutant : Tu n'as qu'à utiliser la strum bar. Facile : La plupart des chansons utilisent les trois premières frettes. Moyen : Généralement quatre frettes. Difficile : les cinq frettes, mais moins de notes et de passages extrêmes qu'en Expert. Expert : les cinq frettes et le chart complet.",
- B:"Débutant : Seulement la strumbar. Facile : Généralement les trois premières frettes et rythme simplifié. Moyen : Généralement les quatre premières frettes. Notes réduites. Difficile : Toutes les frettes avec moins de densité qu'en Expert. Expert : The whole fuckin' thing.",
- D:"Débutant : rythme très simplifié. Facile : patterns simples et moins de frappes. Moyen : davantage de pads et de variations. Difficile : patterns complexes avec moins de densité qu'en Expert. Expert : le chart complet.",
- K:"Débutant : très simplifié. Facile : peu de touches et motifs simples. Moyen : davantage de touches et de mouvements. Difficile : patterns complexes avec moins de densité qu'en Expert. Expert : le chart complet.",
- V:"Débutant : tolérance maximale. Facile : grande marge sur la hauteur et le rythme. Moyen : précision modérée. Difficile : demande une bonne précision. Expert : la tolérance la plus serrée."
+ G:["Débutant : Tu n'as qu'à utiliser la strum bar.","Facile : Les trois premières frettes, des notes espacées et un rythme simplifié.","Moyen : Les quatre premières frettes, davantage de notes et quelques accords.","Difficile : Les cinq frettes, avec moins de notes et de passages rapides qu'en Expert.","Expert : Les cinq frettes, tous les accords et le chart complet."],
+ B:["Débutant : Seulement la strum bar.","Facile : Généralement les trois premières frettes et un rythme simplifié.","Moyen : Les quatre premières frettes, avec moins de notes et de changements rapides.","Difficile : Les cinq frettes, avec moins de densité qu'en Expert.","Expert : The whole fuckin' thing."],
+ D:["Débutant : Frappe les notes sans devoir suivre exactement leur couleur.","Facile : Un rythme très simplifié, souvent sans devoir utiliser les mains et le pied en même temps.","Moyen : Plus de grosse caisse, de caisse claire et de cymbales; le rythme commence à ressembler à l'original.","Difficile : Presque tout le rythme, mais les roulements et les passages rapides sont allégés.","Expert : Le rythme complet, avec les roulements et les passages rapides."],
+ K:["Débutant : Très simplifié.","Facile : Peu de touches et des motifs simples.","Moyen : Plus de notes et de changements.","Difficile : Des motifs complexes, avec moins de notes qu'en Expert.","Expert : Le chart complet."],
+ V:["Débutant : Tolérance maximale.","Facile : Grande marge sur la hauteur et le rythme.","Moyen : Précision modérée.","Difficile : Bonne précision demandée.","Expert : Tolérance la plus serrée."]
 };
 let selected=null, variant=null;
 const partWrap=document.getElementById('parts'), fills=document.getElementById('fills');
@@ -82,7 +82,7 @@ function choose(code,button){
  document.getElementById('mic-wrap').hidden=isListener||code==='V'||!hasVocals;
  if(isListener||code==='V')document.getElementById('mic').checked=false;
  document.getElementById('difficulty-field').hidden=isListener||code==='V';
- if(!isListener)document.getElementById('difficulty-help').textContent=diffHelp[code]||'';
+ if(!isListener)document.getElementById('difficulty-help').replaceChildren(...(diffHelp[code]||[]).map(line=>{const el=document.createElement('div');const i=line.indexOf(':');const strong=document.createElement('strong');strong.textContent=line.slice(0,i+1)+' ';el.append(strong,document.createTextNode(line.slice(i+1).trim()));return el;}));
  renderVariant(code);
 }
 function renderVariant(code){
