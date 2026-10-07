@@ -74,10 +74,38 @@
 
         .counts {
             display: flex;
-            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
             margin-bottom: 0.75rem;
             font-size: 0.875rem;
             color: var(--subtle-text);
+        }
+
+        .library-request-link {
+            margin-left: auto;
+            color: var(--accent);
+            font-weight: 700;
+            text-decoration: none;
+            border: 1px solid var(--accent);
+            border-radius: 999px;
+            padding: 0.35rem 0.7rem;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .library-request-link:hover,
+        .library-request-link:focus-visible {
+            background: var(--accent);
+            color: #000;
+        }
+
+        @media (max-width: 620px) {
+            .library-request-link {
+                width: 100%;
+                margin-left: 0;
+                text-align: center;
+            }
         }
 
         #search {
@@ -455,6 +483,7 @@
         <div class="counts">
             <span id="total-count">Total : 0</span>
             <span id="count">Affichées : 0</span>
+            <a class="library-request-link" href="demande.html">➕ Demander l'ajout d'une chanson</a>
         </div>
         <div class="search-row">
             <div class="search-input-wrap">
