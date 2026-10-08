@@ -97,22 +97,39 @@ header{align-items:flex-start;margin-bottom:27px;padding-bottom:19px}
 }
 @media(max-width:420px){.stats{grid-template-columns:1fr 1fr}.stat:last-child{grid-column:1/-1}}
 
+.owner-list{display:grid;gap:15px;margin-top:20px}.owner-item{padding:18px;background:#222a2f;border:1px solid #37444a;border-radius:12px}.owner-item strong{font-size:1rem}.owner-item-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:12px}.owner-item label{display:block;margin-top:12px;color:#b7c5cb}.owner-item select{display:block;width:100%;background:#111719;border:1px solid #4a5b64;color:#fff;border-radius:9px;padding:11px;margin-top:6px;font:inherit}.tabs [hidden]{display:none!important}@media(max-width:680px){.owner-item-fields{grid-template-columns:1fr;gap:0}}
+
+/* Crédit historique : panneau de gestion extensible, sans encombrer la régie. */
+.legacy-details{margin-top:17px;border-top:1px solid #354047;padding-top:13px}
+.legacy-details summary{cursor:pointer;color:#f5f7f8;font-weight:850;padding:6px 0}
+.legacy-details .help{margin:8px 0 16px}
+.legacy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.legacy-form{display:flex;align-items:end;gap:8px;border:1px solid #354047;background:#171d20;border-radius:10px;padding:12px}
+.legacy-form label{flex:1;min-width:0;margin:0;font-size:.83rem}
+.legacy-form input{display:block;width:100%;min-width:0;margin-top:6px}
+.legacy-form button{flex:0 0 auto;font-size:.8rem;padding:10px}
+.old-guard-choice{display:flex;gap:10px;align-items:center;margin:16px 0 0;color:#e9d2a0;font-weight:800}
+.old-guard-choice input{width:18px;height:18px;accent-color:#ff8a24;margin:0}
+@media(max-width:680px){.legacy-grid{grid-template-columns:1fr}.legacy-form{flex-wrap:wrap}}
 </style></head><body><main>
 <header><strong>🎤 YARG · RÉGIE MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" aria-current="page">Régie MC</a></nav></header>
-<h1>Régie de la soirée</h1><p>Gère la scène, les performances et les réglages de ta soirée, au même endroit.</p>
+<h1>Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. Les outils du propriétaire sont réservés au compte autorisé.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
-<section id="auth" class="card" hidden><h2>Connexion du MC</h2><p>Connecte-toi avec l'adresse courriel autorisée dans Supabase. Le lien reçu permet de retrouver la régie sur n'importe quel appareil.</p><form id="sign-in"><label>Adresse courriel<input name="email" type="email" autocomplete="email" placeholder="mc@exemple.com" required></label><button type="submit" class="primary">Recevoir mon lien de connexion</button></form><p class="help">Le compte doit être ajouté à la liste des MC via le script SQL. Cette page n'accepte pas le simple fait de connaître son URL.</p></section>
+<section id="auth" class="card" hidden><h2>Connexion du MC</h2><p>Connecte-toi avec le courriel et le mot de passe de ton compte MC autorisé.</p><form id="sign-in"><label>Adresse courriel<input name="email" type="email" autocomplete="email" placeholder="mc@exemple.com" required></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary">Se connecter</button></form><p class="help">Le compte doit être ajouté à la liste des MC via le script SQL. Cette page n'accepte pas le simple fait de connaître son URL.</p></section>
 <section id="forbidden" class="card" hidden><h2>Accès réservé</h2><p>Ce compte n'est pas autorisé à gérer la soirée. Connecte-toi avec l'adresse du MC.</p><button id="sign-out-forbidden">Changer de compte</button></section>
 <section id="app" hidden>
 <div class="flex"><div id="session-line" class="muted">Soirée</div><button id="sign-out" class="quiet">Déconnexion</button></div>
-<div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">⚙️ Réglages</button></div>
+<div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">⚙️ Réglages</button><button class="tab" id="owner-tab-button" data-tab="owner" aria-selected="false" hidden>🔒 Propriétaire</button></div>
 <div id="scene-tab"><div class="stats"><div class="stat"><b id="total-done">0</b><small>Chansons terminées</small></div><div class="stat"><b id="total-waiting">0</b><small>Demandes en attente</small></div><div class="stat"><b id="total-library">0</b><small>Demandes bibliothèque</small></div></div>
 <section class="card stage"><div class="flex"><h2>Sur scène</h2><span class="pill live">● EN COURS</span></div><div id="playing"></div></section>
 <section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section></div>
 <div id="history-tab" hidden><section class="card"><h2>Chansons passées / sautées</h2><p class="help">Une chanson passée peut retourner dans la file. Une chanson terminée demeure dans l'historique de cette soirée.</p><div id="history"></div></section></div>
 <div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form></section>
 <section class="card"><h2>Commencer une nouvelle soirée</h2><p>Clôture la session actuelle et démarre une nouvelle file. L'historique reste en base, mais les demandes de l'ancienne session ne passent pas dans la nouvelle.</p><form id="new-party-form"><label>Nom de la nouvelle soirée<input id="new-party-name" maxlength="100" placeholder="Soirée YARG" required></label><button type="submit" class="danger">Commencer une nouvelle soirée</button></form><p class="help">Par sécurité, le Mode soirée sera désactivé sur la nouvelle session jusqu'à ce que tu l'actives.</p></section></div>
-<p class="footnote">Première version de la régie · l'onglet Rockstars, les badges Initié et la gestion des demandes bibliothèque arrivent dans la suite.</p>
+<section id="owner-tab" hidden>
+ <section class="card"><h2>🔒 Gestion des ROCKSTARS</h2><p class="help">Réservé au propriétaire : privilège Initié, titres et crédits historiques. Les crédits ne modifient jamais la file de cette soirée.</p><div id="owner-players" class="owner-list"></div></section>
+ <section class="card"><h2>Demandes de chansons pour la bibliothèque</h2><p class="help">« Téléchargée » veut dire que la chanson a bien été ajoutée à la bibliothèque. Les notifications par courriel seront ajoutées séparément.</p><div id="owner-library" class="owner-list"></div></section>
+</section>
 </section></main>
 <script>
 'use strict';
@@ -153,13 +170,62 @@ async function action(id,name){
  busy=true;try{const {error}=await sb.rpc('yarg_admin_performance_action',{p_request_id:id,p_action:name});if(error)throw error;notice('Action enregistrée.');busy=false;await load();}catch(e){busy=false;notice(e.message,true)}
 }
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(b&&!busy)action(b.dataset.id,b.dataset.action)});
-document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings'])$(id+'-tab').hidden=id!==b.dataset.tab;});
+document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;});
 $('refresh').onclick=()=>load();
 $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {error}=await sb.rpc('yarg_admin_save_settings',{p_name:$('party-name').value.trim(),p_mc:$('mc-name').value.trim(),p_party_mode:$('party-mode').checked});if(error)throw error;notice('Réglages enregistrés.');hasLoadedSettings=false;busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
 $('new-party-form').onsubmit=async e=>{e.preventDefault();const name=$('new-party-name').value.trim();if(!name)return;if(!confirm(`Commencer « ${name} » ? Les demandes de l'ancienne soirée ne seront plus dans la file actuelle.`))return;busy=true;try{const {error}=await sb.rpc('yarg_admin_new_party',{p_name:name});if(error)throw error;notice('Nouvelle soirée créée ! Active le Mode soirée pour les demandes.');hasLoadedSettings=false;$('new-party-name').value='';busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
-$('sign-in').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget;const button=form.querySelector('button');button.disabled=true;try{const {error}=await sb.auth.signInWithOtp({email:form.elements.email.value.trim(),options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;notice('Regarde tes courriels pour le lien de connexion.')}catch(e){notice(e.message,true)}finally{button.disabled=false}};
+
+const ownerData={players:[],library:[],titles:[],credits:[],oldGuard:[]};
+const creditMetrics=[["parties","Soirées antérieures"],["played","Chansons terminées"],["guitar","Guitare / Rythmique"],["bass","Basse"],["drums","Batterie"],["keys","Clavier"],["vocals","Voix"],["stage_minutes","Minutes sur scène"],["confirmed_additions","Ajouts à la bibliothèque"],["library_requests","Demandes de bibliothèque"]];
+async function loadOwner(){
+ const [{data,error},{data:legacy,error:legacyError}]=await Promise.all([sb.rpc('yarg_owner_snapshot'),sb.rpc('yarg_owner_legacy_snapshot')]);if(error||legacyError){notice('Accès propriétaire : '+(error||legacyError).message,true);return;}
+ ownerData.players=data.rockstars||[];ownerData.library=data.library||[];ownerData.titles=data.titles||[];ownerData.credits=legacy.credits||[];ownerData.oldGuard=legacy.old_guard||[];
+ drawOwner();
+}
+function ownerSelect(options,selected){return options.map(([v,l])=>`<option value="${esc(v)}" ${v===selected?'selected':''}>${esc(l)}</option>`).join('')}
+function drawOwner(){
+ $('owner-players').innerHTML=ownerData.players.length?ownerData.players.map(p=>{
+  const credits=ownerData.credits.filter(c=>c.user_id===p.user_id);
+  const current=m=>Number(credits.find(c=>c.metric===m)?.amount||0);
+  const metrics=creditMetrics.map(([metric,label])=>`<form class="legacy-form" data-credit-user="${esc(p.user_id)}" data-credit-metric="${esc(metric)}"><label>${esc(label)}<input type="number" name="amount" min="0" max="1000000" step="1" value="${current(metric)}" required></label><button type="submit">Enregistrer</button></form>`).join('');
+  const oldGuard=ownerData.oldGuard.includes(p.user_id);
+  const titleChoices=ownerData.titles.filter(t=>t.code!=='vieille_garde'||oldGuard);
+  return `<div class="owner-item"><strong>${esc(p.rockstar_name)}</strong><div class="owner-item-fields"><label>Privilège Initié<select data-initie-for="${esc(p.user_id)}">${ownerSelect([['auto','Automatique'],['yes','Accorder'],['no','Retirer']],p.manual_initie===true?'yes':p.manual_initie===false?'no':'auto')}</select></label><label>Titre affiché<select data-title-for="${esc(p.user_id)}">${ownerSelect([['','Aucun'],...titleChoices.map(t=>[t.code,t.label])],p.equipped_title||'')}</select></label></div><label class="old-guard-choice"><input type="checkbox" data-old-guard-for="${esc(p.user_id)}" ${oldGuard?'checked':''}> 🏅 La Vieille Garde — titre secret (ancien du setup)</label><details class="legacy-details"><summary>Crédits historiques d’exploits</summary><p class="help">Indique les participations d’avant le site. Chaque valeur est un crédit ajouté aux statistiques réelles, pas leur total. Les titres se débloquent à la prochaine visite du profil.</p><div class="legacy-grid">${metrics}</div></details></div>`;
+ }).join(''):'<p class="muted">Aucun profil Rockstar inscrit.</p>';
+ $('owner-library').innerHTML=ownerData.library.length?ownerData.library.map(l=>`<div class="owner-item"><strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label></div>`).join(''):'<p class="muted">Aucune demande de bibliothèque.</p>';
+}
+document.addEventListener('submit',async e=>{
+ const form=e.target.closest('.legacy-form');if(!form)return;
+ e.preventDefault();const amount=Number(form.elements.amount.value);
+ if(!Number.isSafeInteger(amount)||amount<0||amount>1000000){notice('Valeur de progression invalide.',true);return;}
+ if(!confirm(`Attribuer ${amount} crédits historiques pour ${form.dataset.creditMetric} ?`))return;
+ const button=form.querySelector('button');button.disabled=true;
+ try{const {error}=await sb.rpc('yarg_owner_set_legacy_credit',{p_user_id:form.dataset.creditUser,p_metric:form.dataset.creditMetric,p_amount:amount});if(error)throw error;notice('Crédit historique enregistré.');await loadOwner();}
+ catch(err){notice('Crédit refusé : '+err.message,true)}finally{button.disabled=false}
+});
+document.addEventListener('change',async e=>{
+ const box=e.target.closest('[data-old-guard-for]');if(!box)return;
+ if(!confirm(box.checked?'Attribuer le titre secret La Vieille Garde ?':'Retirer le titre secret La Vieille Garde ?')){box.checked=!box.checked;return;}
+ box.disabled=true;
+ try{const {error}=await sb.rpc('yarg_owner_set_old_guard',{p_user_id:box.dataset.oldGuardFor,p_awarded:box.checked});if(error)throw error;notice('Titre secret mis à jour.');await loadOwner();}
+ catch(err){notice('Modification refusée : '+err.message,true);await loadOwner()}
+ finally{box.disabled=false}
+});
+document.addEventListener('change',async e=>{
+ const target=e.target;if(!target.matches('[data-initie-for],[data-title-for],[data-library-for]'))return;
+ const action=target.hasAttribute('data-initie-for')?'yarg_owner_set_initie':target.hasAttribute('data-title-for')?'yarg_owner_set_title':'yarg_owner_library_status';
+ const args=action==='yarg_owner_set_initie'?{p_user_id:target.dataset.initieFor,p_status:target.value}:
+ action==='yarg_owner_set_title'?{p_user_id:target.dataset.titleFor,p_title_code:target.value||null}:{p_id:target.dataset.libraryFor,p_status:target.value};
+ if(!confirm('Enregistrer cette modification ?')){await loadOwner();return;}
+ target.disabled=true;
+ try{const {error}=await sb.rpc(action,args);if(error)throw error;notice('Modification enregistrée.');await loadOwner();}
+ catch(err){notice('Modification refusée : '+err.message,true);await loadOwner()}
+ finally{target.disabled=false}
+});
+
+$('sign-in').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget;const button=form.querySelector('button');button.disabled=true;try{const {error}=await sb.auth.signInWithPassword({email:form.elements.email.value.trim(),password:form.elements.password.value});if(error)throw error;location.reload()}catch(e){notice(e.message,true)}finally{button.disabled=false}};
 async function logout(){await sb.auth.signOut();location.reload()}
 $('sign-out').onclick=logout;$('sign-out-forbidden').onclick=logout;
-async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}$('app').hidden=false;await load();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
+async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;await loadOwner()}$('app').hidden=false;await load();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
 init();
 </script></body></html>
