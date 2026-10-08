@@ -239,39 +239,52 @@ function memberLine(name,instrument,difficulty,microphone,harmony,instrumentMode
  const diff=instrument==="vocals"||!instrument?"":` · ${difficulties[difficulty]||difficulty||"—"}`;
  return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}</div>`;
 }
-function guitarRoleState(r){
- const roles = [...new Set(Array.isArray(r.available_guitar_roles)?r.available_guitar_roles.filter(Boolean):[])];
- const taken = [];
- const pushRole = (instrument, mode) => {
-   const actual = mode || instrument;
-   if(["guitar","rhythm_guitar","bass"].includes(actual)) taken.push(actual);
-   else if(instrument === 'bass') taken.push('bass');
-   else if(instrument === 'guitar') taken.push('guitar');
- };
- if(r.requester_instrument && r.requester_instrument !== 'vocals') pushRole(r.requester_instrument, r.requester_instrument_mode);
- membersFor(r.id).forEach(m => pushRole(m.instrument, m.instrument_mode));
- const count = taken.length;
- const filled = new Set(taken);
- const missing = roles.filter(role => !filled.has(role));
- return {roles, filled, missing, count};
+// The request's song-specific chart metadata is authoritative for group requests.
+// Legacy requests may have only fillable_instruments; keep that older behavior.
+const GUITAR_ROLES = ["guitar", "rhythm_guitar", "bass"];
+function permittedParts(r){
+  const advertised = Array.isArray(r.available_parts) ? r.available_parts : [];
+  if(r.is_group_request){
+    return new Set(advertised.filter(i=>["vocals","guitar","bass","drums","keys"].includes(i)));
+  }
+  // The older single-player form did not record available_parts.
+  return new Set((advertised.length ? advertised : (r.fillable_instruments||[]))
+    .filter(i=>["vocals","guitar","bass","drums","keys"].includes(i)));
 }
-function openInstruments(r){
- if(!settings?.performance_requests_enabled||!r.allow_band_fill||!["waiting","full"].includes(r.status))return [];
- const occupied=new Set(membersFor(r.id).map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
- if(r.requester_instrument&&r.requester_instrument!=="vocals")occupied.add(r.requester_instrument);
- const base = [...new Set(Array.isArray(r.fillable_instruments)?r.fillable_instruments:[])];
- const guitarState = guitarRoleState(r);
- return base.flatMap(i => {
-   if(i === 'vocals') return ['vocals'];
-   if(i === 'guitar' || i === 'bass') {
-     const roles = guitarState.roles.length ? guitarState.roles : [...new Set(base.filter(x => x === 'guitar' || x === 'bass'))];
-     if(guitarState.count >= 3) return [];
-     if(guitarState.missing.length) return roles.filter(role => guitarState.missing.includes(role));
-     return roles;
-   }
-   return instruments[i] && !occupied.has(i) ? [i] : [];
- }).filter((v, idx, arr) => arr.indexOf(v) === idx);
+function permittedGuitarRoles(r){
+  const parts=permittedParts(r);
+  const advertised=Array.isArray(r.available_guitar_roles) ? r.available_guitar_roles : [];
+  if(r.is_group_request){
+    return GUITAR_ROLES.filter(role=>advertised.includes(role) && parts.has(role==='bass'?'bass':'guitar'));
+  }
+  const olderRoles=advertised.length?advertised:(r.fillable_instruments||[]);
+  return GUITAR_ROLES.filter(role=>olderRoles.includes(role) && parts.has(role==='bass'?'bass':'guitar'));
 }
+function openInstrumentsFor(r, bandMembers){
+  if(!settings?.performance_requests_enabled || !r.allow_band_fill || !["waiting","full"].includes(r.status))return [];
+  const parts=permittedParts(r);
+  const roles=permittedGuitarRoles(r);
+  // Group requests store the original player in performance_members too.
+  // Counting requester_instrument as well would count the leader twice.
+  const players=[...bandMembers];
+  if(!r.is_group_request && r.requester_instrument){
+    players.unshift({instrument:r.requester_instrument,instrument_mode:r.requester_instrument_mode,microphone:r.requester_microphone});
+  }
+  const assignedGuitarRoles=players.map(m=>m.instrument_mode||m.instrument).filter(v=>GUITAR_ROLES.includes(v));
+  const takenGuitars=new Set(assignedGuitarRoles);
+  const occupied=new Set(players.map(m=>m.instrument));
+  const microphoneCount=players.filter(m=>m.instrument==='vocals'||m.microphone).length;
+  const result=[];
+  if(parts.has('vocals') && Number(r.vocal_parts)>0 && microphoneCount<3)result.push('vocals');
+  if(assignedGuitarRoles.length<3){
+    const uniqueNeeded=roles.filter(role=>!takenGuitars.has(role));
+    result.push(...(uniqueNeeded.length?uniqueNeeded:roles));
+  }
+  if(parts.has('drums') && !occupied.has('drums'))result.push('drums');
+  if(parts.has('keys') && !occupied.has('keys'))result.push('keys');
+  return [...new Set(result)];
+}
+function openInstruments(r){return openInstrumentsFor(r,membersFor(r.id));}
 function harmonyOptions(r){
  const count=Math.max(1,Math.min(3,Number(r.vocal_parts)||1));
  return Array.from({length:count},(_,i)=>`<option value="${i+1}">Harmonie ${i+1}${i===0?" (chant principal)":""}</option>`).join("");
@@ -281,7 +294,7 @@ function joinFormHtml(r){
  const instrument=joining.instrument;
  if(!openInstruments(r).includes(instrument))return "";
  const vocals=instrument==="vocals";
- const canSing=Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone;
+ const canSing=permittedParts(r).has("vocals") && Number(r.vocal_parts)>0;
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instruments[instrument])}</strong>
  <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required placeholder="Ton nom sur scène" autocomplete="nickname"></label>
@@ -357,7 +370,7 @@ async function loadSettings(){
 
 async function loadQueue(){
   const {data:r,error:e1}=await sb.from("performance_requests")
-    .select("id,guest_user_id,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,is_group_request,rockstar_name,band_name,requester_instrument,requester_instrument_mode,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,available_guitar_roles,status,queue_position,started_at,created_at")
+    .select("id,guest_user_id,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,is_group_request,rockstar_name,band_name,requester_instrument,requester_instrument_mode,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,status,queue_position,started_at,created_at")
     .in("status",["waiting","full","playing"])
     .order("queue_position",{ascending:true,nullsFirst:false});
   if(e1) throw e1;
@@ -402,29 +415,18 @@ document.addEventListener("submit",async e=>{
   try{
     // Relire l'état juste avant l'insertion pour éviter les places déjà prises.
     const {data:request,error:re}=await sb.from("performance_requests")
-      .select("id,status,allow_band_fill,fillable_instruments,available_guitar_roles,requester_instrument,requester_instrument_mode,requester_microphone,vocal_parts")
+      .select("id,status,is_group_request,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,requester_instrument,requester_instrument_mode,requester_microphone,vocal_parts")
       .eq("id",id).single();
     if(re)throw re;
     const {data:existing,error:me}=await sb.from("performance_members")
       .select("instrument,instrument_mode,microphone").eq("performance_request_id",id);
     if(me)throw me;
-    const occupied=new Set((existing||[]).map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
-    if(request.requester_instrument&&request.requester_instrument!=="vocals")occupied.add(request.requester_instrument);
-    const currentTaken=[];
-    const pushRole=(inst,mode)=>{const actual=mode||inst; if(["guitar","rhythm_guitar","bass"].includes(actual)) currentTaken.push(actual); else if(inst==="bass") currentTaken.push("bass"); else if(inst==="guitar") currentTaken.push("guitar");};
-    pushRole(request.requester_instrument, request.requester_instrument_mode);
-    (existing||[]).forEach(m=>pushRole(m.instrument,m.instrument_mode));
-    const guitarCount=currentTaken.length;
-    const filled=new Set(currentTaken);
-    const guitarRoles=[...new Set(Array.isArray(request.available_guitar_roles)?request.available_guitar_roles.filter(Boolean):[])];
-    const missing=guitarRoles.filter(role=>!filled.has(role));
-    let unavailable = !settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))));
-    if(!unavailable && instrument !== "vocals"){
-      if(["guitar","rhythm_guitar","bass"].includes(instrument)){
-        if(guitarCount >= 3) unavailable = true;
-        else if(missing.length && !missing.includes(instrument)) unavailable = true;
-      } else if(occupied.has(instrument)) unavailable = true;
-    }
+    const eligible=openInstrumentsFor(request,existing||[]);
+    const alreadySinging=(existing||[]).filter(m=>m.instrument==='vocals'||m.microphone).length
+      + ((!request.is_group_request && (request.requester_instrument==='vocals'||request.requester_microphone))?1:0);
+    const canUseMic=permittedParts(request).has('vocals') && Number(request.vocal_parts)>0 && alreadySinging<3;
+    const unavailable=!eligible.includes(instrument) ||
+      (singing && (!canUseMic || harmony<1 || harmony>Math.min(3,Number(request.vocal_parts)||0)));
     if(unavailable){
       message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
     }
