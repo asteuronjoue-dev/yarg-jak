@@ -197,7 +197,7 @@ async function ensureGuestSession(){
 }
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",keys:"Clavier"};
+const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie 4-Lane",pro_drums:"Pro Drums",keys:"Keys",pro_keys:"Pro Keys"};
 const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
 
 function showError(message){
@@ -342,7 +342,7 @@ function joinFormHtml(r){
 function cardHtml(r, eta, mine=false){
   const bandMembers = membersFor(r.id);
   const canWithdrawLeader=!r.is_group_request && !r.requester_withdrawn_at && currentGuestUid && r.guest_user_id===currentGuestUid && ['waiting','full'].includes(r.status);
-  const own = r.is_group_request || r.requester_withdrawn_at ? "" : memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone,r.vocal_harmony)
+  const own = r.is_group_request || r.requester_withdrawn_at ? "" : memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone,r.vocal_harmony,r.requester_instrument_mode)
     .replace('</div>',canWithdrawLeader?`<button class="withdraw-member" type="button" data-leave-leader="${esc(r.id)}" data-leave-name="${esc(r.rockstar_name)}">Me retirer</button></div>`:'</div>');
   const extras = bandMembers.map(m => memberHtml(m,r)).join("");
   const open = openInstruments(r).map(i => `<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instruments[i])}</button>`).join("");
