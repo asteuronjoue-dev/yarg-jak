@@ -74,6 +74,13 @@
     .member{display:flex;gap:8px;flex-wrap:wrap;color:#dce2e5;margin:5px 0;font-size:14px}
     .member b{color:#fff}
     .open-slots{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+    .slot{cursor:pointer;font:inherit;font-weight:800}.slot:hover{background:rgba(31,200,189,.22)}
+    .join-form{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+    .join-form label{display:block;margin:8px 0;color:var(--muted);font-size:13px;font-weight:750}
+    .join-form input,.join-form select{display:block;width:100%;margin-top:4px;padding:9px;background:#101214;color:white;border:1px solid #455158;border-radius:8px;font:inherit}
+    .join-form .join-submit{margin-top:10px;padding:10px 14px;border:0;border-radius:9px;background:var(--teal);color:#071016;font-weight:900;cursor:pointer}
+    .join-form .join-cancel{margin-left:8px;background:transparent;color:var(--muted);border:0;cursor:pointer}
+    .join-form .join-message{color:#ffb2b2;margin-top:8px;font-size:13px}
     .slot{padding:5px 8px;border-radius:999px;background:rgba(31,200,189,.1);color:var(--teal2);border:1px dashed rgba(31,200,189,.42);font-size:12px;font-weight:800}
     .empty{border:1px dashed var(--line);border-radius:18px;padding:28px;text-align:center;color:var(--muted);background:rgba(255,255,255,.015)}
     .livebar{display:none;margin-bottom:16px;padding:12px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(255,138,36,.16),rgba(31,200,189,.13));border:1px solid rgba(255,138,36,.28);font-weight:850}
@@ -157,6 +164,11 @@ let settings = null;
 let requests = [];
 let members = [];
 let previousStates = new Map();
+let joining = null; // {requestId, instrument} — garder le formulaire ouvert pendant les rafraîchissements
+const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
+function joinedRequestIds(){try{return new Set(JSON.parse(localStorage.getItem(JOINED_REQUESTS_KEY)||"[]").map(String))}catch{return new Set()}}
+function rememberJoined(id){const ids=joinedRequestIds();ids.add(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
+function isMyPerformance(r){return isMyRequest(r)||joinedRequestIds().has(String(r.id))}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
@@ -177,7 +189,10 @@ function relativeMinutes(date){
   if (mins === 1) return "Dans environ 1 min";
   return `Dans environ ${mins} min`;
 }
-function durationSeconds(r){ return Math.max(0, Number(r.song_duration_seconds)||0); }
+function durationSeconds(r){
+  const seconds=Number(r.song_duration_seconds);
+  return Number.isFinite(seconds)&&seconds>0 ? seconds : null;
+}
 
 function sortedActive(){
   return requests
@@ -192,29 +207,24 @@ function sortedActive(){
 
 /* Re-anchor estimates to the actual start time whenever the MC marks a song En cours. */
 function calculateEtas(queue){
-  const etas = new Map();
-  if (!queue.length) return etas;
-
-  const playingIndex = queue.findIndex(r => r.status === "playing");
-  let cursor;
-
-  if (playingIndex >= 0) {
-    const playing = queue[playingIndex];
-    cursor = playing.started_at ? new Date(playing.started_at) : new Date();
-    etas.set(playing.id, {playing:true, at:cursor});
-
-    cursor = new Date(cursor.getTime() + (durationSeconds(playing)+TURNOVER_SECONDS)*1000);
-    for (let i=playingIndex+1;i<queue.length;i++){
-      etas.set(queue[i].id,{playing:false,at:new Date(cursor)});
-      cursor = new Date(cursor.getTime()+(durationSeconds(queue[i])+TURNOVER_SECONDS)*1000);
-    }
-    /* Items sorted ahead of the current performance are historical/odd data; no ETA. */
-  } else {
-    cursor = new Date();
-    for (const r of queue){
-      etas.set(r.id,{playing:false,at:new Date(cursor)});
-      cursor = new Date(cursor.getTime()+(durationSeconds(r)+TURNOVER_SECONDS)*1000);
-    }
+  const etas=new Map();
+  if(!queue.length)return etas;
+  const now=Date.now();
+  const playing=queue.find(r=>r.status==="playing");
+  let cursor=now;
+  if(playing){
+    const started=playing.started_at?Date.parse(playing.started_at):NaN;
+    const length=durationSeconds(playing);
+    etas.set(playing.id,{playing:true,at:new Date(Number.isFinite(started)?started:now)});
+    // Never project the next performance into the past.
+    if(length===null){cursor=null}
+    else cursor=Math.max(now,(Number.isFinite(started)?started:now)+length*1000)+TURNOVER_SECONDS*1000;
+  }
+  for(const r of queue){
+    if(r.status==="playing")continue;
+    etas.set(r.id,{playing:false,at:cursor===null?null:new Date(cursor)});
+    const length=durationSeconds(r);
+    cursor=cursor===null||length===null?null:cursor+(length+TURNOVER_SECONDS)*1000;
   }
   return etas;
 }
@@ -228,12 +238,32 @@ function memberLine(name,instrument,difficulty,microphone){
   return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+mic)} · ${esc(diff)}</div>`;
 }
 
+function openInstruments(r){
+  if(!settings?.performance_requests_enabled || !r.allow_band_fill || !["waiting","full"].includes(r.status))return [];
+  const occupied=new Set(membersFor(r.id).map(m=>m.instrument).filter(Boolean));
+  if(r.requester_instrument)occupied.add(r.requester_instrument);
+  if(r.requester_microphone)occupied.add("vocals");
+  for(const m of membersFor(r.id))if(m.microphone)occupied.add("vocals");
+  return [...new Set(Array.isArray(r.fillable_instruments)?r.fillable_instruments:[])].filter(i=>instruments[i]&&!occupied.has(i));
+}
+function joinFormHtml(r){
+  if(!joining || joining.requestId!==String(r.id))return "";
+  const instrument=joining.instrument;
+  if(!openInstruments(r).includes(instrument))return "";
+  const diffOptions=instrument==="vocals"?["medium"]:["beginner","easy","medium","hard","expert"];
+  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
+    <strong>Rejoindre à la ${esc(instruments[instrument])}</strong>
+    <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required placeholder="Ton nom sur scène" autocomplete="nickname"></label>
+    ${instrument==="vocals"?'<p class="hint">Microphone : difficulté Moyen</p>':`<label>Difficulté <select name="difficulty">${diffOptions.map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
+    <button class="join-submit" type="submit">Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
+    <div class="join-message" role="status"></div>
+  </form>`;
+}
 function cardHtml(r, eta, mine=false){
   const bandMembers = membersFor(r.id);
   const own = memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone);
   const extras = bandMembers.map(m => memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone)).join("");
-  const open = (r.allow_band_fill ? (r.fillable_instruments || []) : [])
-    .map(i => `<span class="slot">+ ${esc(instruments[i] || i)}</span>`).join("");
+  const open = openInstruments(r).map(i => `<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instruments[i])}</button>`).join("");
 
   const isPlaying = r.status === "playing";
   const classes = ["card",mine?"mine":"",isPlaying?"playing":"",mine&&isPlaying?"skittles":""].filter(Boolean).join(" ");
@@ -261,6 +291,7 @@ function cardHtml(r, eta, mine=false){
       ${r.band_name ? `<div class="band-name">🤘 ${esc(r.band_name)}</div>` : ""}
       ${own}${extras}
       ${open ? `<div class="open-slots">${open}</div>` : ""}
+      ${joinFormHtml(r)}
     </div>
   </article>`;
 }
@@ -269,7 +300,7 @@ function render(){
   const queue = sortedActive();
   const etas = calculateEtas(queue);
 
-  const mine = queue.filter(isMyRequest);
+  const mine = queue.filter(isMyPerformance);
   $("#myRequests").innerHTML = mine.length
     ? mine.map(r => cardHtml(r,etas.get(r.id),true)).join("")
     : `<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment. Va donc nous en pousser une p'tite.</div>`;
@@ -311,9 +342,58 @@ async function loadQueue(){
   render();
 }
 
+// Délégation des événements: les cartes sont recréées à chaque mise à jour.
+document.addEventListener("click",e=>{
+  const cancel=e.target.closest(".join-cancel");
+  if(cancel){joining=null;render();return}
+  const btn=e.target.closest("[data-join-id]");
+  if(!btn)return;
+  joining={requestId:btn.dataset.joinId,instrument:btn.dataset.joinInstrument};
+  render();
+  const form=[...document.querySelectorAll(".join-form")].find(f=>f.dataset.joinRequest===joining.requestId);
+  form?.querySelector("input[name=rockstar]")?.focus();
+});
+document.addEventListener("submit",async e=>{
+  const form=e.target.closest(".join-form");if(!form)return;
+  e.preventDefault();
+  const id=form.dataset.joinRequest, instrument=form.dataset.instrument;
+  const name=form.elements.rockstar.value.trim();
+  const message=form.querySelector(".join-message"),submit=form.querySelector(".join-submit");
+  if(!name){message.textContent="Entre ton nom de ROCKSTAR.";return}
+  submit.disabled=true;message.textContent="Vérification de la place…";
+  try{
+    // Relire l'état juste avant l'insertion pour éviter les places déjà prises.
+    const {data:request,error:re}=await sb.from("performance_requests")
+      .select("id,status,allow_band_fill,fillable_instruments,requester_instrument,requester_microphone")
+      .eq("id",id).single();
+    if(re)throw re;
+    const {data:existing,error:me}=await sb.from("performance_members")
+      .select("instrument,microphone").eq("performance_request_id",id);
+    if(me)throw me;
+    const occupied=new Set((existing||[]).map(m=>m.instrument));
+    if(request.requester_instrument)occupied.add(request.requester_instrument);
+    if(request.requester_microphone || (existing||[]).some(m=>m.microphone))occupied.add("vocals");
+    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || occupied.has(instrument)){
+      message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
+    }
+    const difficulty=instrument==="vocals"?"medium":form.elements.difficulty.value;
+    const {error}=await sb.from("performance_members").insert({performance_request_id:id,rockstar_name:name,instrument,difficulty,microphone:false});
+    if(error){
+      console.error("Supabase refused the band member insert:",error);
+      const hint=(error.code==="42501" || /row.level.security|permission denied/i.test(error.message||""))
+        ? "Supabase refuse l’ajout (politique RLS de performance_members). L’organisateur doit autoriser les inscriptions."
+        : "Supabase a refusé l’inscription. Réessaie ou contacte le MC.";
+      message.textContent=hint;
+      return;
+    }
+    rememberJoined(id);joining=null;await loadQueue();
+  }catch(err){console.error("Erreur pour rejoindre le groupe",err);message.textContent="Impossible de rejoindre le groupe. Vérifie la connexion et les autorisations Supabase."}
+  finally{submit.disabled=false}
+});
+
 function maybeNotify(queue,etas){
   if (!("Notification" in window) || Notification.permission!=="granted") return;
-  const mine=queue.filter(isMyRequest);
+  const mine=queue.filter(isMyPerformance);
   for(const r of mine){
     const old=previousStates.get(r.id);
     const eta=etas.get(r.id);
