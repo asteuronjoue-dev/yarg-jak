@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon profil Rockstar · YARG Party</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#071016;--panel:#101b23;--panel2:#14232d;--stroke:#304550;--muted:#acc0ca;--text:#f5f8fa;--pink:#ff5477;--teal:#35d8c8;--gold:#f7c967}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 10% 0,#17353c,transparent 42%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1030px;padding:24px 16px 70px;margin:auto}header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}a{color:var(--teal);text-decoration:none}h1{font-size:clamp(2rem,6vw,3rem);margin:0 0 7px}h2{font-size:1.35rem;margin:0 0 16px}h3{margin:0;font-size:1.05rem}p{color:var(--muted);line-height:1.5}button,input{font:inherit}button{border:1px solid #52636c;border-radius:10px;padding:12px 15px;background:#1d3340;color:var(--text);cursor:pointer;font-weight:800}button:hover:not(:disabled){border-color:var(--teal)}button:disabled{opacity:.45;cursor:not-allowed}.primary{color:#071016;background:var(--teal);border-color:var(--teal)}.small{padding:7px 12px;font-size:.87rem}.ghost{background:none}.card{background:var(--panel);border:1px solid var(--stroke);padding:20px;border-radius:17px;margin:16px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.statgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stat{background:var(--panel2);border-radius:12px;padding:15px;text-align:center}.stat strong{display:block;font-size:clamp(1.2rem,4vw,1.9rem)}.stat span{color:var(--muted);font-size:.8rem}.tag{display:inline-flex;border-radius:50px;padding:6px 10px;background:#1c3242;border:1px solid #3d5865;font-size:.8rem;font-weight:850}.tag.yes{color:#b9fbe8;border-color:#258a79}.tag.no{color:#d6dce1}.form-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.form-fields label{font-weight:750;font-size:.85rem}.form-fields input,.auth input{display:block;width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px solid #506473;background:#0b151c;color:var(--text)}.auth input{max-width:460px;margin-bottom:13px}.hint{font-size:.82rem;color:var(--muted)}.notice{margin:16px 0;min-height:20px;font-size:.93rem}.notice.error{color:#ff9aa8}.notice.ok{color:#91eed8}[hidden]{display:none!important}.title-group{padding-top:8px}.title-item{background:#0e1921;padding:12px;border-radius:12px;border:1px solid #30434e;margin:8px 0}.title-item.locked{opacity:.68}.title-heading{display:flex;align-items:center;gap:9px;justify-content:space-between}.title-heading strong{font-size:.95rem}.progress{height:7px;background:#31444f;border-radius:20px;overflow:hidden;margin:10px 0 4px}.progress span{display:block;background:linear-gradient(90deg,#18c5b9,#65dbfb);height:100%;border-radius:20px}.equipped{border-color:var(--gold);box-shadow:0 0 0 1px #bd9d4b30}.muted{color:var(--muted)}.meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.topline{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.featured{font-weight:800;color:var(--gold)}.disclaimer{background:#171d23;border-left:3px solid var(--gold);padding:12px;color:#d7cbb1;border-radius:7px}.sectionlabel{text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-size:.75rem;font-weight:900;margin-top:23px}
+@media(max-width:670px){.grid,.form-fields{grid-template-columns:1fr}.statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<header><a href="index.html">← Catalogue YARG</a><span>🎸 <strong>ROCKSTAR CLUB</strong></span><a href="file.html">File de la soirée →</a></header>
+<h1>Mon profil Rockstar</h1>
+<p>Ton nom de scène, tes titres et tes exploits, d'une soirée à l'autre. Un compte est facultatif : tu peux toujours demander des chansons sans te connecter.</p>
+<div id="notice" class="notice" role="status" aria-live="polite"></div>
+<section id="auth" class="card auth" hidden><h2>Se connecter ou créer un compte</h2><p>Un lien magique sera envoyé à ton courriel. Aucun mot de passe à retenir.</p>
+<form id="login"><label for="email">Adresse courriel</label><input id="email" type="email" autocomplete="email" required placeholder="rockstar@exemple.com"><button class="primary" type="submit">Recevoir mon lien de connexion</button></form>
+<p class="hint">Si tu avais commencé la soirée en tant qu'invité, te connecter ne rattache pas automatiquement les performances précédentes à ton compte.</p><a href="index.html">Continuer sans compte</a></section>
+<section id="profile" hidden>
+<div class="card"><div class="topline"><div><h2 id="shown-name">Rockstar</h2><div class="meta"><span class="tag" id="initie-tag">Statut : à déterminer</span><span class="featured" id="equipped-preview"></span></div></div><button id="logout" class="small ghost">Se déconnecter</button></div><p id="privilege-note" class="hint"></p>
+<form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><button type="submit" class="primary" style="margin-top:14px">Enregistrer mon profil</button></form></div>
+<div id="account-warning" class="disclaimer" hidden>Les statistiques ne couvrent pour l'instant que les prestations reliées explicitement à ton profil. Les anciennes demandes faites sans compte ne sont pas rattachées automatiquement.</div>
+<div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div>
+<div class="card"><div class="topline"><h2>Collection de titres</h2><span class="hint">Choisis un titre pour l'afficher avec ton nom dans la file.</span></div><p class="hint">« Initié » apparaît toujours comme statut de privilège ici, même si tu équipes un autre titre. Les titres cosmétiques n'ajoutent aucun avantage à la file.</p><div id="titles"></div></div>
+</section>
+<footer><p class="hint">Profil facultatif • Les statistiques de durée utilisent la longueur des chansons terminées, pas un chronomètre laissé ouvert.</p></footer>
+</main>
+<script>
+'use strict';
+const SUPABASE_URL='https://xbhfjzurytdknbqvksjq.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const $=id=>document.getElementById(id);
+const state={user:null,profile:null,progress:{},catalog:[],unlocked:new Set(),initie:false};
+function message(s,bad=false){$('notice').textContent=s;$('notice').className='notice '+(bad?'error':'ok');}
+function safeName(s){return (s||'').trim();}
+function isRegistered(user){return !!user && user.is_anonymous !== true && user.app_metadata?.provider !== 'anonymous';}
+const metrics={played:'Prestations terminées',parties:'Soirées jouées',stage_minutes:'Minutes sur scène',library_requests:'Demandes bibliothèque',guitar:'Guitare',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix'};
+const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Bibliothèque'};
+async function fetchProfile(){
+ const {data,error}=await sb.from('rockstar_profiles').select('user_id,rockstar_name,preferred_band_name,equipped_title').eq('user_id',state.user.id).maybeSingle();
+ if(error)throw error;state.profile=data;
+}
+async function fetchStats(){
+ const [progress,catalog,unlock,initie]=await Promise.all([
+  sb.rpc('yarg_profile_progress'),sb.from('yarg_title_catalog').select('code,label,category,metric,threshold,sort_order').order('sort_order'),
+  sb.rpc('yarg_sync_my_titles'),sb.rpc('yarg_my_initie_status')]);
+ for(const response of [progress,catalog,unlock,initie])if(response.error)throw response.error;
+ state.progress=Object.fromEntries((progress.data||[]).map(x=>[x.metric,Number(x.amount)||0]));
+ state.catalog=catalog.data||[];state.unlocked=new Set((unlock.data||[]).map(x=>x.title_code));state.initie=!!initie.data;
+}
+function renderStats(){const list=['played','parties','stage_minutes','guitar','bass','drums','keys','vocals','library_requests'];$('stats').replaceChildren();for(const metric of list){const box=document.createElement('div');box.className='stat';const strong=document.createElement('strong');strong.textContent=String(state.progress[metric]||0);const label=document.createElement('span');label.textContent=metrics[metric];box.append(strong,label);$('stats').append(box)}}
+function renderTitles(){
+ const parent=$('titles');parent.replaceChildren();let lastCategory='';
+ for(const t of state.catalog){
+  if(lastCategory!==t.category){lastCategory=t.category;const heading=document.createElement('div');heading.className='sectionlabel';heading.textContent=groupNames[t.category]||t.category;parent.append(heading)}
+  const owned=state.unlocked.has(t.code);const equipped=state.profile?.equipped_title===t.code;
+  const box=document.createElement('div');box.className='title-item'+(owned?'':' locked')+(equipped?' equipped':'');
+  const head=document.createElement('div');head.className='title-heading';const name=document.createElement('strong');name.textContent=(owned?'🏆 ':'🔒 ')+t.label;
+  const btn=document.createElement('button');btn.type='button';btn.className='small';btn.textContent=equipped?'Équipé':(owned?'Équiper':'Verrouillé');btn.disabled=!owned||equipped;
+  btn.addEventListener('click',()=>equip(t.code));head.append(name,btn);box.append(head);
+  const n=t.metric==='past_parties'?(state.initie?1:0):(state.progress[t.metric]||0);const denominator=t.threshold;
+  const detail=document.createElement('div');detail.className='hint';detail.textContent=`${Math.min(n,denominator)} / ${denominator}${t.metric==='stage_minutes'?' minutes':''}`;const bar=document.createElement('div');bar.className='progress';const fill=document.createElement('span');fill.style.width=`${Math.min(100,100*n/denominator)}%`;bar.append(fill);box.append(bar,detail);parent.append(box);
+ }
+}
+function renderProfile(){
+ const p=state.profile;$('profile').hidden=false;$('auth').hidden=true;
+ $('shown-name').textContent=p.rockstar_name;$('rockstar-name').value=p.rockstar_name;$('band-name').value=p.preferred_band_name||'';
+ $('initie-tag').textContent=state.initie?'👑 Initié · priorité première chanson':'Pas encore Initié';$('initie-tag').className='tag '+(state.initie?'yes':'no');
+ $('privilege-note').textContent=state.initie?'Tu as le privilège de priorité pour ta première prestation de chaque nouvelle soirée.':'Après une prestation terminée à une soirée précédente, tu peux devenir Initié.';
+ $('equipped-preview').textContent=p.equipped_title?(state.catalog.find(x=>x.code===p.equipped_title)?.label||''):'Aucun titre équipé';
+ $('account-warning').hidden=false;renderStats();renderTitles();
+}
+async function equip(code){
+ if(!state.unlocked.has(code))return;
+ const {error}=await sb.from('rockstar_profiles').update({equipped_title:code,updated_at:new Date().toISOString()}).eq('user_id',state.user.id);
+ if(error){message('Impossible d’équiper ce titre : '+error.message,true);return}
+ state.profile.equipped_title=code;renderProfile();message('Titre équipé !');
+}
+$('profile-form').addEventListener('submit',async e=>{
+ e.preventDefault();const name=safeName($('rockstar-name').value);if(!name){message('Choisis un nom de Rockstar.',true);return}
+ const {error}=await sb.from('rockstar_profiles').update({rockstar_name:name,preferred_band_name:safeName($('band-name').value)||null,updated_at:new Date().toISOString()}).eq('user_id',state.user.id);
+ if(error){message('Enregistrement impossible : '+error.message,true);return}
+ state.profile.rockstar_name=name;state.profile.preferred_band_name=safeName($('band-name').value);renderProfile();message('Profil enregistré !');
+});
+$('login').addEventListener('submit',async e=>{
+ e.preventDefault();const email=$('email').value.trim();const button=$('login').querySelector('button');button.disabled=true;
+ try{const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+window.location.pathname}});if(error)throw error;message('Vérifie tes courriels pour obtenir ton lien de connexion.');}
+ catch(err){message('Connexion impossible : '+err.message,true)}finally{button.disabled=false}
+});
+$('logout').addEventListener('click',async()=>{const {error}=await sb.auth.signOut();if(error){message(error.message,true);return}location.reload()});
+async function initialize(){
+ try{
+  const {data:sessionData,error:sessionError}=await sb.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!sessionData.session){$('auth').hidden=false;return}
+  const {data:{user},error}=await sb.auth.getUser();if(error)throw error;
+  state.user=user;
+  if(!isRegistered(user)){$('auth').hidden=false;return}
+  await fetchProfile();
+  if(!state.profile){
+   const suggested=String(user.user_metadata?.rockstar_name||user.email?.split('@')[0]||'Rockstar').slice(0,60);
+   const {error:saveError}=await sb.from('rockstar_profiles').insert({user_id:user.id,rockstar_name:suggested});if(saveError)throw saveError;
+   await fetchProfile();
+  }
+  await fetchStats();renderProfile();
+ }catch(err){$('auth').hidden=false;message('Erreur de profil : '+err.message,true)}
+}
+initialize();
+</script>
+</body></html>
