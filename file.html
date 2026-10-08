@@ -115,6 +115,7 @@
 .yarg-navigation a:hover,.yarg-navigation a:focus-visible{border-color:#1fc8bd;background:#263338;color:#fff}
 .yarg-navigation a[aria-current="page"]{background:#ff8a24;color:#111;border-color:#ff8a24}
 @media(max-width:670px){.yarg-navigation{width:100%;justify-content:stretch}.yarg-navigation a{flex:1 1 calc(50% - .4rem);font-size:.8rem;padding:.5rem .3rem}}
+.yarg-navigation a[href="admin.html"][hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -125,7 +126,7 @@
         <h1 id="partyTitle">File de la soirée</h1>
         <div class="mc">🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
       </div>
-      <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html" aria-current="page">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html">Régie MC</a></nav>
+      <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html" aria-current="page">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a></nav>
     </div>
   </div>
 </header>
@@ -398,10 +399,10 @@ function render(){
 
 async function loadSettings(){
   const {data,error} = await sb.from("party_settings")
-    .select("party_name,mc_name,performance_requests_enabled,current_session_id")
+    .select("party_name,mc_name,performance_requests_enabled,current_session_id,party_mode_until")
     .eq("id",1).single();
   if(error) throw error;
-  settings=data;
+  settings=data;settings.performance_requests_enabled=!!data.performance_requests_enabled && (!data.party_mode_until || new Date(data.party_mode_until).getTime()>Date.now());
   $("#partyTitle").textContent = data.party_name || "Party YARG";
   $("#mcName").textContent = data.mc_name || "Mystère";
   $("#partyTitle").classList.toggle("party-rainbow", !!data.performance_requests_enabled);
@@ -552,6 +553,22 @@ setInterval(()=>render(),30000);
   try{await ensureGuestSession();}
   catch(err){console.warn('Anonymous Sign-In unavailable:',err);showError('Connexion invitée indisponible : tu peux voir la file, mais pas rejoindre ou quitter un groupe.');}
   await refresh(); await startRealtime();
+})();
+</script>
+
+<script>
+/* The MC navigation is only displayed after Supabase confirms permissions. */
+(async function(){
+ const links=document.querySelectorAll('.yarg-navigation a[href="admin.html"]');
+ links.forEach(a=>a.hidden=true);
+ if(!links.length || !window.supabase)return;
+ try{
+  const client=window.supabase.createClient('https://xbhfjzurytdknbqvksjq.supabase.co','sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM');
+  const {data:{user}}=await client.auth.getUser();
+  if(!user || user.is_anonymous)return;
+  const {data:allowed,error}=await client.rpc('yarg_admin_whoami');
+  if(!error&&allowed)links.forEach(a=>a.hidden=false);
+ }catch(e){console.warn('Vérification MC impossible',e)}
 })();
 </script>
 </body>
