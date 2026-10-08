@@ -73,6 +73,9 @@
     .band-name{font-weight:900;margin-bottom:8px}
     .member{display:flex;gap:8px;flex-wrap:wrap;color:#dce2e5;margin:5px 0;font-size:14px}
     .member b{color:#fff}
+    .withdraw-member{margin-left:auto;padding:3px 9px;font:inherit;font-size:12px;font-weight:800;color:#ffbac2;background:#321d24;border:1px solid #925064;border-radius:8px;cursor:pointer}
+    .withdraw-member:hover{background:#4c2631}
+    .member{align-items:center}
     .open-slots{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
     .slot{cursor:pointer;font:inherit;font-weight:800}.slot:hover{background:rgba(31,200,189,.22)}
     .join-form{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
@@ -164,12 +167,23 @@ let settings = null;
 let requests = [];
 let members = [];
 let previousStates = new Map();
+let currentGuestUid=null;
 let joining = null; // {requestId, instrument} — garder le formulaire ouvert pendant les rafraîchissements
 const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
 function joinedRequestIds(){try{return new Set(JSON.parse(localStorage.getItem(JOINED_REQUESTS_KEY)||"[]").map(String))}catch{return new Set()}}
 function rememberJoined(id){const ids=joinedRequestIds();ids.add(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
-function isMyPerformance(r){return isMyRequest(r)||joinedRequestIds().has(String(r.id))}
+function isMyPerformance(r){return (currentGuestUid && r.guest_user_id===currentGuestUid) ||
+  membersFor(r.id).some(m=>currentGuestUid && m.guest_user_id===currentGuestUid) ||
+  isMyRequest(r)||joinedRequestIds().has(String(r.id))}
 
+async function ensureGuestSession(){
+  const {data,error}=await sb.auth.getSession();
+  if(error)throw error;
+  if(data?.session?.user?.id){currentGuestUid=data.session.user.id;return;}
+  const {data:guest,error:signInError}=await sb.auth.signInAnonymously();
+  if(signInError)throw signInError;
+  currentGuestUid=guest.user.id;
+}
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",keys:"Clavier"};
@@ -239,6 +253,13 @@ function memberLine(name,instrument,difficulty,microphone,harmony,instrumentMode
  const diff=instrument==="vocals"||!instrument?"":` · ${difficulties[difficulty]||difficulty||"—"}`;
  return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}</div>`;
 }
+function memberHtml(m,r){
+  const canWithdraw=!!currentGuestUid && m.guest_user_id===currentGuestUid && ['waiting','full'].includes(r.status);
+  const base=memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.instrument_mode);
+  if(!canWithdraw)return base;
+  const button=`<button class="withdraw-member" type="button" data-leave-member="${esc(m.id)}" data-leave-name="${esc(m.rockstar_name)}">Me retirer</button>`;
+  return base.replace('</div>',button+'</div>');
+}
 // The request's song-specific chart metadata is authoritative for group requests.
 // Legacy requests may have only fillable_instruments; keep that older behavior.
 const GUITAR_ROLES = ["guitar", "rhythm_guitar", "bass"];
@@ -267,7 +288,7 @@ function openInstrumentsFor(r, bandMembers){
   // Group requests store the original player in performance_members too.
   // Counting requester_instrument as well would count the leader twice.
   const players=[...bandMembers];
-  if(!r.is_group_request && r.requester_instrument){
+  if(!r.is_group_request && r.requester_instrument && !r.requester_withdrawn_at){
     players.unshift({instrument:r.requester_instrument,instrument_mode:r.requester_instrument_mode,microphone:r.requester_microphone});
   }
   const assignedGuitarRoles=players.map(m=>m.instrument_mode||m.instrument).filter(v=>GUITAR_ROLES.includes(v));
@@ -298,7 +319,9 @@ function joinFormHtml(r){
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instruments[instrument])}</strong>
  <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required placeholder="Ton nom sur scène" autocomplete="nickname"></label>
- ${vocals?"":`<label>Difficulté <select name="difficulty">${["beginner","easy","medium","hard","expert"].map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
+ ${instrument==='drums'?`<label>Type de batterie <select name="instrument_mode"><option value="drums_4lane">4-Lane — quatre surfaces de frappe</option><option value="pro_drums">Pro Drums — cymbales séparées</option></select><small>Choisis uniquement une variante qui apparaît dans les pistes de cette chanson.</small></label>`:''}
+ ${instrument==='keys'?`<label>Type de clavier <select name="instrument_mode"><option value="keys">Keys — notes simplifiées</option><option value="pro_keys">Pro Keys — jeu de clavier plus réaliste</option></select><small>Choisis uniquement une variante qui apparaît dans les pistes de cette chanson.</small></label>`:''}
+ ${vocals?"":`<label>Difficulté <select name="difficulty">${["easy","medium","hard","expert"].map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
  ${vocals?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${canSing?"":"disabled"}> Je veux aussi chanter au micro</label>`}
  <label class="join-harmony" ${vocals?"":"hidden"}>Partie vocale (difficulté Moyen)<select name="harmony">${harmonyOptions(r)}</select></label>
  <button class="join-submit" type="submit">Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
@@ -306,8 +329,10 @@ function joinFormHtml(r){
 }
 function cardHtml(r, eta, mine=false){
   const bandMembers = membersFor(r.id);
-  const own = r.is_group_request ? "" : memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone,r.vocal_harmony);
-  const extras = bandMembers.map(m => memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.instrument_mode)).join("");
+  const canWithdrawLeader=!r.is_group_request && !r.requester_withdrawn_at && currentGuestUid && r.guest_user_id===currentGuestUid && ['waiting','full'].includes(r.status);
+  const own = r.is_group_request || r.requester_withdrawn_at ? "" : memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone,r.vocal_harmony)
+    .replace('</div>',canWithdrawLeader?`<button class="withdraw-member" type="button" data-leave-leader="${esc(r.id)}" data-leave-name="${esc(r.rockstar_name)}">Me retirer</button></div>`:'</div>');
+  const extras = bandMembers.map(m => memberHtml(m,r)).join("");
   const open = openInstruments(r).map(i => `<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instruments[i])}</button>`).join("");
 
   const isPlaying = r.status === "playing";
@@ -370,7 +395,7 @@ async function loadSettings(){
 
 async function loadQueue(){
   const {data:r,error:e1}=await sb.from("performance_requests")
-    .select("id,guest_user_id,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,is_group_request,rockstar_name,band_name,requester_instrument,requester_instrument_mode,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,status,queue_position,started_at,created_at")
+    .select("id,guest_user_id,requester_withdrawn_at,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,is_group_request,rockstar_name,band_name,requester_instrument,requester_instrument_mode,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,status,queue_position,started_at,created_at")
     .in("status",["waiting","full","playing"])
     .order("queue_position",{ascending:true,nullsFirst:false});
   if(e1) throw e1;
@@ -380,13 +405,35 @@ async function loadQueue(){
   if(!ids.length){ members=[]; render(); return; }
 
   const {data:m,error:e2}=await sb.from("performance_members")
-    .select("id,performance_request_id,rockstar_name,instrument,instrument_mode,difficulty,microphone,vocal_harmony,created_at")
-    .in("performance_request_id",ids);
+    .select("id,performance_request_id,guest_user_id,rockstar_name,instrument,instrument_mode,difficulty,microphone,vocal_harmony,created_at")
+    .in("performance_request_id",ids)
+    .is("withdrawn_at",null);
   if(e2) throw e2;
   members=m||[];
   render();
 }
 
+// Retirer UNE participation, même si plusieurs rockstars ont utilisé le même téléphone.
+document.addEventListener('click',async e=>{
+  const member=e.target.closest('[data-leave-member]');
+  const leader=e.target.closest('[data-leave-leader]');
+  if(!member&&!leader)return;
+  const label=(member||leader).dataset.leaveName||'cette rockstar';
+  if(!confirm(`Retirer ${label} de cette prestation? Si c’est la dernière personne, la demande sera annulée.`))return;
+  const button=member||leader;
+  button.disabled=true;
+  try{
+    await ensureGuestSession();
+    const functionName=member?'yarg_leave_band':'yarg_leave_legacy_leader';
+    const params=member?{p_member_id:member.dataset.leaveMember}:{p_request_id:leader.dataset.leaveLeader};
+    const {data,error}=await sb.rpc(functionName,params);
+    if(error)throw error;
+    if(data?.cancelled)showError('La dernière rockstar s’est retirée : demande annulée.');
+    else showError('');
+    await loadQueue();
+  }catch(err){console.error('Retrait refusé',err);showError(err.message||'Impossible de retirer cette participation.');}
+  finally{button.disabled=false;}
+});
 // Délégation des événements: les cartes sont recréées à chaque mise à jour.
 document.addEventListener("click",e=>{
   const cancel=e.target.closest(".join-cancel");
@@ -413,32 +460,18 @@ document.addEventListener("submit",async e=>{
   if(!name){message.textContent="Entre ton nom de ROCKSTAR.";return}
   submit.disabled=true;message.textContent="Vérification de la place…";
   try{
-    // Relire l'état juste avant l'insertion pour éviter les places déjà prises.
-    const {data:request,error:re}=await sb.from("performance_requests")
-      .select("id,status,is_group_request,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,requester_instrument,requester_instrument_mode,requester_microphone,vocal_parts")
-      .eq("id",id).single();
-    if(re)throw re;
-    const {data:existing,error:me}=await sb.from("performance_members")
-      .select("instrument,instrument_mode,microphone").eq("performance_request_id",id);
-    if(me)throw me;
-    const eligible=openInstrumentsFor(request,existing||[]);
-    const alreadySinging=(existing||[]).filter(m=>m.instrument==='vocals'||m.microphone).length
-      + ((!request.is_group_request && (request.requester_instrument==='vocals'||request.requester_microphone))?1:0);
-    const canUseMic=permittedParts(request).has('vocals') && Number(request.vocal_parts)>0 && alreadySinging<3;
-    const unavailable=!eligible.includes(instrument) ||
-      (singing && (!canUseMic || harmony<1 || harmony>Math.min(3,Number(request.vocal_parts)||0)));
-    if(unavailable){
-      message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
-    }
-    const difficulty=instrument==="vocals"?"medium":form.elements.difficulty.value;
-    const baseInstrument = instrument === "rhythm_guitar" ? "guitar" : instrument;
-    const {error}=await sb.from("performance_members").insert({performance_request_id:id,rockstar_name:name,instrument:baseInstrument,instrument_mode:instrument,difficulty,microphone:instrument!=="vocals"&&singing,vocal_harmony:harmony});
+    await ensureGuestSession();
+    // All authoritative checks and insertion happen atomically in Supabase.
+    const difficulty=instrument==='vocals'?'medium':form.elements.difficulty.value;
+    const selectedMode=form.elements.instrument_mode?.value||instrument;
+    const {error}=await sb.rpc('yarg_join_band',{
+      p_request_id:id,p_rockstar_name:name,p_instrument_mode:selectedMode,
+      p_difficulty:difficulty,p_microphone:instrument!=='vocals'&&singing,
+      p_vocal_harmony:harmony
+    });
     if(error){
-      console.error("Supabase refused the band member insert:",error);
-      const hint=(error.code==="42501" || /row.level.security|permission denied/i.test(error.message||""))
-        ? "Supabase refuse l’ajout (politique RLS de performance_members). L’organisateur doit autoriser les inscriptions."
-        : "Supabase a refusé l’inscription. Réessaie ou contacte le MC.";
-      message.textContent=hint;
+      console.error('Supabase refused the join:',error);
+      message.textContent=error.message||'Cette place n’est plus disponible.';
       return;
     }
     rememberJoined(id);joining=null;await loadQueue();
@@ -496,7 +529,11 @@ async function startRealtime(){
 /* Refresh relative countdown text even if no database event occurs. */
 setInterval(()=>render(),30000);
 
-(async()=>{ await refresh(); await startRealtime(); })();
+(async()=>{
+  try{await ensureGuestSession();}
+  catch(err){console.warn('Anonymous Sign-In unavailable:',err);showError('Connexion invitée indisponible : tu peux voir la file, mais pas rejoindre ou quitter un groupe.');}
+  await refresh(); await startRealtime();
+})();
 </script>
 </body>
 </html>
