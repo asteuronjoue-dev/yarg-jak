@@ -1326,18 +1326,40 @@
         });
 
         // Helper functions
-        const PARTY_FLAVORS = ["Hydrate-toi. Les solos durent plus longtemps quand tu vois encore clair.", "Petit rappel : personne n’a jamais regretté un bon gros refrain chanté trop fort.", "Si tu rates une note, fais comme si c’était du jazz.", "Le prochain solo est peut-être légalement considéré comme une séance de cardio.", "Conseil de pro : le air guitar compte comme échauffement.", "Cette chanson approuve officiellement les high-fives mal synchronisés.", "Un bon party commence par une toune. Un excellent party finit beaucoup trop tard.", "Le groove est gratuit. Les courbatures demain matin le sont aussi.", "Si tout le monde chante faux ensemble, ça devient presque une harmonie.", "Les voisins n’ont rien demandé, mais ils auront le show pareil.", "Tu n’as pas besoin d’être bon. Tu dois juste avoir l’air convaincu.", "Règle non écrite : plus le refrain est connu, moins la justesse est importante.", "Si tu hésites entre deux chansons, choisis celle avec le plus de chances de faire crier le salon.", "Moment idéal pour pratiquer ton regard de rockstar vers un public imaginaire.", "Aucune batterie n’a été blessée pendant la consultation de cette fiche.", "Le bouton volume existe surtout pour être tourné vers la droite.", "Cette chanson est certifiée compatible avec les bras en l’air.", "Si quelqu’un demande encore Free Bird, faites semblant de ne pas avoir entendu.",
-            "Si quelqu’un demande Bohemian Rhapsody, faites semblant de ne pas savoir c’est quoi.", "Les erreurs de rythme deviennent du style si tu les assumes assez fort.", "Bienvenue dans la zone où les refrains deviennent des décisions collectives.",
+        const PARTY_FLAVORS = ["Hydrate-toi. Les solos durent plus longtemps quand tu vois encore clair.",
+			"Petit rappel : personne n’a jamais regretté un refrain chanté trop fort.", 
+			"Si tu rates une note, t'as rienque à faire comme si c’était du jazz.", 
+			"Le prochain solo peut légalement être considéré comme une séance de cardio.", 
+			"Conseil de pro : le air guitar compte comme échauffement.", 
+			"Cette chanson fit très bien avec des high-fives mal synchronisés.", 
+			"Un bon party commence par une grosse toune. Un excellent party finit crissement trop tard.", 
+			"Le groove est gratuit. Les courbatures le lendemain matin le sont aussi.", 
+			"Si tout le monde chante faux ensemble, ça devient une harmonie... Presque.", 
+			"Les voisins n’ont rien demandé, mais ils vont avoir le show pareil.", 
+			"Tu n’as pas besoin d’être bon, faut juste avoir l’air convaincu.", 
+			"Règle classique des karaoke: plus le refrain est connu, moins la justesse est importante.", 
+			"Si tu hésites entre deux chansons, choisis celle avec le plus de chances de faire crier les gens du party.", 
+			"Moment idéal pour pratiquer ton regard de rockstar vers un public imaginaire.", 
+			"Gros t'as un esti d'aura."
+			"Aucune batterie n’a été blessée pendant la consultation de cette fiche.", 
+			"Le bouton volume existe surtout pour être tourné vers la droite.", 
+			"C'est tu possible d'arrêter de fesser sur le drum pendant que je cherche kek chose d'in menu? Ça serait apprécié."
+			"Cette chanson est certifiée compatible avec les mushpits", 
+			"Si quelqu’un demande encore Free Bird, faites semblant de ne pas avoir entendu.",
+            "Si quelqu’un demande Bohemian Rhapsody, faites semblant de ne pas savoir c’est quoi.", 
+			"Les erreurs de rythme deviennent du style si tu les assumes assez fort.", 
+			"Bienvenue dans la zone où les refrains deviennent des décisions collectives.",
             "Faites attention, Jak essaie des fois de vous faire jouer des tounes de 13 minutes quand vous n'êtes pas attentif.",
             "I swear to God, si Jak met encore une toune de Ninja Sex Party, je vais le \"FYA\" avec mon poing",
-            "On vas-tu jouer à Overwatch à place?",
+            "On va-tu jouer à Overwatch à place?",
             "Bon il est déjà passer mon heure de dodo moi.",
-            "On vas-tu vape?",
+            "On va-tu vape?",
+			"Ish, 1h du matin?.. J'suis déjà rendu à mon deuxième pipi de nuit d'habitude."
             "J'mets du Bailey's dans mon orangeade.",
-            "On vas-tu dans l'garage?",
+            "On va-tu dans l'garage?",
             "As-tu bu un peu d'eau dernièrement? Un café ça compte pas.",
             "Voyons les notes vont ben vite bout d'criss.",
-            "Si quelqu'un dit que les notes ont l'air d'être pas on time: skill issue",
+            "Si quelqu'un dit que les notes ont l'air d'être pas d'être désyncronisés du son, vous pouvez lui dire \"skill issue\"",
             "J'ai hâte de vous entendre massacrer c'te belle chanson-là",
             "Ah oui je l'aime celle-là",
             "Nya nya nyaa nyAA nya by the way by the way *TOUSSE TOUSSE TOUSSE* s'cusez",
@@ -1348,7 +1370,11 @@
             "Si quelqu'un demande à avoir deux micro en même temps, j'le fesse.",
             "J'ai refusé ma troisième greffe de foi.",
             "À 4h au rack à bécyk.",
-            "Joue du Green Day, Nat va être contente."
+            "Joue du Green Day, Nat va être contente.",
+			"Au pire",
+			"Stu moé où il fait chaud icitte?",
+			"Ah non pas celle-là!.. C't'une joke fais c'que tu veux."
+			
         ];
         function setPartyFlavor() {
             const el = document.getElementById('party-flavor');
