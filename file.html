@@ -35,7 +35,7 @@
       animation:partyRainbowBg 5s linear infinite;
       box-shadow:0 0 18px rgba(255,255,255,.12);
     }
-    .mc strong{
+    #partyTitle.party-rainbow, .mc strong{
       background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);
       background-size:300% auto;
       color:transparent;
@@ -105,7 +105,6 @@
       <div>
         <h1 id="partyTitle">File de la soirée</h1>
         <div class="mc">🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
-        <span class="party-pill" id="partyPill">Chargement…</span>
       </div>
       <a class="back" href="index.html">← Retour au catalogue</a>
     </div>
@@ -146,7 +145,14 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM
 const TURNOVER_SECONDS = 120;
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-let currentUserId = null;
+const OWNED_REQUESTS_KEY = "yarg_owned_performance_requests";
+function ownedRequestIds(){
+  try {
+    const ids=JSON.parse(localStorage.getItem(OWNED_REQUESTS_KEY)||"[]");
+    return new Set(Array.isArray(ids)?ids.map(String):[]);
+  } catch(e){ return new Set(); }
+}
+function isMyRequest(r){return ownedRequestIds().has(String(r.id));}
 let settings = null;
 let requests = [];
 let members = [];
@@ -155,7 +161,7 @@ let previousStates = new Map();
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const instruments = {vocals:"Voix",guitar:"Guitare",bass:"Basse",drums:"Batterie",keys:"Clavier"};
-const difficulties = {any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
+const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
 
 function showError(message){
   $("#errorBox").textContent = message;
@@ -263,7 +269,7 @@ function render(){
   const queue = sortedActive();
   const etas = calculateEtas(queue);
 
-  const mine = currentUserId ? queue.filter(r => r.guest_user_id === currentUserId) : [];
+  const mine = queue.filter(isMyRequest);
   $("#myRequests").innerHTML = mine.length
     ? mine.map(r => cardHtml(r,etas.get(r.id),true)).join("")
     : `<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment. Va donc nous en pousser une p'tite.</div>`;
@@ -283,14 +289,7 @@ async function loadSettings(){
   settings=data;
   $("#partyTitle").textContent = data.party_name || "Party YARG";
   $("#mcName").textContent = data.mc_name || "Mystère";
-  const pill=$("#partyPill");
-  pill.textContent=data.performance_requests_enabled ? "● Party en cours" : "Party fermé";
-  pill.className="party-pill "+(data.performance_requests_enabled?"on":"off");
-}
-
-async function loadUser(){
-  const {data:{session}} = await sb.auth.getSession();
-  currentUserId = session?.user?.id || null;
+  $("#partyTitle").classList.toggle("party-rainbow", !!data.performance_requests_enabled);
 }
 
 async function loadQueue(){
@@ -313,8 +312,8 @@ async function loadQueue(){
 }
 
 function maybeNotify(queue,etas){
-  if (!("Notification" in window) || Notification.permission!=="granted" || !currentUserId) return;
-  const mine=queue.filter(r=>r.guest_user_id===currentUserId);
+  if (!("Notification" in window) || Notification.permission!=="granted") return;
+  const mine=queue.filter(isMyRequest);
   for(const r of mine){
     const old=previousStates.get(r.id);
     const eta=etas.get(r.id);
@@ -347,7 +346,7 @@ function flashLive(){
 }
 
 async function refresh(){
-  try{ showError(""); await loadSettings(); await loadUser(); await loadQueue(); }
+  try{ showError(""); await loadSettings(); await loadQueue(); }
   catch(err){ console.error(err); showError("Impossible de charger la file pour le moment. Vérifie la configuration Supabase."); }
 }
 
