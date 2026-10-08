@@ -108,7 +108,14 @@
       .eta{text-align:left}
       header{padding-top:20px}
     }
-  </style>
+  
+/* Navigation partagée : visible sur toutes les pages, sans bloquer l'accès invité. */
+.yarg-navigation{display:flex;align-items:center;justify-content:flex-end;gap:.4rem;flex-wrap:wrap}
+.yarg-navigation a{color:#eaf1f3;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #3b4b53;border-radius:10px;padding:.48rem .7rem;background:#1b2429;font-size:.85rem;font-weight:800;white-space:nowrap}
+.yarg-navigation a:hover,.yarg-navigation a:focus-visible{border-color:#1fc8bd;background:#263338;color:#fff}
+.yarg-navigation a[aria-current="page"]{background:#ff8a24;color:#111;border-color:#ff8a24}
+@media(max-width:670px){.yarg-navigation{width:100%;justify-content:stretch}.yarg-navigation a{flex:1 1 calc(50% - .4rem);font-size:.8rem;padding:.5rem .3rem}}
+</style>
 </head>
 <body>
 <header>
@@ -118,7 +125,7 @@
         <h1 id="partyTitle">File de la soirée</h1>
         <div class="mc">🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
       </div>
-      <a class="back" href="index.html">← Retour au catalogue</a>
+      <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html" aria-current="page">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html">Régie MC</a></nav>
     </div>
   </div>
 </header>
