@@ -120,13 +120,12 @@
       <h1>Demander l'ajout d'une chanson</h1>
       <p class="intro">
         Tu cherches une chanson qui n'est pas encore dans la bibliothèque?
-        Donne-nous les détails et le MC pourra essayer de la trouver.
+        Donne-moi les détails et Jak se chargera de chercher la chanson après le party.
       </p>
       <div class="party-notice">
-        <strong>🎸 Important!</strong>
-        Les demandes d'ajout à la bibliothèque sont traitées <strong>entre les soirées</strong>.
-        Pendant un party, le MC se concentre sur les chansons déjà disponibles et sur la file de la soirée.
-        Ta demande pourra donc être traitée après le party.
+        <strong>‼️ Important!</strong>
+        Les demandes d’ajout à la bibliothèque ne sont <strong>jamais traitées pendant un party</strong>.
+        Jak examinera ta demande plus tard, entre les soirées.
       </div>
     </header>
 
@@ -160,17 +159,6 @@
       </div>
 
       <div class="section">
-        <label>Difficulté souhaitée</label>
-        <div class="choices">
-          <label class="choice"><input type="radio" name="difficulty" value="any" checked> Peu importe</label>
-          <label class="choice"><input type="radio" name="difficulty" value="easy"> Facile</label>
-          <label class="choice"><input type="radio" name="difficulty" value="medium"> Moyen</label>
-          <label class="choice"><input type="radio" name="difficulty" value="hard"> Difficile</label>
-          <label class="choice"><input type="radio" name="difficulty" value="expert"> Expert</label>
-        </div>
-      </div>
-
-      <div class="section">
         <label>Instruments souhaités</label>
         <p class="help">Sélectionne les instruments que tu aimerais pouvoir jouer sur cette chanson.</p>
         <div class="check-grid" style="margin-top:9px">
@@ -183,14 +171,22 @@
       </div>
 
       <div class="section">
+        <label>Difficulté souhaitée</label>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="difficulty" value="expert" checked> Expert</label>
+          <label class="choice"><input type="radio" name="difficulty" value="all"> Toutes les difficultés (All)</label>
+        </div>
+      </div>
+
+      <div class="section">
         <label for="download">Lien de téléchargement</label>
         <input id="download" name="download" type="url" maxlength="1000" placeholder="https://...">
-        <p class="help">Got a source for this song? Paste it here to save the host some hunting.</p>
+        <p class="help">Tu as un lien vers cette chanson? Colle-le ici pour faciliter les recherches de Jak.</p>
       </div>
 
       <div class="section">
         <label for="message">Message personnel</label>
-        <textarea id="message" name="message" maxlength="2000" placeholder="Un détail qui pourrait aider le MC à trouver la bonne version?"></textarea>
+        <textarea id="message" name="message" maxlength="2000" placeholder="Un détail pour aider Jak à trouver la bonne version? Commentaires et compliments au maître des chansons bienvenus! 😎"></textarea>
       </div>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
@@ -266,10 +262,10 @@
         if (error) throw error;
 
         form.reset();
-        document.querySelector('input[name="difficulty"][value="any"]').checked = true;
+        document.querySelector('input[name="difficulty"][value="expert"]').checked = true;
         showStatus(
           "success",
-          "Demande envoyée! 🎸 Le MC pourra maintenant faire ses recherches et te tenir au courant par courriel."
+          "Demande envoyée! 🎸 Jak examinera ta demande après le party et pourra te répondre par courriel."
         );
       } catch (error) {
         console.error(error);
