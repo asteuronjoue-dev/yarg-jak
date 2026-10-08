@@ -253,11 +253,12 @@ function joinFormHtml(r){
  const instrument=joining.instrument;
  if(!openInstruments(r).includes(instrument))return "";
  const vocals=instrument==="vocals";
+ const canSing=Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone;
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instruments[instrument])}</strong>
  <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required placeholder="Ton nom sur scène" autocomplete="nickname"></label>
  ${vocals?"":`<label>Difficulté <select name="difficulty">${["beginner","easy","medium","hard","expert"].map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
- ${vocals?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${Number(r.vocal_parts)>0?"":"disabled"}> Je veux aussi chanter au micro</label>`}
+ ${vocals?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${canSing?"":"disabled"}> Je veux aussi chanter au micro</label>`}
  <label class="join-harmony" ${vocals?"":"hidden"}>Partie vocale (difficulté Moyen)<select name="harmony">${harmonyOptions(r)}</select></label>
  <button class="join-submit" type="submit">Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
  <div class="join-message" role="status"></div></form>`;
@@ -381,7 +382,7 @@ document.addEventListener("submit",async e=>{
     if(me)throw me;
     const occupied=new Set((existing||[]).map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
     if(request.requester_instrument&&request.requester_instrument!=="vocals")occupied.add(request.requester_instrument);
-    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || (instrument!=="vocals"&&occupied.has(instrument)) || (singing && (harmony<1 || harmony>Math.max(1,Number(request.vocal_parts)||1)))){
+    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || (instrument!=="vocals"&&occupied.has(instrument)) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
       message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
     }
     const difficulty=instrument==="vocals"?"medium":form.elements.difficulty.value;
