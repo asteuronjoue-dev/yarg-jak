@@ -33,6 +33,7 @@ fieldset{border:1px solid var(--line);border-radius:12px;padding:.85rem 1rem;mar
 <div id="instrument-variant" class="field" hidden></div>
 <label class="check" id="mic-wrap" hidden><input type="checkbox" id="mic"><span>Je veux aussi chanter au micro</span></label>
 
+<div class="field" id="harmony-wrap" hidden><span>Partie vocale</span><small>Les harmonies peuvent être choisies par plusieurs rockstars.</small><select id="harmony"></select></div>
 <div class="field" id="difficulty-field" hidden><span>Difficulté souhaitée *</span><div id="difficulty-help" class="difficulty-lines"></div><select id="difficulty">
 <option value="beginner">Débutant</option>
 <option value="easy">Facile</option>
@@ -76,6 +77,22 @@ let selected=null, variant=null;
 const partWrap=document.getElementById('parts'), fills=document.getElementById('fills');
 
 function available(code){return code==='V' ? (vocalParts>0||availableParts.includes('V')) : availableParts.includes(code)}
+function renderHarmony(){
+ const singing=selected==='V'||(selected!=='none'&&document.getElementById('mic').checked);
+ const box=document.getElementById('harmony-wrap'),select=document.getElementById('harmony');
+ box.hidden=!singing;select.replaceChildren();
+ if(!singing)return;
+ const count=Math.max(1,Math.min(3,vocalParts||1));
+ for(let i=1;i<=count;i++){const o=document.createElement('option');o.value=String(i);o.textContent=i===1?'Harmonie 1 (chant principal)':`Harmonie ${i}`;select.appendChild(o)}
+}
+function updateFillChoices(){
+ document.querySelectorAll('#fills input').forEach(input=>{
+  const occupied=selected!=='none'&&selected!=='V'&&input.value===selected;
+  input.closest('label').hidden=occupied;
+  if(occupied)input.checked=false;
+ });
+}
+document.getElementById('mic').addEventListener('change',renderHarmony);
 function choose(code,button){
  selected=code; variant=null;
  [...partWrap.children].forEach(x=>x.classList.remove('selected')); button.classList.add('selected');
@@ -85,6 +102,7 @@ function choose(code,button){
  document.getElementById('difficulty-field').hidden=isListener||code==='V';
  if(!isListener)document.getElementById('difficulty-help').replaceChildren(...(diffHelp[code]||[]).map(line=>{const el=document.createElement('div');const i=line.indexOf(':');const strong=document.createElement('strong');strong.textContent=line.slice(0,i+1)+' ';el.append(strong,document.createTextNode(line.slice(i+1).trim()));return el;}));
  renderVariant(code);
+ updateFillChoices();renderHarmony();
 }
 function renderVariant(code){
  const box=document.getElementById('instrument-variant'); box.innerHTML=''; box.hidden=true;
@@ -106,7 +124,7 @@ partDefs.forEach(([code,label])=>{
  const l=document.createElement('label');l.innerHTML=`<input type="checkbox" value="${code}" checked> ${label}`;fills.appendChild(l);
 });
 document.getElementById('allow').onchange=e=>document.getElementById('fill-options').hidden=!e.target.checked;
-document.getElementById('all').onchange=e=>document.querySelectorAll('#fills input').forEach(x=>x.checked=e.target.checked);
+document.getElementById('all').onchange=e=>document.querySelectorAll('#fills label:not([hidden]) input').forEach(x=>x.checked=e.target.checked);
 function remember(id){let ids=[];try{ids=JSON.parse(localStorage.getItem('yarg_owned_performance_requests')||'[]')}catch{}if(!ids.includes(id))ids.push(id);localStorage.setItem('yarg_owned_performance_requests',JSON.stringify(ids))}
 document.getElementById('form').onsubmit=async e=>{
  e.preventDefault();const status=document.getElementById('status'),btn=document.getElementById('submit');status.className='status';
@@ -124,6 +142,8 @@ document.getElementById('form').onsubmit=async e=>{
    requester_instrument:listenerOnly?null:map[selected],
    requester_difficulty:listenerOnly?null:(selected==='V'?'medium':document.getElementById('difficulty').value),
    requester_microphone:!listenerOnly&&selected!=='V'&&document.getElementById('mic').checked,
+   vocal_harmony:!listenerOnly&&(selected==='V'||document.getElementById('mic').checked)?Number(document.getElementById('harmony').value):null,
+   vocal_parts:available('V')?Math.max(1,Math.min(3,vocalParts||1)):0,
    allow_band_fill:allow,
    fillable_instruments:allow?[...document.querySelectorAll('#fills input:checked')].map(x=>map[x.value]):[],
    status:'waiting'
