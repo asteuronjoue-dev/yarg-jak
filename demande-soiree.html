@@ -50,6 +50,7 @@ const SUPABASE_URL="https://xbhfjzurytdknbqvksjq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM";
 const q=new URLSearchParams(location.search);
 const songId=q.get('song_id'), title=q.get('title')||'Chanson', artist=q.get('artist')||'', album=q.get('album')||'';
+const durationSeconds=Number(q.get('duration_seconds'));
 const availableParts=q.get('parts')||'', vocalParts=Number(q.get('vocal_parts')||0);
 const chartMask=q.get('charts')||''; // Conservé pour une future interprétation vérifiée des bits Pro.
 const rockstarSuggestions=['Cat Slayer 9000','MC Tronel','Pic Paquette','Genital Simon','MC Wet Shorts','Capitaine Croquette','Gérard Destroyer','DJ Poutine','Turbo Ginette','Patate Suprême','Lord Tétine','Johnny Bécyk','Big Marde','Docteur Pouet','Kevin du Chaos'];
