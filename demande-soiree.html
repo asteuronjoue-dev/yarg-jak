@@ -137,6 +137,9 @@ document.getElementById('form').onsubmit=async e=>{
  const allow=document.getElementById('allow').checked, listenerOnly=selected==='none';
  const payload={
    song_id:songId,
+   song_title:title,
+   song_artist:artist,
+   song_duration_seconds:Number.isFinite(durationSeconds)&&durationSeconds>0?durationSeconds:null,
    rockstar_name:document.getElementById('rockstar').value.trim(),
    band_name:document.getElementById('band').value.trim()||null,
    requester_instrument:listenerOnly?null:map[selected],
