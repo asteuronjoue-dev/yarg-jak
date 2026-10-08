@@ -77,8 +77,8 @@
     .slot{cursor:pointer;font:inherit;font-weight:800}.slot:hover{background:rgba(31,200,189,.22)}
     .join-form{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
     .join-form label{display:block;margin:8px 0;color:var(--muted);font-size:13px;font-weight:750}
-    .join-form input,.join-form select{display:block;width:100%;margin-top:4px;padding:9px;background:#101214;color:white;border:1px solid #455158;border-radius:8px;font:inherit}
-    .join-form .join-submit{margin-top:10px;padding:10px 14px;border:0;border-radius:9px;background:var(--teal);color:#071016;font-weight:900;cursor:pointer}
+    .join-form input:not([type="checkbox"]),.join-form select{display:block;width:100%;margin-top:4px;padding:9px;background:#101214;color:white;border:1px solid #455158;border-radius:8px;font:inherit}
+    .join-form .join-mic-choice{display:flex;align-items:center;gap:8px}.join-form .join-mic-choice input{width:auto;margin:0}.join-form [hidden]{display:none!important}.join-form .join-submit{margin-top:10px;padding:10px 14px;border:0;border-radius:9px;background:var(--teal);color:#071016;font-weight:900;cursor:pointer}
     .join-form .join-cancel{margin-left:8px;background:transparent;color:var(--muted);border:0;cursor:pointer}
     .join-form .join-message{color:#ffb2b2;margin-top:8px;font-size:13px}
     .slot{padding:5px 8px;border-radius:999px;background:rgba(31,200,189,.1);color:var(--teal2);border:1px dashed rgba(31,200,189,.42);font-size:12px;font-weight:800}
@@ -231,38 +231,41 @@ function calculateEtas(queue){
 
 function membersFor(id){ return members.filter(m => m.performance_request_id === id); }
 
-function memberLine(name,instrument,difficulty,microphone){
-  const inst = instruments[instrument] || instrument || "—";
-  const mic = microphone ? " + Voix" : "";
-  const diff = difficulties[difficulty] || difficulty || "—";
-  return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+mic)} · ${esc(diff)}</div>`;
+function memberLine(name,instrument,difficulty,microphone,harmony){
+ const inst=instruments[instrument]||instrument||"Auditeur";
+ const singing=instrument==="vocals"||microphone;
+ const vocal=singing?` · Harmonie ${harmony||1} (voix : Moyen)`:"";
+ const diff=instrument==="vocals"||!instrument?"":` · ${difficulties[difficulty]||difficulty||"—"}`;
+ return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}</div>`;
 }
-
 function openInstruments(r){
-  if(!settings?.performance_requests_enabled || !r.allow_band_fill || !["waiting","full"].includes(r.status))return [];
-  const occupied=new Set(membersFor(r.id).map(m=>m.instrument).filter(Boolean));
-  if(r.requester_instrument)occupied.add(r.requester_instrument);
-  if(r.requester_microphone)occupied.add("vocals");
-  for(const m of membersFor(r.id))if(m.microphone)occupied.add("vocals");
-  return [...new Set(Array.isArray(r.fillable_instruments)?r.fillable_instruments:[])].filter(i=>instruments[i]&&!occupied.has(i));
+ if(!settings?.performance_requests_enabled||!r.allow_band_fill||!["waiting","full"].includes(r.status))return [];
+ const occupied=new Set(membersFor(r.id).map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
+ if(r.requester_instrument&&r.requester_instrument!=="vocals")occupied.add(r.requester_instrument);
+ return [...new Set(Array.isArray(r.fillable_instruments)?r.fillable_instruments:[])].filter(i=>instruments[i]&&(i==="vocals"||!occupied.has(i)));
+}
+function harmonyOptions(r){
+ const count=Math.max(1,Math.min(3,Number(r.vocal_parts)||1));
+ return Array.from({length:count},(_,i)=>`<option value="${i+1}">Harmonie ${i+1}${i===0?" (chant principal)":""}</option>`).join("");
 }
 function joinFormHtml(r){
-  if(!joining || joining.requestId!==String(r.id))return "";
-  const instrument=joining.instrument;
-  if(!openInstruments(r).includes(instrument))return "";
-  const diffOptions=instrument==="vocals"?["medium"]:["beginner","easy","medium","hard","expert"];
-  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
-    <strong>Rejoindre à la ${esc(instruments[instrument])}</strong>
-    <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required placeholder="Ton nom sur scène" autocomplete="nickname"></label>
-    ${instrument==="vocals"?'<p class="hint">Microphone : difficulté Moyen</p>':`<label>Difficulté <select name="difficulty">${diffOptions.map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
-    <button class="join-submit" type="submit">Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
-    <div class="join-message" role="status"></div>
-  </form>`;
+ if(!joining||joining.requestId!==String(r.id))return "";
+ const instrument=joining.instrument;
+ if(!openInstruments(r).includes(instrument))return "";
+ const vocals=instrument==="vocals";
+ return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
+ <strong>Rejoindre : ${esc(instruments[instrument])}</strong>
+ <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required placeholder="Ton nom sur scène" autocomplete="nickname"></label>
+ ${vocals?"":`<label>Difficulté <select name="difficulty">${["beginner","easy","medium","hard","expert"].map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
+ ${vocals?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${Number(r.vocal_parts)>0?"":"disabled"}> Je veux aussi chanter au micro</label>`}
+ <label class="join-harmony" ${vocals?"":"hidden"}>Partie vocale (difficulté Moyen)<select name="harmony">${harmonyOptions(r)}</select></label>
+ <button class="join-submit" type="submit">Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
+ <div class="join-message" role="status"></div></form>`;
 }
 function cardHtml(r, eta, mine=false){
   const bandMembers = membersFor(r.id);
-  const own = memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone);
-  const extras = bandMembers.map(m => memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone)).join("");
+  const own = memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone,r.vocal_harmony);
+  const extras = bandMembers.map(m => memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony)).join("");
   const open = openInstruments(r).map(i => `<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instruments[i])}</button>`).join("");
 
   const isPlaying = r.status === "playing";
@@ -325,7 +328,7 @@ async function loadSettings(){
 
 async function loadQueue(){
   const {data:r,error:e1}=await sb.from("performance_requests")
-    .select("id,guest_user_id,song_id,song_title,song_artist,song_duration_seconds,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,queue_position,started_at,created_at")
+    .select("id,guest_user_id,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,queue_position,started_at,created_at")
     .in("status",["waiting","full","playing"])
     .order("queue_position",{ascending:true,nullsFirst:false});
   if(e1) throw e1;
@@ -335,7 +338,7 @@ async function loadQueue(){
   if(!ids.length){ members=[]; render(); return; }
 
   const {data:m,error:e2}=await sb.from("performance_members")
-    .select("id,performance_request_id,rockstar_name,instrument,difficulty,microphone,created_at")
+    .select("id,performance_request_id,rockstar_name,instrument,difficulty,microphone,vocal_harmony,created_at")
     .in("performance_request_id",ids);
   if(e2) throw e2;
   members=m||[];
@@ -353,10 +356,16 @@ document.addEventListener("click",e=>{
   const form=[...document.querySelectorAll(".join-form")].find(f=>f.dataset.joinRequest===joining.requestId);
   form?.querySelector("input[name=rockstar]")?.focus();
 });
+document.addEventListener("change",e=>{
+ if(!e.target.matches('.join-form input[name="microphone"]'))return;
+ const form=e.target.closest('.join-form');form.querySelector('.join-harmony').hidden=!e.target.checked;
+});
 document.addEventListener("submit",async e=>{
   const form=e.target.closest(".join-form");if(!form)return;
   e.preventDefault();
   const id=form.dataset.joinRequest, instrument=form.dataset.instrument;
+  const singing=instrument==="vocals"||!!form.elements.microphone?.checked;
+  const harmony=singing?Number(form.elements.harmony.value):null;
   const name=form.elements.rockstar.value.trim();
   const message=form.querySelector(".join-message"),submit=form.querySelector(".join-submit");
   if(!name){message.textContent="Entre ton nom de ROCKSTAR.";return}
@@ -364,20 +373,19 @@ document.addEventListener("submit",async e=>{
   try{
     // Relire l'état juste avant l'insertion pour éviter les places déjà prises.
     const {data:request,error:re}=await sb.from("performance_requests")
-      .select("id,status,allow_band_fill,fillable_instruments,requester_instrument,requester_microphone")
+      .select("id,status,allow_band_fill,fillable_instruments,requester_instrument,requester_microphone,vocal_parts")
       .eq("id",id).single();
     if(re)throw re;
     const {data:existing,error:me}=await sb.from("performance_members")
       .select("instrument,microphone").eq("performance_request_id",id);
     if(me)throw me;
-    const occupied=new Set((existing||[]).map(m=>m.instrument));
-    if(request.requester_instrument)occupied.add(request.requester_instrument);
-    if(request.requester_microphone || (existing||[]).some(m=>m.microphone))occupied.add("vocals");
-    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || occupied.has(instrument)){
+    const occupied=new Set((existing||[]).map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
+    if(request.requester_instrument&&request.requester_instrument!=="vocals")occupied.add(request.requester_instrument);
+    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || (instrument!=="vocals"&&occupied.has(instrument)) || (singing && (harmony<1 || harmony>Math.max(1,Number(request.vocal_parts)||1)))){
       message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
     }
     const difficulty=instrument==="vocals"?"medium":form.elements.difficulty.value;
-    const {error}=await sb.from("performance_members").insert({performance_request_id:id,rockstar_name:name,instrument,difficulty,microphone:false});
+    const {error}=await sb.from("performance_members").insert({performance_request_id:id,rockstar_name:name,instrument,difficulty,microphone:instrument!=="vocals"&&singing,vocal_harmony:harmony});
     if(error){
       console.error("Supabase refused the band member insert:",error);
       const hint=(error.code==="42501" || /row.level.security|permission denied/i.test(error.message||""))
