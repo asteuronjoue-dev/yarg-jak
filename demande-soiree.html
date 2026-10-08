@@ -1,168 +1,90 @@
-<!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Demande pour ce soir — YARG</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Monte ton groupe — YARG</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{color-scheme:dark;--bg:#071016;--card:#0d171d;--line:#243740;--text:#f5f7f8;--muted:#9cabb2;--teal:#25d7cf;--orange:#ff8a24}
-*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:radial-gradient(circle at 20% 0,rgba(37,215,207,.08),transparent 30%),radial-gradient(circle at 90% 10%,rgba(255,138,36,.08),transparent 28%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
-main{width:min(760px,calc(100% - 28px));margin:28px auto 60px}.back{color:#aebbc1;text-decoration:none;font-weight:750}.back:hover{color:white}
-.hero{margin:22px 0}.kicker{color:var(--teal);font-weight:950;letter-spacing:.13em;font-size:.75rem}.hero h1{font-size:clamp(1.8rem,5vw,3rem);margin:.3rem 0}.hero p{color:var(--muted);margin:.3rem 0}
-.song{border:1px solid var(--line);background:linear-gradient(135deg,rgba(255,138,36,.08),rgba(37,215,207,.06));border-radius:14px;padding:1rem;margin:1.1rem 0}.song strong{font-size:1.18rem}.song div{color:#b9c5ca;margin-top:.2rem}
-form{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1.2rem}.field{display:block;margin:1.1rem 0}.field>span,fieldset legend{font-weight:900;display:block;margin-bottom:.3rem}.field small,fieldset small{display:block;color:var(--muted);font-size:.82rem;line-height:1.4;margin-bottom:.55rem}
-input,select{width:100%;background:#101d24;color:#fff;border:1px solid #314650;border-radius:10px;padding:.78rem .85rem;font:inherit}
-.parts{display:flex;flex-wrap:wrap;gap:.5rem}.part{border:1px solid #354a54;background:#111d23;color:#e6edef;border-radius:10px;padding:.62rem .78rem;cursor:pointer;font-weight:800}.part.selected{border-color:var(--teal);background:rgba(37,215,207,.13)}.part:disabled{opacity:.28;cursor:not-allowed}
-.check{display:flex;gap:.55rem;align-items:flex-start;margin:.7rem 0;font-weight:700}.check input{width:auto;margin-top:.25rem}
-fieldset{border:1px solid var(--line);border-radius:12px;padding:.85rem 1rem;margin:1.1rem 0}.fills{display:flex;flex-wrap:wrap;gap:.4rem}.fills label{border:1px solid #30434c;border-radius:8px;padding:.42rem .58rem;font-size:.86rem}.fills input{width:auto}
-.submit{width:100%;border:0;border-radius:12px;padding:1rem;color:#050607;font-weight:950;font-size:1.03rem;cursor:pointer;background:linear-gradient(90deg,#ff315a,#ff8a24,#ffe21c,#25d7cf,#369cff,#a45cff,#ff4fb8,#ff315a);background-size:300% 100%;animation:rainbow 5s linear infinite}@keyframes rainbow{to{background-position:300% 0}}
-.difficulty-lines{display:grid;gap:.4rem;margin:.3rem 0 .8rem}.difficulty-lines div{line-height:1.45}.difficulty-lines strong{color:#e4f4f4}.status{min-height:1.3rem;margin:.7rem 0;color:var(--muted)}.status.error{color:#ff7c8a}.status.ok{color:#5be0c9}
-</style>
-</head>
-<body>
-<main>
-<a class="back" href="index.html">← Retour au catalogue</a>
-<section class="hero"><div class="kicker">DEMANDE POUR CE SOIR</div><h1>Monte ton groupe 🤘</h1><p>Choisis ta place. Les autres rockstars pourront compléter le groupe si tu le souhaites.</p></section>
-<section class="song"><strong id="song-title">Chanson</strong><div id="song-meta"></div></section>
-<form id="form">
-<label class="field"><span>Nom de ROCKSTAR 🤘 *</span><small>C'est le nom que le MC utilisera pour t'appeler sur scène. Prénom, surnom, alias ou ce que tu veux.</small><input id="rockstar" maxlength="60" required autocomplete="nickname"></label>
-<label class="field"><span>Nom du groupe <i>(facultatif)</i></span><input id="band" maxlength="80" placeholder="Silent Killers"></label>
-
-<div class="field"><span>Ta place dans le groupe *</span><small>Choisis un instrument disponible, ou choisis de simplement demander la toune. Un seul instrument principal par personne; tu peux aussi ajouter le micro si la chanson a des voix. Si tu demandes seulement la toune, le groupe devra quand même être rempli par des gens du party avant qu'elle puisse être jouée.</small><div class="parts" id="parts"></div></div>
-<div id="instrument-variant" class="field" hidden></div>
-<label class="check" id="mic-wrap" hidden><input type="checkbox" id="mic"><span>Je veux aussi chanter au micro</span></label>
-
-<div class="field" id="harmony-wrap" hidden><span>Partie vocale</span><small>Les harmonies peuvent être choisies par plusieurs rockstars.</small><select id="harmony"></select></div>
-<div class="field" id="difficulty-field" hidden><span>Difficulté souhaitée *</span><div id="difficulty-help" class="difficulty-lines"></div><select id="difficulty">
-<option value="beginner">Débutant</option>
-<option value="easy">Facile</option>
-<option value="medium">Moyen</option>
-<option value="hard">Difficile</option>
-<option value="expert">Expert</option>
-</select></div>
-
-<div id="listener-warning" class="status" hidden>‼️ Cette chanson sera jouée seulement si au moins deux rockstars choisissent des instruments pendant qu’elle attend dans la file. Toutes les places disponibles pourront être remplies.</div>
-<fieldset id="fill-fieldset"><legend>Compléter mon groupe</legend><label class="check"><input type="checkbox" id="allow" checked><span>Je veux que d'autres rockstars puissent compléter mon groupe</span></label><div id="fill-options"><small>Quels rôles les autres peuvent-ils prendre?</small><label class="check"><input type="checkbox" id="all" checked><span>Autoriser toutes les places disponibles</span></label><div class="fills" id="fills"></div></div></fieldset>
-<div class="status" id="status"></div><button class="submit" id="submit" type="submit">Ajouter à la file de la soirée 🤘</button>
-</form>
-</main>
+:root{color-scheme:dark;--bg:#071016;--panel:#101b23;--line:#314550;--text:#f6f7f9;--muted:#adbcc4;--teal:#25d7cf;--orange:#ff8a24}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#152b31,transparent 45%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:820px;margin:0 auto;padding:24px 16px 60px}a{color:var(--teal)}h1{font-size:clamp(1.9rem,5vw,3rem);margin:14px 0 4px}p{color:var(--muted);line-height:1.5}.song,.member,fieldset{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px;margin:16px 0}.song strong{font-size:1.15rem}.song small{display:block;color:var(--muted);margin-top:4px}.member-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.member-head h2{margin:0;font-size:1.1rem}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:block}.field span{display:block;font-size:.87rem;font-weight:850;margin-bottom:6px}.field small{color:var(--muted)}input,select{font:inherit;width:100%;padding:12px;border:1px solid #47606b;border-radius:9px;background:#0a1319;color:#fff}.inline{display:flex;align-items:center;gap:9px}.inline input{width:auto}.inline span{font-size:.9rem}.row-actions{display:flex;flex-wrap:wrap;gap:10px}button{font:inherit;border-radius:9px;border:1px solid #49606d;background:#1a2c36;color:white;padding:10px 14px;cursor:pointer;font-weight:800}button:hover{border-color:var(--teal)}button:disabled{opacity:.5;cursor:not-allowed}.add{color:var(--teal)}.remove{color:#ff9ba8}.submit{width:100%;margin-top:12px;background:linear-gradient(95deg,#fa365c,#fba026,#ead74c,#2ad7d2,#698afd);color:#111;border:0;font-weight:1000;padding:16px}.note{font-size:.86rem;color:var(--muted);margin:8px 0}.status{margin:14px 0;min-height:22px}.error{color:#ff94a2}.ok{color:#6becd8}.warning{color:#ffca75}fieldset legend{font-weight:900}label.check{display:flex;gap:9px;align-items:flex-start}label.check input{width:auto;margin-top:4px}@media(max-width:600px){.grid{grid-template-columns:1fr}.member{padding:13px}}
+</style></head><body><main><a href="index.html">← Retour aux chansons</a><h1>Monte ton groupe 🤘</h1><p>Un téléphone, plusieurs rockstars! Chaque personne choisit sa partie. On garde trois guitares, trois micros, une batterie et un clavier à disposition.</p><section class="song"><strong id="song-title"></strong><small id="song-meta"></small></section>
+<form id="request-form"><label class="field"><span>Nom du band (facultatif)</span><input id="band-name" maxlength="80" placeholder="Les Cornichons Électriques"></label><div id="members"></div><div class="row-actions"><button type="button" class="add" id="add-member">+ Ajouter une rockstar</button></div><p class="note" id="capacity"></p><fieldset><legend>Compléter le groupe</legend><label class="check"><input type="checkbox" id="allow-fill" checked><span>Permettre aux autres invités de joindre notre band.</span></label><p class="note">La gestion des membres qui rejoignent ou quittent sera activée après la mise à jour de <code>file.html</code>.</p></fieldset><p class="status" id="status" role="status" aria-live="polite"></p><button type="submit" class="submit" id="submit">Ajouter le groupe à la file 🎸</button></form></main>
 <script>
-const SUPABASE_URL="https://xbhfjzurytdknbqvksjq.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY="sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM";
-const q=new URLSearchParams(location.search);
-const songId=q.get('song_id'), title=q.get('title')||'Chanson', artist=q.get('artist')||'', album=q.get('album')||'';
-const durationSeconds=Number(q.get('duration_seconds'));
-const availableParts=q.get('parts')||'', vocalParts=Number(q.get('vocal_parts')||0);
-const chartMask=q.get('charts')||''; // Conservé pour une future interprétation vérifiée des bits Pro.
-const rockstarSuggestions=['Cat Slayer 9000','MC Tronel','Pic Paquette','Genital Simon','MC Wet Shorts','Capitaine Croquette','Gérard Destroyer','DJ Poutine','Turbo Ginette','Patate Suprême','Lord Tétine','Johnny Bécyk','Big Marde','Docteur Pouet','Kevin du Chaos'];
-const bandSuggestions=['Silent Killers','Les Destructeurs de Val-David','Les Notes Croches',"Les P'tits Criss",'Garage Sale','The Wet Socks','Les Sans-Talent','Power Chord Poutine','Les Doigts Raides','Bécyk Inferno','The Skill Issues','Orangeade Massacre','Les Fausses Notes','Câline de Band','The Unpaid Roadies'];
-document.getElementById('rockstar').placeholder=rockstarSuggestions[Math.floor(Math.random()*rockstarSuggestions.length)];
-document.getElementById('band').placeholder=bandSuggestions[Math.floor(Math.random()*bandSuggestions.length)];
-document.getElementById('song-title').textContent=title;
-document.getElementById('song-meta').textContent=[artist,album].filter(Boolean).join(' · ');
-
-const partDefs=[
- ['none','Je veux juste entendre la toune'],
- ['G','Guitare'],['B','Basse'],['D','Batterie'],['K','Clavier'],['V','Voix']
-];
-const map={G:'guitar',B:'bass',D:'drums',K:'keys',V:'vocals'};
-const diffHelp={
- G:["Débutant : Tu n'as qu'à utiliser la strum bar.","Facile : Les trois premières frettes, des notes espacées et un rythme simplifié.","Moyen : Les quatre premières frettes, davantage de notes et quelques accords.","Difficile : Les cinq frettes, avec moins de notes et de passages rapides qu'en Expert.","Expert : Les cinq frettes, tous les accords et le chart complet."],
- B:["Débutant : Seulement la strum bar.","Facile : Généralement les trois premières frettes et un rythme simplifié.","Moyen : Les quatre premières frettes, avec moins de notes et de changements rapides.","Difficile : Les cinq frettes, avec moins de densité qu'en Expert.","Expert : The whole fuckin' thing."],
- D:["Débutant : Frappe les notes sans devoir suivre exactement leur couleur.","Facile : Un rythme très simplifié, souvent sans devoir utiliser les mains et le pied en même temps.","Moyen : Plus de grosse caisse, de caisse claire et de cymbales; le rythme commence à ressembler à l'original.","Difficile : Presque tout le rythme, mais les roulements et les passages rapides sont allégés.","Expert : Le rythme complet, avec les roulements et les passages rapides."],
- K:["Débutant : Très simplifié.","Facile : Peu de touches et des motifs simples.","Moyen : Plus de notes et de changements.","Difficile : Des motifs complexes, avec moins de notes qu'en Expert.","Expert : Le chart complet."],
- V:["Débutant : Tolérance maximale.","Facile : Grande marge sur la hauteur et le rythme.","Moyen : Précision modérée.","Difficile : Bonne précision demandée.","Expert : Tolérance la plus serrée."]
-};
-let selected=null, variant=null;
-const partWrap=document.getElementById('parts'), fills=document.getElementById('fills');
-
-function available(code){return code==='V' ? (vocalParts>0||availableParts.includes('V')) : availableParts.includes(code)}
-function renderHarmony(){
- const singing=selected==='V'||(selected!=='none'&&document.getElementById('mic').checked);
- const box=document.getElementById('harmony-wrap'),select=document.getElementById('harmony');
- box.hidden=!singing;select.replaceChildren();
- if(!singing)return;
- const count=Math.max(1,Math.min(3,vocalParts||1));
- for(let i=1;i<=count;i++){const o=document.createElement('option');o.value=String(i);o.textContent=i===1?'Harmonie 1 (chant principal)':`Harmonie ${i}`;select.appendChild(o)}
+'use strict';
+const SUPABASE_URL='https://xbhfjzurytdknbqvksjq.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM';
+const params=new URLSearchParams(location.search);
+const song={id:params.get('song_id')||'',title:params.get('title')||'Chanson',artist:params.get('artist')||'',album:params.get('album')||'',duration:Number(params.get('duration_seconds')||0),parts:params.get('parts')||'',vocals:Number(params.get('vocal_parts')||0),charts:params.get('charts')||''};
+const $=id=>document.getElementById(id);
+$('song-title').textContent=song.title;$('song-meta').textContent=[song.artist,song.album].filter(Boolean).join(' · ');
+const chartMask=/^\d+$/.test(song.charts)?BigInt(song.charts):0n;
+function chartGroup(index){return Number((chartMask>>(BigInt(index)*6n))&63n)}
+// Instruments exposed only if the catalogue explicitly advertises them.
+// Drums: both 4-lane and pro charts; keys: normal and pro. Never expose 5-lane.
+const availableGuitarRoles=[...(song.parts.includes('G')?['guitar']:[]),...(chartGroup(2)>0?['rhythm_guitar']:[]),...(song.parts.includes('B')?['bass']:[])];
+const hasVocals=song.parts.includes('V')||song.vocals>0;
+const vocalParts=hasVocals?Math.max(1,Math.min(3,song.vocals||1)):0;
+const availableParts=[...(hasVocals?['vocals']:[]),...(song.parts.includes('G')?['guitar']:[]),...(song.parts.includes('B')?['bass']:[]),...(song.parts.includes('D')?['drums']:[]),...(song.parts.includes('K')?['keys']:[])];
+const options=[...(hasVocals?[['vocals','Voix / harmonies']]:[]),...(availableGuitarRoles.includes('guitar')?[['guitar','Guitare']]:[]),...(availableGuitarRoles.includes('rhythm_guitar')?[['rhythm_guitar','Guitare rythmique']]:[]),...(availableGuitarRoles.includes('bass')?[['bass','Basse']]:[]),...(song.parts.includes('D')?[['drums_4lane','Batterie 4-Lane']]:[]),...(chartGroup(5)>0?[['pro_drums','Pro Drums']]:[]),...(song.parts.includes('K')?[['keys','Clavier']]:[]),...(chartGroup(7)>0?[['pro_keys','Pro Keys']]:[])];
+// Chart mapping may differ for some exporters: do not display unsupported Pro modes.
+const diffOptions=[['any','Peu importe'],['easy','Facile'],['medium','Moyen'],['hard','Difficile'],['expert','Expert']];
+let members=[];let nextId=0;
+const instrumentFamily=mode=>['guitar','rhythm_guitar','bass'].includes(mode)?'guitar':mode==='vocals'?'vocals':mode.startsWith('drums_')||mode==='pro_drums'?'drums':'keys';
+function model(){return {id:++nextId,name:'',mode:options[0]?.[0]||'',difficulty:'any',microphone:false,harmony:1}}
+function counts(){return {guitars:members.filter(m=>instrumentFamily(m.mode)==='guitar').length,drums:members.filter(m=>instrumentFamily(m.mode)==='drums').length,keys:members.filter(m=>instrumentFamily(m.mode)==='keys').length,mics:members.filter(m=>m.mode==='vocals'||m.microphone).length}}
+function allowed(m,mode){
+ const others=members.filter(x=>x!==m), fam=instrumentFamily(mode);
+ if(fam==='drums'&&others.some(x=>instrumentFamily(x.mode)==='drums'))return false;
+ if(fam==='keys'&&others.some(x=>instrumentFamily(x.mode)==='keys'))return false;
+ if(fam==='guitar'&&others.filter(x=>instrumentFamily(x.mode)==='guitar').length>=3)return false;
+ if(fam==='guitar'&&others.some(x=>x.mode===mode)){
+   const filled=new Set(others.filter(x=>instrumentFamily(x.mode)==='guitar').map(x=>x.mode));
+   if(availableGuitarRoles.some(role=>!filled.has(role)))return false;
+ }
+ if(fam==='vocals'&&others.filter(x=>x.mode==='vocals'||x.microphone).length>=3)return false;
+ return true;
 }
-function updateFillChoices(){
- const listener=selected==='none';
- document.getElementById('fill-fieldset').hidden=listener;
- document.getElementById('listener-warning').hidden=!listener;
- const all=document.getElementById('all');
- all.checked=false;
-
- document.querySelectorAll('#fills input').forEach(input=>{
-  const occupied=selected!=='none'&&selected!=='V'&&input.value===selected;
-  input.closest('label').hidden=occupied;
-  input.checked=!occupied;
+function message(){const c=counts();$('capacity').textContent=`Matériel utilisé : ${c.guitars}/3 guitares · ${c.mics}/3 micros · ${c.drums}/1 batterie · ${c.keys}/1 clavier`;}
+function render(){
+ const host=$('members');host.replaceChildren();
+ members.forEach((m,i)=>{
+  const card=document.createElement('section');card.className='member';
+  const heading=document.createElement('div');heading.className='member-head';
+  const h=document.createElement('h2');h.textContent=`Rockstar ${i+1}`;heading.append(h);
+  if(members.length>1){const remove=document.createElement('button');remove.type='button';remove.className='remove';remove.textContent='Retirer';remove.onclick=()=>{members=members.filter(x=>x!==m);render()};heading.append(remove)}
+  const grid=document.createElement('div');grid.className='grid';
+  function field(label,el){const wrap=document.createElement('label');wrap.className='field';const span=document.createElement('span');span.textContent=label;wrap.append(span,el);grid.append(wrap);return wrap}
+  const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de rockstar';name.value=m.name;name.oninput=()=>m.name=name.value;field('Nom de rockstar *',name);
+  const instrument=document.createElement('select');for(const [value,label] of options){const o=document.createElement('option');o.value=value;o.textContent=label;o.disabled=!allowed(m,value);instrument.append(o)}instrument.value=m.mode;instrument.onchange=()=>{m.mode=instrument.value;if(m.mode==='vocals')m.microphone=false;render()};field('Partie / instrument *',instrument);
+  const diff=document.createElement('select');for(const [value,label] of diffOptions){const o=document.createElement('option');o.value=value;o.textContent=label;diff.append(o)}diff.value=m.difficulty;diff.onchange=()=>m.difficulty=diff.value;field('Difficulté',diff);
+  if(hasVocals&&m.mode!=='vocals'){
+    const wrap=document.createElement('label');wrap.className='inline';const mic=document.createElement('input');mic.type='checkbox';mic.checked=m.microphone;mic.disabled=!mic.checked&&counts().mics>=3;mic.onchange=()=>{m.microphone=mic.checked;render()};const span=document.createElement('span');span.textContent='Chanter aussi (un micro)';wrap.append(mic,span);grid.append(wrap)
+  }
+  if(m.mode==='vocals'||m.microphone){const harmony=document.createElement('select');for(let n=1;n<=vocalParts;n++){const o=document.createElement('option');o.value=n;o.textContent=n===1?'Chant principal':`Harmonie ${n}`;harmony.append(o)}harmony.value=String(m.harmony<=vocalParts?m.harmony:1);harmony.onchange=()=>m.harmony=Number(harmony.value);field('Partie vocale',harmony)}
+  card.append(heading,grid);host.append(card);
  });
+ $('add-member').disabled=members.length>=8;message();
 }
-document.getElementById('mic').addEventListener('change',renderHarmony);
-function choose(code,button){
- selected=code; variant=null;
- [...partWrap.children].forEach(x=>x.classList.remove('selected')); button.classList.add('selected');
- const isListener=code==='none', hasVocals=available('V');
- document.getElementById('mic-wrap').hidden=isListener||code==='V'||!hasVocals;
- if(isListener||code==='V')document.getElementById('mic').checked=false;
- document.getElementById('difficulty-field').hidden=isListener||code==='V';
- if(!isListener)document.getElementById('difficulty-help').replaceChildren(...(diffHelp[code]||[]).map(line=>{const el=document.createElement('div');const i=line.indexOf(':');const strong=document.createElement('strong');strong.textContent=line.slice(0,i+1)+' ';el.append(strong,document.createTextNode(line.slice(i+1).trim()));return el;}));
- renderVariant(code);
- updateFillChoices();renderHarmony();
+$('add-member').onclick=()=>{if(members.length<8){const m=model();const first=options.find(o=>allowed(m,o[0]));if(first)m.mode=first[0];members.push(m);render()}};
+if(options.length){members.push(model());render()}else{$('status').textContent='Aucun instrument jouable trouvé pour cette chanson.';$('submit').disabled=true}
+function validate(){
+ const c=counts();if(c.guitars>3||c.mics>3||c.drums>1||c.keys>1)return 'Trop de personnes pour le matériel disponible.';
+ const used=new Set();for(const m of members){if(!m.name.trim())return 'Donne un nom à chaque rockstar.';
+ if(instrumentFamily(m.mode)==='guitar'){
+   if(used.has(m.mode)&&availableGuitarRoles.some(role=>!used.has(role)))return 'Toutes les parties Guitare / Rythmique / Basse disponibles doivent être remplies avant un doublon.';
+   used.add(m.mode);
+ }}return null;
 }
-function renderVariant(code){
- const box=document.getElementById('instrument-variant'); box.innerHTML=''; box.hidden=true;
- if(code==='D'){
-   box.hidden=false; box.innerHTML='<span>Type de batterie</span><small>4-Lanes utilise quatre pistes de batterie. Pro Drums ajoute les cymbales comme notes distinctes. Le choix Pro n’est affiché que lorsque le catalogue confirme qu’un chart Pro existe.</small><div class="parts"><button type="button" class="part selected" data-v="4lane">4-Lanes Drums</button></div>';
-   variant='4lane';
- }
- if(code==='K'){
-   box.hidden=false; box.innerHTML='<span>Type de clavier</span><small>5-Keys utilise le mode clavier standard à cinq touches. Pro Keys utilise le clavier Pro et ses notes dédiées. Le choix Pro n’est affiché que lorsque le catalogue confirme qu’un chart Pro existe.</small><div class="parts"><button type="button" class="part selected" data-v="5keys">5-Keys</button></div>';
-   variant='5keys';
- }
-}
-partDefs.forEach(([code,label])=>{
- if(code!=='none'&&!available(code))return;
- const b=document.createElement('button');b.type='button';b.className='part';b.textContent=label;b.onclick=()=>choose(code,b);partWrap.appendChild(b);
+$('request-form').addEventListener('submit',async e=>{
+ e.preventDefault();const status=$('status');status.className='status';
+ const err=validate();if(err){status.className='status error';status.textContent=err;return}
+ if(!song.id||!song.artist||!Number.isFinite(song.duration)||song.duration<=0){status.className='status error';status.textContent='Données de chanson manquantes : retourne au catalogue puis réessaie.';return}
+ const btn=$('submit');btn.disabled=true;status.textContent='Connexion et inscription du groupe…';
+ try{
+  if(!window.supabase)throw Error('Impossible de charger Supabase.');
+  const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+  let {data:{session},error:sessErr}=await sb.auth.getSession();if(sessErr)throw sessErr;
+  if(!session){const result=await sb.auth.signInAnonymously();if(result.error)throw Error('Active les connexions anonymes dans Supabase Auth (Providers → Anonymous). '+result.error.message)}
+  const args={p_song_id:song.id,p_song_title:song.title,p_song_artist:song.artist,p_duration_seconds:song.duration,p_band_name:$('band-name').value.trim(),p_members:members.map(m=>({name:m.name.trim(),mode:m.mode,difficulty:m.difficulty,microphone:m.mode!=='vocals'&&m.microphone,harmony:m.mode==='vocals'||m.microphone?m.harmony:null})),p_guitar_roles:availableGuitarRoles,p_available_parts:availableParts,p_vocal_parts:vocalParts,p_allow_band_fill:$('allow-fill').checked};
+  // PostgreSQL RPC validates the entire band in one transaction.
+  const {data,error}=await sb.rpc('yarg_submit_group_request',args);if(error)throw error;
+  const key='yarg_owned_performance_requests';let owned=[];try{owned=JSON.parse(localStorage.getItem(key)||'[]')}catch{}if(!Array.isArray(owned))owned=[];if(!owned.includes(data))owned.push(data);localStorage.setItem(key,JSON.stringify(owned));
+  status.className='status ok';status.textContent='Votre groupe est dans la file! 🤘';
+  location.href='file.html';
+ }catch(err){console.error(err);status.className='status error';status.textContent=err.message||'Impossible d’inscrire le groupe.';btn.disabled=false}
 });
-[['G','Guitare'],['B','Basse'],['D','Batterie'],['K','Clavier'],['V','Voix']].forEach(([code,label])=>{
- if(!available(code))return;
- const l=document.createElement('label');l.innerHTML=`<input type="checkbox" value="${code}" checked> ${label}`;fills.appendChild(l);
-});
-document.getElementById('allow').onchange=e=>document.getElementById('fill-options').hidden=!e.target.checked;
-fills.addEventListener('change',()=>{document.getElementById('all').checked=[...document.querySelectorAll('#fills label:not([hidden]) input')].every(x=>x.checked)});
-document.getElementById('all').onchange=e=>document.querySelectorAll('#fills label:not([hidden]) input').forEach(x=>x.checked=e.target.checked);
-function remember(id){let ids=[];try{ids=JSON.parse(localStorage.getItem('yarg_owned_performance_requests')||'[]')}catch{}if(!ids.includes(id))ids.push(id);localStorage.setItem('yarg_owned_performance_requests',JSON.stringify(ids))}
-document.getElementById('form').onsubmit=async e=>{
- e.preventDefault();const status=document.getElementById('status'),btn=document.getElementById('submit');status.className='status';
- if(!songId){status.className='status error';status.textContent='Cette chanson ne possède pas son identifiant de catalogue.';return}
- if(!selected){status.className='status error';status.textContent='Choisis ta place dans le groupe, ou demande simplement la toune.';return}
- if(!window.supabase||SUPABASE_URL.includes('COLLE_TON_')){status.className='status error';status.textContent='La connexion à Supabase doit être configurée sur cette page.';return}
- const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
- const {data:settings,error:se}=await client.from('party_settings').select('performance_requests_enabled').eq('id',1).single();
- if(se||!settings?.performance_requests_enabled){status.className='status error';status.textContent="Il n'y a pas de demandes ouvertes pour le moment.";return}
- const listenerOnly=selected==='none', allow=listenerOnly||document.getElementById('allow').checked;
- const payload={
-   song_id:songId,
-   song_title:title,
-   song_artist:artist,
-   song_duration_seconds:Number.isFinite(durationSeconds)&&durationSeconds>0?durationSeconds:null,
-   rockstar_name:document.getElementById('rockstar').value.trim(),
-   band_name:document.getElementById('band').value.trim()||null,
-   requester_instrument:listenerOnly?null:map[selected],
-   requester_difficulty:listenerOnly?null:(selected==='V'?'medium':document.getElementById('difficulty').value),
-   requester_microphone:!listenerOnly&&selected!=='V'&&document.getElementById('mic').checked,
-   vocal_harmony:!listenerOnly&&(selected==='V'||document.getElementById('mic').checked)?Number(document.getElementById('harmony').value):null,
-   vocal_parts:available('V')?Math.max(1,Math.min(3,vocalParts||1)):0,
-   allow_band_fill:allow,
-   fillable_instruments:allow?[...document.querySelectorAll(listenerOnly?'#fills input':'#fills input:checked')].map(x=>map[x.value]):[],
-   status:'waiting'
- };
- btn.disabled=true;status.textContent='Envoi vers la scène…';
- const {data,error}=await client.from('performance_requests').insert(payload).select('id').single();btn.disabled=false;
- if(error){console.error(error);status.className='status error';status.textContent='Oups. La demande ne veut pas monter sur scène. Réessaie.';return}
- remember(data.id);status.className='status ok';status.textContent="C'est dans la file! 🤘";setTimeout(()=>location.href='file.html',900)
-};
-</script>
-</body></html>
+</script></body></html>
