@@ -42,7 +42,8 @@ fieldset{border:1px solid var(--line);border-radius:12px;padding:.85rem 1rem;mar
 <option value="expert">Expert</option>
 </select></div>
 
-<fieldset><legend>Compléter mon groupe</legend><label class="check"><input type="checkbox" id="allow" checked><span>Je veux que d'autres rockstars puissent compléter mon groupe</span></label><div id="fill-options"><small>Quels rôles les autres peuvent-ils prendre?</small><label class="check"><input type="checkbox" id="all" checked><span>Autoriser toutes les places disponibles</span></label><div class="fills" id="fills"></div></div></fieldset>
+<div id="listener-warning" class="status" hidden>‼️ Cette chanson sera jouée seulement si au moins deux rockstars choisissent des instruments pendant qu’elle attend dans la file. Toutes les places disponibles pourront être remplies.</div>
+<fieldset id="fill-fieldset"><legend>Compléter mon groupe</legend><label class="check"><input type="checkbox" id="allow" checked><span>Je veux que d'autres rockstars puissent compléter mon groupe</span></label><div id="fill-options"><small>Quels rôles les autres peuvent-ils prendre?</small><label class="check"><input type="checkbox" id="all" checked><span>Autoriser toutes les places disponibles</span></label><div class="fills" id="fills"></div></div></fieldset>
 <div class="status" id="status"></div><button class="submit" id="submit" type="submit">Ajouter à la file de la soirée 🤘</button>
 </form>
 </main>
@@ -86,10 +87,16 @@ function renderHarmony(){
  for(let i=1;i<=count;i++){const o=document.createElement('option');o.value=String(i);o.textContent=i===1?'Harmonie 1 (chant principal)':`Harmonie ${i}`;select.appendChild(o)}
 }
 function updateFillChoices(){
+ const listener=selected==='none';
+ document.getElementById('fill-fieldset').hidden=listener;
+ document.getElementById('listener-warning').hidden=!listener;
+ const all=document.getElementById('all');
+ all.checked=false;
+
  document.querySelectorAll('#fills input').forEach(input=>{
   const occupied=selected!=='none'&&selected!=='V'&&input.value===selected;
   input.closest('label').hidden=occupied;
-  if(occupied)input.checked=false;
+  input.checked=!occupied;
  });
 }
 document.getElementById('mic').addEventListener('change',renderHarmony);
@@ -124,6 +131,7 @@ partDefs.forEach(([code,label])=>{
  const l=document.createElement('label');l.innerHTML=`<input type="checkbox" value="${code}" checked> ${label}`;fills.appendChild(l);
 });
 document.getElementById('allow').onchange=e=>document.getElementById('fill-options').hidden=!e.target.checked;
+fills.addEventListener('change',()=>{document.getElementById('all').checked=[...document.querySelectorAll('#fills label:not([hidden]) input')].every(x=>x.checked)});
 document.getElementById('all').onchange=e=>document.querySelectorAll('#fills label:not([hidden]) input').forEach(x=>x.checked=e.target.checked);
 function remember(id){let ids=[];try{ids=JSON.parse(localStorage.getItem('yarg_owned_performance_requests')||'[]')}catch{}if(!ids.includes(id))ids.push(id);localStorage.setItem('yarg_owned_performance_requests',JSON.stringify(ids))}
 document.getElementById('form').onsubmit=async e=>{
@@ -134,7 +142,7 @@ document.getElementById('form').onsubmit=async e=>{
  const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
  const {data:settings,error:se}=await client.from('party_settings').select('performance_requests_enabled').eq('id',1).single();
  if(se||!settings?.performance_requests_enabled){status.className='status error';status.textContent="Il n'y a pas de demandes ouvertes pour le moment.";return}
- const allow=document.getElementById('allow').checked, listenerOnly=selected==='none';
+ const listenerOnly=selected==='none', allow=listenerOnly||document.getElementById('allow').checked;
  const payload={
    song_id:songId,
    song_title:title,
@@ -148,7 +156,7 @@ document.getElementById('form').onsubmit=async e=>{
    vocal_harmony:!listenerOnly&&(selected==='V'||document.getElementById('mic').checked)?Number(document.getElementById('harmony').value):null,
    vocal_parts:available('V')?Math.max(1,Math.min(3,vocalParts||1)):0,
    allow_band_fill:allow,
-   fillable_instruments:allow?[...document.querySelectorAll('#fills input:checked')].map(x=>map[x.value]):[],
+   fillable_instruments:allow?[...document.querySelectorAll(listenerOnly?'#fills input':'#fills input:checked')].map(x=>map[x.value]):[],
    status:'waiting'
  };
  btn.disabled=true;status.textContent='Envoi vers la scène…';
