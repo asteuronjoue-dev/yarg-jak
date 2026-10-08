@@ -1344,6 +1344,7 @@
             if (!PARTY_REQUESTS_ENABLED || !CURRENT_SHEET_SONG) return;
             const params = new URLSearchParams({
                 song_id: CURRENT_SHEET_SONG.id,
+                duration_seconds: CURRENT_SHEET_SONG.l || '',
                 title: CURRENT_SHEET_SONG.t || '',
                 artist: CURRENT_SHEET_SONG.a || '',
                 album: CURRENT_SHEET_SONG.al || '',
