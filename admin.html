@@ -111,9 +111,17 @@ header{align-items:flex-start;margin-bottom:27px;padding-bottom:19px}
 .old-guard-choice{display:flex;gap:10px;align-items:center;margin:16px 0 0;color:#e9d2a0;font-weight:800}
 .old-guard-choice input{width:18px;height:18px;accent-color:#ff8a24;margin:0}
 @media(max-width:680px){.legacy-grid{grid-template-columns:1fr}.legacy-form{flex-wrap:wrap}}
+
+/* Party mode styling and clear navigation hierarchy */
+header > strong{font-size:.95rem;font-weight:900;letter-spacing:.01em}
+body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);background-size:300% auto;color:transparent;-webkit-background-clip:text;background-clip:text;animation:yargPartyRainbow 5s linear infinite}
+@keyframes yargPartyRainbow{to{background-position:300% center}}
+.yarg-navigation a[href="admin.html"][hidden]{display:none!important}
+.mc-list{display:grid;gap:12px;margin-top:16px}.mc-row{display:flex;align-items:center;gap:14px;justify-content:space-between;background:#222a2f;border:1px solid #38474d;border-radius:12px;padding:14px 16px}.mc-row button{white-space:nowrap}
+#mc-admin-email{min-width:200px}.mc-add{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.mc-add label{flex:1 1 240px;margin:0}
 </style></head><body><main>
-<header><strong>🎤 YARG · RÉGIE MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" aria-current="page">Régie MC</a></nav></header>
-<h1>Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. Les outils du propriétaire sont réservés au compte autorisé.</p>
+<header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
+<h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. Les outils du propriétaire sont réservés au compte autorisé.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
 <section id="auth" class="card" hidden><h2>Connexion du MC</h2><p>Connecte-toi avec le courriel et le mot de passe de ton compte MC autorisé.</p><form id="sign-in"><label>Adresse courriel<input name="email" type="email" autocomplete="email" placeholder="mc@exemple.com" required></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary">Se connecter</button></form><p class="help">Le compte doit être ajouté à la liste des MC via le script SQL. Cette page n'accepte pas le simple fait de connaître son URL.</p></section>
 <section id="forbidden" class="card" hidden><h2>Accès réservé</h2><p>Ce compte n'est pas autorisé à gérer la soirée. Connecte-toi avec l'adresse du MC.</p><button id="sign-out-forbidden">Changer de compte</button></section>
@@ -128,6 +136,7 @@ header{align-items:flex-start;margin-bottom:27px;padding-bottom:19px}
 <section class="card"><h2>Commencer une nouvelle soirée</h2><p>Clôture la session actuelle et démarre une nouvelle file. L'historique reste en base, mais les demandes de l'ancienne session ne passent pas dans la nouvelle.</p><form id="new-party-form"><label>Nom de la nouvelle soirée<input id="new-party-name" maxlength="100" placeholder="Soirée YARG" required></label><button type="submit" class="danger">Commencer une nouvelle soirée</button></form><p class="help">Par sécurité, le Mode soirée sera désactivé sur la nouvelle session jusqu'à ce que tu l'actives.</p></section></div>
 <section id="owner-tab" hidden>
  <section class="card"><h2>🔒 Gestion des ROCKSTARS</h2><p class="help">Réservé au propriétaire : privilège Initié, titres et crédits historiques. Les crédits ne modifient jamais la file de cette soirée.</p><div id="owner-players" class="owner-list"></div></section>
+ <section class="card"><h2>Comptes MC autorisés</h2><p class="help">Le propriétaire désigne les MC qui peuvent gérer la scène. Un MC n'a pas accès aux outils Propriétaire.</p><form class="mc-add" id="mc-add-form"><label>Courriel du compte MC confirmé<input type="email" id="mc-admin-email" placeholder="mc@exemple.com" required></label><button class="primary" type="submit">Autoriser ce MC</button></form><div id="mc-accounts" class="mc-list"></div></section>
  <section class="card"><h2>Demandes de chansons pour la bibliothèque</h2><p class="help">« Téléchargée » veut dire que la chanson a bien été ajoutée à la bibliothèque. Les notifications par courriel seront ajoutées séparément.</p><div id="owner-library" class="owner-list"></div></section>
 </section>
 </section></main>
@@ -140,6 +149,30 @@ const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let snapshot=null,busy=false,hasLoadedSettings=false;
 const activeStatuses=new Set(['waiting','full']);
+
+async function syncMcControls(){
+  const {data,error}=await sb.rpc('yarg_owner_mc_snapshot');
+  if(error){notice('Liste des MC : '+error.message,true);return;}
+  const host=$('mc-accounts');if(!host)return;
+  host.replaceChildren();
+  for(const mc of (data||[])){
+    const row=document.createElement('div');row.className='mc-row';
+    const detail=document.createElement('div');const strong=document.createElement('strong');strong.textContent=mc.email||'Compte inconnu';
+    const suffix=document.createElement('div');suffix.className='muted';suffix.textContent=mc.is_owner?'Propriétaire · accès permanent':'MC · gestion de la scène';
+    detail.append(strong,suffix);row.append(detail);
+    if(!mc.is_owner){const remove=document.createElement('button');remove.type='button';remove.className='danger';remove.textContent='Révoquer';
+      remove.onclick=async()=>{if(!confirm('Retirer les accès MC de '+mc.email+' ?'))return;const {error}=await sb.rpc('yarg_owner_manage_mc',{p_email:mc.email,p_authorize:false});if(error)notice(error.message,true);else{notice('Accès MC retiré.');await syncMcControls()}};row.append(remove)}
+    host.append(row)
+  }
+}
+$('mc-add-form').addEventListener('submit',async e=>{
+  e.preventDefault();const email=$('mc-admin-email').value.trim();
+  const {error}=await sb.rpc('yarg_owner_manage_mc',{p_email:email,p_authorize:true});
+  if(error)notice(error.message,true);else{$('mc-admin-email').value='';notice('MC autorisé.');await syncMcControls()}
+});
+function partyStillOn(s){return !!s.performance_requests_enabled && (!s.party_mode_until || new Date(s.party_mode_until).getTime()>Date.now())}
+function applyAdminPartyMode(s){document.body.classList.toggle('party-mode',partyStillOn(s));}
+
 function notice(text,error=false){$('notice').textContent=text;$('notice').className='notice '+(error?'error':'ok');}
 function fmt(seconds){const s=Math.max(0,Number(seconds)||0);return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
 function membersFor(r){const m=(snapshot.members||[]).filter(x=>x.performance_request_id===r.id&&!x.withdrawn_at);if(r.is_group_request)return m;return [...(!r.requester_withdrawn_at?[{rockstar_name:r.rockstar_name,instrument_mode:r.requester_instrument_mode||r.requester_instrument,microphone:r.requester_microphone}]:[]),...m]}
@@ -150,7 +183,7 @@ function historyRow(r){return `<div class="row"><div class="grow"><div class="st
 function render(){
  if(!snapshot)return;
  const s=snapshot.settings||{};const session=snapshot.session||{};
- $('session-line').textContent=`${session.name||s.party_name||'Soirée YARG'} · ${s.performance_requests_enabled?'🟢 Demandes ouvertes':'🔴 Demandes fermées'}`;
+ applyAdminPartyMode(s);$('session-line').textContent=`${session.name||s.party_name||'Soirée YARG'} · ${partyStillOn(s)?'🟢 Demandes ouvertes':'🔴 Demandes fermées'}`;
  const rows=snapshot.requests||[];
  const playing=rows.filter(r=>r.status==='playing');
  $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${people(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
@@ -161,7 +194,7 @@ function render(){
  $('history').innerHTML=history.length?history.map(historyRow).join(''):'<div class="empty">Aucun historique pour cette soirée.</div>';
  $('total-done').textContent=String(rows.filter(r=>['completed','played'].includes(r.status)).length);
  $('total-waiting').textContent=String(upcoming.length);$('total-library').textContent=String(snapshot.library_pending||0);
- if(!hasLoadedSettings){$('party-name').value=s.party_name||'';$('mc-name').value=s.mc_name||'';$('party-mode').checked=!!s.performance_requests_enabled;hasLoadedSettings=true;}
+ if(!hasLoadedSettings){$('party-name').value=s.party_name||'';$('mc-name').value=s.mc_name||'';$('party-mode').checked=partyStillOn(s);hasLoadedSettings=true;}
 }
 async function load(){if(busy)return;const {data,error}=await sb.rpc('yarg_admin_snapshot');if(error){notice('Lecture impossible : '+error.message,true);return}snapshot=data;render();}
 async function action(id,name){
@@ -226,6 +259,6 @@ document.addEventListener('change',async e=>{
 $('sign-in').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget;const button=form.querySelector('button');button.disabled=true;try{const {error}=await sb.auth.signInWithPassword({email:form.elements.email.value.trim(),password:form.elements.password.value});if(error)throw error;location.reload()}catch(e){notice(e.message,true)}finally{button.disabled=false}};
 async function logout(){await sb.auth.signOut();location.reload()}
 $('sign-out').onclick=logout;$('sign-out-forbidden').onclick=logout;
-async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;await loadOwner()}$('app').hidden=false;await load();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
+async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;await loadOwner();await syncMcControls()}$('app').hidden=false;await load();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
 init();
 </script></body></html>
