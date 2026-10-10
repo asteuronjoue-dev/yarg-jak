@@ -119,6 +119,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .yarg-navigation a[href="admin.html"][hidden]{display:none!important}
 .mc-list{display:grid;gap:12px;margin-top:16px}.mc-row{display:flex;align-items:center;gap:14px;justify-content:space-between;background:#222a2f;border:1px solid #38474d;border-radius:12px;padding:14px 16px}.mc-row button{white-space:nowrap}
 #mc-admin-email{min-width:200px}.mc-add{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.mc-add label{flex:1 1 240px;margin:0}
+.preopen-control{margin-top:25px;border-top:1px solid var(--line);padding-top:23px}.preopen-control h3{margin-bottom:10px}.preopen-control button{margin-top:10px}
 </style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. Les outils du propriétaire sont réservés au compte autorisé.</p>
@@ -127,13 +128,21 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section id="forbidden" class="card" hidden><h2>Accès réservé</h2><p>Ce compte n'est pas autorisé à gérer la soirée. Connecte-toi avec l'adresse du MC.</p><button id="sign-out-forbidden">Changer de compte</button></section>
 <section id="app" hidden>
 <div class="flex"><div id="session-line" class="muted">Soirée</div><button id="sign-out" class="quiet">Déconnexion</button></div>
-<div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">⚙️ Réglages</button><button class="tab" id="owner-tab-button" data-tab="owner" aria-selected="false" hidden>🔒 Propriétaire</button></div>
+<div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">⚙️ Réglages</button><button class="tab" data-tab="playlists" aria-selected="false">🎶 Playlists</button><button class="tab" id="owner-tab-button" data-tab="owner" aria-selected="false" hidden>🔒 Propriétaire</button></div>
 <div id="scene-tab"><div class="stats"><div class="stat"><b id="total-done">0</b><small>Chansons terminées</small></div><div class="stat"><b id="total-waiting">0</b><small>Demandes en attente</small></div><div class="stat"><b id="total-library">0</b><small>Demandes bibliothèque</small></div></div>
 <section class="card stage"><div class="flex"><h2>Sur scène</h2><span class="pill live">● EN COURS</span></div><div id="playing"></div></section>
 <section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section></div>
 <div id="history-tab" hidden><section class="card"><h2>Chansons passées / sautées</h2><p class="help">Une chanson passée peut retourner dans la file. Une chanson terminée demeure dans l'historique de cette soirée.</p><div id="history"></div></section></div>
-<div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form></section>
+<div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><div class="preopen-control"><h3>Soirée et préinscriptions</h3><p id="preopen-status" class="help">Active le Mode soirée pour recevoir les demandes à l’avance, sans compte à rebours. Le jour J, lance la fenêtre de 12 heures.</p><button type="button" id="begin-live-party" class="primary" hidden>▶ Démarrer la soirée (12 h)</button></div></section>
 <section class="card"><h2>Commencer une nouvelle soirée</h2><p>Clôture la session actuelle et démarre une nouvelle file. L'historique reste en base, mais les demandes de l'ancienne session ne passent pas dans la nouvelle.</p><form id="new-party-form"><label>Nom de la nouvelle soirée<input id="new-party-name" maxlength="100" placeholder="Soirée YARG" required></label><button type="submit" class="danger">Commencer une nouvelle soirée</button></form><p class="help">Par sécurité, le Mode soirée sera désactivé sur la nouvelle session jusqu'à ce que tu l'actives.</p></section></div>
+<section id="playlists-tab" hidden>
+  <section class="card">
+    <h2>🎶 Playlists publiques</h2>
+    <p class="help">Les MC autorisés peuvent créer des playlists visibles par tous. Pour y ajouter une chanson, ouvre sa fiche dans le Catalogue.</p>
+    <form id="playlist-create"><label>Nom de la playlist<input id="playlist-name" maxlength="100" required placeholder="Ex. Classiques Rock Band"></label><label>Description (facultative)<input id="playlist-description" maxlength="500" placeholder="Ex. Les incontournables de la soirée"></label><button class="primary" type="submit">Créer la playlist</button></form>
+    <div id="admin-playlists" class="owner-list"></div>
+  </section>
+</section>
 <section id="owner-tab" hidden>
  <section class="card"><h2>🔒 Gestion des ROCKSTARS</h2><p class="help">Réservé au propriétaire : privilège Initié, titres et crédits historiques. Les crédits ne modifient jamais la file de cette soirée.</p><div id="owner-players" class="owner-list"></div></section>
  <section class="card"><h2>Comptes MC autorisés</h2><p class="help">Le propriétaire désigne les MC qui peuvent gérer la scène. Un MC n'a pas accès aux outils Propriétaire.</p><form class="mc-add" id="mc-add-form"><label>Courriel du compte MC confirmé<input type="email" id="mc-admin-email" placeholder="mc@exemple.com" required></label><button class="primary" type="submit">Autoriser ce MC</button></form><div id="mc-accounts" class="mc-list"></div></section>
@@ -183,7 +192,12 @@ function historyRow(r){return `<div class="row"><div class="grow"><div class="st
 function render(){
  if(!snapshot)return;
  const s=snapshot.settings||{};const session=snapshot.session||{};
- applyAdminPartyMode(s);$('session-line').textContent=`${session.name||s.party_name||'Soirée YARG'} · ${partyStillOn(s)?'🟢 Demandes ouvertes':'🔴 Demandes fermées'}`;
+ applyAdminPartyMode(s);
+ const preregistration = partyStillOn(s) && !s.party_mode_until;
+ const running = partyStillOn(s) && !!s.party_mode_until;
+ $('session-line').textContent=`${session.name||s.party_name||'Soirée YARG'} · ${preregistration?'🟢 Préinscriptions ouvertes':running?'🟠 Soirée en cours':'🔴 Demandes fermées'}`;
+ $('preopen-status').textContent=preregistration?'Préinscriptions ouvertes. Le décompte de 12 heures n’a pas commencé.':running?`La fenêtre de 12 heures se termine le ${new Date(s.party_mode_until).toLocaleString('fr-CA')}.`:partyStillOn(s)?'Demandes ouvertes.':'Pour préparer une soirée, active le Mode soirée et enregistre les réglages.';
+ $('begin-live-party').hidden=!preregistration;
  const rows=snapshot.requests||[];
  const playing=rows.filter(r=>r.status==='playing');
  $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${people(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
@@ -203,7 +217,11 @@ async function action(id,name){
  busy=true;try{const {error}=await sb.rpc('yarg_admin_performance_action',{p_request_id:id,p_action:name});if(error)throw error;notice('Action enregistrée.');busy=false;await load();}catch(e){busy=false;notice(e.message,true)}
 }
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(b&&!busy)action(b.dataset.id,b.dataset.action)});
-document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;});
+document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings','playlists','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;});
+$('begin-live-party').onclick=async()=>{
+ if(!confirm('Démarrer la soirée ? Le système acceptera les nouvelles demandes pendant encore 12 heures, puis les fermera automatiquement.'))return;
+ busy=true;try{const {error}=await sb.rpc('yarg_admin_begin_live_party');if(error)throw error;notice('Soirée lancée : 12 heures restantes.');busy=false;await load();}catch(e){busy=false;notice(e.message,true)}
+};
 $('refresh').onclick=()=>load();
 $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {error}=await sb.rpc('yarg_admin_save_settings',{p_name:$('party-name').value.trim(),p_mc:$('mc-name').value.trim(),p_party_mode:$('party-mode').checked});if(error)throw error;notice('Réglages enregistrés.');hasLoadedSettings=false;busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
 $('new-party-form').onsubmit=async e=>{e.preventDefault();const name=$('new-party-name').value.trim();if(!name)return;if(!confirm(`Commencer « ${name} » ? Les demandes de l'ancienne soirée ne seront plus dans la file actuelle.`))return;busy=true;try{const {error}=await sb.rpc('yarg_admin_new_party',{p_name:name});if(error)throw error;notice('Nouvelle soirée créée ! Active le Mode soirée pour les demandes.');hasLoadedSettings=false;$('new-party-name').value='';busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
@@ -259,6 +277,41 @@ document.addEventListener('change',async e=>{
 $('sign-in').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget;const button=form.querySelector('button');button.disabled=true;try{const {error}=await sb.auth.signInWithPassword({email:form.elements.email.value.trim(),password:form.elements.password.value});if(error)throw error;location.reload()}catch(e){notice(e.message,true)}finally{button.disabled=false}};
 async function logout(){await sb.auth.signOut();location.reload()}
 $('sign-out').onclick=logout;$('sign-out-forbidden').onclick=logout;
-async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;await loadOwner();await syncMcControls()}$('app').hidden=false;await load();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
+// Public playlist editor: authorization is enforced by Supabase RLS on all mutations.
+async function loadMcPlaylists(){
+ const host=$('admin-playlists'); if(!host)return;
+ const [{data:pls,error:pe},{data:songs,error:se}]=await Promise.all([
+ sb.from('yarg_public_playlists').select('id,name,description').order('name'),
+ sb.from('yarg_public_playlist_songs').select('playlist_id,song_id,song_title,song_artist').order('added_at',{ascending:false})
+ ]);
+ if(pe||se){host.textContent='Impossible de charger les playlists : '+(pe||se).message;return;}
+ host.replaceChildren();
+ for(const p of pls||[]){
+   const wrapper=document.createElement('div');wrapper.className='owner-item';
+   const title=document.createElement('strong');title.textContent=p.name;
+   const description=document.createElement('div');description.className='muted';description.textContent=p.description||'';
+   const count=document.createElement('div');count.className='muted';const items=(songs||[]).filter(s=>s.playlist_id===p.id);count.textContent=items.length+' chanson(s)';
+   const del=document.createElement('button');del.className='danger';del.textContent='Supprimer cette playlist';
+   del.onclick=async()=>{if(!confirm('Supprimer la playlist « '+p.name+' » ?'))return;const {error}=await sb.from('yarg_public_playlists').delete().eq('id',p.id);if(error)notice(error.message,true);else await loadMcPlaylists();};
+   wrapper.append(title,description,count,del);
+   for(const s of items){const line=document.createElement('div');line.className='row';
+     const name=document.createElement('span');name.className='grow';name.textContent=s.song_title+' — '+s.song_artist;
+     const remove=document.createElement('button');remove.className='quiet';remove.textContent='Retirer';
+     remove.onclick=async()=>{const {error}=await sb.from('yarg_public_playlist_songs').delete().eq('playlist_id',p.id).eq('song_id',s.song_id);if(error)notice(error.message,true);else await loadMcPlaylists();};
+     line.append(name,remove);wrapper.append(line);
+   }
+   host.append(wrapper);
+ }
+ if(!(pls||[]).length)host.textContent='Aucune playlist pour le moment.';
+}
+$('playlist-create').onsubmit=async e=>{
+ e.preventDefault();const name=$('playlist-name').value.trim(),description=$('playlist-description').value.trim();
+ if(!name)return;
+ const {data:{user}}=await sb.auth.getUser();if(!user)return;
+ const {error}=await sb.from('yarg_public_playlists').insert({name,description,created_by:user.id});
+ if(error){notice('Création impossible : '+error.message,true);return;}
+ $('playlist-name').value='';$('playlist-description').value='';notice('Playlist créée. Ajoute des chansons depuis le catalogue.');await loadMcPlaylists();
+};
+async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;await loadOwner();await syncMcControls()}$('app').hidden=false;await load();await loadMcPlaylists();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
 init();
 </script></body></html>
