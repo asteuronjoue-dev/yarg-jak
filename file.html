@@ -403,8 +403,9 @@ async function loadSettings(){
     .eq("id",1).single();
   if(error) throw error;
   settings=data;settings.performance_requests_enabled=!!data.performance_requests_enabled && (!data.party_mode_until || new Date(data.party_mode_until).getTime()>Date.now());
-  $("#partyTitle").textContent = data.party_name || "Party YARG";
+  $("#partyTitle").textContent = settings.performance_requests_enabled ? (data.party_name || "Party YARG") : "File de la soirée";
   $("#mcName").textContent = data.mc_name || "Mystère";
+  const mcLine = $("#mcName").closest(".mc"); if(mcLine) mcLine.hidden = !settings.performance_requests_enabled;
   $("#partyTitle").classList.toggle("party-rainbow", !!data.performance_requests_enabled);
 }
 
