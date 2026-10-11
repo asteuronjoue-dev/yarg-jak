@@ -111,9 +111,9 @@
       .check-grid { grid-template-columns: 1fr; }
       .card { padding: 18px; }
     }
-  </style>
+  .yarg-newbie-note{background:#163039;border:1px solid #328585;border-radius:12px;padding:14px 16px;margin:12px auto;color:#e5f5f3;max-width:1000px}.yarg-newbie-note button{float:right;background:#284047;color:white;border:1px solid #4f8086;border-radius:8px;padding:6px 9px}.yarg-newbie-note[hidden]{display:none!important}</style>
 </head>
-<body>
+<body><aside id="newbie-note-yarg_tips_library_v1" class="yarg-newbie-note"><button type="button" onclick="localStorage.setItem('yarg_tips_library_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>💌 Demander une chanson</strong><p>Cette page sert à proposer de nouveaux ajouts à la bibliothèque YARG, pas à inscrire une chanson à la soirée en cours. Mets un courriel valide pour recevoir le résultat de ta demande.</p></aside><script>if(localStorage.getItem('yarg_tips_library_v1'))document.getElementById('newbie-note-yarg_tips_library_v1').hidden=true</script>
   <main class="wrap">
     <header class="top">
       <a class="back" href="index.html">← Retour au catalogue</a>
@@ -133,7 +133,7 @@
       <div class="grid">
         <div>
           <label class="required" for="name">Nom</label>
-          <input id="name" name="name" autocomplete="name" required maxlength="120">
+          <input id="name" name="name" autocomplete="name" required maxlength="120"><p class="help">Qui fait la demande? Juste un nom pour que je sache c’est qui, ça peut être un surnom.</p>
         </div>
 
         <div>
@@ -144,12 +144,12 @@
 
         <div>
           <label class="required" for="title">Titre de la chanson</label>
-          <input id="title" name="title" required maxlength="200">
+          <input id="title" name="title" required maxlength="200"><p class="help">Ta demande m’aide à trouver l’artiste; je chercherai également ses autres chansons disponibles pour YARG.</p>
         </div>
 
         <div>
           <label class="required" for="artist">Artiste</label>
-          <input id="artist" name="artist" required maxlength="200">
+          <input id="artist" name="artist" required maxlength="200"><p class="help">Je chercherai aussi les autres chansons de cet artiste et les téléchargerai si je trouve des versions jouables, même si je ne trouve pas la chanson demandée.</p>
         </div>
 
         <div class="full">
@@ -255,9 +255,7 @@
         const { createClient } = window.supabase;
         const client = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-        const { error } = await client
-          .from("library_requests")
-          .insert(data);
+        const { error } = await client.rpc("yarg_submit_library_request", {p_request: data});
 
         if (error) throw error;
 
