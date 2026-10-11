@@ -3,7 +3,16 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mon Profil de ROCKSTAR · YARG Party</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+async function yargProfileBandInit(){
+ const box=document.getElementById('band-invites'), opt=document.getElementById('band-opt-in');if(!box||!opt||!state?.user||!state.profile)return;
+ const {data:setting}=await sb.from('rockstar_profiles').select('listed_for_bands').eq('user_id',state.user.id).maybeSingle();opt.checked=!!setting?.listed_for_bands;
+ opt.onchange=async()=>{const {error}=await sb.from('rockstar_profiles').update({listed_for_bands:opt.checked}).eq('user_id',state.user.id);if(error)message(error.message,true)};
+ async function refresh(){const {data,error}=await sb.rpc('yarg_my_band_invitations');if(error){box.textContent=error.message;return}box.replaceChildren();if(!data?.length){box.textContent='Aucune invitation en attente.';return}for(const inv of data){const p=document.createElement('p');p.textContent=inv.song_title+' — '+inv.song_artist+' · '+inv.rockstar_name+' ('+inv.instrument_mode+') ';for(const [label,accept] of [['Accepter',true],['Refuser',false]]){const b=document.createElement('button');b.textContent=label;b.onclick=async()=>{const {error:e}=await sb.rpc('yarg_respond_band_invitation',{p_invitation_id:inv.id,p_accept:accept});if(e){message(e.message,true)}else{await refresh();await fetchStats();renderStats()}};p.append(b)}box.append(p)}}
+ document.getElementById('reload-invites').onclick=refresh;await refresh();
+}
+const yargOriginalFetchProfile=fetchProfile;fetchProfile=async function(){await yargOriginalFetchProfile();if(state.profile)await yargProfileBandInit()};
+</script>
 <style>
 :root{color-scheme:dark;--bg:#071016;--panel:#101b23;--panel2:#14232d;--stroke:#304550;--muted:#acc0ca;--text:#f5f8fa;--pink:#ff5477;--teal:#35d8c8;--gold:#f7c967}
 *{box-sizing:border-box}body{margin:0;background:#101214;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -27,9 +36,9 @@ header{padding-bottom:20px;border-bottom:1px solid #354047;margin-bottom:32px}
 body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);background-size:300% auto;color:transparent;background-clip:text;-webkit-background-clip:text;animation:yargPartyRainbow 5s linear infinite}
 @keyframes yargPartyRainbow{to{background-position:300% center}}
 .yarg-navigation a[href="admin.html"][hidden]{display:none!important}
-</style>
+.yarg-newbie-note{background:#163039;border:1px solid #328585;border-radius:12px;padding:14px 16px;margin:12px auto;color:#e5f5f3;max-width:1000px}.yarg-newbie-note button{float:right;background:#284047;color:white;border:1px solid #4f8086;border-radius:8px;padding:6px 9px}.yarg-newbie-note[hidden]{display:none!important}</style>
 </head>
-<body>
+<body><aside id="newbie-note-yarg_tips_profile_v1" class="yarg-newbie-note"><button type="button" onclick="localStorage.setItem('yarg_tips_profile_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🌟 Ton profil Rockstar</strong><p>Un compte est facultatif. Si tu en crées un, tes titres et statistiques peuvent suivre ton compte entre les soirées. Pour créditer une co-star, accepte ses invitations dans ton profil.</p></aside><script>if(localStorage.getItem('yarg_tips_profile_v1'))document.getElementById('newbie-note-yarg_tips_profile_v1').hidden=true</script>
 <main>
 <header><span>🎸 <strong>ROCKSTAR CLUB</strong></span><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html" aria-current="page">Mon profil</a><a href="admin.html" hidden>Régie MC</a></nav></header>
 <h1 id="profile-heading">Mon Profil de ROCKSTAR</h1>
@@ -42,7 +51,7 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <div class="card"><div class="topline"><div><h2 id="shown-name">Rockstar</h2><div class="meta"><span class="tag" id="initie-tag">Statut : à déterminer</span><span class="featured" id="equipped-preview"></span></div></div><button id="logout" class="small ghost">Se déconnecter</button></div><p id="privilege-note" class="hint"></p>
 <form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><button type="submit" class="primary" style="margin-top:14px">Enregistrer mon profil</button></form></div>
 <div id="account-warning" class="disclaimer" hidden>Les statistiques ne couvrent pour l'instant que les prestations reliées explicitement à ton profil. Les anciennes demandes faites sans compte ne sont pas rattachées automatiquement.</div>
-<div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div>
+<div class="card"><h2>Co-stars et statistiques</h2><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="band-opt-in"> Apparaître dans la liste des co-stars (nom de Rockstar seulement)</label><p class="hint">Pour éviter que quelqu’un d’autre utilise ton compte sans permission, les invitations demandent ta confirmation. Les anciennes performances sans association ne sont pas créditées automatiquement.</p><button id="reload-invites" type="button">Vérifier mes invitations</button><div id="band-invites"></div></div><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div>
 <div class="card"><div class="topline"><h2>Collection de titres</h2><span class="hint">Choisis un titre pour l'afficher avec ton nom dans la file.</span></div><p class="hint">« Initié » apparaît toujours comme statut de privilège ici, même si tu équipes un autre titre. Les titres cosmétiques n'ajoutent aucun avantage à la file.</p><div id="titles"></div></div>
 </section>
 <footer><p class="hint">Profil facultatif • Tu peux toujours participer sans compte.</p></footer>
@@ -133,6 +142,15 @@ async function initialize(){
  }catch(err){$('auth').hidden=false;message('Erreur de profil : '+err.message,true)}
 }
 initialize();
+
+async function yargProfileBandInit(){
+ const box=document.getElementById('band-invites'), opt=document.getElementById('band-opt-in');if(!box||!opt||!state?.user||!state.profile)return;
+ const {data:setting}=await sb.from('rockstar_profiles').select('listed_for_bands').eq('user_id',state.user.id).maybeSingle();opt.checked=!!setting?.listed_for_bands;
+ opt.onchange=async()=>{const {error}=await sb.from('rockstar_profiles').update({listed_for_bands:opt.checked}).eq('user_id',state.user.id);if(error)message(error.message,true)};
+ async function refresh(){const {data,error}=await sb.rpc('yarg_my_band_invitations');if(error){box.textContent=error.message;return}box.replaceChildren();if(!data?.length){box.textContent='Aucune invitation en attente.';return}for(const inv of data){const p=document.createElement('p');p.textContent=inv.song_title+' — '+inv.song_artist+' · '+inv.rockstar_name+' ('+inv.instrument_mode+') ';for(const [label,accept] of [['Accepter',true],['Refuser',false]]){const b=document.createElement('button');b.textContent=label;b.onclick=async()=>{const {error:e}=await sb.rpc('yarg_respond_band_invitation',{p_invitation_id:inv.id,p_accept:accept});if(e){message(e.message,true)}else{await refresh();await fetchStats();renderStats()}};p.append(b)}box.append(p)}}
+ document.getElementById('reload-invites').onclick=refresh;await refresh();
+}
+const yargOriginalFetchProfile=fetchProfile;fetchProfile=async function(){await yargOriginalFetchProfile();if(state.profile)await yargProfileBandInit()};
 </script>
 
 <script>
@@ -149,5 +167,14 @@ initialize();
   if(!error&&allowed)links.forEach(a=>a.hidden=false);
  }catch(e){console.warn('Vérification MC impossible',e)}
 })();
+
+async function yargProfileBandInit(){
+ const box=document.getElementById('band-invites'), opt=document.getElementById('band-opt-in');if(!box||!opt||!state?.user||!state.profile)return;
+ const {data:setting}=await sb.from('rockstar_profiles').select('listed_for_bands').eq('user_id',state.user.id).maybeSingle();opt.checked=!!setting?.listed_for_bands;
+ opt.onchange=async()=>{const {error}=await sb.from('rockstar_profiles').update({listed_for_bands:opt.checked}).eq('user_id',state.user.id);if(error)message(error.message,true)};
+ async function refresh(){const {data,error}=await sb.rpc('yarg_my_band_invitations');if(error){box.textContent=error.message;return}box.replaceChildren();if(!data?.length){box.textContent='Aucune invitation en attente.';return}for(const inv of data){const p=document.createElement('p');p.textContent=inv.song_title+' — '+inv.song_artist+' · '+inv.rockstar_name+' ('+inv.instrument_mode+') ';for(const [label,accept] of [['Accepter',true],['Refuser',false]]){const b=document.createElement('button');b.textContent=label;b.onclick=async()=>{const {error:e}=await sb.rpc('yarg_respond_band_invitation',{p_invitation_id:inv.id,p_accept:accept});if(e){message(e.message,true)}else{await refresh();await fetchStats();renderStats()}};p.append(b)}box.append(p)}}
+ document.getElementById('reload-invites').onclick=refresh;await refresh();
+}
+const yargOriginalFetchProfile=fetchProfile;fetchProfile=async function(){await yargOriginalFetchProfile();if(state.profile)await yargProfileBandInit()};
 </script>
 </body></html>
