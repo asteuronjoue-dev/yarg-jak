@@ -109,6 +109,16 @@
       header{padding-top:20px}
     }
   
+/* Historical accordions and explicit closed-party state. */
+[hidden]{display:none!important}
+.hall-party{background:#181c1f;border:1px solid #30383d;border-radius:16px;overflow:hidden}
+.hall-party summary{padding:18px;cursor:pointer;font-weight:850;list-style-position:inside}
+.hall-party[open] summary{border-bottom:1px solid #30383d;color:#78eee5}
+.hall-sub{display:block;font-weight:500;font-size:13px;color:#aeb8bd;margin:7px 0 0 20px}
+.hall-content{padding:8px 22px 18px;overflow-wrap:anywhere}
+.hall-content h3{font-size:15px;color:#ffad42;margin:18px 0 8px}
+.hall-content li{padding:4px 0;line-height:1.5}
+.history-card .song{font-size:16px}
 /* Navigation partagée : visible sur toutes les pages, sans bloquer l'accès invité. */
 .yarg-navigation{display:flex;align-items:center;justify-content:flex-end;gap:.4rem;flex-wrap:wrap}
 .yarg-navigation a{color:#eaf1f3;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #3b4b53;border-radius:10px;padding:.48rem .7rem;background:#1b2429;font-size:.85rem;font-weight:800;white-space:nowrap}
@@ -116,14 +126,14 @@
 .yarg-navigation a[aria-current="page"]{background:#ff8a24;color:#111;border-color:#ff8a24}
 @media(max-width:670px){.yarg-navigation{width:100%;justify-content:stretch}.yarg-navigation a{flex:1 1 calc(50% - .4rem);font-size:.8rem;padding:.5rem .3rem}}
 .yarg-navigation a[href="admin.html"][hidden]{display:none!important}
-</style>
+.yarg-up-next{position:sticky;top:0;z-index:50;text-align:center;font-weight:1000;font-size:clamp(18px,3.5vw,28px);padding:16px;color:#111;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);background-size:200% 100%;animation:partyRainbowBg 1.5s linear infinite}.newbie-tips{max-width:1100px;margin:16px auto;padding:16px;border:1px solid #2f7776;border-radius:13px;background:#163039}.newbie-tips button{float:right;border:1px solid #46636b;background:#203a40;color:white;border-radius:8px;padding:6px}</style>
 </head>
 <body>
 <header>
   <div class="wrap">
     <div class="topline">
       <div>
-        <h1 id="partyTitle">File de la soirée</h1>
+        <h1 id="partyTitle">Les Rockstars sur scène</h1>
         <div class="mc">🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
       </div>
       <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html" aria-current="page">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a></nav>
@@ -131,14 +141,14 @@
   </div>
 </header>
 
-<main class="wrap">
+<div id="yarg-up-next" hidden class="yarg-up-next" role="alert"></div><aside id="yarg-tips-file" class="newbie-tips"><button id="yarg-tip-file-off" type="button">Ne plus afficher</button><strong>🎤 Comment fonctionne la file?</strong><p>Les demandes sont classées selon le temps de scène déjà consommé : les chansons longues ajoutent plus de points après avoir été jouées. Deux chansons de suite maximum par demandeur ou artiste si d’autres choix sont possibles. Tu peux rejoindre les groupes ouverts sans points supplémentaires. Les demandes de chacun respectent leur ordre d’inscription.</p></aside><main class="wrap">
   <div class="error" id="errorBox"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
 
-  <section>
+  <section id="mineSection">
     <div class="section-head">
       <div>
-        <h2>🎸 Mes demandes</h2>
+        <h2>🎸 Mes Demandes</h2>
         <div class="hint">Tes prestations sont affichées selon l’ordre équitable de la soirée.</div>
       </div>
       <button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button>
@@ -146,15 +156,30 @@
     <div class="cards" id="myRequests"></div>
   </section>
 
-  <section>
+  <section id="joinSection">
     <div class="section-head">
       <div>
-        <h2>🎤 File de la soirée</h2>
-        <div class="hint">Toutes les chansons demandées pour ce party, mises à jour en direct.</div>
+        <h2>🎤 Chansons que je peux rejoindre</h2>
+        <div class="hint">Prestations ouvertes à d’autres rockstars, selon leur rang dans la file.</div>
       </div>
     </div>
-    <p class="fair-note">🎸 Rotation équitable : chaque rockstar passe une première fois avant d’accumuler les tours suivants, autant que possible.</p>
+    <p class="fair-note">⚖️ Le temps de scène consommé détermine la priorité. Tes demandes jouent toujours dans leur ordre d’inscription.</p>
     <div class="cards" id="publicQueue"></div>
+  </section>
+  <section id="fullSection">
+    <div class="section-head"><div><h2>🔒 Chansons complètes</h2><div class="hint">Groupes fermés ou sans place restante.</div></div></div>
+    <div class="cards" id="fullQueue"></div>
+  </section>
+  <section id="historySection">
+    <div class="section-head"><div><h2>🎶 Historique</h2><div class="hint">Chansons terminées pendant la soirée actuelle.</div></div></div>
+    <div class="cards" id="currentHistory"></div>
+  </section>
+  <section id="closedSection" hidden>
+    <div class="empty">🎤 Aucune soirée en préparation pour le moment : les demandes sont fermées. <a href="index.html">Ajoute des chansons à tes favoris</a> pour la prochaine fois!</div>
+  </section>
+  <section id="hallSection">
+    <div class="section-head"><div><h2>🏆 Hall of Fame</h2><div class="hint">Les anciennes soirées, leurs setlists, les rockstars et le temps de scène. Ouvre une soirée pour consulter les détails.</div></div></div>
+    <div id="hallOfFame" class="cards"><div class="empty">Chargement des archives…</div></div>
   </section>
 </main>
 
@@ -164,7 +189,7 @@ const SUPABASE_URL = "https://xbhfjzurytdknbqvksjq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM";
 
 const TURNOVER_SECONDS = 120;
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);if(localStorage.getItem('yarg_tips_file_v1'))document.getElementById('yarg-tips-file').hidden=true;document.getElementById('yarg-tip-file-off').onclick=()=>{document.getElementById('yarg-tips-file').hidden=true;localStorage.setItem('yarg_tips_file_v1','1')};
 
 const OWNED_REQUESTS_KEY = "yarg_owned_performance_requests";
 function ownedRequestIds(){
@@ -177,6 +202,8 @@ function isMyRequest(r){return ownedRequestIds().has(String(r.id));}
 let settings = null;
 let requests = [];
 let members = [];
+let completedRequests = [];
+let hallSessions = [];
 let fairRanks = new Map(); // authoritative positions calculated by Supabase
 let previousStates = new Map();
 let currentGuestUid=null;
@@ -185,7 +212,7 @@ const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
 function joinedRequestIds(){try{return new Set(JSON.parse(localStorage.getItem(JOINED_REQUESTS_KEY)||"[]").map(String))}catch{return new Set()}}
 function rememberJoined(id){const ids=joinedRequestIds();ids.add(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
 function isMyPerformance(r){return (currentGuestUid && r.guest_user_id===currentGuestUid) ||
-  membersFor(r.id).some(m=>currentGuestUid && m.guest_user_id===currentGuestUid) ||
+  membersFor(r.id).some(m=>currentGuestUid && (m.guest_user_id===currentGuestUid||m.rockstar_profile_id===currentGuestUid)) ||
   isMyRequest(r)||joinedRequestIds().has(String(r.id))}
 
 async function ensureGuestSession(){
@@ -258,17 +285,18 @@ function calculateEtas(queue){
 
 function membersFor(id){ return members.filter(m => m.performance_request_id === id); }
 
-function memberLine(name,instrument,difficulty,microphone,harmony,instrumentMode){
+function memberLine(name,instrument,difficulty,microphone,harmony,instrumentMode,guitarChoice){
  const shown = instrumentMode || instrument;
  const inst=instruments[shown]||instruments[instrument]||shown||"Auditeur";
  const singing=instrument==="vocals"||microphone;
  const vocal=singing?` · Harmonie ${harmony||1} (voix : Moyen)`:"";
  const diff=instrument==="vocals"||!instrument?"":` · ${difficulties[difficulty]||difficulty||"—"}`;
- return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}</div>`;
+ const guitarLabel=({"osp uze":"OSPUZE - Rockband",crkd:"Blue Guitar - CRKD",sunburst:"Sunburst - Guitar Hero"})[guitarChoice];
+ return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 Réservée : ${esc(guitarLabel)}`:""}</div>`;
 }
 function memberHtml(m,r){
   const canWithdraw=!!currentGuestUid && m.guest_user_id===currentGuestUid && ['waiting','full'].includes(r.status);
-  const base=memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.instrument_mode);
+  const base=memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.instrument_mode,m.preferred_guitar);
   if(!canWithdraw)return base;
   const button=`<button class="withdraw-member" type="button" data-leave-member="${esc(m.id)}" data-leave-name="${esc(m.rockstar_name)}">Me retirer</button>`;
   return base.replace('</div>',button+'</div>');
@@ -361,7 +389,7 @@ function cardHtml(r, eta, mine=false){
     ? `<div class="skittle-banner">🌈🔥 EN COURS — C'EST À TOI! 🔥🌈</div>`
     : "";
 
-  return `<article class="${classes}" data-request-id="${esc(r.id)}">
+  return `<article class="${classes}" id="demande-${esc(r.id)}" data-request-id="${esc(r.id)}">
     ${skittles}
     ${!isPlaying && fairPosition ? `<div class="fair-rank">🎵 Passage #${fairPosition} dans la file</div>` : ""}
     <div class="songline">
@@ -381,20 +409,64 @@ function cardHtml(r, eta, mine=false){
   </article>`;
 }
 
+function historicalCard(r){
+ const band=membersFor(r.id).map(m=>m.rockstar_name).filter(Boolean);
+ const names=[...(r.is_group_request?[]:[r.rockstar_name]),...band].filter(Boolean);
+ const unique=[...new Set(names)];
+ return `<article class="card history-card"><div class="song">${esc(r.song_title)}</div>
+ <div class="artist">${esc(r.song_artist||'')} · ${esc(unique.join(', ')||r.rockstar_name||'')} · ${formatDuration(r.song_duration_seconds)}</div></article>`;
+}
+function formatDuration(sec){const n=Math.max(0,Number(sec)||0);return `${Math.floor(n/60)} min ${String(n%60).padStart(2,'0')} s`;}
 function render(){
-  const queue = sortedActive();
-  const etas = calculateEtas(queue);
-
-  const mine = queue.filter(isMyPerformance);
-  $("#myRequests").innerHTML = mine.length
-    ? mine.map(r => cardHtml(r,etas.get(r.id),true)).join("")
-    : `<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment. Va donc nous en pousser une p'tite.</div>`;
-
-  $("#publicQueue").innerHTML = queue.length
-    ? queue.map(r => cardHtml(r,etas.get(r.id),false)).join("")
-    : `<div class="empty">La file est vide. Quelqu'un doit bien avoir envie de massacrer une chanson, non? 🎸</div>`;
-
-  maybeNotify(queue, etas);
+ const open=!!settings?.performance_requests_enabled;
+ for(const id of ['mineSection','joinSection','fullSection','historySection']) $("#"+id).hidden=!open;
+ $("#closedSection").hidden=open;
+ if(!open)return;
+ const queue=sortedActive();const etas=calculateEtas(queue);
+ const mine=queue.filter(isMyPerformance);
+ const canJoin=r=>r.status!=='playing' && openInstruments(r).length>0 && !isMyPerformance(r);
+ const join=queue.filter(canJoin);
+ const full=queue.filter(r=>r.status==='playing'||openInstruments(r).length===0);
+ $("#myRequests").innerHTML=mine.length?mine.map(r=>cardHtml(r,etas.get(r.id),true)).join(''):
+   `<div class="empty">Aucune demande de ton côté pour l’instant.</div>`;
+ $("#publicQueue").innerHTML=join.length?join.map(r=>cardHtml(r,etas.get(r.id),false)).join(''):
+   `<div class="empty">Aucun groupe ouvert en ce moment.</div>`;
+ $("#fullQueue").innerHTML=full.length?full.map(r=>cardHtml(r,etas.get(r.id),false)).join(''):
+   `<div class="empty">Aucune chanson complète pour le moment.</div>`;
+ $("#currentHistory").innerHTML=completedRequests.length?completedRequests.map(historicalCard).join(''):
+   `<div class="empty">Aucune chanson terminée pour l’instant.</div>`;
+ maybeNotify(queue,etas);
+ const hash=decodeURIComponent(location.hash.slice(1));
+ if(hash.startsWith('demande-')){const target=document.getElementById(hash);if(target&& !target.dataset.scrolled){target.dataset.scrolled='1';target.scrollIntoView({behavior:'smooth',block:'center'});}}
+}
+function renderHall(){
+ const dest=$("#hallOfFame");
+ if(!hallSessions.length){dest.innerHTML=`<div class="empty">Aucune soirée passée disponible pour le moment.</div>`;return;}
+ dest.innerHTML=hallSessions.map((session,i)=>{
+  const songs=Array.isArray(session.setlist)?session.setlist:[];
+  const credits=new Map();let seconds=0;
+  const requests=Array.isArray(session.requests)?session.requests:[];
+  for(const req of requests){const name=req.requester||'Rockstar';const record=credits.get(name)||{requests:0,played:0,seconds:0};record.requests++;credits.set(name,record);}
+  for(const song of songs){const n=Math.max(0,Number(song.seconds)||0);seconds+=n;
+   const name=song.requester||'Rockstar';const record=credits.get(name)||{requests:0,played:0,seconds:0};
+   record.played++;record.seconds+=n;credits.set(name,record);
+  }
+  const stats=[...credits.entries()].sort((a,b)=>b[1].requests-a[1].requests).map(([name,v])=>
+    `<li><b>${esc(name)}</b> : ${v.requests} demande(s), ${v.played} jouée(s), ${formatDuration(v.seconds)} demandées et jouées</li>`).join('');
+  const setlist=songs.map((song,j)=>{
+    const performers=[...new Set((Array.isArray(song.members)?song.members:[]).filter(Boolean))];
+    return `<li><strong>${j+1}. ${esc(song.title)}</strong> — ${esc(song.artist||'')} · demande de ${esc(song.requester||'')} (${formatDuration(song.seconds)})${performers.length?`<div class="hall-sub">Sur scène : ${esc(performers.join(', '))}</div>`:''}</li>`;
+  }).join('');
+  const date=session.started_at?new Date(session.started_at).toLocaleDateString('fr-CA'):'';
+  return `<details class="hall-party"><summary>${esc(session.name||'Soirée YARG')} <span class="hall-sub">${esc(date)} · ${songs.length} chansons · ${formatDuration(seconds)}</span></summary>
+  <div class="hall-content"><h3>Statistiques des demandes</h3><ul>${stats||'<li>Aucune chanson terminée</li>'}</ul>
+  <h3>Setlist</h3><ol>${setlist||'<li>Aucune chanson terminée</li>'}</ol></div></details>`;
+ }).join('');
+}
+async function loadHall(){
+ const {data,error}=await sb.rpc('yarg_public_hall_of_fame');
+ if(error){$("#hallOfFame").innerHTML=`<div class="empty">Archives indisponibles : applique la migration SQL du Hall of Fame.</div>`;return;}
+ hallSessions=Array.isArray(data)?data:[];renderHall();
 }
 
 async function loadSettings(){
@@ -403,14 +475,14 @@ async function loadSettings(){
     .eq("id",1).single();
   if(error) throw error;
   settings=data;settings.performance_requests_enabled=!!data.performance_requests_enabled && (!data.party_mode_until || new Date(data.party_mode_until).getTime()>Date.now());
-  $("#partyTitle").textContent = settings.performance_requests_enabled ? (data.party_name || "Party YARG") : "File de la soirée";
+  $("#partyTitle").textContent = settings.performance_requests_enabled ? (data.party_name || "Party YARG") : "Les Rockstars sur scène";
   $("#mcName").textContent = data.mc_name || "Mystère";
   const mcLine = $("#mcName").closest(".mc"); if(mcLine) mcLine.hidden = !settings.performance_requests_enabled;
   $("#partyTitle").classList.toggle("party-rainbow", !!data.performance_requests_enabled);
 }
 
 async function loadQueue(){
-  if(!settings?.current_session_id){requests=[];members=[];fairRanks.clear();render();return;}
+  if(!settings?.current_session_id){requests=[];members=[];completedRequests=[];fairRanks.clear();render();return;}
   const {data:ranking,error:rankingError}=await sb.rpc('yarg_get_fair_queue');
   if(rankingError)throw rankingError;
   fairRanks=new Map((ranking||[]).map(row=>[row.request_id,row]));
@@ -421,12 +493,18 @@ async function loadQueue(){
     .order("created_at",{ascending:true});
   if(e1) throw e1;
   requests=(r||[]).filter(row=>fairRanks.has(row.id));
+  const {data:history,error:historyError}=await sb.from('performance_requests')
+    .select('id,song_title,song_artist,song_duration_seconds,is_group_request,rockstar_name,finished_at,started_at,created_at')
+    .eq('party_session_id',settings.current_session_id).in('status',['completed','played'])
+    .order('finished_at',{ascending:false}).limit(1000);
+  if(historyError)throw historyError;
+  completedRequests=history||[];
 
-  const ids=requests.map(x=>x.id);
+  const ids=[...new Set([...requests,...completedRequests].map(x=>x.id))];
   if(!ids.length){ members=[]; render(); return; }
 
   const {data:m,error:e2}=await sb.from("performance_members")
-    .select("id,performance_request_id,guest_user_id,rockstar_name,instrument,instrument_mode,difficulty,microphone,vocal_harmony,created_at")
+    .select("id,performance_request_id,guest_user_id,rockstar_profile_id,rockstar_name,instrument,instrument_mode,difficulty,microphone,vocal_harmony,preferred_guitar,created_at")
     .in("performance_request_id",ids)
     .is("withdrawn_at",null);
   if(e2) throw e2;
@@ -501,6 +579,11 @@ document.addEventListener("submit",async e=>{
 });
 
 function maybeNotify(queue,etas){
+ const active=queue.filter(r=>r.status==='playing');const next=queue.find(r=>r.status!=='playing');
+ const onDeck=next&&isMyPerformance(next);
+ const upNext=document.getElementById('yarg-up-next');if(upNext){upNext.hidden=!onDeck;if(onDeck)upNext.textContent='🌈 À TOI BIENTÔT! '+next.song_title+' — '+next.song_artist+' · Prépare tes instruments!'}
+ if(onDeck&&previousStates.get(next.id)!=='up-next'&&'Notification' in window&&Notification.permission==='granted')new Notification('🌈 TU PASSES JUSTE APRÈS!',{body:next.song_title+' — '+next.song_artist});
+ if(onDeck)previousStates.set(next.id,'up-next');
   if (!("Notification" in window) || Notification.permission!=="granted") return;
   const mine=queue.filter(isMyPerformance);
   for(const r of mine){
@@ -535,14 +618,14 @@ function flashLive(){
 }
 
 async function refresh(){
-  try{ showError(""); await loadSettings(); await loadQueue(); }
+  try{ showError(""); await loadSettings(); await Promise.all([loadQueue(),loadHall()]); }
   catch(err){ console.error(err); showError("Impossible de charger la file pour le moment. Vérifie la configuration Supabase."); }
 }
 
 async function startRealtime(){
   sb.channel("yarg-party-queue")
-    .on("postgres_changes",{event:"*",schema:"public",table:"performance_requests"},async()=>{flashLive();await loadQueue();})
-    .on("postgres_changes",{event:"*",schema:"public",table:"performance_members"},async()=>{flashLive();await loadQueue();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"performance_requests"},async()=>{flashLive();await loadQueue();await loadHall();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"performance_members"},async()=>{flashLive();await loadQueue();await loadHall();})
     .on("postgres_changes",{event:"UPDATE",schema:"public",table:"party_settings",filter:"id=eq.1"},async()=>{flashLive();await loadSettings();})
     .subscribe();
 }
