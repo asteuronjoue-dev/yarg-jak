@@ -838,9 +838,9 @@
  .filter-line .chip.chip-fav .fav-heart {display:inline!important;}
  .catalog-jump {display:inline-flex;align-items:center;border:1px solid #365a57;border-radius:8px;padding:5px 8px;}
 }
-</style>
+.newbie-tips-index{position:relative;z-index:2;margin:12px auto;padding:13px 16px;max-width:1000px;color:#e8faf7;background:#163039;border:1px solid #398481;border-radius:12px;font:14px system-ui}.newbie-tips-index button{float:right;margin:0 0 8px 12px;background:#223b40;color:white;border:1px solid #4f7779;border-radius:8px;padding:5px 9px}.newbie-tips-index[hidden]{display:none!important}</style>
 </head>
-<body>
+<body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🎸 Bienvenue dans le catalogue!</strong><p>Un compte est entièrement facultatif pour participer aux soirées. Recherche une chanson par titre, artiste ou jeu, utilise les filtres d’instruments, ou fais-toi suggérer 10 chansons au hasard. Avec un compte Rockstar, tu peux enregistrer tes favoris pour plus tard.</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
     <header>
         <div class="site-topline">
             <div class="site-identity">
