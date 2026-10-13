@@ -194,6 +194,14 @@
         <textarea id="message" name="message" maxlength="2000" placeholder="Un détail pour aider Jak à trouver la bonne version? Commentaires et compliments au maître des chansons bienvenus! 😎"></textarea>
       </div>
 
+      <div class="section" id="automatic-favorites-panel" style="border:1px solid #4b605e;border-radius:12px;padding:14px;">
+        <strong>♥ Favoris Rockstar</strong>
+        <p class="help">Si tu demandes une chanson précise et qu’elle est trouvée, elle sera automatiquement ajoutée à tes favoris lorsque tu es connecté à ton compte Rockstar.</p>
+        <label class="choice" style="display:flex;align-items:flex-start;gap:10px;margin-top:12px"><input type="checkbox" id="favoriteArtistExtras" style="margin-top:4px">
+          <span><strong>Ajouter aussi les autres chansons trouvées de cet artiste à mes favoris</strong><span class="help" style="display:block">Tu pourras les retirer manuellement de tes favoris à tout moment.</span></span></label>
+        <p class="help" id="favorite-account-info" aria-live="polite">Connecte-toi à ton compte Rockstar pour activer les favoris automatiques.</p>
+      </div>
+
       <div id="status" class="status" role="status" aria-live="polite"></div>
 
       <div class="actions">
@@ -224,6 +232,18 @@
       return value.trim();
     }
 
+    (async()=>{
+      try {
+        const authClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+        const {data:{user}}=await authClient.auth.getUser();
+        const connected=!!(user&&!user.is_anonymous);
+        document.getElementById('favoriteArtistExtras').disabled=!connected;
+        document.getElementById('favorite-account-info').textContent=connected
+          ? 'Compte Rockstar connecté : les favoris de ta demande seront mis à jour automatiquement.'
+          : 'Connecte-toi dans Mon profil pour profiter des favoris automatiques. Tu peux quand même demander une chanson.';
+      }catch(e){document.getElementById('favoriteArtistExtras').disabled=true;}
+    })();
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
@@ -244,7 +264,8 @@
         desired_difficulty: "any",
         desired_instruments: instruments,
         personal_message: clean(document.getElementById("message").value) || null,
-        download_url: clean(document.getElementById("download").value) || null
+        download_url: clean(document.getElementById("download").value) || null,
+        favorite_artist_extras: document.getElementById("favoriteArtistExtras").checked
       };
 
       if (!data.requester_name || !data.requester_email || !data.artist) {
@@ -260,6 +281,10 @@
         const { createClient } = window.supabase;
         const client = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
+        const {data: authData} = await client.auth.getUser();
+        const user = authData?.user;
+        // The database links a request only to the authenticated Rockstar account.
+        if (!user || user.is_anonymous) data.favorite_artist_extras = false;
         const { error } = await client.rpc("yarg_submit_library_request", {p_request: data});
 
         if (error) throw error;
