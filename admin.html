@@ -2,6 +2,7 @@
 <html lang="fr-CA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>YARG — Régie MC</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="catalogue-yarg-adapter.js"></script>
 <style>
 :root{color-scheme:dark;--bg:#0a1118;--panel:#14212a;--panel2:#1a2932;--line:#344b58;--ink:#f5f8fb;--muted:#b0c0c9;--teal:#25d6cc;--orange:#ffb36b;--red:#ff8791;--green:#75e3ac}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top left,#1a3340,transparent 48%),var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1060px;margin:auto;padding:22px 17px 76px}header,.flex{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}header{padding-bottom:19px;border-bottom:1px solid var(--line)}header strong{font-size:1.08rem}a{color:var(--teal)}h1{font-size:clamp(1.7rem,4vw,2.5rem);margin:26px 0 6px}h2{font-size:1.2rem;margin:0 0 13px}h3{font-size:1rem;margin:0}p{margin:7px 0 15px;color:var(--muted)}.muted,small{color:var(--muted)}.card{border:1px solid var(--line);border-radius:15px;padding:18px;background:var(--panel);margin:17px 0}.stage{border-color:#387e86;background:linear-gradient(125deg,#193e47,var(--panel) 60%)}.stage-song{font-size:clamp(1.45rem,4vw,2rem);font-weight:900}.pill{display:inline-flex;gap:5px;align-items:center;background:#243b45;border:1px solid #4a6674;border-radius:999px;padding:3px 10px;color:#ddedf2;font-size:.79rem;font-weight:750}.pill.live{color:#99f2cb;border-color:#337f65}.row{display:flex;gap:12px;align-items:center;border-top:1px solid #314652;padding:12px 0}.row:first-child{border-top:0}.grow{flex:1;min-width:175px}.rank{background:#233741;border-radius:9px;padding:9px 11px;min-width:40px;text-align:center;font-weight:900}.song{font-weight:800}.members{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}.member{border:1px solid #3b5664;border-radius:8px;padding:3px 8px;color:#d8e6ee;font-size:.79rem}.actions{display:flex;gap:8px;flex-wrap:wrap}button,input{font:inherit}button{border:1px solid #506775;border-radius:9px;background:#263a46;color:#fff;padding:9px 13px;font-weight:850;cursor:pointer}button:hover{border-color:var(--teal)}button:disabled{opacity:.45;cursor:wait}.primary{background:var(--teal);color:#092025;border:0}.success{background:#287354;border-color:#358963}.danger{background:#643039;border-color:#a45158}.quiet{background:transparent}input{background:#0d1820;color:#fff;border:1px solid #536d7a;border-radius:9px;padding:12px;width:100%}label{font-weight:700;display:block;margin:10px 0}label input{margin-top:5px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.notice{min-height:23px;margin-top:12px}.notice.error{color:var(--red)}.notice.ok{color:var(--green)}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.tab[aria-selected="true"]{background:#2b5157;border-color:var(--teal)}[hidden]{display:none!important}.empty{border:1px dashed #536371;border-radius:12px;padding:20px;text-align:center;color:var(--muted)}.help{font-size:.85rem;color:var(--muted)}.stats{display:flex;flex-wrap:wrap;gap:12px}.stat{padding:12px 17px;border-radius:11px;background:var(--panel2);min-width:135px}.stat b{display:block;font-size:1.55rem}.mode{display:flex;gap:10px;align-items:center;margin:16px 0}input[type=checkbox]{width:19px;height:19px;accent-color:var(--teal)}.mode label{margin:0}.status{font-weight:900;color:var(--orange);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em}.footnote{color:var(--muted);font-size:.82rem;margin-top:22px}@media(max-width:650px){.grid{grid-template-columns:1fr}.card{padding:14px}.row{flex-wrap:wrap}.row .actions{width:100%}main{padding:15px 12px 55px}}
@@ -262,10 +263,42 @@ $('new-party-form').onsubmit=async e=>{e.preventDefault();const name=$('new-part
 
 const ownerData={players:[],library:[],titles:[],credits:[],oldGuard:[]};
 let libraryFilter='active';
+// Le catalogue public est la source unique pour sélectionner les chansons réellement publiées.
+let publishedSongs=[], publishedById=new Map();
+const pickedLibrary=new Map();
+function selectionsFor(l){
+ if(!pickedLibrary.has(l.id))pickedLibrary.set(l.id,{original:l.original_song_id||null,extras:new Set(l.extra_song_ids||[])});
+ return pickedLibrary.get(l.id);
+}
+function songLabel(r){return `${r.a} — ${r.t}${r.al?' ('+r.al+')':''}`;}
+async function loadPublishedSongs(){
+ try{
+  const payload=await window.YARG_loadCatalogue();publishedSongs=payload.songs||[];
+  publishedById=new Map(publishedSongs.map(r=>[r.id,r]));
+ }catch(e){console.warn('Catalogue indisponible',e);notice('songs.json non disponible : impossible de sélectionner des titres publiés.',true)}
+}
+function renderLibrarySelection(id){
+ const request=ownerData.library.find(r=>r.id===id);const item=[...document.querySelectorAll('[data-request-id]')].find(e=>e.dataset.requestId===id);
+ if(!request||!item)return;
+ const selection=selectionsFor(request);
+ const results=item.querySelector('[data-library-results]');
+ const lookup=item.querySelector('[data-library-search]').value.trim().toLocaleLowerCase('fr-CA');
+ const hits=lookup.length>=2?publishedSongs.filter(r=>`${r.a} ${r.t} ${r.al||''}`.toLocaleLowerCase('fr-CA').includes(lookup)).slice(0,25):[];
+ results.innerHTML=lookup.length>=2?(hits.length?hits.map(r=>`<div class="owner-item" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px;margin:4px 0"><span style="flex:1">${esc(songLabel(r))}</span>${request.song_title==='Discographie de l’artiste'?'':`<button type="button" data-pick-original="${esc(id)}" data-song-id="${esc(r.id)}">🎵 Originale</button>`}${r.a.toLocaleLowerCase('fr-CA').includes(request.artist.toLocaleLowerCase('fr-CA'))?`<button type="button" data-pick-extra="${esc(id)}" data-song-id="${esc(r.id)}">+ Ajout de l’artiste</button>`:''}</div>`).join(''):'<p class="muted">Aucun titre trouvé dans songs.json.</p>'):'<p class="muted">Cherche au moins deux lettres pour trouver une chanson publiée.</p>';
+ const chosen=item.querySelector('[data-library-picked]');
+ const base=selection.original&&publishedById.get(selection.original);
+ const extra=[...selection.extras].map(id=>publishedById.get(id)).filter(Boolean);
+ chosen.innerHTML=`<div><b>Chanson demandée :</b> ${base?esc(songLabel(base)):'Non trouvée / non associée'} ${base?`<button type="button" data-remove-original="${esc(id)}">Retirer</button>`:''}</div>
+ <div><b>Autres chansons ajoutées :</b> ${extra.length?extra.map(r=>`<span class="inst-chip">${esc(songLabel(r))} <button type="button" data-remove-extra="${esc(id)}" data-song-id="${esc(r.id)}">×</button></span>`).join(''):'Aucune'}</div>`;
+}
+
 const creditMetrics=[["parties","Soirées antérieures"],["played","Chansons terminées"],["guitar","Guitare / Rythmique"],["bass","Basse"],["drums","Batterie"],["keys","Clavier"],["vocals","Voix"],["stage_minutes","Minutes sur scène"],["confirmed_additions","Ajouts à la bibliothèque"],["library_requests","Demandes de bibliothèque"]];
 async function loadOwner(){
+ if(!publishedSongs.length)await loadPublishedSongs();
  const [{data,error},{data:legacy,error:legacyError}]=await Promise.all([sb.rpc('yarg_owner_snapshot'),sb.rpc('yarg_owner_legacy_snapshot')]);if(error||legacyError){notice('Accès propriétaire : '+(error||legacyError).message,true);return;}
- ownerData.players=data.rockstars||[];ownerData.library=data.library||[];ownerData.titles=data.titles||[];ownerData.credits=legacy.credits||[];ownerData.oldGuard=legacy.old_guard||[];
+ ownerData.players=data.rockstars||[];ownerData.library=data.library||[];
+ for(const id of [...pickedLibrary.keys()])if(!ownerData.library.some(l=>l.id===id))pickedLibrary.delete(id);
+ for(const l of ownerData.library)pickedLibrary.delete(l.id);ownerData.titles=data.titles||[];ownerData.credits=legacy.credits||[];ownerData.oldGuard=legacy.old_guard||[];
  drawOwner();
 }
 function ownerSelect(options,selected){return options.map(([v,l])=>`<option value="${esc(v)}" ${v===selected?'selected':''}>${esc(l)}</option>`).join('')}
@@ -296,14 +329,34 @@ function drawOwner(){
   const checks=iOptions.map(([k,label])=>`<label class="inst-chip"><input type="checkbox" data-actual-inst="${esc(l.id)}" value="${k}" ${(l.available_instruments||[]).includes(k)?'checked':''}>${label}</label>`).join('');
   return `<div class="owner-item request-item" data-request-id="${esc(l.id)}"><div class="flex"><strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><span class="pill">${esc(l.status==='downloaded'?'Téléchargée':l.status==='unfindable'?'Introuvable':'En attente')}</span></div>
   <div class="muted">Demandé par ${esc(l.name||'—')} · ${esc(l.email||'—')} · ${formatDate(l.created_at)}${lastSearch}</div><div class="muted">${emailState}${isHidden(l)?' · Masquée 30 jours':''}</div>
-  <label>Chansons ajoutées grâce à cette demande (une par ligne)<textarea data-downloaded-songs="${esc(l.id)}" rows="3" placeholder="Artiste — Titre de la chanson">${esc(l.downloaded_song_list||'')}</textarea></label>
+  <div class="owner-item" style="margin:12px 0;padding:13px"><strong>🎵 Associer les chansons publiées</strong><p class="muted">Le titre original est ajouté aux favoris du ROCKSTAR connecté dès qu'il est trouvé. Les autres titres le sont seulement s'il a coché l'option.</p>
+  <p class="muted">Ajout automatique d'autres chansons : <b>${l.favorite_artist_extras?'Oui':'Non'}</b> · Compte Rockstar : <b>${l.requester_profile_id?'Oui':'Non'}</b></p>
+  <div data-library-picked="${esc(l.id)}"></div>
+  <label>Chercher dans songs.json<input type="search" data-library-search="${esc(l.id)}" placeholder="Artiste ou titre, au moins 2 lettres" autocomplete="off" style="width:100%"></label>
+  <div data-library-results="${esc(l.id)}"></div></div>
+  <label>Notes des chansons téléchargées (une par ligne)<textarea data-downloaded-songs="${esc(l.id)}" rows="3" placeholder="Notes internes facultatives">${esc(l.downloaded_song_list||'')}</textarea></label>
   <div class="instrument-heading">Instruments réellement disponibles dans les chansons téléchargées</div><div class="inst-list">${checks}</div>
   <div class="actions request-actions"><button type="button" data-save-library="${esc(l.id)}">💾 Enregistrer les détails</button><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label>${l.status==='unfindable'?`<button type="button" data-recheck-library="${esc(l.id)}">↻ Toujours introuvable (nouvelle recherche)</button>`:''}</div>
   </div>`;
  }).join(''):'<p class="muted">Aucune requête dans ce filtre.</p>';
  document.querySelectorAll('[data-library-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.libraryFilter===libraryFilter)));
+ visible.forEach(l=>renderLibrarySelection(l.id));
 
 }
+document.addEventListener('input',e=>{
+ const input=e.target.closest('[data-library-search]');if(input)renderLibrarySelection(input.dataset.librarySearch);
+});
+document.addEventListener('click',e=>{
+ const action=e.target.closest('[data-pick-original],[data-pick-extra],[data-remove-original],[data-remove-extra]');if(!action)return;
+ const id=action.dataset.pickOriginal||action.dataset.pickExtra||action.dataset.removeOriginal||action.dataset.removeExtra;
+ const req=ownerData.library.find(l=>l.id===id);if(!req)return;
+ const selection=selectionsFor(req),songId=action.dataset.songId;
+ if(action.hasAttribute('data-pick-original')){selection.original=songId;selection.extras.delete(songId)}
+ if(action.hasAttribute('data-pick-extra')&&songId!==selection.original)selection.extras.add(songId);
+ if(action.hasAttribute('data-remove-original'))selection.original=null;
+ if(action.hasAttribute('data-remove-extra'))selection.extras.delete(songId);
+ renderLibrarySelection(id);
+});
 $('show-hidden-library').addEventListener('change',drawOwner);
 document.querySelectorAll('[data-library-filter]').forEach(b=>b.addEventListener('click',()=>{libraryFilter=b.dataset.libraryFilter;drawOwner()}));
 async function saveLibraryDetails(id,quiet=false){
@@ -311,6 +364,13 @@ async function saveLibraryDetails(id,quiet=false){
  if(!item)throw new Error('Demande non affichée.');
  const songs=item.querySelector('[data-downloaded-songs]').value;
  const instruments=[...item.querySelectorAll('[data-actual-inst]:checked')].map(x=>x.value);
+ const req=ownerData.library.find(x=>x.id===id), picks=selectionsFor(req);
+ const original=publishedById.get(picks.original);
+ const extras=[...picks.extras].map(k=>publishedById.get(k)).filter(Boolean);
+ const {error:matchError}=await sb.rpc('yarg_owner_set_library_matches',{
+   p_id:id,p_original_id:original?.id||null,p_original_label:original?songLabel(original):null,
+   p_extra_ids:extras.map(x=>x.id),p_extra_labels:extras.map(songLabel)});
+ if(matchError)throw matchError;
  const {error}=await sb.rpc('yarg_owner_save_library_details',{p_id:id,p_songs:songs,p_instruments:instruments});
  if(error)throw error;
  if(!quiet){notice('Détails enregistrés.');await loadOwner()}
@@ -363,7 +423,7 @@ document.addEventListener('change',async e=>{
  action==='yarg_owner_set_title'?{p_user_id:target.dataset.titleFor,p_title_code:target.value||null}:{p_id:target.dataset.libraryFor,p_status:target.value};
  if(!confirm('Enregistrer cette modification ?')){await loadOwner();return;}
  target.disabled=true;
- try{if(action==='yarg_owner_library_status')await saveLibraryDetails(target.dataset.libraryFor,true);const {error}=await sb.rpc(action,args);if(error)throw error;notice('Modification enregistrée.');await loadOwner();}
+ try{if(action==='yarg_owner_library_status'){const req=ownerData.library.find(l=>l.id===target.dataset.libraryFor);const chosen=selectionsFor(req);if(target.value==='downloaded'&&!chosen.original&&!chosen.extras.size)throw new Error('Choisis au moins une chanson réellement présente dans songs.json avant de marquer Téléchargée.');await saveLibraryDetails(target.dataset.libraryFor,true)}const {error}=await sb.rpc(action,args);if(error)throw error;notice('Modification enregistrée.');await loadOwner();}
  catch(err){notice('Modification refusée : '+err.message,true);await loadOwner()}
  finally{target.disabled=false}
 });
