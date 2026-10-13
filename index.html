@@ -705,6 +705,49 @@
             box-shadow:0 0 30px rgba(37,215,207,.30);
         }
 
+        /* Favoris Rockstar : bouton pleine largeur, harmonisé avec l'appel à jouer. */
+        #sheet-favourite[hidden]{display:none!important}
+        #sheet-favourite{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            width:100%;
+            min-height:54px;
+            box-sizing:border-box;
+            margin-top:.75rem;
+            padding:.85rem 1.25rem;
+            border:1px solid rgba(255,115,145,.6);
+            border-radius:9px;
+            background:linear-gradient(135deg,rgba(255,65,115,.20),rgba(255,115,145,.08));
+            color:#ffe8ef;
+            font:inherit;
+            font-size:1rem;
+            font-weight:850;
+            letter-spacing:.01em;
+            line-height:1.35;
+            text-align:center;
+            cursor:pointer;
+            transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease;
+        }
+        #sheet-favourite:hover{
+            transform:translateY(-1px);
+            background:linear-gradient(135deg,rgba(255,65,115,.30),rgba(255,115,145,.15));
+            border-color:#ff84aa;
+            box-shadow:0 6px 22px rgba(255,65,115,.13);
+        }
+        #sheet-favourite[data-on="true"]{
+            background:linear-gradient(135deg,rgba(37,215,207,.17),rgba(37,215,207,.06));
+            border-color:rgba(37,215,207,.65);
+            color:#bffcf5;
+        }
+        #sheet-favourite[data-on="true"]:hover{
+            background:linear-gradient(135deg,rgba(37,215,207,.26),rgba(37,215,207,.12));
+            box-shadow:0 6px 22px rgba(37,215,207,.12);
+        }
+        #sheet-favourite:focus-visible{outline:3px solid #ffc36e;outline-offset:3px}
+        #sheet-favourite:disabled{cursor:wait;opacity:.65;transform:none;box-shadow:none}
+        @media (prefers-reduced-motion:reduce){#sheet-favourite{transition:none}}
+
         @keyframes performanceRainbow{to{background-position:300% 0}}}
 
 
@@ -952,7 +995,7 @@
                 <button id="collection-clear" type="button">Effacer les playlists publiques</button>
                 <button id="credits-reset" type="button">Effacer le filtre de jeu</button>
               </div>
-              <p class="catalog-credits-help">Les regroupements utilisent les listes de jeux de ta bibliothèque, avec leurs DLC. Guitar Hero (2005) utilise maintenant une comparaison artiste + titre avec les 47 chansons de la version nord-américaine. Une chanson peut apparaître dans plusieurs jeux; ceci ne garantit pas que la charte soit celle du jeu d'origine.</p>
+              <p class="catalog-credits-help">Les filtres utilisent les listes nord-américaines des jeux et leurs contenus téléchargeables associés. Une chanson peut figurer dans plusieurs jeux, même si ta charte provient d’une autre collection. La présence d’une chanson ne garantit pas que la charte téléchargée soit identique à celle du jeu d’origine.</p>
             </details>
         </div>
         <div class="band-builder" id="band-builder" hidden>
@@ -1023,7 +1066,7 @@
                 </button>
             </div>
 
-            <button id="sheet-favourite" type="button" hidden>♡ Ajouter à mes favoris</button>
+            <button id="sheet-favourite" type="button" hidden>♥ Ajouter à mes favoris</button>
             <div id="sheet-playlist-manager" hidden>
               <strong>🎛️ Ajouter à une playlist publique (MC)</strong>
               <div><select id="sheet-mc-playlist"><option value="">Choisir une playlist…</option></select></div>
@@ -1303,11 +1346,11 @@
         });
         const OFFICIAL_GAMES = [
           {id:'gh1',name:'Guitar Hero',series:'gh',aliases:['Guitar Hero 1']},
-          {id:'bandhero',name:'Band Hero',series:'gh',aliases:['Band Hero']},
-          {id:'ghlive',name:'Guitar Hero Live',series:'gh',aliases:['Guitar Hero Live']},
-          {id:'ghontour',name:'Guitar Hero: On Tour',series:'gh',aliases:[]},
-          {id:'ghdecades',name:'Guitar Hero: On Tour – Decades',series:'gh',aliases:[]},
-          {id:'ghmodern',name:'Guitar Hero: On Tour – Modern Hits',series:'gh',aliases:[]},
+          {id:'bandhero',icon:'bh',name:'Band Hero',series:'gh',aliases:['Band Hero']},
+          {id:'ghlive',icon:'ghl',name:'Guitar Hero Live',series:'gh',aliases:['Guitar Hero Live']},
+          {id:'ghontour',icon:'ghot',name:'Guitar Hero: On Tour',series:'gh',aliases:[]},
+          {id:'ghdecades',icon:'ghotd',name:'Guitar Hero: On Tour – Decades',series:'gh',aliases:[]},
+          {id:'ghmodern',icon:'ghotmh',name:'Guitar Hero: On Tour – Modern Hits',series:'gh',aliases:[]},
           {id:'gh2',name:'Guitar Hero II',series:'gh',aliases:['Guitar Hero 2','Guitar Hero 2 (DLC)']},
           {id:'gh80s',name:'Guitar Hero Encore: Rocks the 80s',series:'gh',aliases:['Guitar Hero Encore - Rock The 80s']},
           {id:'gh3',name:'Guitar Hero III: Legends of Rock',series:'gh',aliases:['Guitar Hero 3 - Legends of Rock','Guitar Hero 3 (DLC)','Guitar Hero III']},
@@ -1400,7 +1443,7 @@
           favouriteButton.hidden=!signedInRockstar;
           const on=myFavoriteSongIds.has(String(CURRENT_SHEET_SONG.id));
           favouriteButton.dataset.on=String(on);
-          favouriteButton.textContent=on?'♥ Retirer de mes favoris':'♡ Ajouter à mes favoris';
+          favouriteButton.textContent=on?'♥ Dans mes favoris · Retirer':'♥ Ajouter à mes favoris';
           mcSheetBox.hidden=!mcCanEdit;
         };
         async function refreshPlaylistDirectory(){
