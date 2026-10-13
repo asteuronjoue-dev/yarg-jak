@@ -1344,7 +1344,7 @@
           for(const [game,songs] of officialSongKeys)if(songs.has(key))r.gameIds.add(game);
           r.games=[]; // Le nom affiché est ajouté ci-dessous avec la liste des jeux.
         });
-        // Associations vérifiées par le propriétaire via manquantes-guitar-hero.html.
+        // Associations vérifiées par le propriétaire via les pages Guitar Hero et Rock Band.
         // Une association pointe vers l'ID YARG EXACT du catalogue (pas un simple « je l'ai »).
         // Elle est publiée dans game-song-matches.json sur GitHub, jamais dans le localStorage d'un invité.
         try {
@@ -1372,7 +1372,7 @@
               for(const game of allowedGames)linked.gameIds.add(game);
               accepted++;
             }
-            if(accepted)console.info('Associations Guitar Hero vérifiées :',accepted);
+            if(accepted)console.info('Associations Guitar Hero / Rock Band vérifiées :',accepted);
           } else if(response.status!==404){console.warn('game-song-matches.json : HTTP',response.status);}
         } catch(e){console.warn('Associations manuelles non chargées (filtres automatiques conservés)',e);}
         const OFFICIAL_GAMES = [
@@ -1400,7 +1400,7 @@
           {id:'lrb',name:'LEGO Rock Band',series:'rb',aliases:['Rock Band - LEGO']},
           {id:'gdrb',name:'Green Day: Rock Band',series:'rb',aliases:['Rock Band - Green Day']},
           {id:'rbb',name:'Rock Band Blitz',series:'rb',aliases:['Rock Band Blitz']},
-          {id:'rbdlc',icon:'rbacdc',name:'AC/DC Live: Rock Band Track Pack',series:'rb',aliases:['Rock Band - ACDC Live Track Pack']},
+          {id:'rbacdc',icon:'rbacdc',name:'AC/DC Live: Rock Band Track Pack',series:'rb',aliases:['Rock Band - ACDC Live Track Pack']},
           {id:'rbn',name:'Rock Band Network',series:'rbn',aliases:['Rock Band Network']}
         ];
         const gameById = new Map(OFFICIAL_GAMES.map(g=>[g.id,g]));
