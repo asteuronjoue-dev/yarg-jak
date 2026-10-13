@@ -37,8 +37,21 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 @keyframes yargPartyRainbow{to{background-position:300% center}}
 .yarg-navigation a[href="admin.html"][hidden]{display:none!important}
 .yarg-newbie-note{background:#163039;border:1px solid #328585;border-radius:12px;padding:14px 16px;margin:12px auto;color:#e5f5f3;max-width:1000px}.yarg-newbie-note button{float:right;background:#284047;color:white;border:1px solid #4f8086;border-radius:8px;padding:6px 9px}.yarg-newbie-note[hidden]{display:none!important}</style>
+
+<style>
+/* YARG shared banner: animated forward, reverse, without jump */
+.yarg-up-next-shared{position:sticky;top:0;z-index:1100;display:block;width:100%;text-align:center;
+ font:1000 clamp(17px,3.7vw,27px)/1.25 system-ui,sans-serif;color:#13151a!important;
+ padding:15px 20px;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);
+ background-size:200% 100%;animation:yarg-banner-pingpong 2.2s ease-in-out infinite alternate;
+ box-shadow:0 5px 20px rgba(0,0,0,.22)}
+.yarg-up-next-shared[hidden]{display:none!important}
+@keyframes yarg-banner-pingpong{from{background-position:0% center}to{background-position:100% center}}
+@media(prefers-reduced-motion:reduce){.yarg-up-next-shared{animation:none}}
+</style>
 </head>
-<body><aside id="newbie-note-yarg_tips_profile_v1" class="yarg-newbie-note"><button type="button" onclick="localStorage.setItem('yarg_tips_profile_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🌟 Ton profil Rockstar</strong><p>Un compte est facultatif. Si tu en crées un, tes titres et statistiques peuvent suivre ton compte entre les soirées. Pour créditer une co-star, accepte ses invitations dans ton profil.</p></aside><script>if(localStorage.getItem('yarg_tips_profile_v1'))document.getElementById('newbie-note-yarg_tips_profile_v1').hidden=true</script>
+<body>
+<div id="yarg-up-next-shared" class="yarg-up-next-shared" role="status" aria-live="polite" hidden></div><aside id="newbie-note-yarg_tips_profile_v1" class="yarg-newbie-note"><button type="button" onclick="localStorage.setItem('yarg_tips_profile_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🌟 Ton profil Rockstar</strong><p>Un compte est facultatif. Si tu en crées un, tes titres et statistiques peuvent suivre ton compte entre les soirées. Pour créditer une co-star, accepte ses invitations dans ton profil.</p></aside><script>if(localStorage.getItem('yarg_tips_profile_v1'))document.getElementById('newbie-note-yarg_tips_profile_v1').hidden=true</script>
 <main>
 <header><span>🎸 <strong>ROCKSTAR CLUB</strong></span><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html" aria-current="page">Mon profil</a><a href="admin.html" hidden>Régie MC</a></nav></header>
 <h1 id="profile-heading">Mon Profil de ROCKSTAR</h1>
@@ -177,4 +190,5 @@ async function yargProfileBandInit(){
 }
 const yargOriginalFetchProfile=fetchProfile;fetchProfile=async function(){await yargOriginalFetchProfile();if(state.profile)await yargProfileBandInit()};
 </script>
+<script defer src="yarg-up-next.js"></script>
 </body></html>
