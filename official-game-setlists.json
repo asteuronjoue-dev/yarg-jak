@@ -1,0 +1,339 @@
+{
+  "schema": "yarg-original-game-setlists-v2",
+  "coverage": "gh1-only",
+  "generated": "2026-10-13",
+  "description": "PROVISIONAL / GH1 only! Run GitHub Actions before publishing index.html",
+  "games": {
+    "gh1": [
+      {
+        "t": "Ace of Spades",
+        "a": "Motörhead",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Bark at the Moon",
+        "a": "Ozzy Osbourne",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Cochise",
+        "a": "Audioslave",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Cowboys from Hell",
+        "a": "Pantera",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Crossroads",
+        "a": "Cream",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Fat Lip",
+        "a": "Sum 41",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Frankenstein",
+        "a": "The Edgar Winter Group",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Godzilla",
+        "a": "Blue Öyster Cult",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Heart Full of Black",
+        "a": "Burning Brides",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Hey You",
+        "a": "The Exies",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Higher Ground",
+        "a": "Red Hot Chili Peppers",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "I Love Rock 'n Roll",
+        "a": "Joan Jett & the Blackhearts",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "I Wanna Be Sedated",
+        "a": "Ramones",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Infected",
+        "a": "Bad Religion",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Iron Man",
+        "a": "Black Sabbath",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Killer Queen",
+        "a": "Queen",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "More Than a Feeling",
+        "a": "Boston",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "No One Knows",
+        "a": "Queens of the Stone Age",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Sharp Dressed Man",
+        "a": "ZZ Top",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Smoke on the Water",
+        "a": "Deep Purple",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Spanish Castle Magic",
+        "a": "The Jimi Hendrix Experience",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Stellar",
+        "a": "Incubus",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Symphony of Destruction",
+        "a": "Megadeth",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Take It Off",
+        "a": "The Donnas",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Take Me Out",
+        "a": "Franz Ferdinand",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Texas Flood",
+        "a": "Stevie Ray Vaughan",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Thunder Kiss '65",
+        "a": "White Zombie",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Unsung",
+        "a": "Helmet",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "You've Got Another Thing Comin'",
+        "a": "Judas Priest",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Ziggy Stardust",
+        "a": "David Bowie",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "All of This",
+        "a": "Shaimus",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Behind the Mask",
+        "a": "Anarchy Club",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "The Breaking Wheel",
+        "a": "Artillery",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Callout",
+        "a": "The Acro-Brats",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Caveman Rejoice",
+        "a": "The Bags",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Cheat on the Church",
+        "a": "Graveyard BBQ",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Decontrol",
+        "a": "Drist",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Eureka, I've Found Love",
+        "a": "The Upper Crust",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Even Rats",
+        "a": "The Slip",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Farewell Myth",
+        "a": "Made in Mexico",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Fire It Up",
+        "a": "Black Label Society",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Fly on the Wall",
+        "a": "Din",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Get Ready 2 Rokk",
+        "a": "Freezepop",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Guitar Hero",
+        "a": "Monkey Steals the Peach",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Hey",
+        "a": "Honest Bob and the Factory-to-Dealer Incentives",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Sail Your Ship By",
+        "a": "Count Zero",
+        "k": [
+          "disc"
+        ]
+      },
+      {
+        "t": "Story of My Love",
+        "a": "The Model Sons",
+        "k": [
+          "disc"
+        ]
+      }
+    ]
+  }
+}
