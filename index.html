@@ -1344,6 +1344,37 @@
           for(const [game,songs] of officialSongKeys)if(songs.has(key))r.gameIds.add(game);
           r.games=[]; // Le nom affiché est ajouté ci-dessous avec la liste des jeux.
         });
+        // Associations vérifiées par le propriétaire via manquantes-guitar-hero.html.
+        // Une association pointe vers l'ID YARG EXACT du catalogue (pas un simple « je l'ai »).
+        // Elle est publiée dans game-song-matches.json sur GitHub, jamais dans le localStorage d'un invité.
+        try {
+          const response=await fetch('game-song-matches.json',{cache:'no-cache'});
+          if(response.ok){
+            const overrides=await response.json();
+            if(overrides.schema!=='yarg-game-song-matches-v1'||!overrides.matches||typeof overrides.matches!=='object'||Array.isArray(overrides.matches))
+              throw new Error('Format des associations incompatible');
+            const byId=new Map(DATA.map(song=>[String(song.id),song]));
+            const officialGamesForKey=new Map();
+            for(const [game,keys] of officialSongKeys){
+              for(const key of keys){
+                if(!officialGamesForKey.has(key))officialGamesForKey.set(key,new Set());
+                officialGamesForKey.get(key).add(game);
+              }
+            }
+            let accepted=0;
+            for(const [officialOriginal,matchingSong] of Object.entries(overrides.matches)){
+              const allowedGames=officialGamesForKey.get(officialOriginal);
+              if(!allowedGames||!matchingSong||typeof matchingSong!=='object')continue;
+              const linked=byId.get(String(matchingSong.songId||''));
+              // Ne pas appliquer un lien périmé si l'ID change après un nouvel export YARG.
+              if(!linked)continue;
+              if(officialKey(linked.t,linked.a)!==officialKey(matchingSong.title,matchingSong.artist))continue;
+              for(const game of allowedGames)linked.gameIds.add(game);
+              accepted++;
+            }
+            if(accepted)console.info('Associations Guitar Hero vérifiées :',accepted);
+          } else if(response.status!==404){console.warn('game-song-matches.json : HTTP',response.status);}
+        } catch(e){console.warn('Associations manuelles non chargées (filtres automatiques conservés)',e);}
         const OFFICIAL_GAMES = [
           {id:'gh1',name:'Guitar Hero',series:'gh',aliases:['Guitar Hero 1']},
           {id:'bandhero',icon:'bh',name:'Band Hero',series:'gh',aliases:['Band Hero']},
