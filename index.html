@@ -839,6 +839,19 @@
  .catalog-jump {display:inline-flex;align-items:center;border:1px solid #365a57;border-radius:8px;padding:5px 8px;}
 }
 .newbie-tips-index{position:relative;z-index:2;margin:12px auto;padding:13px 16px;max-width:1000px;color:#e8faf7;background:#163039;border:1px solid #398481;border-radius:12px;font:14px system-ui}.newbie-tips-index button{float:right;margin:0 0 8px 12px;background:#223b40;color:white;border:1px solid #4f7779;border-radius:8px;padding:5px 9px}.newbie-tips-index[hidden]{display:none!important}</style>
+
+<style>
+/* YARG shared banner: animated forward, reverse, without jump */
+.yarg-up-next-shared{position:sticky;top:0;z-index:1100;display:block;width:100%;text-align:center;
+ font:1000 clamp(17px,3.7vw,27px)/1.25 system-ui,sans-serif;color:#13151a!important;
+ padding:15px 20px;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);
+ background-size:200% 100%;animation:yarg-banner-pingpong 2.2s ease-in-out infinite alternate;
+ box-shadow:0 5px 20px rgba(0,0,0,.22)}
+.yarg-up-next-shared[hidden]{display:none!important}
+@keyframes yarg-banner-pingpong{from{background-position:0% center}to{background-position:100% center}}
+@media(prefers-reduced-motion:reduce){.yarg-up-next-shared{animation:none}}
+@media(max-width:680px){#yarg-up-next-shared:not([hidden]){position:fixed;top:0;left:0;right:0;z-index:1200}}
+</style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🎸 Bienvenue dans le catalogue!</strong><p>Un compte est entièrement facultatif pour participer aux soirées. Recherche une chanson par titre, artiste ou jeu, utilise les filtres d’instruments, ou fais-toi suggérer 10 chansons au hasard. Avec un compte Rockstar, tu peux enregistrer tes favoris pour plus tard.</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
     <header>
@@ -856,6 +869,7 @@
             <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
+        <div id="yarg-up-next-shared" class="yarg-up-next-shared" role="status" aria-live="polite" hidden></div>
         <div class="counts">
             <span id="total-count">Total : 0</span>
             <span id="count">Affichées : 0</span><a href="#scroll" class="catalog-jump">↓ Voir les chansons</a>
@@ -1890,5 +1904,6 @@
  }catch(e){console.warn('Vérification MC impossible',e)}
 })();
 </script>
+<script defer src="yarg-up-next.js"></script>
 </body>
 </html>
