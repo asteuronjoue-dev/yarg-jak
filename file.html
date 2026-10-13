@@ -44,10 +44,12 @@
       animation:partyRainbowText 5s linear infinite;
     }
     @keyframes partyRainbowBg{
-      to{background-position:300% center}
+      from{background-position:0% center}
+      to{background-position:100% center}
     }
     @keyframes partyRainbowText{
-      to{background-position:300% center}
+      from{background-position:0% center}
+      to{background-position:100% center}
     }
     main{padding:26px 0 70px}
     section{margin-bottom:34px}
@@ -126,9 +128,22 @@
 .yarg-navigation a[aria-current="page"]{background:#ff8a24;color:#111;border-color:#ff8a24}
 @media(max-width:670px){.yarg-navigation{width:100%;justify-content:stretch}.yarg-navigation a{flex:1 1 calc(50% - .4rem);font-size:.8rem;padding:.5rem .3rem}}
 .yarg-navigation a[href="admin.html"][hidden]{display:none!important}
-.yarg-up-next{position:sticky;top:0;z-index:50;text-align:center;font-weight:1000;font-size:clamp(18px,3.5vw,28px);padding:16px;color:#111;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);background-size:200% 100%;animation:partyRainbowBg 1.5s linear infinite}.newbie-tips{max-width:1100px;margin:16px auto;padding:16px;border:1px solid #2f7776;border-radius:13px;background:#163039}.newbie-tips button{float:right;border:1px solid #46636b;background:#203a40;color:white;border-radius:8px;padding:6px}</style>
+.yarg-up-next{position:sticky;top:0;z-index:50;text-align:center;font-weight:1000;font-size:clamp(18px,3.5vw,28px);padding:16px;color:#111;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);background-size:200% 100%;animation:partyRainbowBg 1.5s ease-in-out infinite alternate}.newbie-tips{max-width:1100px;margin:16px auto;padding:16px;border:1px solid #2f7776;border-radius:13px;background:#163039}.newbie-tips button{float:right;border:1px solid #46636b;background:#203a40;color:white;border-radius:8px;padding:6px}</style>
+
+<style>
+/* YARG shared banner: animated forward, reverse, without jump */
+.yarg-up-next-shared{position:sticky;top:0;z-index:1100;display:block;width:100%;text-align:center;
+ font:1000 clamp(17px,3.7vw,27px)/1.25 system-ui,sans-serif;color:#13151a!important;
+ padding:15px 20px;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);
+ background-size:200% 100%;animation:yarg-banner-pingpong 2.2s ease-in-out infinite alternate;
+ box-shadow:0 5px 20px rgba(0,0,0,.22)}
+.yarg-up-next-shared[hidden]{display:none!important}
+@keyframes yarg-banner-pingpong{from{background-position:0% center}to{background-position:100% center}}
+@media(prefers-reduced-motion:reduce){.yarg-up-next-shared{animation:none}}
+</style>
 </head>
 <body>
+<div id="yarg-up-next-shared" class="yarg-up-next-shared" role="status" aria-live="polite" hidden></div>
 <header>
   <div class="wrap">
     <div class="topline">
@@ -141,7 +156,7 @@
   </div>
 </header>
 
-<div id="yarg-up-next" hidden class="yarg-up-next" role="alert"></div><aside id="yarg-tips-file" class="newbie-tips"><button id="yarg-tip-file-off" type="button">Ne plus afficher</button><strong>🎤 Comment fonctionne la file?</strong><p>Les demandes sont classées selon le temps de scène déjà consommé : les chansons longues ajoutent plus de points après avoir été jouées. Deux chansons de suite maximum par demandeur ou artiste si d’autres choix sont possibles. Tu peux rejoindre les groupes ouverts sans points supplémentaires. Les demandes de chacun respectent leur ordre d’inscription.</p></aside><main class="wrap">
+<aside id="yarg-tips-file" class="newbie-tips"><button id="yarg-tip-file-off" type="button">Ne plus afficher</button><strong>🎤 Comment fonctionne la file?</strong><p>Les demandes sont classées selon le temps de scène déjà consommé : les chansons longues ajoutent plus de points après avoir été jouées. Deux chansons de suite maximum par demandeur ou artiste si d’autres choix sont possibles. Tu peux rejoindre les groupes ouverts sans points supplémentaires. Les demandes de chacun respectent leur ordre d’inscription.</p></aside><main class="wrap">
   <div class="error" id="errorBox"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
 
@@ -581,7 +596,7 @@ document.addEventListener("submit",async e=>{
 function maybeNotify(queue,etas){
  const active=queue.filter(r=>r.status==='playing');const next=queue.find(r=>r.status!=='playing');
  const onDeck=next&&isMyPerformance(next);
- const upNext=document.getElementById('yarg-up-next');if(upNext){upNext.hidden=!onDeck;if(onDeck)upNext.textContent='🌈 À TOI BIENTÔT! '+next.song_title+' — '+next.song_artist+' · Prépare tes instruments!'}
+
  if(onDeck&&previousStates.get(next.id)!=='up-next'&&'Notification' in window&&Notification.permission==='granted')new Notification('🌈 TU PASSES JUSTE APRÈS!',{body:next.song_title+' — '+next.song_artist});
  if(onDeck)previousStates.set(next.id,'up-next');
   if (!("Notification" in window) || Notification.permission!=="granted") return;
@@ -655,5 +670,6 @@ setInterval(()=>render(),30000);
  }catch(e){console.warn('Vérification MC impossible',e)}
 })();
 </script>
+<script defer src="yarg-up-next.js"></script>
 </body>
 </html>
