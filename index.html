@@ -857,6 +857,7 @@
 .games-discovery[open] {padding-bottom:18px;}
 .games-discovery summary {cursor:pointer;font-weight:850;font-size:1.06rem;color:#eafafa;}
 .games-discovery-intro {color:#b5ccd1;font-size:.88rem;margin:12px 0 18px;line-height:1.5;}
+.official-game-reference-info {font-size:.83rem;color:#9fdad0;margin:0 0 10px;line-height:1.45;}
 .official-games-grid {display:grid;gap:19px;}
 .official-game-section h3 {font-size:1rem;color:#58d8cb;margin:0 0 10px;font-weight:900;}
 .official-game-cards {display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:11px;}
@@ -872,6 +873,18 @@
 .official-game-copy small {color:#a9c0c5;font-size:.8rem;line-height:1.2;}
 .official-games-extras {margin-top:20px;border-top:1px solid #30434e;padding-top:13px;}
 @media(max-width:680px){.official-game-cards{grid-template-columns:1fr 1fr;gap:8px}.official-game-card{padding:9px;gap:8px;flex-direction:column;align-items:center;text-align:center}.official-game-card.active{padding:8px}.official-game-logo{width:57px;height:57px;flex-basis:57px}.official-game-logo img{height:53px;width:53px}.official-game-copy strong{font-size:.83rem}.official-game-copy small{font-size:.72rem}}
+
+/* PC : la liste des jeux pouvait dépasser la fenêtre parce que body verrouillait le défilement. */
+@media (min-width:681px) {
+  .games-discovery[open] {max-height:min(62dvh,590px);overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#48aeb1 #15242b;}
+  .games-discovery[open]::-webkit-scrollbar {width:11px;}
+  .games-discovery[open]::-webkit-scrollbar-thumb {background:#3b8d93;border-radius:9px;border:2px solid #15242b;}
+  body:has(.games-discovery[open]) {display:block!important;height:auto!important;min-height:100dvh!important;
+    overflow-y:auto!important;overflow-x:hidden!important;}
+  body:has(.games-discovery[open]) header {max-height:none!important;overflow:visible!important;}
+  body:has(.games-discovery[open]) #scroll {height:min(72dvh,730px)!important;min-height:340px!important;overflow-y:auto!important;}
+}
 </style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🎸 Bienvenue dans le catalogue!</strong><p>Un compte est entièrement facultatif pour participer aux soirées. Recherche une chanson par titre, artiste ou jeu, utilise les filtres d’instruments, ou fais-toi suggérer 10 chansons au hasard. Avec un compte Rockstar, tu peux enregistrer tes favoris pour plus tard, avoir un suivi de tes stats et avoir un accès prioritaire pour ta première chanson au prochain party.</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
@@ -939,7 +952,7 @@
                 <button id="collection-clear" type="button">Effacer les playlists publiques</button>
                 <button id="credits-reset" type="button">Effacer le filtre de jeu</button>
               </div>
-              <p class="catalog-credits-help">Les regroupements correspondent aux jeux indiqués dans la bibliothèque et incluent leurs DLC. Une chanson peut apparaître dans plusieurs jeux.</p>
+              <p class="catalog-credits-help">Les regroupements utilisent les listes de jeux de ta bibliothèque, avec leurs DLC. Guitar Hero (2005) utilise maintenant une comparaison artiste + titre avec les 47 chansons de la version nord-américaine. Une chanson peut apparaître dans plusieurs jeux; ceci ne garantit pas que la charte soit celle du jeu d'origine.</p>
             </details>
         </div>
         <div class="band-builder" id="band-builder" hidden>
@@ -1241,13 +1254,60 @@
             sortAsc: true
         };
 
-        // Jeux officiels seulement : les DLC sont filtrés avec leur jeu parent.
-        // Les icônes pointent vers la bibliothèque officielle Clone Hero ; un monogramme
-        // demeure visible si une image externe est indisponible.
-        const GAME_APPEARANCES = YARG_CATALOGUE.game_appearances;
-        DATA.forEach(r => { r.games = GAME_APPEARANCES[r.id] || (r.pl ? [r.pl] : []); });
+        // Référentiel externe des sorties nord-américaines d'origine.
+        // Ne dépend PAS des champs Playlist/Charter du JSON exporté par YARG.
+        // Une chanson peut figurer dans plusieurs jeux, mais chaque charte
+        // conserve ses véritables instruments fournis par songs.json.
+        function officialNormalize(value) {
+          return String(value||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+            .toLowerCase().replace(/[’']/g,'').replace(/&/g,' and ')
+            .replace(/\s*\((?:cover version|as made famous by[^)]*|wavegroup|cover)\)\s*/gi,' ')
+            .replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+        }
+        function officialArtist(value) {
+          const artist=officialNormalize(value);
+          const names={
+            'stevie ray vaughan and double trouble':'stevie ray vaughan',
+            'the jimi hendrix experience':'jimi hendrix experience',
+            'the rolling stones':'rolling stones',
+            'the beatles':'beatles', 'the police':'police',
+            'the who':'who', 'the doors':'doors', 'the clash':'clash',
+            'the offspring':'offspring','the allman brothers band':'allman brothers band',
+            'the edgar winter group':'edgar winter group',
+            'the grateful dead':'grateful dead',
+            'joan jett and the blackhearts':'joan jett the blackhearts',
+            'jimi hendrix':'jimi hendrix experience'
+          };
+          return names[artist]||artist;
+        }
+        const officialKey=(title,artist)=>officialNormalize(title)+'|'+officialArtist(artist);
+        let officialReferences={games:{},generated:'',schema:''};
+        try {
+          const response=await fetch('official-game-setlists.json',{cache:'no-cache'});
+          if(!response.ok)throw new Error('HTTP '+response.status);
+          const doc=await response.json();
+          if(doc.schema!=='yarg-original-game-setlists-v2'||!doc.games||typeof doc.games!=='object')
+            throw new Error('Référentiel incompatible');
+          officialReferences=doc;
+        } catch(e) {
+          console.error('Le référentiel officiel des jeux est absent ou invalide',e);
+          // Ne JAMAIS inventer des appartenances à partir des Playlists YARG.
+        }
+        const officialSongKeys=new Map(Object.entries(officialReferences.games).map(
+          ([game,songs])=>[game,new Set(songs.map(s=>officialKey(s.t,s.a)))]));
+        DATA.forEach(r=>{
+          const key=officialKey(r.t,r.a);
+          r.gameIds=new Set();
+          for(const [game,songs] of officialSongKeys)if(songs.has(key))r.gameIds.add(game);
+          r.games=[]; // Le nom affiché est ajouté ci-dessous avec la liste des jeux.
+        });
         const OFFICIAL_GAMES = [
           {id:'gh1',name:'Guitar Hero',series:'gh',aliases:['Guitar Hero 1']},
+          {id:'bandhero',name:'Band Hero',series:'gh',aliases:['Band Hero']},
+          {id:'ghlive',name:'Guitar Hero Live',series:'gh',aliases:['Guitar Hero Live']},
+          {id:'ghontour',name:'Guitar Hero: On Tour',series:'gh',aliases:[]},
+          {id:'ghdecades',name:'Guitar Hero: On Tour – Decades',series:'gh',aliases:[]},
+          {id:'ghmodern',name:'Guitar Hero: On Tour – Modern Hits',series:'gh',aliases:[]},
           {id:'gh2',name:'Guitar Hero II',series:'gh',aliases:['Guitar Hero 2','Guitar Hero 2 (DLC)']},
           {id:'gh80s',name:'Guitar Hero Encore: Rocks the 80s',series:'gh',aliases:['Guitar Hero Encore - Rock The 80s']},
           {id:'gh3',name:'Guitar Hero III: Legends of Rock',series:'gh',aliases:['Guitar Hero 3 - Legends of Rock','Guitar Hero 3 (DLC)','Guitar Hero III']},
@@ -1270,18 +1330,26 @@
           {id:'rbn',name:'Rock Band Network',series:'rbn',aliases:['Rock Band Network']}
         ];
         const gameById = new Map(OFFICIAL_GAMES.map(g=>[g.id,g]));
+        DATA.forEach(r=>{r.games=[...r.gameIds].map(id=>gameById.get(id)?.name||id);});
         const gameGrid = document.getElementById('official-games-grid');
         const gameCount = new Map(OFFICIAL_GAMES.map(g=>[g.id,0]));
         DATA.forEach(r=>OFFICIAL_GAMES.forEach(g=>{
-          if(r.games.some(name=>g.aliases.includes(name)))gameCount.set(g.id,gameCount.get(g.id)+1);
+          if(r.gameIds.has(g.id))gameCount.set(g.id,gameCount.get(g.id)+1);
         }));
+        const officialInfo=document.createElement('p');
+        officialInfo.className='official-game-reference-info';
+        const fullReference=officialReferences.coverage==='complete' && Object.keys(officialReferences.games).length>=18;
+        officialInfo.textContent=fullReference
+          ? '🎮 Listes originales nord-américaines vérifiées par artiste et titre · DLC regroupés sous leur jeu de sortie · Référence : '+officialReferences.generated
+          : '⚠️ Référentiel de jeux incomplet : lance l’action GitHub « Mettre à jour les listes officielles » avant de publier le catalogue.';
+        gameGrid.before(officialInfo);
         const imgBase = 'https://gitlab.com/clonehero/sources/-/raw/master/public/icons/';
         function gameCard(game){
           const count=gameCount.get(game.id)||0;
           const btn=document.createElement('button'); btn.type='button';
           btn.className='official-game-card'; btn.dataset.game=game.id;
           btn.setAttribute('aria-pressed',String(state.playlist===game.id));
-          btn.setAttribute('aria-label',game.name+' — '+count+' chansons, DLC inclus');
+          btn.setAttribute('aria-label',game.name+' — '+count+' chansons'+(game.id==='rbn'?', réseau indépendant':', chansons des jeux et DLC associés'));
           const emblem=document.createElement('span'); emblem.className='official-game-logo';
           const fallback=document.createElement('span');fallback.className='official-game-fallback';
           fallback.textContent=game.series==='gh'?'GH':game.series==='rbn'?'RBN':'RB';
@@ -1291,7 +1359,7 @@
           emblem.append(fallback,img);
           const copy=document.createElement('span');copy.className='official-game-copy';
           const title=document.createElement('strong');title.textContent=game.name;
-          const meta=document.createElement('small');meta.textContent=count.toLocaleString('fr-CA')+' chansons'+(game.id==='rbn'?'':' · DLC inclus');
+          const meta=document.createElement('small');meta.textContent=count.toLocaleString('fr-CA')+' chansons'+(game.id==='rbn'?' · réseau indépendant':' · sorties officielles');
           copy.append(title,meta);btn.append(emblem,copy);
           btn.addEventListener('click',()=>{
             state.playlist=state.playlist===game.id?'':game.id;
@@ -1450,7 +1518,7 @@
 
             if (state.favoritesOnly && !myFavoriteSongIds.has(String(r.id))) return false;
             if (state.publicPlaylistId && !publicPlaylistSongIds.has(String(r.id))) return false;
-            if (state.playlist && !r.games.some(name=>(gameById.get(state.playlist)?.aliases||[]).includes(name))) return false;
+            if (state.playlist && !r.gameIds.has(state.playlist)) return false;
 
 
             // Check all required parts (case-insensitive: K/k both mean Keys present)
@@ -1848,7 +1916,7 @@
             
             document.getElementById('sheet-charter').textContent = r.ch || '—';
             document.getElementById('sheet-playlist').textContent = r.pl || '—';
-            document.getElementById('sheet-game-appearances').textContent = (r.games||[]).filter(g=>g!==r.pl).join(' · ') || '—';
+            document.getElementById('sheet-game-appearances').textContent = (r.games||[]).join(' · ') || '—';
 // Decode per-part difficulties (V/G/D/K/B).
             let diffHtml = '';
             const rhythmBits = chartGroup(r,2);
