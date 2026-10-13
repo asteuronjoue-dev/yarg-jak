@@ -181,7 +181,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
  <div id="owner-library" class="owner-list"></div></section>
 </section>
 <section id="owner-tab" hidden>
- <section class="card"><h2>🔒 Propriétaire</h2><p>Le compte maître est <strong>jaccob.provost@gmail.com</strong>. Il contrôle les autorisations MC et les demandes. Les emails de notification continuent d’être envoyés par <strong>asteur.on.joue@gmail.com</strong> grâce au relais Gmail.</p><p class="help">La gestion des profils est dans ROCKSTARS; le suivi des demandes est dans Requêtes.</p></section>
+ <section class="card"><h2>🔒 Propriétaire</h2><p>Le compte maître est <strong>jaccob.provost@gmail.com</strong>. Il contrôle les autorisations MC et les demandes. Les emails de notification continuent d’être envoyés par <strong>asteur.on.joue@gmail.com</strong> grâce au relais Gmail.</p><p class="help">La gestion des profils est dans ROCKSTARS; le suivi des demandes est dans Requêtes.</p><p id="gh-matches-owner-link" hidden><a class="primary" href="manquantes-guitar-hero.html" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:700">🎸 Associer les chansons Guitar Hero au catalogue</a></p></section>
 </section>
 </section></main>
 <script>
@@ -466,7 +466,7 @@ $('playlist-create').onsubmit=async e=>{
  if(error){notice('Création impossible : '+error.message,true);return;}
  $('playlist-name').value='';$('playlist-description').value='';notice('Playlist créée. Ajoute des chansons depuis le catalogue.');await loadMcPlaylists();
 };
-async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;$('requests-tab-button').hidden=false;await loadOwner();await syncMcControls()}$('app').hidden=false;await load();await loadMcPlaylists();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
+async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){if(String(data.user.email||'').trim().toLowerCase()==='jaccob.provost@gmail.com')$('gh-matches-owner-link').hidden=false;$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;$('requests-tab-button').hidden=false;await loadOwner();await syncMcControls()}$('app').hidden=false;await load();await loadMcPlaylists();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
 init();
 </script><script defer src="yarg-up-next.js"></script>
 </body></html>
