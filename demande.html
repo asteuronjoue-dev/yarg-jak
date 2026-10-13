@@ -112,8 +112,21 @@
       .card { padding: 18px; }
     }
   .yarg-newbie-note{background:#163039;border:1px solid #328585;border-radius:12px;padding:14px 16px;margin:12px auto;color:#e5f5f3;max-width:1000px}.yarg-newbie-note button{float:right;background:#284047;color:white;border:1px solid #4f8086;border-radius:8px;padding:6px 9px}.yarg-newbie-note[hidden]{display:none!important}</style>
+
+<style>
+/* YARG shared banner: animated forward, reverse, without jump */
+.yarg-up-next-shared{position:sticky;top:0;z-index:1100;display:block;width:100%;text-align:center;
+ font:1000 clamp(17px,3.7vw,27px)/1.25 system-ui,sans-serif;color:#13151a!important;
+ padding:15px 20px;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);
+ background-size:200% 100%;animation:yarg-banner-pingpong 2.2s ease-in-out infinite alternate;
+ box-shadow:0 5px 20px rgba(0,0,0,.22)}
+.yarg-up-next-shared[hidden]{display:none!important}
+@keyframes yarg-banner-pingpong{from{background-position:0% center}to{background-position:100% center}}
+@media(prefers-reduced-motion:reduce){.yarg-up-next-shared{animation:none}}
+</style>
 </head>
-<body><aside id="newbie-note-yarg_tips_library_v1" class="yarg-newbie-note"><button type="button" onclick="localStorage.setItem('yarg_tips_library_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>💌 Demander une chanson</strong><p>Cette page sert à proposer de nouveaux ajouts à la bibliothèque YARG, pas à inscrire une chanson à la soirée en cours. Mets un courriel valide pour recevoir le résultat de ta demande.</p></aside><script>if(localStorage.getItem('yarg_tips_library_v1'))document.getElementById('newbie-note-yarg_tips_library_v1').hidden=true</script>
+<body>
+<div id="yarg-up-next-shared" class="yarg-up-next-shared" role="status" aria-live="polite" hidden></div><aside id="newbie-note-yarg_tips_library_v1" class="yarg-newbie-note"><button type="button" onclick="localStorage.setItem('yarg_tips_library_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>💌 Demander une chanson</strong><p>Cette page sert à proposer de nouveaux ajouts à la bibliothèque YARG, pas à inscrire une chanson à la soirée en cours. Mets un courriel valide pour recevoir le résultat de ta demande.</p></aside><script>if(localStorage.getItem('yarg_tips_library_v1'))document.getElementById('newbie-note-yarg_tips_library_v1').hidden=true</script>
   <main class="wrap">
     <header class="top">
       <a class="back" href="index.html">← Retour au catalogue</a>
@@ -143,13 +156,13 @@
         </div>
 
         <div>
-          <label class="required" for="title">Titre de la chanson</label>
-          <input id="title" name="title" required maxlength="200"><p class="help">Ta demande m’aide à trouver l’artiste; je chercherai également ses autres chansons disponibles pour YARG.</p>
+          <label for="title">Titre de la chanson (facultatif)</label>
+          <input id="title" name="title" maxlength="200" placeholder="Laisse vide pour demander plusieurs chansons de l’artiste">
         </div>
 
         <div>
           <label class="required" for="artist">Artiste</label>
-          <input id="artist" name="artist" required maxlength="200"><p class="help">Je chercherai aussi les autres chansons de cet artiste et les téléchargerai si je trouve des versions jouables, même si je ne trouve pas la chanson demandée.</p>
+          <input id="artist" name="artist" required maxlength="200" placeholder="Nom de l’artiste">
         </div>
 
         <div class="full">
@@ -167,14 +180,6 @@
           <label class="choice"><input type="checkbox" name="instrument" value="bass"> 🎸 Basse</label>
           <label class="choice"><input type="checkbox" name="instrument" value="drums"> 🥁 Batterie</label>
           <label class="choice"><input type="checkbox" name="instrument" value="keys"> 🎹 Clavier</label>
-        </div>
-      </div>
-
-      <div class="section">
-        <label>Difficulté souhaitée</label>
-        <div class="choices">
-          <label class="choice"><input type="radio" name="difficulty" value="expert" checked> Expert</label>
-          <label class="choice"><input type="radio" name="difficulty" value="all"> Toutes les difficultés (All)</label>
         </div>
       </div>
 
@@ -236,13 +241,13 @@
         song_title: clean(document.getElementById("title").value),
         artist: clean(document.getElementById("artist").value),
         album: clean(document.getElementById("album").value) || null,
-        desired_difficulty: document.querySelector('input[name="difficulty"]:checked')?.value || "any",
+        desired_difficulty: "any",
         desired_instruments: instruments,
         personal_message: clean(document.getElementById("message").value) || null,
         download_url: clean(document.getElementById("download").value) || null
       };
 
-      if (!data.requester_name || !data.requester_email || !data.song_title || !data.artist) {
+      if (!data.requester_name || !data.requester_email || !data.artist) {
         showStatus("error", "Merci de remplir tous les champs obligatoires.");
         return;
       }
@@ -260,10 +265,9 @@
         if (error) throw error;
 
         form.reset();
-        document.querySelector('input[name="difficulty"][value="expert"]').checked = true;
         showStatus(
           "success",
-          "Demande envoyée! 🎸 Jak examinera ta demande après le party et pourra te répondre par courriel."
+          "Demande envoyée! 🎸 Tu recevras une confirmation par courriel, puis un avis lorsque la recherche sera terminée."
         );
       } catch (error) {
         console.error(error);
@@ -277,5 +281,6 @@
       }
     });
   </script>
+<script defer src="yarg-up-next.js"></script>
 </body>
 </html>
