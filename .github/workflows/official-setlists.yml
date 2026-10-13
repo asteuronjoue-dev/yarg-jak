@@ -1,0 +1,33 @@
+name: Mettre à jour les listes officielles GH et RB
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  official-song-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Installer les modules
+        run: python -m pip install 'requests>=2.32,<3' 'beautifulsoup4>=4.12,<5'
+      - name: Vérifier les sources et générer le référentiel
+        run: >-
+          python scripts/build_setlists.py
+          --out official-game-setlists.json
+          --report official-game-source-audit.csv
+          --songs songs.json
+      - name: Enregistrer le référentiel vérifié
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add official-game-setlists.json official-game-source-audit.csv official-game-audit.csv
+          if git diff --cached --quiet; then
+            echo 'Aucune modification.'
+          else
+            git commit -m 'Mise à jour du référentiel officiel Guitar Hero / Rock Band'
+            git push
+          fi
