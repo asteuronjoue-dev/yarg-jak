@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chansons Guitar Hero à compléter · Asteur On Joue</title>
+<style>
+:root{color-scheme:dark;--bg:#0c141b;--surface:#18252d;--surface2:#21333c;--line:#37515a;--txt:#ecf5f5;--muted:#b0c6ca;--cyan:#76e2db;--orange:#ffb36a;--yellow:#f2d585;--red:#ff929b}
+*{box-sizing:border-box}body{background:radial-gradient(ellipse at 15% 0,#233e44 0,transparent 45%),var(--bg);color:var(--txt);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0}main{max-width:1260px;padding:28px 20px 80px;margin:auto}a{color:var(--cyan)}h1{font-size:clamp(1.65rem,4vw,2.8rem);margin:10px 0 9px}h2{font-size:1.18rem;margin:10px 0}header p{color:var(--muted);max-width:850px;margin:6px 0 17px}.tag{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid #427c78;color:var(--cyan);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.panel{background:rgba(25,38,45,.95);border:1px solid var(--line);border-radius:16px;padding:19px;margin:20px 0}.note{color:var(--muted);font-size:.89rem}.note strong{color:var(--yellow)}.warn{background:#352c22;border:1px solid #735b32;border-radius:11px;padding:12px 15px}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px}.metric{border:1px solid #3b5860;background:var(--surface2);border-radius:12px;padding:13px}.metric b{display:block;font-size:1.85rem;letter-spacing:-.025em;color:var(--cyan)}.metric span{font-size:.82rem;color:var(--muted)}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;align-items:end}label{font-weight:700;font-size:.88rem;color:#d2e8e7}input,select,button{font:inherit}input,select{display:block;margin-top:5px;width:100%;padding:11px;border:1px solid #59747b;border-radius:10px;background:#0f1b23;color:var(--txt)}button,.action{background:#244048;color:#f3ffff;border:1px solid #48757c;padding:10px 15px;border-radius:10px;font-weight:750;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}button:hover,.action:hover{border-color:var(--cyan);background:#315057}.primary{background:#bd753b;border-color:#ed9f5f;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}table{border-collapse:collapse;width:100%;font-size:.91rem}td,th{padding:10px 9px;text-align:left;border-bottom:1px solid #2e464c;vertical-align:top}th{position:sticky;top:0;background:#1a3038;z-index:1;color:var(--cyan);font-size:.81rem;letter-spacing:.015em}td:first-child{min-width:140px}.table-scroll{max-height:68vh;overflow:auto;border:1px solid #30494f;border-radius:12px}tbody tr:nth-child(even){background:#1a2a32}.status{font-size:.75rem;padding:4px 8px;border-radius:7px;display:inline-block;font-weight:850;white-space:nowrap}.status.missing{background:#56303a;color:#ffc6cb}.status.check{background:#594b28;color:#ffe8a5}.status.have{background:#235044;color:#b4f4dc}summary{cursor:pointer;color:var(--cyan);font-weight:800}details{margin-top:11px}#error{display:none;border-color:var(--red)}#error:not(:empty){display:block}#spinner{color:var(--cyan)}.tiny{font-size:.79rem;color:var(--muted)}.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}@media(max-width:700px){main{padding:17px 12px 50px}.panel{padding:13px}.table-scroll{max-height:63vh}th,td{padding:9px 6px}table{font-size:.82rem}}@media print{main{max-width:100%}header,.controls,.actions,.note,.warn,details{display:none}.table-scroll{overflow:visible;max-height:none}th{position:static}body{color:#000;background:#fff}td,th{color:#000!important;background:#fff!important;border-color:#888}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<a href="index.html">← Retour au catalogue</a>
+<p><span class="tag">Asteur On Joue · Inventaire</span></p>
+<h1>🎸 Guitar Hero — Chansons à compléter</h1>
+<p>Comparaison en direct des listes de jeux nord-américaines avec <strong>ton dernier songs.json</strong>. Les jeux principaux, les versions dérivées et leurs DLC sont inclus. Une même chanson peut compter pour plusieurs jeux.</p>
+</header>
+<div id="spinner" class="panel" role="status">Chargement du référentiel officiel et de ta bibliothèque…</div>
+<div id="error" class="panel" role="alert"></div>
+<div id="app" hidden>
+<div class="panel warn"><strong>Comment interpréter les résultats ?</strong> « À vérifier » signifie que le titre existe dans ta bibliothèque, mais avec un artiste différent de la liste officielle (reprise, nom de groupe, erreur de données, etc.). Il ne faut pas le retélécharger sans vérifier. « Non trouvé » signifie qu’aucune correspondance simple n’a été identifiée; cela reste une <em>liste de recherche</em>, pas une preuve absolue d’absence. Le nombre affiché par ton filtre de jeux peut donc être inférieur au nombre de chansons réellement possédées.</div>
+<div class="stats" aria-live="polite">
+ <div class="metric"><b id="stat-games">—</b><span>Jeux Guitar Hero disponibles</span></div>
+ <div class="metric"><b id="stat-unmatched">—</b><span>Entrées sans correspondance exacte</span></div>
+ <div class="metric"><b id="stat-missing">—</b><span>Entrées non trouvées</span></div>
+ <div class="metric"><b id="stat-check">—</b><span>Entrées à vérifier</span></div>
+ <div class="metric"><b id="stat-unique">—</b><span>Chansons distinctes à rechercher</span></div>
+</div>
+<div class="panel">
+ <div class="controls">
+ <label>Jeu<select id="game"><option value="">Tous les jeux Guitar Hero</option></select></label>
+ <label>État<select id="status"><option value="unmatched">Non trouvées + à vérifier</option><option value="missing">Non trouvées seulement</option><option value="check">À vérifier seulement</option><option value="all">Toutes (incluant trouvées)</option></select></label>
+ <label>Type<select id="type"><option value="">Disque + DLC</option><option value="disc">Jeu sur disque</option><option value="dlc">DLC</option></select></label>
+ <label>Recherche<input id="search" type="search" placeholder="Artiste, chanson…"></label>
+ </div>
+ <div class="actions">
+   <button id="download" class="primary" type="button">⬇ Télécharger la liste par jeu (CSV)</button>
+   <button id="download-unique" type="button">⬇ Liste sans doublons (CSV)</button>
+   <button id="print" type="button">🖨 Imprimer</button>
+ </div>
+ <p class="note" id="summary"></p>
+ <div class="table-scroll"><table><thead><tr><th>Jeu</th><th>Artiste — Chanson</th><th>Type</th><th>État</th><th>Note / Correspondance possible</th></tr></thead><tbody id="rows"></tbody></table></div>
+ <p class="tiny" id="limit"></p>
+ <details><summary>Comment garder cette liste à jour ?</summary><p>Quand tu remplaces <code>songs.json</code> sur GitHub et que GitHub Pages publie le changement, cette page recalcule automatiquement les chansons manquantes. Inutile de réexécuter l’action GitHub simplement pour ajouter des chansons à ta bibliothèque. En revanche, une correction des listes originales exige de regénérer <code>official-game-setlists.json</code>.</p><p>Les fichiers CSV sont en UTF-8, séparés par des points-virgules, avec un BOM pour Excel. Les chansons « À vérifier » sont séparées des absences probables. La liste dédoublonnée indique tous les jeux concernés.</p></details>
+</div>
+</div>
+</main>
+<script>
+'use strict';
+(async()=>{
+ const $=id=>document.getElementById(id);
+ const gameNames={gh1:'Guitar Hero',gh2:'Guitar Hero II',gh80s:'Guitar Hero Encore: Rocks the 80s',gh3:'Guitar Hero III',gha:'Guitar Hero: Aerosmith',ghwt:'Guitar Hero: World Tour',ghm:'Guitar Hero: Metallica',ghsh:'Guitar Hero: Smash Hits',gh5:'Guitar Hero 5',ghvh:'Guitar Hero: Van Halen',ghwor:'Guitar Hero: Warriors of Rock',bandhero:'Band Hero',ghlive:'Guitar Hero Live',ghontour:'Guitar Hero: On Tour',ghdecades:'Guitar Hero: On Tour – Decades',ghmodern:'Guitar Hero: On Tour – Modern Hits'};
+ const order=['gh1','gh2','gh80s','gh3','ghontour','gha','ghwt','ghm','ghsh','gh5','bandhero','ghvh','ghwor','ghdecades','ghmodern','ghlive'];
+ const fmt=n=>Number(n).toLocaleString('fr-CA');
+ const norm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[’']/g,'').replace(/&/g,' and ').replace(/\s*\((?:cover version|as made famous by[^)]*|wavegroup|cover)\)\s*/gi,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+ const aliases={'stevie ray vaughan and double trouble':'stevie ray vaughan','the jimi hendrix experience':'jimi hendrix experience','the rolling stones':'rolling stones','the beatles':'beatles','the police':'police','the who':'who','the doors':'doors','the clash':'clash','the offspring':'offspring','the allman brothers band':'allman brothers band','the edgar winter group':'edgar winter group','the grateful dead':'grateful dead','joan jett and the blackhearts':'joan jett the blackhearts','jimi hendrix':'jimi hendrix experience'};
+ const na=x=>aliases[norm(x)]||norm(x);
+ const key=(t,a)=>norm(t)+'|'+na(a);
+ const text=(tag,value,className='')=>{const e=document.createElement(tag);e.textContent=value;if(className)e.className=className;return e};
+ const csv=rows=>'\ufeff'+rows.map(r=>r.map(s=>'"'+String(s??'').replace(/"/g,'""')+'"').join(';')).join('\r\n')+'\r\n';
+ const save=(name,data)=>{const obj=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=obj;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(obj),2000)};
+ try{
+  const [rr,rs]=await Promise.all([fetch('./official-game-setlists.json',{cache:'no-cache'}),fetch('./songs.json',{cache:'no-cache'})]);
+  if(!rr.ok||!rs.ok)throw Error('Fichiers non accessibles. Vérifie que official-game-setlists.json et songs.json sont à la racine du site.');
+  const [reference,songs]=await Promise.all([rr.json(),rs.json()]);
+  if(reference.schema!=='yarg-original-game-setlists-v2'||reference.coverage!=='complete'||!reference.games||!Array.isArray(songs))throw Error('Format de liste incompatible ou référentiel encore incomplet.');
+  const byExact=new Map(),byTitle=new Map();
+  for(const s of songs){const t=s?.Name,a=s?.Artist;if(!t||!a)continue;const k=key(t,a),n=norm(t);byExact.set(k,(byExact.get(k)||0)+1);if(!byTitle.has(n))byTitle.set(n,new Set());byTitle.get(n).add(String(a));}
+  const rows=[];
+  for(const game of order){for(const s of reference.games[game]||[]){if(!s?.t||!s?.a)continue;
+   const exact=byExact.get(key(s.t,s.a))||0;
+   const sameTitle=[...(byTitle.get(norm(s.t))||[])];
+   const state=exact?'have':sameTitle.length?'check':'missing';
+   const kinds=Array.isArray(s.k)&&s.k.length?s.k:['disc'];
+   rows.push({game,gameName:gameNames[game],artist:String(s.a),title:String(s.t),type:kinds.join(' + '),state,candidates:state==='check'?sameTitle.join(' / '):'',exact});
+  }}
+  const games=[...new Set(rows.map(r=>r.game))];
+  for(const g of order.filter(g=>games.includes(g))) $('game').add(new Option(gameNames[g],g));
+  $('stat-games').textContent=fmt(games.length);
+  $('stat-unmatched').textContent=fmt(rows.filter(r=>r.state!=='have').length);
+  $('stat-missing').textContent=fmt(rows.filter(r=>r.state==='missing').length);
+  $('stat-check').textContent=fmt(rows.filter(r=>r.state==='check').length);
+  $('stat-unique').textContent=fmt(new Set(rows.filter(r=>r.state!=='have').map(r=>key(r.title,r.artist))).size);
+  function filtered(){let out=rows.filter(r=>{
+    if($('game').value&&r.game!==$('game').value)return false;
+    if($('status').value==='missing'&&r.state!=='missing')return false;
+    if($('status').value==='check'&&r.state!=='check')return false;
+    if($('status').value==='unmatched'&&r.state==='have')return false;
+    if($('type').value&&!r.type.split(' + ').includes($('type').value))return false;
+    if($('search').value&&!norm(r.artist+' '+r.title+' '+r.gameName).includes(norm($('search').value)))return false;
+    return true;
+  });return out;}
+  function render(){const display=filtered();$('summary').textContent=`${fmt(display.length)} entrées affichées · ${fmt(display.filter(r=>r.state==='missing').length)} non trouvées · ${fmt(display.filter(r=>r.state==='check').length)} à vérifier. Les listes de DLC peuvent contenir des reprises ou versions différentes.`;
+   const tbody=$('rows');tbody.replaceChildren();const frag=document.createDocumentFragment();
+   const states={missing:'Non trouvé',check:'À vérifier',have:'Trouvé'};
+   for(const r of display.slice(0,1100)){
+    const tr=document.createElement('tr');tr.append(text('td',r.gameName));
+    const song=document.createElement('td');song.append(text('strong',r.title),text('div',r.artist,'tiny'));tr.append(song);
+    tr.append(text('td',r.type==='disc'?'Disque':r.type==='dlc'?'DLC':r.type));
+    const badge=document.createElement('td');badge.append(text('span',states[r.state],'status '+r.state));tr.append(badge);
+    tr.append(text('td',r.candidates?`Artiste dans songs.json : ${r.candidates}`:r.state==='have'?`${r.exact} charte(s) : titre et artiste reconnus`:'Aucun artiste + titre reconnu'));
+    frag.append(tr);
+   }
+   tbody.append(frag);
+   $('limit').textContent=display.length>1100?`Affichage limité aux 1 100 premières lignes pour préserver la fluidité. Les exports CSV incluent les ${fmt(display.length)} lignes filtrées.`:'';
+  }
+  ['game','status','type','search'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
+  $('download').addEventListener('click',()=>{
+   const display=filtered();save('yarg_guitar_hero_chansons_a_completer_par_jeu.csv',csv([
+    ['Jeu','Catégorie','Artiste original','Chanson originale','État','Artiste(s) à vérifier dans songs.json','Correspondances exactes YARG'],
+    ...display.map(r=>[r.gameName,r.type,r.artist,r.title,r.state==='have'?'Trouvé':r.state==='check'?'À vérifier':'Non trouvé',r.candidates,r.exact])
+   ]));
+  });
+  $('download-unique').addEventListener('click',()=>{
+   const map=new Map();for(const r of filtered()){const k=key(r.title,r.artist);if(!map.has(k))map.set(k,{title:r.title,artist:r.artist,states:new Set(),games:new Set(),types:new Set(),candidates:new Set()});const v=map.get(k);v.games.add(r.gameName);v.types.add(r.type);v.states.add(r.state);if(r.candidates)v.candidates.add(r.candidates);}
+   const list=[...map.values()].sort((a,b)=>a.artist.localeCompare(b.artist,'fr')||a.title.localeCompare(b.title,'fr'));
+   save('yarg_guitar_hero_chansons_uniques_a_completer.csv',csv([['Artiste','Chanson','État','Jeux concernés','Type(s)','Artiste(s) à vérifier dans songs.json'],...list.map(r=>[r.artist,r.title,r.states.has('have')?'Trouvé':r.states.has('check')?'À vérifier':'Non trouvé',[...r.games].join(' | '),[...r.types].join(' | '),[...r.candidates].join(' | ')])]));
+  });
+  $('print').addEventListener('click',()=>window.print());
+  $('spinner').hidden=true;$('app').hidden=false;render();
+ }catch(err){$('spinner').hidden=true;$('error').textContent=`Impossible de générer la liste : ${err.message}`;console.error(err);}
+})();
+</script>
+</body>
+</html>
