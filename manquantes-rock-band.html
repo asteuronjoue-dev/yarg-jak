@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rock Band — Associer les chansons · Asteur On Joue</title>
+<style>
+:root{color-scheme:dark;--bg:#0c141b;--surface:#18252d;--surface2:#21333c;--line:#37515a;--txt:#ecf5f5;--muted:#b0c6ca;--cyan:#76e2db;--orange:#ffb36a;--yellow:#f2d585;--red:#ff929b}
+*{box-sizing:border-box}body{background:radial-gradient(ellipse at 15% 0,#233e44 0,transparent 45%),var(--bg);color:var(--txt);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0}main{max-width:1300px;padding:28px 20px 80px;margin:auto}a{color:var(--cyan)}h1{font-size:clamp(1.65rem,4vw,2.8rem);margin:10px 0 9px}h2{font-size:1.18rem;margin:10px 0}header p{color:var(--muted);max-width:900px;margin:6px 0 17px}.tag{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid #427c78;color:var(--cyan);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.panel{background:rgba(25,38,45,.95);border:1px solid var(--line);border-radius:16px;padding:19px;margin:20px 0}.note{color:var(--muted);font-size:.91rem}.note strong{color:var(--yellow)}.warn{background:#352c22;border:1px solid #735b32;border-radius:11px;padding:12px 15px;margin:15px 0}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px}.metric{border:1px solid #3b5860;background:var(--surface2);border-radius:12px;padding:13px}.metric b{display:block;font-size:1.85rem;letter-spacing:-.025em;color:var(--cyan)}.metric span{font-size:.82rem;color:var(--muted)}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;align-items:end}label{font-weight:700;font-size:.88rem;color:#d2e8e7}input,select,button{font:inherit}input,select{display:block;margin-top:5px;width:100%;padding:11px;border:1px solid #59747b;border-radius:10px;background:#0f1b23;color:var(--txt)}button{background:#244048;color:#f3ffff;border:1px solid #48757c;padding:10px 15px;border-radius:10px;font-weight:750;cursor:pointer}button:hover{border-color:var(--cyan);background:#315057}button:focus-visible{outline:3px solid #ffb36a;outline-offset:2px}.primary{background:#aa662e;border-color:#ffbc83;color:#fff}.yes{background:#20483d;border-color:#4e9d7c;color:#b5f8da}.no{background:#462d34;border-color:#ad6570;color:#ffd3d5}.undo{background:#263b43;border-color:#55757c}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}table{border-collapse:collapse;width:100%;font-size:.91rem}td,th{padding:11px 9px;text-align:left;border-bottom:1px solid #2e464c;vertical-align:top}th{position:sticky;top:0;background:#1a3038;z-index:1;color:var(--cyan);font-size:.81rem}td:first-child{min-width:125px}.table-scroll{max-height:67vh;overflow:auto;border:1px solid #30494f;border-radius:12px}tbody tr:nth-child(even){background:#1a2a32}.status{font-size:.75rem;padding:4px 8px;border-radius:7px;display:inline-block;font-weight:850;white-space:nowrap}.status.missing{background:#56303a;color:#ffc6cb}.status.check{background:#594b28;color:#ffe8a5}.status.have{background:#235044;color:#b4f4dc}.review-actions{display:flex;gap:6px;flex-wrap:wrap}.review-actions button{font-size:.79rem;padding:8px 10px;min-height:39px}.review-help{border:1px solid #3d7b76;background:#172e30;border-radius:13px;padding:15px;margin:15px 0}.review-help h2{margin-top:0}.review-help ol{margin:8px 0 4px;padding-left:22px}.saved-notice{color:#b4f4dc;min-height:1.5em;margin:9px 0}.muted{color:var(--muted)}.tiny{font-size:.79rem;color:var(--muted)}#error:empty{display:none}#error:not(:empty){display:block;border-color:var(--red)}#spinner{color:var(--cyan)}.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}.pill{border:1px solid #5b747b;padding:3px 8px;border-radius:999px;font-size:.72rem;display:inline-block}.linked{color:#b4f4dc;font-weight:650}.draft{color:var(--yellow);font-weight:700}.modal[hidden]{display:none}.modal{position:fixed;inset:0;background:#03090ddd;z-index:9999;display:flex;align-items:center;justify-content:center;padding:15px}.modal-card{width:min(790px,100%);max-height:92vh;overflow:auto;background:#152630;border:2px solid #477878;border-radius:16px;padding:20px;box-shadow:0 20px 60px #000a}.modal-head{display:flex;align-items:start;justify-content:space-between;gap:12px}.modal-head h2{margin:0}.modal-head button{padding:6px 12px}.suggestions{max-height:52vh;overflow:auto;margin-top:12px;border:1px solid var(--line);border-radius:10px}.suggestion{width:100%;border:0;border-radius:0;border-bottom:1px solid #3a5058;text-align:left;display:block;padding:12px}.instrument-total{display:inline-block;font-size:.76rem;font-weight:850;color:#aff3d7;background:#19483d;border:1px solid #508c78;padding:4px 8px;border-radius:8px;margin-top:7px}.instrument-list{display:block;color:#d5ebed;font-size:.8rem;line-height:1.5;margin-top:5px}.instrument-list i{font-style:normal;color:#b0c6ca}.suggestion small{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}.empty{padding:16px;color:var(--muted)}@media(max-width:700px){main{padding:17px 12px 50px}.panel{padding:13px}.table-scroll{max-height:63vh}th,td{padding:9px 6px}table{font-size:.82rem}.review-actions button{padding:7px 8px;font-size:.75rem}.modal-card{padding:12px}}@media print{header,.controls,.actions,.review-help,.note,.modal,.review-actions{display:none!important}.table-scroll{max-height:none;overflow:visible}th{position:static}body{color:#000;background:#fff}td,th{color:#000!important;background:#fff!important}}
+</style>
+</head>
+<body>
+<main>
+<header><a href="index.html">← Retour au catalogue</a><p><span class="tag">Asteur On Joue · Inventaire</span></p><h1>🥁 Rock Band — Associer les chansons</h1><p>Relie une chanson des listes originales à la <strong>bonne charte de ta bibliothèque YARG</strong>. Après publication des associations sur GitHub, elle apparaîtra dans les filtres des jeux pour tous tes invités.</p></header>
+<div id="spinner" class="panel" role="status">Chargement des listes de jeux et du catalogue…</div><div id="error" class="panel" role="alert"></div>
+<div id="app" hidden>
+<section class="review-help"><h2>Comment ça fonctionne ?</h2><ol><li>Dans <strong>À vérifier</strong>, clique <strong>🔗 Associer une chanson</strong>.</li><li>Recherche et sélectionne la <strong>vraie chanson dans ton catalogue</strong> (titre, artiste, album).</li><li>Quand tu as terminé, clique <strong>⬇ Télécharger game-song-matches.json</strong>, puis remplace le fichier de ce nom sur GitHub.</li><li>Une fois le site publié, les invités retrouvent ces chansons dans les filtres de <strong>index.html</strong>.</li></ol><p class="note">Le bouton d'association enregistre un <strong>brouillon local</strong>. Seul le fichier <code>game-song-matches.json</code> publié sur GitHub change ce que voient les invités.</p><p id="saved-notice" class="saved-notice" role="status"></p></section>
+<div class="stats" aria-live="polite"><div class="metric"><b id="stat-games">—</b><span>Jeux Rock Band</span></div><div class="metric"><b id="stat-have">—</b><span>Entrées reconnues (auto + manuelles)</span></div><div class="metric"><b id="stat-check">—</b><span>Entrées à vérifier</span></div><div class="metric"><b id="stat-missing">—</b><span>Entrées à trouver</span></div><div class="metric"><b id="stat-linked">—</b><span>Chansons associées manuellement</span></div><div class="metric"><b id="stat-drafts">—</b><span>Modifications locales à publier</span></div></div>
+<div class="panel"><div class="controls"><label>Jeu<select id="game"><option value="">Tous les jeux Rock Band</option></select></label><label>État<select id="status"><option value="check">À vérifier</option><option value="todo">Tout ce qui reste à traiter</option><option value="missing">À trouver / télécharger</option><option value="linked">Associées manuellement</option><option value="owned">Reconnues dans ma bibliothèque</option><option value="all">Toutes les chansons</option></select></label><label>Type<select id="type"><option value="">Disque + DLC</option><option value="disc">Disque</option><option value="dlc">DLC</option><option value="network">Rock Band Network</option></select></label><label>Recherche<input id="search" type="search" placeholder="Artiste, chanson…"></label></div>
+<div class="actions"><button id="publish" type="button" class="primary">⬇ Télécharger game-song-matches.json</button><button id="download-needed" type="button">⬇ Ma liste à télécharger (CSV)</button><button id="download-unique" type="button">⬇ Inventaire sans doublons (CSV)</button><button id="reset-draft" type="button" class="undo">↶ Annuler mes modifications locales</button></div>
+<p class="note" id="publish-help"></p><p class="note" id="summary"></p><div class="table-scroll"><table><thead><tr><th>Jeu</th><th>Chanson officielle</th><th>Type</th><th>État</th><th>Charte YARG associée / possibilité</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table></div><p class="tiny" id="limit"></p>
+<div class="warn"><strong>Important :</strong> une association choisie se propage à tous les jeux où cette chanson originale figure. La charte YARG associée peut provenir d'un autre jeu. Si un titre change d'identifiant après un futur export YARG, il faudra le réassocier. Les associations ne modifient pas <code>songs.json</code>.</div></div></div>
+</main>
+<div id="matcher" class="modal" hidden><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="matcher-title"><div class="modal-head"><div><h2 id="matcher-title">Associer la chanson</h2><p id="matcher-original" class="note"></p></div><button id="matcher-close" type="button">✕ Fermer</button></div><label>Rechercher parmi les chansons YARG<input id="matcher-search" type="search" placeholder="Titre, artiste ou album…" autocomplete="off"></label><p id="matcher-help" class="tiny">Les versions affichent leurs instruments jouables dans YARG (guitare, basse, batterie, clavier, chant). Le nombre compte ces 5 familles, pas les niveaux de difficulté. Choisis la bonne charte.</p><div id="matcher-results" class="suggestions" aria-live="polite"></div></section></div>
+<script src="catalogue-yarg-adapter.js"></script>
+<script>
+'use strict';
+(async function(){
+ const $=id=>document.getElementById(id);
+ const names={rb1:'Rock Band',rb2:'Rock Band 2',rb3:'Rock Band 3',rb4:'Rock Band 4',tbrb:'The Beatles: Rock Band',lrb:'LEGO Rock Band',gdrb:'Green Day: Rock Band',rbb:'Rock Band Blitz',rbacdc:'AC/DC Live: Rock Band Track Pack',rbn:'Rock Band Network'};
+ const order=['rb1','rb2','rb3','rb4','tbrb','lrb','gdrb','rbb','rbacdc','rbn'];
+ const fmt=x=>Number(x).toLocaleString('fr-CA');
+ const norm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[’']/g,'').replace(/&/g,' and ').replace(/\s*\((?:cover version|as made famous by[^)]*|wavegroup|cover)\)\s*/gi,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+ const alias={'stevie ray vaughan and double trouble':'stevie ray vaughan','the jimi hendrix experience':'jimi hendrix experience','the rolling stones':'rolling stones','the beatles':'beatles','the police':'police','the who':'who','the doors':'doors','the clash':'clash','the offspring':'offspring','the allman brothers band':'allman brothers band','the edgar winter group':'edgar winter group','the grateful dead':'grateful dead','joan jett and the blackhearts':'joan jett the blackhearts','jimi hendrix':'jimi hendrix experience'};
+ const officialKey=(title,artist)=>norm(title)+'|'+(alias[norm(artist)]||norm(artist));
+ const text=(tag,value,cls)=>{const e=document.createElement(tag);e.textContent=value;if(cls)e.className=cls;return e};
+ const equal=(a,b)=>JSON.stringify(a??null)===JSON.stringify(b??null);
+ const csv=lines=>'\ufeff'+lines.map(r=>r.map(c=>'"'+String(c??'').replace(/"/g,'""')+'"').join(';')).join('\r\n')+'\r\n';
+ const download=(name,contents,mime)=>{const url=URL.createObjectURL(new Blob([contents],{type:mime||'application/json;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500)};
+ const instrumentInfo=s=>{
+  let bits=[];
+  try {
+   const mask=BigInt(s.chartMask||'0');
+   bits=Array.from({length:10},(_,i)=>((mask>>BigInt(i*6))&63n)!==0n);
+  } catch(e){bits=[];}
+  if(!bits.length){
+   const legacy=String(s.p||'');
+   return {count:[...legacy].filter(c=>'GBDKV'.includes(c)).length,names:[...legacy].filter(c=>'GBDKV'.includes(c)).map(c=>({G:'Guitare',B:'Basse',D:'Batterie',K:'Clavier',V:'Chant'})[c])};
+  }
+  const names=[];
+  if(bits[0])names.push('Guitare');
+  if(bits[1])names.push('Basse');
+  if(bits[3]||bits[4]||bits[5])names.push('Batterie');
+  if(bits[6]||bits[7])names.push('Clavier');
+  if(bits[8]||bits[9])names.push('Chant');
+  return {count:names.length,names};
+ };
+ const STORAGE='yarg-game-song-matches-draft-v1';
+ try{
+  if(typeof window.YARG_loadCatalogue!=='function')throw new Error('catalogue-yarg-adapter.js est introuvable.');
+  const [refResponse,lib,existingResponse]=await Promise.all([fetch('official-game-setlists.json',{cache:'no-cache'}),window.YARG_loadCatalogue(),fetch('game-song-matches.json',{cache:'no-cache'})]);
+  if(!refResponse.ok)throw new Error('official-game-setlists.json : HTTP '+refResponse.status);
+  const ref=await refResponse.json();
+  if(ref.schema!=='yarg-original-game-setlists-v2'||!ref.games)throw new Error('Référentiel officiel invalide.');
+  const library=lib.songs;
+  const byId=new Map(library.map(s=>[String(s.id),s]));
+  const byExact=new Map(),byTitle=new Map();
+  for(const s of library){const k=officialKey(s.t,s.a),t=norm(s.t);if(!byExact.has(k))byExact.set(k,[]);byExact.get(k).push(s);if(!byTitle.has(t))byTitle.set(t,[]);byTitle.get(t).push(s);}
+  let published={};
+  if(existingResponse.ok){
+   const doc=await existingResponse.json();
+   if(doc.schema!=='yarg-game-song-matches-v1'||!doc.matches||Array.isArray(doc.matches)||typeof doc.matches!=='object')throw new Error('game-song-matches.json a un format incompatible.');
+   published=doc.matches;
+  }else if(existingResponse.status!==404)throw new Error('game-song-matches.json : HTTP '+existingResponse.status);
+  let drafts={};
+  try{const saved=JSON.parse(localStorage.getItem(STORAGE)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))drafts=saved;}catch(e){console.warn('Brouillon local inaccessible',e);}
+  const validLink=link=>{const song=link&&byId.get(String(link.songId||''));return song&&officialKey(song.t,song.a)===officialKey(link.title,link.artist)?song:null;};
+  const merged=()=>{const map={...published};for(const [k,v] of Object.entries(drafts)){if(v===null)delete map[k];else if(v&&typeof v==='object')map[k]=v;}return map;};
+  const linkForKey=key=>{const v=Object.prototype.hasOwnProperty.call(drafts,key)?drafts[key]:published[key];return validLink(v);};
+  const linkRecord=s=>({songId:String(s.id),title:s.t,artist:s.a,album:s.al||''});
+  const cleanDraft=()=>{for(const [k,v] of Object.entries(drafts))if(equal(v,published[k]))delete drafts[k];};
+  cleanDraft();
+  function notice(t){$('saved-notice').textContent=t;}
+  function persist(){cleanDraft();try{localStorage.setItem(STORAGE,JSON.stringify(drafts));notice('✓ Brouillon conservé dans ce navigateur. Publie le fichier JSON pour tes invités.');}catch(e){notice('⚠ Enregistrement local indisponible : télécharge immédiatement le fichier JSON.');}render();}
+  const rows=[];
+  for(const game of order)for(const s of ref.games[game]||[]){if(!s?.t||!s?.a)continue;const k=officialKey(s.t,s.a);const autos=byExact.get(k)||[],sameTitle=byTitle.get(norm(s.t))||[],types=Array.isArray(s.k)&&s.k.length?s.k:['disc'];rows.push({game,gameName:names[game]||game,title:String(s.t),artist:String(s.a),key:k,autos,sameTitle,type:types.join(' + ')});}
+  if(!rows.length)throw new Error('Aucune chanson Rock Band dans official-game-setlists.json. Vérifie que le référentiel complet généré par GitHub Actions a été publié, et non le référentiel provisoire Guitar Hero 1.');
+  const games=[...new Set(rows.map(r=>r.game))];for(const game of order.filter(g=>games.includes(g)))$('game').add(new Option(names[game]||game,game));
+  const status=r=>r.autos.length?'auto':linkForKey(r.key)?'linked':r.sameTitle.length?'check':'missing';
+  const description=r=>{const s=status(r);return s==='auto'?'✓ Reconnue automatiquement':s==='linked'?'✓ Association vérifiée':s==='check'?'À vérifier':'Non trouvée';};
+  const dirtyCount=()=>Object.keys(drafts).length;
+  const unique=()=>new Map(rows.map(r=>[r.key,r]));
+  function subset(){return rows.filter(r=>{const st=status(r),sel=$('status').value;
+   if($('game').value&&r.game!==$('game').value)return false;
+   if(sel==='check'&&st!=='check')return false;
+   if(sel==='todo'&&st!=='check'&&st!=='missing')return false;
+   if(sel==='missing'&&st!=='missing')return false;
+   if(sel==='linked'&&st!=='linked')return false;
+   if(sel==='owned'&&st!=='auto'&&st!=='linked')return false;
+   if($('type').value&&!r.type.split(' + ').includes($('type').value))return false;
+   if($('search').value&&!norm(r.artist+' '+r.title+' '+r.gameName).includes(norm($('search').value)))return false;
+   return true;
+  });}
+  let active=null;
+  const dialog=$('matcher');
+  function close(){dialog.hidden=true;active=null;document.body.style.overflow='';}
+  $('matcher-close').addEventListener('click',close);
+  dialog.addEventListener('click',e=>{if(e.target===dialog)close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!dialog.hidden)close();});
+  function showCandidates(){if(!active)return;const query=norm($('matcher-search').value);const terms=query.split(' ').filter(Boolean);let matches=[];
+   if(!terms.length)matches=active.sameTitle.slice(0,45);
+   else matches=library.filter(s=>terms.every(word=>norm(s.t+' '+s.a+' '+(s.al||'')).includes(word))).slice(0,70);
+   matches.sort((a,b)=>Number(norm(b.t)===norm(active.title))-Number(norm(a.t)===norm(active.title))||instrumentInfo(b).count-instrumentInfo(a).count||a.a.localeCompare(b.a,'fr'));
+   const area=$('matcher-results');area.replaceChildren();
+   if(!matches.length){area.append(text('div','Aucun résultat. Recherche avec un autre mot, titre ou artiste.','empty'));return;}
+   const frag=document.createDocumentFragment();
+   for(const s of matches.slice(0,45)){
+    const btn=text('button',s.t+' — '+s.a,'suggestion');btn.type='button';
+    btn.append(text('small',[s.al||'Album inconnu',s.pl||'Playlist non indiquée',s.l?Math.floor(s.l/60)+':'+String(s.l%60).padStart(2,'0'):''].filter(Boolean).join(' · ')));
+    const instruments=instrumentInfo(s);
+    btn.append(text('span',instruments.count?`${instruments.count} instrument${instruments.count>1?'s':''}`:'Instruments non répertoriés','instrument-total'));
+    if(instruments.names.length)btn.append(text('span',instruments.names.join(' · '),'instrument-list'));
+    btn.addEventListener('click',()=>{
+     const key=active.key;
+     const selection=linkRecord(s);
+     if(!confirm(`Associer la chanson officielle « ${active.artist} — ${active.title} » à la charte YARG « ${s.a} — ${s.t} » ?`))return;
+     drafts[key]=selection;close();persist();
+    });frag.append(btn);
+   }
+   area.append(frag);
+  }
+  function open(r){active=r;$('matcher-original').textContent=r.artist+' — '+r.title;$('matcher-search').value=r.title;dialog.hidden=false;document.body.style.overflow='hidden';showCandidates();$('matcher-search').focus();$('matcher-search').select();}
+  $('matcher-search').addEventListener('input',showCandidates);
+  function unlink(r){if(!confirm(`Retirer l’association de « ${r.artist} — ${r.title} » ? Elle restera active pour tes invités tant que tu n’auras pas publié le nouveau JSON.`))return;drafts[r.key]=null;persist();}
+  function render(){
+   const distinct=[...unique().values()];$('stat-games').textContent=fmt(games.length);$('stat-have').textContent=fmt(rows.filter(r=>['auto','linked'].includes(status(r))).length);
+   $('stat-check').textContent=fmt(rows.filter(r=>status(r)==='check').length);$('stat-missing').textContent=fmt(rows.filter(r=>status(r)==='missing').length);
+   $('stat-linked').textContent=fmt(distinct.filter(r=>status(r)==='linked').length);$('stat-drafts').textContent=fmt(dirtyCount());
+   $('publish-help').textContent=dirtyCount()?`⚠ ${dirtyCount()} modification(s) locales ne sont PAS encore visibles par les invités. Télécharge et remplace game-song-matches.json sur GitHub.`:'Les associations présentes sur GitHub sont chargées. Pour toute nouvelle association, télécharge le JSON et publie-le sur GitHub.';
+   const found=subset();$('summary').textContent=`${fmt(found.length)} entrée(s) affichée(s). Un lien officiel ↔ YARG s’applique automatiquement à tous les jeux concernés.`;
+   const tbody=$('rows');tbody.replaceChildren();const frag=document.createDocumentFragment();
+   for(const r of found.slice(0,950)){
+    const tr=document.createElement('tr');tr.append(text('td',r.gameName));const name=document.createElement('td');name.append(text('strong',r.title),text('div',r.artist,'tiny'));tr.append(name);
+    tr.append(text('td',r.type==='disc'?'Disque':r.type==='dlc'?'DLC':r.type==='network'?'RBN':r.type));
+    const st=status(r),badge=document.createElement('td');badge.append(text('span',description(r),'status '+(st==='auto'||st==='linked'?'have':st==='check'?'check':'missing')));tr.append(badge);
+    const details=document.createElement('td');
+    if(st==='linked'){
+      const s=linkForKey(r.key);details.append(text('strong',s.a+' — '+s.t,'linked'));details.append(text('div',(s.al||'')+' · ID YARG : '+String(s.id),'tiny'));
+      if(Object.prototype.hasOwnProperty.call(drafts,r.key))details.append(text('div','● Brouillon non publié','tiny draft'));
+    }else if(st==='auto')details.append(text('span',r.autos.length+' charte(s) reconnue(s) automatiquement','tiny'));
+    else if(r.sameTitle.length)details.append(text('span','Titres semblables : '+[...new Set(r.sameTitle.map(s=>s.a))].slice(0,5).join(', '),'tiny'));
+    else details.append(text('span','Aucune correspondance exacte détectée','tiny'));
+    tr.append(details);
+    const buttons=document.createElement('td'),wrap=document.createElement('div');wrap.className='review-actions';
+    if(st==='auto')wrap.append(text('span','Aucune action nécessaire','tiny'));
+    else if(st==='linked'){
+      const change=text('button','🔗 Modifier','yes');change.addEventListener('click',()=>open(r));
+      const del=text('button','Dissocier','no');del.addEventListener('click',()=>unlink(r));wrap.append(change,del);
+    }else{
+      const associate=text('button','🔗 Associer une chanson','yes');associate.addEventListener('click',()=>open(r));wrap.append(associate);
+    }
+    buttons.append(wrap);tr.append(buttons);frag.append(tr);
+   }
+   tbody.append(frag);$('limit').textContent=found.length>950?`Affichage limité aux 950 premières lignes pour préserver la fluidité. Utilise les filtres pour les autres chansons.`:'';
+  }
+  ['game','status','type'].forEach(id=>$(id).addEventListener('change',render));$('search').addEventListener('input',render);
+  $('publish').addEventListener('click',()=>{
+   const doc={schema:'yarg-game-song-matches-v1',updated:new Date().toISOString().slice(0,10),matches:merged()};
+   download('game-song-matches.json',JSON.stringify(doc,null,2)+'\n');
+   notice('✓ Fichier téléchargé. Étape OBLIGATOIRE : remplace game-song-matches.json sur GitHub pour que les invités voient les associations.');
+  });
+  $('download-needed').addEventListener('click',()=>{
+   const map=new Map();for(const r of rows){if(['auto','linked'].includes(status(r)))continue;if(!map.has(r.key))map.set(r.key,{...r,games:new Set()});map.get(r.key).games.add(r.gameName);}
+   const list=[...map.values()].sort((a,b)=>a.artist.localeCompare(b.artist,'fr')||a.title.localeCompare(b.title,'fr'));
+   download('yarg_rock_band_a_trouver.csv',csv([['Artiste','Chanson','Jeux','État','Artistes voisins'],...list.map(r=>[r.artist,r.title,[...r.games].join(' | '),description(r),[...new Set(r.sameTitle.map(s=>s.a))].join(' | ')])]),'text/csv;charset=utf-8');notice(`✓ ${fmt(list.length)} chansons distinctes à rechercher exportées.`);
+  });
+  $('download-unique').addEventListener('click',()=>{
+   const map=new Map();for(const r of subset()){if(!map.has(r.key))map.set(r.key,{...r,games:new Set()});map.get(r.key).games.add(r.gameName);}
+   const list=[...map.values()];download('yarg_rock_band_inventaire.csv',csv([['Artiste','Chanson','Jeux','État','Association YARG'],...list.map(r=>{const s=linkForKey(r.key);return [r.artist,r.title,[...r.games].join(' | '),description(r),s?s.a+' — '+s.t+' ['+s.id+']':''];})]),'text/csv;charset=utf-8');
+  });
+  $('reset-draft').addEventListener('click',()=>{if(!dirtyCount())return;if(!confirm('Annuler toutes tes modifications locales non publiées ?'))return;drafts={};persist();});
+  $('spinner').hidden=true;$('app').hidden=false;render();
+ }catch(err){$('spinner').hidden=true;$('error').textContent='Impossible de charger l’inventaire : '+err.message;console.error(err);}
+})();
+</script>
+</body>
+</html>
