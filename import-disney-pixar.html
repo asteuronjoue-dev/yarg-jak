@@ -1,0 +1,24 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Importer Disney & Pixar — YARG</title><style>body{font:16px system-ui;background:#0c1620;color:#e2f7ff;margin:0;padding:24px}main{max-width:720px;margin:auto;background:#132431;border:1px solid #2d576c;padding:24px;border-radius:15px}img{width:100%;display:block}button{padding:12px 18px;border-radius:12px;background:#117eaa;color:white;border:1px solid #67d6ff;cursor:pointer;font-weight:bold}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#07121a;padding:16px;border-radius:8px}a{color:#68d8ff}</style></head><body><main><img src="assets/playlist-art/disney-pixar.png" alt="Disney & Pixar"><h1>Importer Disney & Pixar</h1><p>Connecte-toi à ton compte MC/Admin depuis <a href="profil.html">Mon profil</a>, puis lance l'importation ici. Les chansons sont associées à leurs identifiants exacts dans le catalogue du site. Relancer l'import ne crée pas de doublons.</p><button id="go">✨ Créer / compléter la playlist</button><pre id="log" role="status">Prêt.</pre><p><a href="index.html">← Retour à l'explorateur</a></p></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="catalogue-yarg-adapter.js"></script><script>
+const out=document.getElementById('log');const go=document.getElementById('go');const say=t=>{out.textContent+='\n'+t;};
+const url='https://xbhfjzurytdknbqvksjq.supabase.co';const key='sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM';
+function norm(s){return String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
+function applyIds(songs){const counts=new Map();for(const r of songs){const base=norm([r.a,r.t,r.al||'',r.y||'',r.l||''].join('|')).slice(0,150)||'song';const count=(counts.get(base)||0)+1;counts.set(base,count);if(!r.id)r.id='yarg-'+base+(count>1?'-'+count:'');}}
+const keyFor=(t,a)=>norm(t)+'|'+norm(a);
+go.onclick=async()=>{go.disabled=true;out.textContent='Chargement…';try{
+ if(!window.supabase||!window.YARG_loadCatalogue)throw Error('Dépendances Supabase ou catalogue-yarg-adapter.js manquantes.');
+ const sb=window.supabase.createClient(url,key);const {data:{user},error:authError}=await sb.auth.getUser();if(authError)throw authError;
+ if(!user||user.is_anonymous)throw Error('Connecte-toi depuis Mon profil avec un compte Rockstar.');
+ const {data:isMc,error:mcErr}=await sb.rpc('yarg_admin_whoami');if(mcErr)throw mcErr;if(isMc!==true)throw Error('Ce compte n’a pas les droits MC/Admin.');
+ const response=await fetch('disney-pixar-playlist.json',{cache:'no-store'});if(!response.ok)throw Error('Manifeste Disney & Pixar introuvable.');const manifest=await response.json();
+ const catalogue=await window.YARG_loadCatalogue();const rows=catalogue.songs;applyIds(rows);
+ const index=new Map();for(const r of rows){const k=keyFor(r.t,r.a);if(!index.has(k))index.set(k,[]);index.get(k).push(r);}
+ const found=[],missing=[];for(const entry of manifest.songs){const hits=index.get(keyFor(entry.name,entry.artist))||[];if(hits.length===1)found.push(hits[0]);else missing.push(entry.name+' ('+hits.length+' correspondances)');}
+ say(found.length+' chansons reconnues dans le catalogue; '+missing.length+' non reconnues.');
+ if(missing.length)throw Error('Importation interrompue pour éviter une playlist partielle : '+missing.join('; '));
+ let {data:existing,error:lookupErr}=await sb.from('yarg_public_playlists').select('id,name').eq('name',manifest.playlist).limit(1);if(lookupErr)throw lookupErr;
+ let playlistId=existing?.[0]?.id;
+ if(!playlistId){const {data:created,error:createErr}=await sb.from('yarg_public_playlists').insert({name:manifest.playlist,description:manifest.description}).select('id').single();if(createErr)throw createErr;playlistId=created.id;say('Playlist créée.');}else say('Playlist déjà présente : ajout des chansons manquantes.');
+ for(let i=0;i<found.length;i+=80){const chunk=found.slice(i,i+80).map(r=>({playlist_id:playlistId,song_id:String(r.id),song_title:r.t,song_artist:r.a}));const {error}=await sb.from('yarg_public_playlist_songs').upsert(chunk,{onConflict:'playlist_id,song_id',ignoreDuplicates:true});if(error)throw error;}
+ say('✅ Terminé : '+found.length+' chansons traitées. Retourne à l’index pour découvrir le nouveau bouton.');
+ }catch(e){say('❌ '+(e?.message||String(e)));}finally{go.disabled=false;}};
+</script></body></html>

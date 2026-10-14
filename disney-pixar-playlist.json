@@ -1,0 +1,121 @@
+{
+  "playlist": "Disney & Pixar",
+  "description": "Chansons de films d’animation Disney, Pixar, DreamWorks, Studio Ghibli et autres.",
+  "songs": [
+    {
+      "name": "We Don't Talk About Bruno",
+      "artist": "Carolina Gaitán, Mauro Castillo, Adassa, Rhenzy Feliz, Diane Guerrero",
+      "album": "Encanto"
+    },
+    {
+      "name": "Accidentally in Love",
+      "artist": "Counting Crows",
+      "album": "Shrek 2: Motion Picture Soundtrack"
+    },
+    {
+      "name": "How Far I'll Go",
+      "artist": "Auli'i Cravalho",
+      "album": "Moana (Original Motion Picture Soundtrack)"
+    },
+    {
+      "name": "Sigo Aqui",
+      "artist": "Alex Ubago",
+      "album": "El Planeta del Tesoro (Un Soundtrack Original de Walt Disney Records)"
+    },
+    {
+      "name": "You've Got a Friend in Me",
+      "artist": "Randy Newman",
+      "album": "Toy Story: An Original Walt Disney Records Soundtrack"
+    },
+    {
+      "name": "Who's Afraid of the Big Bad Wolf",
+      "artist": "B5",
+      "album": "Disneymania 4"
+    },
+    {
+      "name": "Just Around the Riverbend",
+      "artist": "Judy Kuhn",
+      "album": "Pocahontas: An Original Walt Disney Records Soundtrack"
+    },
+    {
+      "name": "You'll Be In My Heart",
+      "artist": "Phil Collins",
+      "album": "Tarzan (Original Motion Picture Soundtrack)"
+    },
+    {
+      "name": "You're Welcome",
+      "artist": "Dwayne \"The Rock\" Johnson",
+      "album": "Moana: Original Motion Picture Soundtrack"
+    },
+    {
+      "name": "I Just Can't Wait to be King",
+      "artist": "Elton John",
+      "album": "The Lion King: Original Motion Picture Soundtrack"
+    },
+    {
+      "name": "Under the Sea",
+      "artist": "Samuel E. Wright",
+      "album": "The Little Mermaid: Original Walt Disney Records Soundtrack"
+    },
+    {
+      "name": "Teistä Miehen Teen (I'll Make A Man Out Of You)",
+      "artist": "Santeri Kinnunen",
+      "album": "Disney's Mulan (Alkuperäinen Suomalainen Soundtrack)"
+    },
+    {
+      "name": "Look Thru My Eyes",
+      "artist": "Everlife",
+      "album": "Disney Mania 4"
+    },
+    {
+      "name": "Hakuna Matata",
+      "artist": "Jimmy Cliff and Lebo M",
+      "album": "The Lion King: Original Motion Picture Soundtrack"
+    },
+    {
+      "name": "A Whole New World",
+      "artist": "Lea Salonga and Brad Kane",
+      "album": "Aladdin: Original Motion Picture Soundtrack"
+    },
+    {
+      "name": "Something There",
+      "artist": "Disney",
+      "album": "Beauty And The Beast"
+    },
+    {
+      "name": "I'll Make a Man Out of You",
+      "artist": "Donny Osmond",
+      "album": "Mulan: An Original Walt Disney Records Soundtrack"
+    },
+    {
+      "name": "Belle",
+      "artist": "Disney",
+      "album": "Beauty And The Beast"
+    },
+    {
+      "name": "Let it Go",
+      "artist": "Idina Menzel",
+      "album": "Frozen (Original Motion Picture Soundtrack)"
+    },
+    {
+      "name": "Into the Unknown",
+      "artist": "Panic at the Disco",
+      "album": "Frozen 2 (Original Motion Picture Soundtrack)"
+    },
+    {
+      "name": "New Genesis",
+      "artist": "Ado",
+      "album": "New Genesis (UTA from One Piece Film Red)"
+    },
+    {
+      "name": "Mononoke Hime (ft. Living Corpse and Yoko Hallelujah)",
+      "artist": "Imaginary Flying Machines",
+      "album": "Princess Ghibli"
+    },
+    {
+      "name": "Long Hope Philia",
+      "artist": "Masaki Suda",
+      "album": "Long Hope Philia"
+    }
+  ]
+}
