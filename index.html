@@ -1634,8 +1634,10 @@
           const {data:{user}}=await collectionsSb.auth.getUser();
           signedInRockstar=user&&!user.is_anonymous?user:null;
           const hint=document.getElementById('catalog-account-hint');
-          if(signedInRockstar){hint.textContent='♥ Tes favoris restent associés à ton compte Rockstar, sur tous tes appareils.';}
-          else {hint.textContent='Pour sauvegarder des favoris, connecte-toi dans Mon profil. Les playlists publiques restent accessibles à tous.';}
+          if(hint){
+            if(signedInRockstar){hint.textContent='♥ Tes favoris restent associés à ton compte Rockstar, sur tous tes appareils.';}
+            else {hint.textContent='Pour sauvegarder des favoris, connecte-toi dans Mon profil. Les playlists publiques restent accessibles à tous.';}
+          }
           favFilterButton.disabled=!signedInRockstar;
           if(!signedInRockstar&&state.favoritesOnly){state.favoritesOnly=false;favFilterButton.setAttribute('aria-pressed','false');}
           await loadFavouriteIds();
