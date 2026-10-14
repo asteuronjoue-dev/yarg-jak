@@ -1,5 +1,1026 @@
 {
   "schema": "yarg-game-song-matches-v1",
-  "updated": "",
-  "matches": {}
+  "updated": "2026-10-14",
+  "matches": {
+    "impulse|endless sporadic an endless sporadic": {
+      "songId": "yarg-an-endless-sporadic-impulse-ameliorate-2008-277",
+      "title": "Impulse",
+      "artist": "An Endless Sporadic",
+      "album": "Ameliorate"
+    },
+    "im in the band|hellacopters hellacopters": {
+      "songId": "yarg-the-hellacopters-i-m-in-the-band-rock-roll-is-dead-2005-204",
+      "title": "I'm In The Band",
+      "artist": "The Hellacopters",
+      "album": "Rock & Roll Is Dead"
+    },
+    "when you were young|killers the killers": {
+      "songId": "yarg-the-killers-when-you-were-young-sam-s-town-2006-222",
+      "title": "When You Were Young",
+      "artist": "The Killers",
+      "album": "Sam's Town"
+    },
+    "paint it black|rolling stones the rolling stones": {
+      "songId": "yarg-the-rolling-stones-paint-it-black-aftermath-1966-230",
+      "title": "Paint It, Black",
+      "artist": "The Rolling Stones",
+      "album": "Aftermath"
+    },
+    "dont hold back|sleeping the sleeping": {
+      "songId": "yarg-the-sleeping-don-t-hold-back-questions-answers-2006-275",
+      "title": "Don't Hold Back",
+      "artist": "The Sleeping",
+      "album": "Questions & Answers"
+    },
+    "reptilia|strokes the strokes": {
+      "songId": "yarg-the-strokes-reptilia-room-on-fire-2003-218",
+      "title": "Reptilia",
+      "artist": "The Strokes",
+      "album": "Room on Fire"
+    },
+    "cherub rock|smashing pumpkins the smashing pumpkins": {
+      "songId": "yarg-the-smashing-pumpkins-cherub-rock-siamese-dream-1993-304",
+      "title": "Cherub Rock",
+      "artist": "The Smashing Pumpkins",
+      "album": "Siamese Dream"
+    },
+    "she bangs the drums|stone roses the stone roses": {
+      "songId": "yarg-the-stone-roses-she-bangs-the-drums-the-stone-roses-1989-229",
+      "title": "She Bangs the Drums",
+      "artist": "The Stone Roses",
+      "album": "The Stone Roses"
+    },
+    "slash guitar battle|slash": {
+      "songId": "yarg-guitar-battles-slash-guitar-battle-guitar-hero-iii-2007-239",
+      "title": "Slash Guitar Battle",
+      "artist": "Guitar Battles",
+      "album": "Guitar Hero III"
+    },
+    "hier kommt alex|toten hosen die toten hosen": {
+      "songId": "yarg-die-toten-hosen-hier-kommt-alex-ein-kleines-bisschen-horrorschau-1988-240",
+      "title": "Hier Kommt Alex",
+      "artist": "Die Toten Hosen",
+      "album": "Ein kleines bisschen Horrorschau"
+    },
+    "halo theme mjolnir mix|odonnell odonnell salvatori vai": {
+      "songId": "yarg-o-donnell-salvatori-vai-halo-theme-mjolnir-mix-halo-game-2004-252",
+      "title": "Halo Theme MJOLNIR Mix",
+      "artist": "O'Donnell & Salvatori & Vai",
+      "album": "HALO Game"
+    },
+    "ernten was wir saen|fantastischen vier die fantastischen vier": {
+      "songId": "yarg-die-fantastischen-vier-ernten-was-wir-saen-fornika-2007-495",
+      "title": "Ernten, was wir saen",
+      "artist": "Die Fantastischen Vier",
+      "album": "Fornika"
+    },
+    "i am murloc|l70etc": {
+      "songId": "yarg-level-70-elite-tauren-chieftain-i-am-murloc-world-of-warcraft-2007-216",
+      "title": "I am Murloc",
+      "artist": "Level 70 Elite Tauren Chieftain",
+      "album": "World of Warcraft"
+    },
+    "pretty handsome awkward|used the used": {
+      "songId": "yarg-the-used-pretty-handsome-awkward-lies-for-the-liars-2007-217",
+      "title": "Pretty Handsome Awkward",
+      "artist": "The Used",
+      "album": "Lies for the Liars"
+    },
+    "f c p r e m i x|fall of troy the fall of troy": {
+      "songId": "yarg-the-fall-of-troy-f-c-p-r-e-m-i-x-doppelganger-2005-241",
+      "title": "F.C.P.R.E.M.I.X.",
+      "artist": "The Fall of Troy",
+      "album": "Doppelgänger"
+    },
+    "callout|acro brats the acro brats": {
+      "songId": "yarg-the-acro-brats-callout-go-down-swinging-2005-198",
+      "title": "Callout",
+      "artist": "The Acro-Brats",
+      "album": "...Go Down Swinging!"
+    },
+    "heart full of black|burning brides burning brides": {
+      "songId": "yarg-burning-brides-heart-full-of-black-wavegroup-leave-no-ashes-2004-200",
+      "title": "Heart Full of Black (WaveGroup)",
+      "artist": "Burning Brides",
+      "album": "Leave No Ashes"
+    },
+    "take it off|donnas the donnas": {
+      "songId": "yarg-the-donnas-take-it-off-spend-the-night-2002-162",
+      "title": "Take It Off",
+      "artist": "The Donnas",
+      "album": "Spend the Night"
+    },
+    "frankenstein|edgar winter group the edgar winter group": {
+      "songId": "yarg-the-edgar-winter-group-frankenstein-they-only-come-out-at-night-1972-286",
+      "title": "Frankenstein",
+      "artist": "The Edgar Winter Group",
+      "album": "They Only Come Out at Night"
+    },
+    "hey you|exies the exies": {
+      "songId": "yarg-the-exies-hey-you-head-for-the-door-2004-240",
+      "title": "Hey You",
+      "artist": "The Exies",
+      "album": "Head for the Door"
+    },
+    "story of my love|model sons the model sons": {
+      "songId": "yarg-the-model-sons-story-of-my-love-story-of-my-love-2004-215",
+      "title": "Story of My Love",
+      "artist": "The Model Sons",
+      "album": "Story of My Love"
+    },
+    "i wanna be sedated|ramones ramones": {
+      "songId": "yarg-ramones-i-wanna-be-sedated-road-to-ruin-1978-151",
+      "title": "I Wanna Be Sedated",
+      "artist": "Ramones",
+      "album": "Road to Ruin"
+    },
+    "higher ground|red hot chili peppers red hot chili peppers": {
+      "songId": "yarg-red-hot-chili-peppers-higher-ground-mother-s-milk-1989-205",
+      "title": "Higher Ground",
+      "artist": "Red Hot Chili Peppers",
+      "album": "Mother's Milk"
+    },
+    "even rats|slip the slip": {
+      "songId": "yarg-the-slip-even-rats-eisenhower-2006-359",
+      "title": "Even Rats",
+      "artist": "The Slip",
+      "album": "Eisenhower"
+    },
+    "eureka ive found love|upper crust the upper crust": {
+      "songId": "yarg-the-upper-crust-eureka-i-ve-found-love-once-more-into-the-breeches-2001-182",
+      "title": "Eureka, I've Found Love",
+      "artist": "The Upper Crust",
+      "album": "Once More Into The Breeches"
+    },
+    "jessica|allman brothers band the allman brothers band": {
+      "songId": "yarg-the-allman-brothers-band-jessica-brothers-and-sisters-1973-426",
+      "title": "Jessica",
+      "artist": "The Allman Brothers Band",
+      "album": "Brothers and Sisters"
+    },
+    "mr fix it|amazing crowns the amazing crowns": {
+      "songId": "yarg-the-amazing-crowns-mr-fix-it-royal-2000-157",
+      "title": "Mr. Fix It",
+      "artist": "The Amazing Crowns",
+      "album": "Royal"
+    },
+    "you should be ashamed of myself|bled the bled": {
+      "songId": "yarg-the-bled-you-should-be-ashamed-of-myself-silent-treatment-2007-154",
+      "title": "You Should Be Ashamed Of Myself",
+      "artist": "The Bled",
+      "album": "Silent Treatment"
+    },
+    "one for the road|breaking wheel the breaking wheel": {
+      "songId": "yarg-breaking-wheel-one-for-the-road-breaking-wheel-2006-266",
+      "title": "One For the Road",
+      "artist": "Breaking Wheel",
+      "album": "Breaking Wheel"
+    },
+    "who was in my room last night|butthole surfers the butthole surfers": {
+      "songId": "yarg-the-butthole-surfers-who-was-in-my-room-last-night-wavegroup-independent-worm-saloon-1993-197",
+      "title": "Who Was In My Room Last Night? (WaveGroup)",
+      "artist": "The Butthole Surfers",
+      "album": "Independent Worm Saloon"
+    },
+    "surrender|cheap trick": {
+      "songId": "yarg-cheap-trick-surrender-live-cheap-trick-at-budokan-1979-267",
+      "title": "Surrender (Live)",
+      "artist": "Cheap Trick",
+      "album": "Cheap Trick at Budokan"
+    },
+    "raw dog|last vegas the last vegas": {
+      "songId": "yarg-the-last-vegas-raw-dog-seal-the-deal-2006-208",
+      "title": "Raw Dog",
+      "artist": "The Last Vegas",
+      "album": "Seal the Deal"
+    },
+    "carry me home|living end the living end": {
+      "songId": "yarg-the-living-end-carry-me-home-wavegroup-roll-on-2000-193",
+      "title": "Carry Me Home (WaveGroup)",
+      "artist": "The Living End",
+      "album": "Roll On"
+    },
+    "parasite|neighborhoods the neighborhoods": {
+      "songId": "yarg-the-neighborhoods-parasite-last-known-address-2006-204",
+      "title": "Parasite",
+      "artist": "The Neighborhoods",
+      "album": "Last Known Address"
+    },
+    "message in a bottle|police the police": {
+      "songId": "yarg-the-police-message-in-a-bottle-reggatta-de-blanc-1979-289",
+      "title": "Message in a Bottle",
+      "artist": "The Police",
+      "album": "Reggatta de Blanc"
+    },
+    "tattooed love boys|pretenders the pretenders": {
+      "songId": "yarg-the-pretenders-tattooed-love-boys-wavegroup-pretenders-1979-181",
+      "title": "Tattooed Love Boys (WaveGroup)",
+      "artist": "The Pretenders",
+      "album": "Pretenders"
+    },
+    "i wanna be sedated|ramones the ramones": {
+      "songId": "yarg-ramones-i-wanna-be-sedated-road-to-ruin-1978-151",
+      "title": "I Wanna Be Sedated",
+      "artist": "Ramones",
+      "album": "Road to Ruin"
+    },
+    "psychobilly freakout|reverend horton heat": {
+      "songId": "yarg-the-reverend-horton-heat-psychobilly-freakout-smoke-em-if-you-got-em-1990-158",
+      "title": "Psychobilly Freakout",
+      "artist": "The Reverend Horton Heat",
+      "album": "Smoke 'em if You Got 'em"
+    },
+    "sin documentos|rodriguez los rodriguez": {
+      "songId": "yarg-los-rodriguez-sin-documentos-sin-documentos-1993-284",
+      "title": "Sin Documentos",
+      "artist": "Los Rodriguez",
+      "album": "Sin Documentos"
+    },
+    "freya|sword the sword": {
+      "songId": "yarg-the-sword-freya-age-of-winters-2006-269",
+      "title": "Freya",
+      "artist": "The Sword",
+      "album": "Age of Winters"
+    },
+    "i ran so far away|flock of seagulls a flock of seagulls": {
+      "songId": "yarg-a-flock-of-seagulls-i-ran-so-far-away-a-flock-of-seagulls-1982-306",
+      "title": "I Ran (So Far Away)",
+      "artist": "A Flock of Seagulls",
+      "album": "A Flock of Seagulls"
+    },
+    "we got the beat|go gos the go gos": {
+      "songId": "yarg-the-go-go-s-we-got-the-beat-beauty-and-the-beat-1981-157",
+      "title": "We Got the Beat",
+      "artist": "The Go-Go's",
+      "album": "Beauty and the Beat"
+    },
+    "ballroom blitz|krokus": {
+      "songId": "yarg-sweet-ballroom-blitz-wavegroup-desolation-boulevard-1974-247",
+      "title": "Ballroom Blitz (WaveGroup)",
+      "artist": "Sweet",
+      "album": "Desolation Boulevard"
+    },
+    "synchronicity ii|police the police": {
+      "songId": "yarg-the-police-synchronicity-ii-synchronicity-1983-287",
+      "title": "Synchronicity II",
+      "artist": "The Police",
+      "album": "Synchronicity"
+    },
+    "what i like about you|romantics the romantics": {
+      "songId": "yarg-the-romantics-what-i-like-about-you-the-romantics-1980-179",
+      "title": "What I Like About You",
+      "artist": "The Romantics",
+      "album": "The Romantics"
+    },
+    "turning japanese|vapors the vapors": {
+      "songId": "yarg-the-vapors-turning-japanese-new-clear-days-1980-225",
+      "title": "Turning Japanese",
+      "artist": "The Vapors",
+      "album": "New Clear Days"
+    },
+    "china grove|doobie brothers the doobie brothers": {
+      "songId": "yarg-the-doobie-brothers-china-grove-the-captain-and-me-1973-196",
+      "title": "China Grove",
+      "artist": "The Doobie Brothers",
+      "album": "The Captain and Me"
+    },
+    "i hate myself for loving you|joan jett": {
+      "songId": "yarg-joan-jett-the-blackhearts-i-hate-myself-for-loving-you-up-your-alley-1988-252",
+      "title": "I Hate Myself for Loving You",
+      "artist": "Joan Jett & the Blackhearts",
+      "album": "Up Your Alley"
+    },
+    "joe perry guitar battle|joe perry": {
+      "songId": "yarg-guitar-battles-joe-perry-guitar-battle-guitar-hero-aerosmith-2008-249",
+      "title": "Joe Perry Guitar Battle",
+      "artist": "Guitar Battles",
+      "album": "Guitar Hero: Aerosmith"
+    },
+    "all the young dudes|mott the hoople cover by wavegroup": {
+      "songId": "yarg-mott-the-hoople-all-the-young-dudes-wavegroup-all-the-young-dudes-1972-295",
+      "title": "All the Young Dudes (WaveGroup)",
+      "artist": "Mott the Hoople",
+      "album": "All the Young Dudes"
+    },
+    "king of rock|run d m c": {
+      "songId": "yarg-run-dmc-king-of-rock-king-of-rock-1985-317",
+      "title": "King of Rock",
+      "artist": "Run-DMC",
+      "album": "King of Rock"
+    },
+    "hard to handle|the black crowes cover by steve ouimette": {
+      "songId": "yarg-the-black-crowes-wavegroup-hard-to-handle-shake-your-money-maker-1990-200",
+      "title": "Hard to Handle",
+      "artist": "The Black Crowes (WaveGroup)",
+      "album": "Shake Your Money Maker"
+    },
+    "no sleep till brooklyn|beastie boys featuring kerry king": {
+      "songId": "yarg-beastie-boys-no-sleep-till-brooklyn-licensed-to-ill-1986-257",
+      "title": "No Sleep till Brooklyn",
+      "artist": "Beastie Boys",
+      "album": "Licensed to Ill"
+    },
+    "nj legion iced tea|day to remember a day to remember": {
+      "songId": "yarg-a-day-to-remember-nj-legion-iced-tea-homesick-2009-214",
+      "title": "NJ Legion Iced Tea",
+      "artist": "A Day to Remember",
+      "album": "Homesick"
+    },
+    "anything|endless sporadic an endless sporadic": {
+      "songId": "yarg-an-endless-sporadic-anything-ameliorate-2008-290",
+      "title": "Anything",
+      "artist": "An Endless Sporadic",
+      "album": "Ameliorate"
+    },
+    "all day and all of the night|the kinks cover by wavegroup": {
+      "songId": "yarg-the-kinks-all-day-and-all-of-the-night-kinks-size-1965-145",
+      "title": "All Day and All of the Night",
+      "artist": "The Kinks",
+      "album": "Kinks-Size"
+    },
+    "dez moines|devil wears prada the devil wears prada": {
+      "songId": "yarg-the-devil-wears-prada-dez-moines-with-roots-above-and-branches-below-2009-246",
+      "title": "Dez Moines",
+      "artist": "The Devil Wears Prada",
+      "album": "With Roots Above and Branches Below"
+    },
+    "sacrifice|expendables": {
+      "songId": "yarg-the-expendables-sacrifice-the-expendables-2007-286",
+      "title": "Sacrifice",
+      "artist": "The Expendables",
+      "album": "The Expendables"
+    },
+    "low travis barker remix|flo rida featuring t pain": {
+      "songId": "yarg-flo-rida-ft-t-pain-low-travis-barker-remix-mail-on-sunday-2007-263",
+      "title": "Low (Travis Barker Remix)",
+      "artist": "Flo Rida ft. T-Pain",
+      "album": "Mail on Sunday"
+    },
+    "cadillac solitario live|loquillo y trogloditas": {
+      "songId": "yarg-loquillo-y-los-trogloditas-cadillac-solitario-live-el-ritmo-del-garaje-1983-351",
+      "title": "Cadillac Solitario (Live)",
+      "artist": "Loquillo Y Los Trogloditas",
+      "album": "El ritmo del garaje"
+    },
+    "kick out the jams|mc5 s wayne kramer": {
+      "songId": "yarg-mc5-s-wayne-kramer-kick-out-the-jams-kick-out-the-jams-1969-181",
+      "title": "Kick Out the Jams",
+      "artist": "MC5's Wayne Kramer",
+      "album": "Kick Out the Jams"
+    },
+    "so what|pink": {
+      "songId": "yarg-p-nk-so-what-funhouse-2008-218",
+      "title": "So What",
+      "artist": "P!nk",
+      "album": "Funhouse"
+    },
+    "c lebrity|queen paul rodgers": {
+      "songId": "yarg-queen-c-lebrity-the-cosmos-rocks-2008-221",
+      "title": "C-lebrity",
+      "artist": "Queen",
+      "album": "The Cosmos Rocks"
+    },
+    "consoler of the lonely|raconteurs the raconteurs": {
+      "songId": "yarg-the-raconteurs-consoler-of-the-lonely-consolers-of-the-lonely-2008-199",
+      "title": "Consoler of the Lonely",
+      "artist": "The Raconteurs",
+      "album": "Consolers of the Lonely"
+    },
+    "hold up|raconteurs the raconteurs": {
+      "songId": "yarg-the-raconteurs-hold-up-consolers-of-the-lonely-2008-204",
+      "title": "Hold Up",
+      "artist": "The Raconteurs",
+      "album": "Consolers of the Lonely"
+    },
+    "salute your solution|raconteurs the raconteurs": {
+      "songId": "yarg-the-raconteurs-salute-your-solution-consolers-of-the-lonely-2008-184",
+      "title": "Salute Your Solution",
+      "artist": "The Raconteurs",
+      "album": "Consolers of the Lonely"
+    },
+    "in the shadows|rasmus the rasmus": {
+      "songId": "yarg-the-rasmus-in-the-shadows-dead-letters-2003-241",
+      "title": "In the Shadows",
+      "artist": "The Rasmus",
+      "album": "Dead Letters"
+    },
+    "cest comme ca|rita mitsouko les rita mitsouko": {
+      "songId": "yarg-les-rita-mitsouko-c-est-comme-ca-the-no-comprendo-1986-353",
+      "title": "C'est Comme Ca",
+      "artist": "Les Rita Mitsouko",
+      "album": "The No Comprendo"
+    },
+    "pretty vacant|sex pistols": {
+      "songId": "yarg-the-sex-pistols-pretty-vacant-never-mind-the-bollocks-here-s-the-sex-pistols-203",
+      "title": "Pretty Vacant",
+      "artist": "The Sex Pistols",
+      "album": "Never Mind the Bollocks, Here's the Sex Pistols"
+    },
+    "new slang|shins the shins": {
+      "songId": "yarg-the-shins-new-slang-oh-inverted-world-2001-233",
+      "title": "New Slang",
+      "artist": "The Shins",
+      "album": "Oh, Inverted World"
+    },
+    "bomb the world|sleeping the sleeping": {
+      "songId": "yarg-the-sleeping-bomb-the-world-what-it-takes-2009-243",
+      "title": "Bomb the World",
+      "artist": "The Sleeping",
+      "album": "What It Takes"
+    },
+    "demolition man live|sting": {
+      "songId": "yarg-the-police-demolition-man-live-ghost-in-the-machine-1981-254",
+      "title": "Demolition Man (Live)",
+      "artist": "The Police",
+      "album": "Ghost in the Machine"
+    },
+    "the kill|thirty seconds to mars": {
+      "songId": "yarg-30-seconds-to-mars-the-kill-a-beautiful-lie-2005-247",
+      "title": "The Kill",
+      "artist": "30 Seconds to Mars",
+      "album": "A Beautiful Lie"
+    },
+    "band on the run|wings": {
+      "songId": "yarg-paul-mccartney-wings-band-on-the-run-band-on-the-run-1973-314",
+      "title": "Band on the Run",
+      "artist": "Paul McCartney & Wings",
+      "album": "Band on the Run"
+    },
+    "juniors farm|wings": {
+      "songId": "yarg-paul-mccartney-wings-junior-s-farm-single-1974-264",
+      "title": "Junior's Farm",
+      "artist": "Paul McCartney & Wings",
+      "album": "Single"
+    },
+    "what have you done|within temptation": {
+      "songId": "yarg-within-temptation-ft-keith-caputo-what-have-you-done-the-heart-of-everything-2007-315",
+      "title": "What Have You Done",
+      "artist": "Within Temptation ft Keith Caputo",
+      "album": "The Heart of Everything"
+    },
+    "gives you hell|all american rejects the all american rejects": {
+      "songId": "yarg-the-all-american-rejects-gives-you-hell-when-the-world-comes-down-2008-217",
+      "title": "Gives You Hell",
+      "artist": "The All-American Rejects",
+      "album": "When the World Comes Down"
+    },
+    "a classic case of transference|fall of troy the fall of troy": {
+      "songId": "yarg-fall-of-troy-a-classic-case-of-transference-in-the-unlikely-event-2009-285",
+      "title": "A Classic Case of Transference",
+      "artist": "Fall of Troy",
+      "album": "In the Unlikely Event"
+    },
+    "panic attack|fall of troy the fall of troy": {
+      "songId": "yarg-fall-of-troy-panic-attack-in-the-unlikely-event-2009-219",
+      "title": "Panic Attack!",
+      "artist": "Fall of Troy",
+      "album": "In the Unlikely Event"
+    },
+    "freeze frame|j geils band the j geils band": {
+      "songId": "yarg-the-j-geils-band-freeze-frame-freeze-frame-1981-233",
+      "title": "Freeze-Frame",
+      "artist": "The J. Geils Band",
+      "album": "Freeze-Frame"
+    },
+    "just dance|lady gaga feat colby odonis": {
+      "songId": "yarg-lady-gaga-just-dance-the-fame-2009-244",
+      "title": "Just Dance",
+      "artist": "Lady Gaga",
+      "album": "The Fame"
+    },
+    "judith|perfect circle a perfect circle": {
+      "songId": "yarg-a-perfect-circle-judith-mer-de-noms-2000-249",
+      "title": "Judith",
+      "artist": "A Perfect Circle",
+      "album": "Mer De Noms"
+    },
+    "under pressure|queen and david bowie": {
+      "songId": "yarg-queen-under-pressure-hot-space-1982-236",
+      "title": "Under Pressure",
+      "artist": "Queen",
+      "album": "Hot Space"
+    },
+    "i cant get no satisfaction live|rolling stones the rolling stones": {
+      "songId": "yarg-the-rolling-stones-i-can-t-get-no-satisfaction-live-get-yer-ya-yas-out-1969-330",
+      "title": "(I Can't Get No) Satisfaction (Live)",
+      "artist": "The Rolling Stones",
+      "album": "Get Yer Ya-Yas Out!"
+    },
+    "im free live|rolling stones the rolling stones": {
+      "songId": "yarg-the-rolling-stones-im-free-live-get-yer-ya-ya-s-out-the-rolling-stones-in-concert-1969-162",
+      "title": "Im Free (Live)",
+      "artist": "The Rolling Stones",
+      "album": "Get Yer Ya-Ya's Out! The Rolling Stones in Concert"
+    },
+    "prodigal son live|rolling stones the rolling stones": {
+      "songId": "yarg-the-rolling-stones-prodigal-son-live-get-yer-ya-ya-s-out-the-rolling-stones-in-concert-1969-204",
+      "title": "Prodigal Son (Live)",
+      "artist": "The Rolling Stones",
+      "album": "Get Yer Ya-Ya's Out! The Rolling Stones in Concert"
+    },
+    "under my thumb live|rolling stones the rolling stones": {
+      "songId": "yarg-the-rolling-stones-under-my-thumb-live-get-yer-ya-ya-s-out-the-rolling-stones-in-concert-1969-225",
+      "title": "Under My Thumb (Live)",
+      "artist": "The Rolling Stones",
+      "album": "Get Yer Ya-Ya's Out! The Rolling Stones in Concert"
+    },
+    "you gotta move live|rolling stones the rolling stones": {
+      "songId": "yarg-the-rolling-stones-you-gotta-move-live-get-yer-ya-ya-s-out-the-rolling-stones-in-concert-1969-142",
+      "title": "You Gotta Move (Live)",
+      "artist": "The Rolling Stones",
+      "album": "Get Yer Ya-Ya's Out! The Rolling Stones in Concert"
+    },
+    "attack|thirty seconds to mars": {
+      "songId": "yarg-30-seconds-to-mars-attack-a-beautiful-lie-2005-189",
+      "title": "Attack",
+      "artist": "30 Seconds to Mars",
+      "album": "A Beautiful Lie"
+    },
+    "jailbreak|thin lizzy": {
+      "songId": "yarg-thin-lizzy-jailbreak-live-still-dangerous-live-at-the-tower-theatre-philadelphia-1977-1977-280",
+      "title": "Jailbreak (Live)",
+      "artist": "Thin Lizzy",
+      "album": "Still Dangerous - Live at the Tower Theatre Philadelphia 1977"
+    },
+    "guilty pleasures|tony solis": {
+      "songId": "yarg-tony-solis-ft-andy-gentile-guilty-pleasures-single-2009-323",
+      "title": "Guilty Pleasures",
+      "artist": "Tony Solis Ft. Andy Gentile",
+      "album": "Single"
+    },
+    "from yesterday|thirty seconds to mars": {
+      "songId": "yarg-30-seconds-to-mars-from-yesterday-a-beautiful-lie-2006-241",
+      "title": "From Yesterday",
+      "artist": "30 Seconds to Mars",
+      "album": "A Beautiful Lie"
+    },
+    "kings and queens|thirty seconds to mars": {
+      "songId": "yarg-30-seconds-to-mars-kings-and-queens-this-is-war-2009-327",
+      "title": "Kings and Queens",
+      "artist": "30 Seconds to Mars",
+      "album": "This Is War"
+    },
+    "the bird and the worm|used the used": {
+      "songId": "yarg-the-used-the-bird-and-the-worm-lies-for-the-liars-2007-226",
+      "title": "The Bird and the Worm",
+      "artist": "The Used",
+      "album": "Lies for the Liars"
+    },
+    "the taste of ink|used the used": {
+      "songId": "yarg-the-used-the-taste-of-ink-the-used-2002-214",
+      "title": "The Taste of Ink",
+      "artist": "The Used",
+      "album": "The Used"
+    },
+    "abc|jackson 5 the jackson 5": {
+      "songId": "yarg-the-jackson-5-abc-abc-1970-187",
+      "title": "ABC",
+      "artist": "The Jackson 5",
+      "album": "ABC"
+    },
+    "back again|parachute": {
+      "songId": "yarg-paracute-back-again-losing-sleep-2009-194",
+      "title": "Back Again",
+      "artist": "Paracute",
+      "album": "Losing Sleep"
+    },
+    "2nd sucks|day to remember a day to remember": {
+      "songId": "yarg-a-day-to-remember-2nd-sucks-what-separates-me-from-you-2010-147",
+      "title": "2nd Sucks",
+      "artist": "A Day to Remember",
+      "album": "What Separates Me from You"
+    },
+    "all i want|day to remember a day to remember": {
+      "songId": "yarg-a-day-to-remember-all-i-want-what-separates-me-from-you-2010-206",
+      "title": "All I Want",
+      "artist": "A Day to Remember",
+      "album": "What Separates Me from You"
+    },
+    "theme from spiderman|ramones": {
+      "songId": "yarg-the-ramones-theme-from-spiderman-adios-amigos-1995-127",
+      "title": "Theme from Spiderman",
+      "artist": "The Ramones",
+      "album": "Adios Amigos!"
+    },
+    "sweet transvestite|rocky horror picture show the rocky horror picture show": {
+      "songId": "yarg-the-rocky-horror-picture-show-sweet-transvestite-the-rocky-horror-picture-show-1975-205",
+      "title": "Sweet Transvestite",
+      "artist": "The Rocky Horror Picture Show",
+      "album": "The Rocky Horror Picture Show"
+    },
+    "ghost|slash featuring ian astbury": {
+      "songId": "yarg-slash-ft-ian-astbury-ghost-slash-2010-209",
+      "title": "Ghost",
+      "artist": "Slash ft Ian Astbury",
+      "album": "Slash"
+    },
+    "i believe in a thing called love|darkness the darkness": {
+      "songId": "yarg-the-darkness-i-believe-in-a-thing-called-love-permission-to-land-2003-218",
+      "title": "I Believe in a Thing Called Love",
+      "artist": "The Darkness",
+      "album": "Permission to Land"
+    },
+    "blaze of glory|jon bon jovi": {
+      "songId": "yarg-bon-jovi-blaze-of-glory-blaze-of-glory-1990-340",
+      "title": "Blaze of Glory",
+      "artist": "Bon Jovi",
+      "album": "Blaze of Glory"
+    },
+    "try|pink": {
+      "songId": "yarg-p-nk-try-the-truth-about-love-2012-250",
+      "title": "Try",
+      "artist": "P!nk",
+      "album": "The Truth About Love"
+    },
+    "the rock show|yearbook ghosts": {
+      "songId": "yarg-blink-182-the-rock-show-take-off-your-pants-jacket-2001-174",
+      "title": "The Rock Show",
+      "artist": "Blink-182",
+      "album": "Take Off Your Pants & Jacket"
+    },
+    "now|vivid screams": {
+      "songId": "yarg-paramore-now-paramore-2013-250",
+      "title": "Now",
+      "artist": "Paramore",
+      "album": "Paramore"
+    },
+    "the anthem|yearbook ghosts": {
+      "songId": "yarg-good-charlotte-the-anthem-the-young-and-the-hopeless-2002-178",
+      "title": "The Anthem",
+      "artist": "Good Charlotte",
+      "album": "The Young and the Hopeless"
+    },
+    "everybody talks|yearbook ghosts": {
+      "songId": "yarg-neon-trees-everybody-talks-picture-show-2012-181",
+      "title": "Everybody Talks",
+      "artist": "Neon Trees",
+      "album": "Picture Show"
+    },
+    "wont get fooled again|vip party": {
+      "songId": "yarg-the-who-won-t-get-fooled-again-who-s-next-1971-515",
+      "title": "Won't Get Fooled Again",
+      "artist": "The Who",
+      "album": "Who's Next"
+    },
+    "tie your mother down|vip party": {
+      "songId": "yarg-queen-tie-your-mother-down-a-day-at-the-races-1976-226",
+      "title": "Tie Your Mother Down",
+      "artist": "Queen",
+      "album": "A Day at the Races"
+    },
+    "paint it black|vip party": {
+      "songId": "yarg-the-rolling-stones-paint-it-black-aftermath-1966-230",
+      "title": "Paint It, Black",
+      "artist": "The Rolling Stones",
+      "album": "Aftermath"
+    },
+    "the ocean|tonight alive": {
+      "songId": "yarg-led-zeppelin-the-ocean-houses-of-the-holy-1973-274",
+      "title": "The Ocean",
+      "artist": "Led Zeppelin",
+      "album": "Houses of the Holy"
+    },
+    "lazaretto|the jephson hangout": {
+      "songId": "yarg-jack-white-lazaretto-lazaretto-2014-222",
+      "title": "Lazaretto",
+      "artist": "Jack White",
+      "album": "Lazaretto"
+    },
+    "when you were young|the jephson hangout": {
+      "songId": "yarg-the-killers-when-you-were-young-sam-s-town-2006-222",
+      "title": "When You Were Young",
+      "artist": "The Killers",
+      "album": "Sam's Town"
+    },
+    "counting stars|the jephson hangout": {
+      "songId": "yarg-onerepublic-counting-stars-native-2013-259",
+      "title": "Counting Stars",
+      "artist": "OneRepublic",
+      "album": "Native"
+    },
+    "gold on the ceiling|broken tide": {
+      "songId": "yarg-the-black-keys-gold-on-the-ceiling-el-camino-2011-218",
+      "title": "Gold on the Ceiling",
+      "artist": "The Black Keys",
+      "album": "El Camino"
+    },
+    "r u mine|broken tide": {
+      "songId": "yarg-arctic-monkeys-r-u-mine-am-2013-204",
+      "title": "R U Mine?",
+      "artist": "Arctic Monkeys",
+      "album": "AM"
+    },
+    "sundial|broken tide": {
+      "songId": "yarg-wolfmother-sundial-cosmic-egg-2009-229",
+      "title": "Sundial",
+      "artist": "Wolfmother",
+      "album": "Cosmic Egg"
+    },
+    "little monster|broken tide": {
+      "songId": "yarg-royal-blood-little-monster-royal-blood-2014-225",
+      "title": "Little Monster",
+      "artist": "Royal Blood",
+      "album": "Royal Blood"
+    },
+    "the kill|our pasts collide": {
+      "songId": "yarg-30-seconds-to-mars-the-kill-a-beautiful-lie-2005-247",
+      "title": "The Kill",
+      "artist": "30 Seconds to Mars",
+      "album": "A Beautiful Lie"
+    },
+    "my songs know what you did in the dark light em up|our pasts collide": {
+      "songId": "yarg-fall-out-boy-my-songs-know-what-you-did-in-the-dark-light-em-up-save-rock-and-roll-2013-191",
+      "title": "My Songs Know What You Did in the Dark (Light Em Up)",
+      "artist": "Fall Out Boy",
+      "album": "Save Rock and Roll"
+    },
+    "waking up in vegas|the out outs": {
+      "songId": "yarg-katy-perry-waking-up-in-vegas-one-of-the-boys-2008-176",
+      "title": "Waking Up in Vegas",
+      "artist": "Katy Perry",
+      "album": "One of the Boys"
+    },
+    "ho hey|portland cloud orchestra": {
+      "songId": "yarg-the-lumineers-ho-hey-the-lumineers-2012-162",
+      "title": "Ho Hey",
+      "artist": "The Lumineers",
+      "album": "The Lumineers"
+    },
+    "i will wait|portland cloud orchestra": {
+      "songId": "yarg-mumford-sons-i-will-wait-babel-2012-278",
+      "title": "I Will Wait",
+      "artist": "Mumford & Sons",
+      "album": "Babel"
+    },
+    "mountain sound|portland cloud orchestra": {
+      "songId": "yarg-of-monsters-and-men-mountain-sound-my-head-is-an-animal-2011-216",
+      "title": "Mountain Sound",
+      "artist": "Of Monsters and Men",
+      "album": "My Head is an Animal"
+    },
+    "walk this way|aerosmith featuring run d m c": {
+      "songId": "yarg-run-d-m-c-walk-this-way-run-d-m-c-raising-hell-1986-308",
+      "title": "Walk This Way (Run-D.M.C.)",
+      "artist": "Run-D.M.C.",
+      "album": "Raising Hell"
+    },
+    "dirty little secret|all american rejects": {
+      "songId": "yarg-the-all-american-rejects-dirty-little-secret-move-along-2005-199",
+      "title": "Dirty Little Secret",
+      "artist": "The All-American Rejects",
+      "album": "Move Along"
+    },
+    "move along|all american rejects": {
+      "songId": "yarg-the-all-american-rejects-move-along-move-along-2005-228",
+      "title": "Move Along",
+      "artist": "The All-American Rejects",
+      "album": "Move Along"
+    },
+    "should i stay or should i go|clash the clash": {
+      "songId": "yarg-the-clash-should-i-stay-or-should-i-go-combat-rock-1982-193",
+      "title": "Should I Stay or Should I Go",
+      "artist": "The Clash",
+      "album": "Combat Rock"
+    },
+    "main offender|hives the hives": {
+      "songId": "yarg-the-hives-main-offender-veni-vidi-vicious-2000-157",
+      "title": "Main Offender",
+      "artist": "The Hives",
+      "album": "Veni Vidi Vicious"
+    },
+    "time we had|mother hips the mother hips": {
+      "songId": "yarg-the-mother-hips-time-we-had-kiss-the-crystal-flake-2007-189",
+      "title": "Time We Had",
+      "artist": "The Mother Hips",
+      "album": "Kiss the Crystal Flake"
+    },
+    "electric version|new pornographers the new pornographers": {
+      "songId": "yarg-the-new-pornographers-electric-version-electric-version-2003-177",
+      "title": "Electric Version",
+      "artist": "The New Pornographers",
+      "album": "Electric Version"
+    },
+    "next to you|police the police": {
+      "songId": "yarg-the-police-next-to-you-outlandos-d-amour-1978-160",
+      "title": "Next to You",
+      "artist": "The Police",
+      "album": "Outlandos d'Amour"
+    },
+    "gimme shelter|rolling stones the rolling stones": {
+      "songId": "yarg-the-rolling-stones-gimme-shelter-let-it-bleed-1969-275",
+      "title": "Gimme Shelter",
+      "artist": "The Rolling Stones",
+      "album": "Let It Bleed"
+    },
+    "cherub rock|smashing pumpkins": {
+      "songId": "yarg-the-smashing-pumpkins-cherub-rock-siamese-dream-1993-304",
+      "title": "Cherub Rock",
+      "artist": "The Smashing Pumpkins",
+      "album": "Siamese Dream"
+    },
+    "siva|smashing pumpkins": {
+      "songId": "yarg-the-smashing-pumpkins-siva-gish-1991-268",
+      "title": "Siva",
+      "artist": "The Smashing Pumpkins",
+      "album": "Gish"
+    },
+    "zero|smashing pumpkins": {
+      "songId": "yarg-the-smashing-pumpkins-zero-mellon-collie-and-the-infinite-sadness-1995-162",
+      "title": "Zero",
+      "artist": "The Smashing Pumpkins",
+      "album": "Mellon Collie and the Infinite Sadness"
+    },
+    "manu chao|wampas les wampas": {
+      "songId": "yarg-les-wampas-manu-chao-never-trust-a-guy-who-after-having-been-a-punk-is-now-playing-electro-2003-172",
+      "title": "Manu Chao",
+      "artist": "Les Wampas",
+      "album": "Never Trust a Guy Who After Having Been a Punk, Is Now Playing Electro"
+    },
+    "wont get fooled again|who the who": {
+      "songId": "yarg-the-who-won-t-get-fooled-again-who-s-next-1971-515",
+      "title": "Won't Get Fooled Again",
+      "artist": "The Who",
+      "album": "Who's Next"
+    },
+    "gives you hell|all american rejects": {
+      "songId": "yarg-the-all-american-rejects-gives-you-hell-when-the-world-comes-down-2008-217",
+      "title": "Gives You Hell",
+      "artist": "The All-American Rejects",
+      "album": "When the World Comes Down"
+    },
+    "real world|all american rejects": {
+      "songId": "yarg-the-all-american-rejects-real-world-when-the-world-comes-down-2008-237",
+      "title": "Real World",
+      "artist": "The All-American Rejects",
+      "album": "When the World Comes Down"
+    },
+    "give it to me|cocktail slippers": {
+      "songId": "yarg-the-cocktail-slippers-give-it-to-me-mastermind-2006-191",
+      "title": "Give It to Me",
+      "artist": "The Cocktail Slippers",
+      "album": "Mastermind"
+    },
+    "the downfall of us all|day to remember a day to remember": {
+      "songId": "yarg-a-day-to-remember-the-downfall-of-us-all-homesick-2009-214",
+      "title": "The Downfall of Us All",
+      "artist": "A Day to Remember",
+      "album": "Homesick"
+    },
+    "abc|jackson 5": {
+      "songId": "yarg-the-jackson-5-abc-abc-1970-187",
+      "title": "ABC",
+      "artist": "The Jackson 5",
+      "album": "ABC"
+    },
+    "control|mutemath": {
+      "songId": "yarg-mute-math-control-mute-math-2006-277",
+      "title": "Control",
+      "artist": "Mute Math",
+      "album": "Mute Math"
+    },
+    "typical|mutemath": {
+      "songId": "yarg-mute-math-typical-mute-math-2007-262",
+      "title": "Typical",
+      "artist": "Mute Math",
+      "album": "Mute Math"
+    },
+    "lump|presidents of the united states of america": {
+      "songId": "yarg-the-presidents-of-the-united-states-of-america-lump-the-presidents-of-the-united-states-of-america-1995-136",
+      "title": "Lump",
+      "artist": "The Presidents of the United States of America",
+      "album": "The Presidents of the United States of America"
+    },
+    "today|smashing pumpkins the smashing pumpkins": {
+      "songId": "yarg-the-smashing-pumpkins-today-siamese-dream-1993-208",
+      "title": "Today",
+      "artist": "The Smashing Pumpkins",
+      "album": "Siamese Dream"
+    },
+    "gonzo|all american rejects": {
+      "songId": "yarg-the-all-american-rejects-gonzo-kids-in-the-street-2012-304",
+      "title": "Gonzo",
+      "artist": "The All-American Rejects",
+      "album": "Kids in the Street"
+    },
+    "jive talkin|bee gees": {
+      "songId": "yarg-the-bee-gees-jive-talkin-main-course-1975-230",
+      "title": "Jive Talkin'",
+      "artist": "The Bee Gees",
+      "album": "Main Course"
+    },
+    "night fever|bee gees": {
+      "songId": "yarg-the-bee-gees-night-fever-saturday-night-fever-ost-1977-232",
+      "title": "Night Fever",
+      "artist": "The Bee Gees",
+      "album": "Saturday Night Fever: OST"
+    },
+    "nights on broadway|bee gees": {
+      "songId": "yarg-the-bee-gees-nights-on-broadway-main-course-1975-280",
+      "title": "Nights on Broadway",
+      "artist": "The Bee Gees",
+      "album": "Main Course"
+    },
+    "stayin alive|bee gees": {
+      "songId": "yarg-the-bee-gees-stayin-alive-saturday-night-fever-ost-1977-290",
+      "title": "Stayin' Alive",
+      "artist": "The Bee Gees",
+      "album": "Saturday Night Fever: OST"
+    },
+    "tragedy|bee gees": {
+      "songId": "yarg-the-bee-gees-tragedy-spirits-having-flown-1979-307",
+      "title": "Tragedy",
+      "artist": "The Bee Gees",
+      "album": "Spirits Having Flown"
+    },
+    "you should be dancing|bee gees": {
+      "songId": "yarg-the-bee-gees-you-should-be-dancing-children-of-the-world-1976-274",
+      "title": "You Should Be Dancing",
+      "artist": "The Bee Gees",
+      "album": "Children of the World"
+    },
+    "got you where i want you|flys the flys": {
+      "songId": "yarg-the-flys-got-you-where-i-want-you-holiday-man-1998-247",
+      "title": "Got You (Where I Want You)",
+      "artist": "The Flys",
+      "album": "Holiday Man"
+    },
+    "tell me something good|rufus featuring chaka khan": {
+      "songId": "yarg-rufus-ft-chaka-khan-tell-me-something-good-rags-to-rufus-1974-294",
+      "title": "Tell Me Something Good",
+      "artist": "Rufus (ft. Chaka Khan)",
+      "album": "Rags to Rufus"
+    },
+    "smooth|santana ft rob thomas": {
+      "songId": "yarg-santana-smooth-supernatural-1999-296",
+      "title": "Smooth",
+      "artist": "Santana",
+      "album": "Supernatural"
+    },
+    "panic|sublime with rome": {
+      "songId": "yarg-sublime-panic-ft-rome-yours-truly-2011-143",
+      "title": "Panic ft. Rome",
+      "artist": "Sublime",
+      "album": "Yours Truly"
+    },
+    "this will be the day|jeff williams feat casey lee williams": {
+      "songId": "yarg-jeff-williams-ft-casey-lee-williams-this-will-be-the-day-rwby-volume-1-soundtrack-2013-188",
+      "title": "This Will Be the Day",
+      "artist": "Jeff Williams ft. Casey Lee Williams",
+      "album": "RWBY: Volume 1 Soundtrack"
+    },
+    "king for a day|pierce the veil": {
+      "songId": "yarg-pierce-the-veil-king-for-a-day-ft-kellin-quinn-collide-with-the-sky-2012-239",
+      "title": "King for a Day (ft. Kellin Quinn)",
+      "artist": "Pierce the Veil",
+      "album": "Collide with the Sky"
+    },
+    "backwoods company|wild feathers the wild feathers": {
+      "songId": "yarg-the-wild-feathers-backwoods-company-the-wild-feathers-2013-187",
+      "title": "Backwoods Company",
+      "artist": "The Wild Feathers",
+      "album": "The Wild Feathers"
+    },
+    "fire|jimi hendrix experience the jimi hendrix experience": {
+      "songId": "yarg-the-jimi-hendrix-experience-fire-are-you-experienced-1967-166",
+      "title": "Fire",
+      "artist": "The Jimi Hendrix Experience",
+      "album": "Are You Experienced"
+    },
+    "kids in the street|all american rejects": {
+      "songId": "yarg-the-all-american-rejects-kids-in-the-street-kids-in-the-street-2012-281",
+      "title": "Kids in the Street",
+      "artist": "The All-American Rejects",
+      "album": "Kids in the Street"
+    },
+    "we are young|fun feat janelle monae": {
+      "songId": "yarg-fun-ft-janelle-monae-we-are-young-some-nights-2012-253",
+      "title": "We Are Young",
+      "artist": "Fun. ft. Janelle Monáe",
+      "album": "Some Nights"
+    },
+    "moves like jagger|maroon 5 feat christina aguilera": {
+      "songId": "yarg-maroon-5-ft-christina-aguilera-moves-like-jagger-hands-all-over-2011-204",
+      "title": "Moves Like Jagger",
+      "artist": "Maroon 5 ft. Christina Aguilera",
+      "album": "Hands All Over"
+    },
+    "trippolette|andraleia buch": {
+      "songId": "yarg-andrew-buch-trippolette-unknown-album-2005-135",
+      "title": "Trippolette",
+      "artist": "Andrew Buch",
+      "album": "Unknown Album"
+    },
+    "cluster 2|jacob chaney": {
+      "songId": "yarg-askari-nari-cluster-2-satan-is-a-fallen-angel-and-he-can-respect-this-2011-256",
+      "title": "Cluster #2",
+      "artist": "Askari Nari",
+      "album": "Satan is a Fallen Angel (And He Can Respect This)"
+    },
+    "wake up|me talk pretty": {
+      "songId": "yarg-metalkpretty-wake-up-we-are-strangers-2010-250",
+      "title": "Wake Up",
+      "artist": "MeTalkPretty",
+      "album": "We Are Strangers"
+    }
+  }
 }
