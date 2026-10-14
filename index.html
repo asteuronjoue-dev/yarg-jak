@@ -1528,7 +1528,8 @@
           rockersRiseUp:'rockers-rise-up.png',
           rockersSleep:'rockers-go-to-sleep-soon.png',
           favorites:'mes-favoris.png',
-          disneyPixar:'disney-pixar.png'
+          disneyPixar:'disney-pixar.png',
+          guitarBattles:'guitar-battles.png'
         };
         const normalizePlaylistName=name=>String(name||'')
           .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -1536,6 +1537,7 @@
         function playlistArtworkFor(name){
           const normalized=normalizePlaylistName(name);
           if(normalized.includes('disney')&&normalized.includes('pixar'))return playlistArt.disneyPixar;
+          if(normalized.includes('guitar')&&normalized.includes('battl'))return playlistArt.guitarBattles;
           if(normalized.includes('francophone'))return playlistArt.francophone;
           if(normalized.includes('rockers')&&normalized.includes('rise up'))return playlistArt.rockersRiseUp;
           if(normalized.includes('rockers')&&normalized.includes('sleep soon'))return playlistArt.rockersSleep;
