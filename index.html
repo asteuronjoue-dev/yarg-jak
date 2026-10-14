@@ -1506,38 +1506,77 @@
           mcSheetBox.hidden=!mcCanEdit;
         };
         const playlistCardsGrid=document.getElementById('public-playlist-cards');
+        // Exact artwork filenames; playlist names from the database may vary in
+        // capitalization, accents, punctuation and explanatory suffixes.
         const playlistArt={
-          'francophone':'assets/playlist-art/francophone.png',
-          'rockers rise up':'assets/playlist-art/rockers-rise-up.png',
-          'rockers go to sleep soon':'assets/playlist-art/rockers-go-to-sleep-soon.png'
+          francophone:'francophone.png',
+          rockersRiseUp:'rockers-rise-up.png',
+          rockersSleep:'rockers-go-to-sleep-soon.png',
+          favorites:'mes-favoris.png'
         };
+        const normalizePlaylistName=name=>String(name||'')
+          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+          .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+        function playlistArtworkFor(name){
+          const normalized=normalizePlaylistName(name);
+          if(normalized.includes('francophone'))return playlistArt.francophone;
+          if(normalized.includes('rockers')&&normalized.includes('rise up'))return playlistArt.rockersRiseUp;
+          if(normalized.includes('rockers')&&normalized.includes('sleep soon'))return playlistArt.rockersSleep;
+          return null;
+        }
+        // Support deployments where the art folder has been copied into assets,
+        // or next to index.html; do not silently hide a failed image.
+        function playlistImageCandidates(filename){
+          return [
+            'assets/playlist-art/'+filename,
+            './assets/playlist-art/'+filename,
+            'playlist-art/'+filename,
+            'assets/'+filename
+          ].filter((v,i,a)=>a.indexOf(v)===i);
+        }
         function drawPlaylistCards(){
           playlistCardsGrid.replaceChildren();
           function makeCard(title,subtitle,art,selected,action,isFav=false){
-            const btn=document.createElement('button'); btn.type='button';
-            btn.className='official-game-card'+(selected?' active':'')+(isFav&&!signedInRockstar?' playlist-signin':'')+(art?' has-art':'');
+            const btn=document.createElement('button');btn.type='button';
+            btn.className='official-game-card'+(selected?' active':'')+(isFav&&!signedInRockstar?' playlist-signin':'');
             btn.setAttribute('aria-pressed',String(!!selected));
             btn.setAttribute('aria-label',subtitle?`${title} — ${subtitle}`:title);
             btn.title=subtitle?`${title} — ${subtitle}`:title;
             const emblem=document.createElement('span');emblem.className='official-game-logo';
             const fallback=document.createElement('span');fallback.className='playlist-generated-icon';
             fallback.textContent=isFav?'♥':'♫';emblem.append(fallback);
-            if(art){const img=document.createElement('img');img.alt='';img.loading='lazy';img.src=art;img.onerror=()=>img.remove();emblem.append(img);}
-            btn.append(emblem);
-            if(!art){
-              const copy=document.createElement('span');copy.className='official-game-copy';
-              const label=document.createElement('strong');label.textContent=title;
-              const small=document.createElement('small');small.textContent=subtitle;
-              copy.append(label,small);btn.append(copy);
+            const copy=document.createElement('span');copy.className='official-game-copy';
+            const label=document.createElement('strong');label.textContent=title;
+            const small=document.createElement('small');small.textContent=subtitle;
+            copy.append(label,small);
+            btn.append(emblem,copy);
+            if(art){
+              const img=document.createElement('img');
+              img.alt='';img.loading='lazy';
+              const paths=playlistImageCandidates(art);
+              let position=0;
+              img.onload=()=>{btn.classList.add('has-art');};
+              img.onerror=()=>{
+                position++;
+                if(position<paths.length)img.src=paths[position];
+                else{
+                  img.remove();
+                  btn.classList.remove('has-art');
+                  console.warn('Artwork introuvable pour '+title+'. Chemins essayés : '+paths.join(', '));
+                }
+              };
+              emblem.append(img);
+              img.src=paths[0];
             }
-            btn.addEventListener('click',action);playlistCardsGrid.append(btn);
+            btn.addEventListener('click',action);
+            playlistCardsGrid.append(btn);
           }
-          makeCard('Mes Favoris',signedInRockstar?'Mes chansons préférées':'Connexion Rockstar requise','assets/playlist-art/mes-favoris.png',state.favoritesOnly,()=>{
+          makeCard('Mes Favoris',signedInRockstar?'Mes chansons préférées':'Connexion Rockstar requise',playlistArt.favorites,state.favoritesOnly,()=>{
             if(!signedInRockstar){location.href='profil.html';return;}
             favFilterButton.click();
           },true);
           for(const p of publicPlaylists){
-            const art=playlistArt[p.name.trim().toLowerCase()]||null;
+            const art=playlistArtworkFor(p.name);
             makeCard(p.name,p.description||'Playlist publique',art,state.publicPlaylistId===p.id,()=>{
               curatedPicker.value=state.publicPlaylistId===p.id?'':p.id;
               curatedPicker.dispatchEvent(new Event('change'));
