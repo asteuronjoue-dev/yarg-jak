@@ -948,8 +948,16 @@
 #public-playlist-cards .official-game-card.has-art .official-game-copy{display:none;}
 @media(max-width:680px){#public-playlist-cards .official-game-card.has-art .official-game-logo{height:72px;min-height:72px;max-height:72px;}}
 #favorites-only {display:none!important;}
-#public-playlists-discovery .official-games-extras {display:none!important;}
 @media(min-width:681px){body:has(#public-playlists-discovery[open]){display:block!important;height:auto!important;min-height:100dvh!important;overflow-y:auto!important;overflow-x:hidden!important;}body:has(#public-playlists-discovery[open]) #scroll{height:min(72dvh,730px)!important;min-height:340px!important;overflow-y:auto!important;}#public-playlists-discovery[open]{max-height:min(62dvh,590px);overflow-y:auto;}}
+
+/* MC-only direct playlist action on song rows. */
+.row.mc-song-row{padding-right:112px!important;}
+.row .mc-add-playlist{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:2;
+  padding:6px 8px;background:#173a37;border:1px solid #39ada3;border-radius:7px;
+  color:#c4fff3;font:700 11px system-ui;cursor:pointer;white-space:nowrap;}
+.row .mc-add-playlist:hover{background:#24534c;border-color:#7ce8d8;}
+.row .mc-add-playlist:focus-visible{outline:2px solid #ffc36e;outline-offset:2px;}
+@media(max-width:680px){.row.mc-song-row{padding-right:110px!important;}}
 </style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🎸 Bienvenue dans le catalogue!</strong><p>Un compte est entièrement facultatif pour participer aux soirées. Recherche une chanson par titre, artiste ou jeu, utilise les filtres d’instruments, ou fais-toi suggérer 10 chansons au hasard. Avec un compte Rockstar, tu peux enregistrer tes favoris pour plus tard, avoir un suivi de tes stats et avoir un accès prioritaire pour ta première chanson au prochain party.</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
@@ -1033,9 +1041,6 @@
               <summary class="catalog-credits-heading">🎮 Explorer par jeu Guitar Hero et RockBand</summary>
               <div class="games-discovery-intro">Choisis un jeu pour voir ses chansons, <strong>DLC inclus</strong>. La liste se fit sur la version de sortie nord-américaines</div>
               <div id="official-games-grid" class="official-games-grid" aria-label="Jeux Guitar Hero et Rock Band"></div>
-              <div class="catalog-credits-controls official-games-extras">
-                <button id="credits-reset" type="button">Effacer le filtre de jeu</button>
-              </div>
               <p class="catalog-credits-help">Les filtres utilisent les listes nord-américaines des jeux et leurs contenus téléchargeables associés. Une chanson peut figurer dans plusieurs jeux, même si ta charte provient d’une autre collection. La présence d’une chanson ne garantit pas que la charte téléchargée soit identique à celle du jeu d’origine.</p>
             </details>
     </header>
@@ -1406,32 +1411,32 @@
           } else if(response.status!==404){console.warn('game-song-matches.json : HTTP',response.status);}
         } catch(e){console.warn('Associations manuelles non chargées (filtres automatiques conservés)',e);}
         const OFFICIAL_GAMES = [
-          {id:'gh1',name:'Guitar Hero',series:'gh',aliases:['Guitar Hero 1']},
-          {id:'bandhero',icon:'bh',name:'Band Hero',series:'gh',aliases:['Band Hero']},
-          {id:'ghlive',icon:'ghl',name:'Guitar Hero Live',series:'gh',aliases:['Guitar Hero Live']},
-          {id:'ghontour',icon:'ghot',name:'Guitar Hero: On Tour',series:'gh',aliases:[]},
-          {id:'ghdecades',icon:'ghotd',name:'Guitar Hero: On Tour – Decades',series:'gh',aliases:[]},
-          {id:'ghmodern',icon:'ghotmh',name:'Guitar Hero: On Tour – Modern Hits',series:'gh',aliases:[]},
-          {id:'gh2',name:'Guitar Hero II',series:'gh',aliases:['Guitar Hero 2','Guitar Hero 2 (DLC)']},
-          {id:'gh80s',name:'Guitar Hero Encore: Rocks the 80s',series:'gh',aliases:['Guitar Hero Encore - Rock The 80s']},
-          {id:'gh3',name:'Guitar Hero III: Legends of Rock',series:'gh',aliases:['Guitar Hero 3 - Legends of Rock','Guitar Hero 3 (DLC)','Guitar Hero III']},
-          {id:'gha',name:'Guitar Hero: Aerosmith',series:'gh',aliases:['Guitar Hero - Aerosmith']},
-          {id:'ghwt',name:'Guitar Hero: World Tour',series:'gh',aliases:['Guitar Hero 4 - World Tour','Guitar Hero 4 - World Tour (DLC)']},
-          {id:'ghm',name:'Guitar Hero: Metallica',series:'gh',aliases:['Guitar Hero - Metallica','Guitar Hero - Metallica DLC']},
-          {id:'ghsh',name:'Guitar Hero: Smash Hits',series:'gh',aliases:['Guitar Hero - Smash Hits']},
-          {id:'gh5',name:'Guitar Hero 5',series:'gh',aliases:['Guitar Hero 5','Guitar Hero 5 (DLC)']},
-          {id:'ghvh',name:'Guitar Hero: Van Halen',series:'gh',aliases:['Guitar Hero - Van Halen']},
-          {id:'ghwor',name:'Guitar Hero: Warriors of Rock',series:'gh',aliases:['Guitar Hero - Warriors of Rock']},
-          {id:'rb1',name:'Rock Band',series:'rb',aliases:['Rock Band 1','Rock Band 1 (DLC)','Rock Band']},
-          {id:'rb2',name:'Rock Band 2',series:'rb',aliases:['Rock Band 2','Rock Band 2 (DLC)']},
-          {id:'rb3',name:'Rock Band 3',series:'rb',aliases:['Rock Band 3','Rock Band 3 (DLC)']},
-          {id:'rb4',name:'Rock Band 4',series:'rb',aliases:['Rock Band 4','Rock Band 4 (DLC)']},
-          {id:'tbrb',name:'The Beatles: Rock Band',series:'rb',aliases:['Rock Band - The Beatles']},
-          {id:'lrb',name:'LEGO Rock Band',series:'rb',aliases:['Rock Band - LEGO']},
-          {id:'gdrb',name:'Green Day: Rock Band',series:'rb',aliases:['Rock Band - Green Day']},
-          {id:'rbb',name:'Rock Band Blitz',series:'rb',aliases:['Rock Band Blitz']},
-          {id:'rbacdc',icon:'rbacdc',name:'AC/DC Live: Rock Band Track Pack',series:'rb',aliases:['Rock Band - ACDC Live Track Pack']},
-          {id:'rbn',name:'Rock Band Network',series:'rb',aliases:['Rock Band Network']}
+          {id:'gh1',name:'Guitar Hero',series:'gh',year:2005,releaseOrder:1,aliases:['Guitar Hero 1']},
+          {id:'bandhero',icon:'bh',name:'Band Hero',series:'gh',year:2009,releaseOrder:5,aliases:['Band Hero']},
+          {id:'ghlive',icon:'ghl',name:'Guitar Hero Live',series:'gh',year:2015,releaseOrder:1,aliases:['Guitar Hero Live']},
+          {id:'ghontour',icon:'ghot',name:'Guitar Hero: On Tour',series:'gh',year:2008,releaseOrder:1,aliases:[]},
+          {id:'ghdecades',icon:'ghotd',name:'Guitar Hero: On Tour – Decades',series:'gh',year:2008,releaseOrder:4,aliases:[]},
+          {id:'ghmodern',icon:'ghotmh',name:'Guitar Hero: On Tour – Modern Hits',series:'gh',year:2009,releaseOrder:2,aliases:[]},
+          {id:'gh2',name:'Guitar Hero II',series:'gh',year:2006,releaseOrder:1,aliases:['Guitar Hero 2','Guitar Hero 2 (DLC)']},
+          {id:'gh80s',name:'Guitar Hero Encore: Rocks the 80s',series:'gh',year:2007,releaseOrder:1,aliases:['Guitar Hero Encore - Rock The 80s']},
+          {id:'gh3',name:'Guitar Hero III: Legends of Rock',series:'gh',year:2007,releaseOrder:2,aliases:['Guitar Hero 3 - Legends of Rock','Guitar Hero 3 (DLC)','Guitar Hero III']},
+          {id:'gha',name:'Guitar Hero: Aerosmith',series:'gh',year:2008,releaseOrder:2,aliases:['Guitar Hero - Aerosmith']},
+          {id:'ghwt',name:'Guitar Hero: World Tour',series:'gh',year:2008,releaseOrder:3,aliases:['Guitar Hero 4 - World Tour','Guitar Hero 4 - World Tour (DLC)']},
+          {id:'ghm',name:'Guitar Hero: Metallica',series:'gh',year:2009,releaseOrder:1,aliases:['Guitar Hero - Metallica','Guitar Hero - Metallica DLC']},
+          {id:'ghsh',name:'Guitar Hero: Smash Hits',series:'gh',year:2009,releaseOrder:3,aliases:['Guitar Hero - Smash Hits']},
+          {id:'gh5',name:'Guitar Hero 5',series:'gh',year:2009,releaseOrder:4,aliases:['Guitar Hero 5','Guitar Hero 5 (DLC)']},
+          {id:'ghvh',name:'Guitar Hero: Van Halen',series:'gh',year:2009,releaseOrder:6,aliases:['Guitar Hero - Van Halen']},
+          {id:'ghwor',name:'Guitar Hero: Warriors of Rock',series:'gh',year:2010,releaseOrder:1,aliases:['Guitar Hero - Warriors of Rock']},
+          {id:'rb1',name:'Rock Band',series:'rb',year:2007,releaseOrder:1,aliases:['Rock Band 1','Rock Band 1 (DLC)','Rock Band']},
+          {id:'rb2',name:'Rock Band 2',series:'rb',year:2008,releaseOrder:1,aliases:['Rock Band 2','Rock Band 2 (DLC)']},
+          {id:'rb3',name:'Rock Band 3',series:'rb',year:2010,releaseOrder:2,aliases:['Rock Band 3','Rock Band 3 (DLC)']},
+          {id:'rb4',name:'Rock Band 4',series:'rb',year:2015,releaseOrder:1,aliases:['Rock Band 4','Rock Band 4 (DLC)']},
+          {id:'tbrb',name:'The Beatles: Rock Band',series:'rb',year:2009,releaseOrder:1,aliases:['Rock Band - The Beatles']},
+          {id:'lrb',name:'LEGO Rock Band',series:'rb',year:2009,releaseOrder:2,aliases:['Rock Band - LEGO']},
+          {id:'gdrb',name:'Green Day: Rock Band',series:'rb',year:2010,releaseOrder:1,aliases:['Rock Band - Green Day']},
+          {id:'rbb',name:'Rock Band Blitz',series:'rb',year:2012,releaseOrder:1,aliases:['Rock Band Blitz']},
+          {id:'rbacdc',icon:'rbacdc',name:'AC/DC Live: Rock Band Track Pack',series:'rb',year:2008,releaseOrder:2,aliases:['Rock Band - ACDC Live Track Pack']},
+          {id:'rbn',name:'Rock Band Network',series:'rb',year:2010,releaseOrder:99,aliases:['Rock Band Network']}
         ];
         const gameById = new Map(OFFICIAL_GAMES.map(g=>[g.id,g]));
         DATA.forEach(r=>{r.games=[...r.gameIds].map(id=>gameById.get(id)?.name||id);});
@@ -1463,7 +1468,7 @@
           emblem.append(fallback,img);
           const copy=document.createElement('span');copy.className='official-game-copy';
           const title=document.createElement('strong');title.textContent=game.name;
-          const meta=document.createElement('small');meta.textContent=count.toLocaleString('fr-CA')+' chansons'+(game.id==='rbn'?' · réseau indépendant':' · sorties officielles');
+          const meta=document.createElement('small');meta.textContent=count.toLocaleString('fr-CA')+' chansons · '+game.year;
           copy.append(title,meta);btn.append(emblem,copy);
           btn.addEventListener('click',()=>{
             state.playlist=state.playlist===game.id?'':game.id;
@@ -1478,7 +1483,7 @@
           });
         }
         for(const series of ['gh','rb']){
-          const games=OFFICIAL_GAMES.filter(g=>g.series===series&&gameCount.get(g.id)>0);
+          const games=OFFICIAL_GAMES.filter(g=>g.series===series&&gameCount.get(g.id)>0).sort((a,b)=>((a.id==='rbn')?1:0)-((b.id==='rbn')?1:0)||a.year-b.year||a.releaseOrder-b.releaseOrder);
           if(!games.length)continue;
           const section=document.createElement('section');section.className='official-game-section';
           const heading=document.createElement('h3'); heading.textContent=series==='gh'?'Guitar Hero':series==='rb'?'Rock Band':'Rock Band Network';
@@ -1486,9 +1491,6 @@
           games.forEach(g=>cards.appendChild(gameCard(g)));
           section.append(heading,cards);gameGrid.append(section);
         }
-        document.getElementById('credits-reset').addEventListener('click',()=>{
-          state.playlist='';updateGameSelection();filter();
-        });
 
         // Registered Rockstar favourites + public MC-curated playlists.
         // Catalogue ids are stable keys stored in songs.json.
@@ -1625,7 +1627,7 @@
           await loadFavouriteIds();
           mcCanEdit=false;
           if(signedInRockstar){const {data,error}=await collectionsSb.rpc('yarg_admin_whoami');mcCanEdit=!error&&data===true;}
-          updateFavoriteButton();drawPlaylistCards();
+          updateFavoriteButton();drawPlaylistCards();render();
         }
         favFilterButton.onclick=()=>{
           if(!signedInRockstar){location.href='profil.html';return;}
@@ -2017,19 +2019,31 @@
                     const r = filtered[i];
                     const top = i * ROW_H;
                     const ariaLabel = `${r.a} ${r.t}`;
-                    html += `<div class="row" style="top:${top}px" data-index="${i}" data-song-id="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(ariaLabel)}">`;
+                    html += `<div class="row${mcCanEdit?' mc-song-row':''}" style="top:${top}px" data-index="${i}" data-song-id="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(ariaLabel)}">`;
                     html += `<div class="cell">${esc(r.a)}</div>`;
                     html += `<div class="cell">${esc(r.t)}</div>`;
                     html += `<div class="cell cell-length">${fmtLen(r.l)}</div>`;
                     html += `<div class="cell cell-year">${esc(r.y || '')}</div>`;
                     html += `<div class="cell cell-album">${esc(r.al || '')}</div>`;
                     html += `<div class="cell cell-instruments">${partsBadges(r)}</div>`;
+                    if(mcCanEdit)html += `<button type="button" class="mc-add-playlist" data-index="${i}" aria-label="Ajouter ${esc(r.t)} à une playlist publique">＋ Playlist</button>`;
                     html += `</div>`;
                 }
 
                 spacerEl.innerHTML = html;
 
                 // Attach click and keyboard handlers for detail sheet
+                spacerEl.querySelectorAll('.mc-add-playlist').forEach(button=>{
+                    button.addEventListener('click',e=>{
+                        e.stopPropagation();
+                        const song=filtered[Number(button.dataset.index)];
+                        if(!mcCanEdit||!song)return;
+                        openSheet(song);
+                        // Reuse the existing MC-only playlist selector and save action.
+                        sheet.scrollTop=sheet.scrollHeight;
+                        mcSheetPicker.focus({preventScroll:true});
+                    });
+                });
                 spacerEl.querySelectorAll('.row').forEach(row => {
                     const handleOpen = () => {
                         const idx = parseInt(row.dataset.index);
