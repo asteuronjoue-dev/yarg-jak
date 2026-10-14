@@ -950,15 +950,6 @@
 #favorites-only {display:none!important;}
 @media(min-width:681px){body:has(#public-playlists-discovery[open]){display:block!important;height:auto!important;min-height:100dvh!important;overflow-y:auto!important;overflow-x:hidden!important;}body:has(#public-playlists-discovery[open]) #scroll{height:min(72dvh,730px)!important;min-height:340px!important;overflow-y:auto!important;}#public-playlists-discovery[open]{max-height:min(62dvh,590px);overflow-y:auto;}}
 
-/* MC-only direct playlist action on song rows. */
-.row.mc-song-row{padding-right:112px!important;}
-.row .mc-add-playlist{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:2;
-  padding:6px 8px;background:#173a37;border:1px solid #39ada3;border-radius:7px;
-  color:#c4fff3;font:700 11px system-ui;cursor:pointer;white-space:nowrap;}
-.row .mc-add-playlist:hover{background:#24534c;border-color:#7ce8d8;}
-.row .mc-add-playlist:focus-visible{outline:2px solid #ffc36e;outline-offset:2px;}
-@media(max-width:680px){.row.mc-song-row{padding-right:110px!important;}}
-
 /* Playlist manager is visible near the top of a song's info card for authorized MCs. */
 #sheet-playlist-manager[hidden],#sheet-mc-access-note[hidden]{display:none!important;}
 #sheet-playlist-manager{margin:.65rem 0 1rem;padding:14px;border:1px solid #45b9a9;border-radius:12px;background:linear-gradient(120deg,#14312f,#1d292f);color:#eafffa;}
@@ -2048,31 +2039,19 @@
                     const r = filtered[i];
                     const top = i * ROW_H;
                     const ariaLabel = `${r.a} ${r.t}`;
-                    html += `<div class="row${mcCanEdit?' mc-song-row':''}" style="top:${top}px" data-index="${i}" data-song-id="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(ariaLabel)}">`;
+                    html += `<div class="row" style="top:${top}px" data-index="${i}" data-song-id="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(ariaLabel)}">`;
                     html += `<div class="cell">${esc(r.a)}</div>`;
                     html += `<div class="cell">${esc(r.t)}</div>`;
                     html += `<div class="cell cell-length">${fmtLen(r.l)}</div>`;
                     html += `<div class="cell cell-year">${esc(r.y || '')}</div>`;
                     html += `<div class="cell cell-album">${esc(r.al || '')}</div>`;
                     html += `<div class="cell cell-instruments">${partsBadges(r)}</div>`;
-                    if(mcCanEdit)html += `<button type="button" class="mc-add-playlist" data-index="${i}" aria-label="Ajouter ${esc(r.t)} à une playlist publique">＋ Playlist</button>`;
                     html += `</div>`;
                 }
 
                 spacerEl.innerHTML = html;
 
                 // Attach click and keyboard handlers for detail sheet
-                spacerEl.querySelectorAll('.mc-add-playlist').forEach(button=>{
-                    button.addEventListener('click',e=>{
-                        e.stopPropagation();
-                        const song=filtered[Number(button.dataset.index)];
-                        if(!mcCanEdit||!song)return;
-                        openSheet(song);
-                        // Reuse the existing MC-only playlist selector and save action.
-                        sheet.scrollTop=0;
-                        mcSheetPicker.focus({preventScroll:true});
-                    });
-                });
                 spacerEl.querySelectorAll('.row').forEach(row => {
                     const handleOpen = () => {
                         const idx = parseInt(row.dataset.index);
