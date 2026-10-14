@@ -959,17 +959,16 @@
 .row .mc-add-playlist:focus-visible{outline:2px solid #ffc36e;outline-offset:2px;}
 @media(max-width:680px){.row.mc-song-row{padding-right:110px!important;}}
 
-/* Private MC / owner controls on song detail sheets. */
-#sheet-playlist-manager[hidden],#sheet-playlist-controls[hidden]{display:none!important}
-#sheet-playlist-manager{margin-top:.8rem}
-#sheet-show-playlist{display:block;width:100%;min-height:54px;border:1px solid #42cfc0;border-radius:9px;background:linear-gradient(120deg,#124640,#17635a);color:#e4fff9;font:inherit;font-weight:850;font-size:1rem;cursor:pointer;padding:.8rem 1rem;text-align:center}
-#sheet-show-playlist:hover,#sheet-show-playlist:focus-visible{background:#20786d;outline-offset:3px}
-#sheet-playlist-controls{margin-top:.65rem;padding:1rem;border:1px solid #41625d;border-radius:10px;background:#142523;display:grid;gap:.65rem}
-#sheet-playlist-controls label{font-weight:750;font-size:.88rem;color:#dbf5ef}
-#sheet-mc-playlist{width:100%;min-height:43px;padding:.65rem;border-radius:8px;background:#111a1d;color:#f5f7f8;border:1px solid #52746e;font:inherit}
-#sheet-add-playlist{padding:.75rem 1rem;border:0;border-radius:8px;background:#ff8a24;color:#111;font:inherit;font-weight:850;cursor:pointer}
-#sheet-add-playlist:disabled{opacity:.5;cursor:not-allowed}
-#sheet-playlist-message{font-size:.88rem;min-height:1.3em;color:#a6ede0}
+/* Playlist manager is visible near the top of a song's info card for authorized MCs. */
+#sheet-playlist-manager[hidden],#sheet-mc-access-note[hidden]{display:none!important;}
+#sheet-playlist-manager{margin:.65rem 0 1rem;padding:14px;border:1px solid #45b9a9;border-radius:12px;background:linear-gradient(120deg,#14312f,#1d292f);color:#eafffa;}
+#sheet-playlist-manager strong{display:block;font-size:1rem;margin-bottom:9px;}
+#sheet-playlist-manager .mc-playlist-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+#sheet-mc-playlist{flex:1 1 185px;min-width:0;font:inherit;color:#f6fffd;background:#101a20;border:1px solid #4c7875;padding:10px;border-radius:8px;}
+#sheet-add-playlist{font:800 .89rem system-ui;background:#1fc8bd;color:#071715;border:0;border-radius:8px;padding:11px 14px;cursor:pointer;}
+#sheet-add-playlist:disabled{opacity:.5;cursor:not-allowed;}
+#sheet-playlist-message{margin-top:7px;font-size:.83rem;}
+#sheet-mc-access-note{margin:.7rem 0;padding:10px;background:#342823;border:1px solid #987053;border-radius:9px;color:#ffe0c9;font-size:.83rem;}
 </style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🎸 Bienvenue dans le catalogue!</strong><p>Un compte est entièrement facultatif pour participer aux soirées. Recherche une chanson par titre, artiste ou jeu, utilise les filtres d’instruments, ou fais-toi suggérer 10 chansons au hasard. Avec un compte Rockstar, tu peux enregistrer tes favoris pour plus tard, avoir un suivi de tes stats et avoir un accès prioritaire pour ta première chanson au prochain party.</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
@@ -1042,14 +1041,18 @@
               <summary class="catalog-credits-heading">🎵 Playlists publiques et Mes Favoris</summary>
               <p class="games-discovery-intro">Explore les playlists publiques ou retrouve les favoris de ton compte Rockstar.</p>
               <div id="public-playlist-cards" class="official-game-cards" aria-label="Choisir une playlist"></div>
-              <!-- Internal state holder for playlist-card selection; no redundant UI. -->
-              <select id="mc-playlist-picker" hidden aria-hidden="true" tabindex="-1"><option value="">Toutes les chansons</option></select>
+              <div class="catalog-credits-controls official-games-extras">
+                <label class="playlist-select-backup" for="mc-playlist-picker">Choisir une playlist
+                  <select id="mc-playlist-picker"><option value="">Toutes les chansons</option></select>
+                </label>
+                <button id="collection-clear" type="button">Effacer le filtre de playlist / favoris</button>
+              </div>
             </details>
             <details class="catalog-credits-filter games-discovery" aria-label="Explorer les chansons de Guitar Hero et Rock Band">
               <summary class="catalog-credits-heading">🎮 Explorer par jeu Guitar Hero et RockBand</summary>
-              <div class="games-discovery-intro">Choisis un jeu pour voir ses chansons, <strong>DLC inclus</strong>. </div>
+              <div class="games-discovery-intro">Choisis un jeu pour voir ses chansons, <strong>DLC inclus</strong>. La liste se fit sur la version de sortie nord-américaines</div>
               <div id="official-games-grid" class="official-games-grid" aria-label="Jeux Guitar Hero et Rock Band"></div>
-              <p class="catalog-credits-help">Les filtres se fient sur les versions de sortie nord-américaines. La présence d’une chanson ne signifie pas que la charte disponible soit identique à celle du jeu d’origine, seulement qu'il s'agit de la même chanson.</p>
+              <p class="catalog-credits-help">Les filtres utilisent les listes nord-américaines des jeux et leurs contenus téléchargeables associés. Une chanson peut figurer dans plusieurs jeux, même si ta charte provient d’une autre collection. La présence d’une chanson ne garantit pas que la charte téléchargée soit identique à celle du jeu d’origine.</p>
             </details>
     </header>
 
@@ -1071,6 +1074,13 @@
     <div id="sheet-backdrop">
         <div id="sheet">
             <div class="sheet-header" id="sheet-title"></div>
+            <div id="sheet-mc-access-note" hidden role="status">🔒 La gestion des playlists nécessite un compte Rockstar reconnu comme MC/Admin. Vérifie ta connexion dans Mon profil.</div>
+            <div id="sheet-playlist-manager" hidden>
+              <strong>🎛️ Ajouter à une playlist publique (MC)</strong>
+              <div class="mc-playlist-controls"><select id="sheet-mc-playlist" aria-label="Playlist publique de destination"><option value="">Choisir une playlist…</option></select>
+              <button id="sheet-add-playlist" type="button">＋ Ajouter à cette playlist</button></div>
+              <div id="sheet-playlist-message" class="collection-help" role="status"></div>
+            </div>
             <div class="sheet-row">
                 <span class="sheet-label">Artiste</span>
                 <span class="sheet-value" id="sheet-artist"></span>
@@ -1110,15 +1120,6 @@
             </div>
 
             <button id="sheet-favourite" type="button" hidden>♥ Ajouter à mes favoris</button>
-            <div id="sheet-playlist-manager" hidden>
-              <button id="sheet-show-playlist" type="button" aria-expanded="false" aria-controls="sheet-playlist-controls">＋ Ajouter à une playlist publique</button>
-              <div id="sheet-playlist-controls" hidden>
-                <label for="sheet-mc-playlist">Playlist de destination</label>
-                <select id="sheet-mc-playlist"><option value="">Choisir une playlist…</option></select>
-                <button id="sheet-add-playlist" type="button">Confirmer l’ajout</button>
-                <div id="sheet-playlist-message" class="collection-help" role="status" aria-live="polite"></div>
-              </div>
-            </div>
             <div id="sheet-queue-hook" class="party-flavor-wrap">
                 <span id="party-flavor"></span>
             </div>
@@ -1512,18 +1513,7 @@
         const favouriteButton=document.getElementById('sheet-favourite');
         const mcSheetBox=document.getElementById('sheet-playlist-manager');
         const mcSheetPicker=document.getElementById('sheet-mc-playlist');
-        const mcPlaylistToggle=document.getElementById('sheet-show-playlist');
-        const mcPlaylistControls=document.getElementById('sheet-playlist-controls');
-        const mcPlaylistMessage=document.getElementById('sheet-playlist-message');
-        function showMcPlaylistControls(open){
-          mcPlaylistControls.hidden=!open;
-          mcPlaylistToggle.setAttribute('aria-expanded',String(open));
-          if(open)mcSheetPicker.focus({preventScroll:true});
-        }
-        mcPlaylistToggle.onclick=()=>{
-          if(!mcCanEdit)return;
-          showMcPlaylistControls(mcPlaylistControls.hidden);
-        };
+        const mcAccessNote=document.getElementById('sheet-mc-access-note');
         const updateFavoriteButton=()=>{
           if(!CURRENT_SHEET_SONG)return;
           favouriteButton.hidden=!signedInRockstar;
@@ -1531,7 +1521,7 @@
           favouriteButton.dataset.on=String(on);
           favouriteButton.textContent=on?'♥ Dans mes favoris · Retirer':'♥ Ajouter à mes favoris';
           mcSheetBox.hidden=!mcCanEdit;
-          if(!mcCanEdit)showMcPlaylistControls(false);
+          mcAccessNote.hidden=!!mcCanEdit||!signedInRockstar;
         };
         const playlistCardsGrid=document.getElementById('public-playlist-cards');
         // Exact artwork filenames; playlist names from the database may vary in
@@ -1650,7 +1640,11 @@
           if(!signedInRockstar&&state.favoritesOnly){state.favoritesOnly=false;favFilterButton.setAttribute('aria-pressed','false');}
           await loadFavouriteIds();
           mcCanEdit=false;
-          if(signedInRockstar){const {data,error}=await collectionsSb.rpc('yarg_admin_whoami');mcCanEdit=!error&&data===true;}
+          if(signedInRockstar){
+            const {data,error}=await collectionsSb.rpc('yarg_admin_whoami');
+            if(error) console.warn('Vérification des droits MC/Admin impossible :',error.message);
+            mcCanEdit=!error&&(data===true);
+          }
           updateFavoriteButton();drawPlaylistCards();render();
         }
         favFilterButton.onclick=()=>{
@@ -1666,6 +1660,10 @@
             publicPlaylistSongIds=new Set((data||[]).map(x=>x.song_id));
           }drawPlaylistCards();filter();
         };
+        document.getElementById('collection-clear').onclick=()=>{
+          state.favoritesOnly=false;state.publicPlaylistId='';publicPlaylistSongIds.clear();
+          favFilterButton.setAttribute('aria-pressed','false');curatedPicker.value='';drawPlaylistCards();filter();
+        };
         favouriteButton.onclick=async()=>{
           if(!signedInRockstar||!CURRENT_SHEET_SONG)return;
           const songId=String(CURRENT_SHEET_SONG.id),on=myFavoriteSongIds.has(songId);
@@ -1678,20 +1676,14 @@
           updateFavoriteButton();if(state.favoritesOnly)filter();
         };
         document.getElementById('sheet-add-playlist').onclick=async()=>{
-          if(!mcCanEdit||!signedInRockstar||!CURRENT_SHEET_SONG||!collectionsSb)return;
-          const playlistId=mcSheetPicker.value;
-          if(!playlistId){mcPlaylistMessage.textContent='Choisis d’abord une playlist.';mcSheetPicker.focus();return;}
-          if(!publicPlaylists.some(p=>String(p.id)===String(playlistId))){mcPlaylistMessage.textContent='Playlist introuvable.';return;}
-          const song=CURRENT_SHEET_SONG;
-          const button=document.getElementById('sheet-add-playlist');
+          if(!mcCanEdit||!CURRENT_SHEET_SONG)return;
+          if(!mcSheetPicker.value){document.getElementById('sheet-playlist-message').textContent='Choisis une playlist publique avant d’ajouter la chanson.';return;}
+          const button=document.getElementById('sheet-add-playlist'),label=document.getElementById('sheet-playlist-message');
           button.disabled=true;
-          mcPlaylistMessage.textContent='Ajout en cours…';
-          try{
-            const {error}=await collectionsSb.from('yarg_public_playlist_songs').upsert({playlist_id:playlistId,song_id:String(song.id),song_title:song.t,song_artist:song.a},{onConflict:'playlist_id,song_id',ignoreDuplicates:true});
-            mcPlaylistMessage.textContent=error?'Erreur : '+error.message:'✓ Chanson ajoutée à la playlist !';
-            if(!error&&state.publicPlaylistId===playlistId){publicPlaylistSongIds.add(String(song.id));filter();}
-          }catch(err){mcPlaylistMessage.textContent='Erreur : '+(err?.message||'Ajout impossible');}
-          finally{button.disabled=false;}
+          const {error}=await collectionsSb.from('yarg_public_playlist_songs').upsert({playlist_id:mcSheetPicker.value,song_id:String(CURRENT_SHEET_SONG.id),song_title:CURRENT_SHEET_SONG.t,song_artist:CURRENT_SHEET_SONG.a},{onConflict:'playlist_id,song_id',ignoreDuplicates:true});
+          button.disabled=false;
+          label.textContent=error?'Erreur : '+error.message:'Chanson ajoutée à la playlist !';
+          if(!error&&state.publicPlaylistId===mcSheetPicker.value){publicPlaylistSongIds.add(String(CURRENT_SHEET_SONG.id));filter();}
         };
         if(collectionsSb){collectionsSb.auth.onAuthStateChange(()=>{setTimeout(initCollections,0)});setTimeout(initCollections,0)}
         let filtered = [...DATA];
@@ -2066,9 +2058,9 @@
                         const song=filtered[Number(button.dataset.index)];
                         if(!mcCanEdit||!song)return;
                         openSheet(song);
-                        // Open the same authorized playlist action as on the detail card.
-                        showMcPlaylistControls(true);
-                        mcSheetBox.scrollIntoView({block:'nearest',behavior:'smooth'});
+                        // Reuse the existing MC-only playlist selector and save action.
+                        sheet.scrollTop=0;
+                        mcSheetPicker.focus({preventScroll:true});
                     });
                 });
                 spacerEl.querySelectorAll('.row').forEach(row => {
@@ -2135,10 +2127,9 @@
 
         function openSheet(r) {
             CURRENT_SHEET_SONG = r;
-            mcPlaylistMessage.textContent='';
-            showMcPlaylistControls(false);
-            mcSheetPicker.value='';
             updateFavoriteButton();
+            document.getElementById('sheet-playlist-message').textContent='';
+            sheet.scrollTop=0;
             const requestZone = document.getElementById('performance-request-zone');
             if (requestZone) requestZone.hidden = !PARTY_REQUESTS_ENABLED;
             document.getElementById('sheet-title').textContent = r.t;
