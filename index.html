@@ -969,6 +969,13 @@
 #sheet-add-playlist:disabled{opacity:.5;cursor:not-allowed;}
 #sheet-playlist-message{margin-top:7px;font-size:.83rem;}
 #sheet-mc-access-note{margin:.7rem 0;padding:10px;background:#342823;border:1px solid #987053;border-radius:9px;color:#ffe0c9;font-size:.83rem;}
+
+/* Controls retained for filtering logic, never displayed. */
+#playlist-hidden-controls { display:none!important; }
+/* Show complete random song titles and artists at every screen width. */
+#song-suggestions .suggestion-results { max-height:none!important; overflow:visible!important; align-items:stretch; }
+#song-suggestions .suggestion { max-width:none!important; min-width:0; white-space:normal!important; overflow-wrap:anywhere; word-break:normal; text-overflow:clip!important; overflow:visible!important; text-align:left; line-height:1.4; }
+@media(min-width:681px) { #song-suggestions .suggestion-results { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,225px),1fr)); } }
 </style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🎸 Bienvenue dans le catalogue!</strong><p>Un compte est entièrement facultatif pour participer aux soirées. Recherche une chanson par titre, artiste ou jeu, utilise les filtres d’instruments, ou fais-toi suggérer 10 chansons au hasard. Avec un compte Rockstar, tu peux enregistrer tes favoris pour plus tard, avoir un suivi de tes stats et avoir un accès prioritaire pour ta première chanson au prochain party.</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
@@ -1041,7 +1048,7 @@
               <summary class="catalog-credits-heading">🎵 Playlists publiques et Mes Favoris</summary>
               <p class="games-discovery-intro">Explore les playlists publiques ou retrouve les favoris de ton compte Rockstar.</p>
               <div id="public-playlist-cards" class="official-game-cards" aria-label="Choisir une playlist"></div>
-              <div class="catalog-credits-controls official-games-extras">
+              <div class="catalog-credits-controls official-games-extras" id="playlist-hidden-controls" hidden>
                 <label class="playlist-select-backup" for="mc-playlist-picker">Choisir une playlist
                   <select id="mc-playlist-picker"><option value="">Toutes les chansons</option></select>
                 </label>
@@ -1050,9 +1057,8 @@
             </details>
             <details class="catalog-credits-filter games-discovery" aria-label="Explorer les chansons de Guitar Hero et Rock Band">
               <summary class="catalog-credits-heading">🎮 Explorer par jeu Guitar Hero et RockBand</summary>
-              <div class="games-discovery-intro">Choisis un jeu pour voir ses chansons, <strong>DLC inclus</strong>. La liste se fit sur la version de sortie nord-américaines</div>
+              <div class="games-discovery-intro">Choisis un jeu pour voir ses chansons, <strong>DLC inclus</strong>. La liste se fit sur la version de sortie nord-américaines et ne garanti pas que la charte soit celle du jeu d'origine. Comme les vieux jeux contenaient peu d'instruments, j'ai remplacé beaucoup de chartes pour des versions avec plus d'instruments.</div>
               <div id="official-games-grid" class="official-games-grid" aria-label="Jeux Guitar Hero et Rock Band"></div>
-              <p class="catalog-credits-help">Les filtres utilisent les listes nord-américaines des jeux et leurs contenus téléchargeables associés. Une chanson peut figurer dans plusieurs jeux, même si ta charte provient d’une autre collection. La présence d’une chanson ne garantit pas que la charte téléchargée soit identique à celle du jeu d’origine.</p>
             </details>
     </header>
 
