@@ -2139,10 +2139,13 @@
             for (let i = 0; i < PART_ORDER.length; i++) {
                 const part = PART_ORDER[i];
                 const ch = r.d ? r.d['VGDKB'.indexOf(part)] : '.';
-                // A playable guitar chart can exist even if YARG exports no intensity rating.
-                // Keep it in the combined guitar/rhythm row in that case.
-                const hasGuitarChart = part === 'G' && (r.p?.includes('G') || hasChartGroup(r,0));
-                if (ch === '.' && !hasGuitarChart) continue;
+                // Instrument availability is independent from intensity ratings.
+                // Use the same r.p flags as the catalogue's instrument icons,
+                // so every playable instrument appears even if its tier is missing.
+                const chartGroups = {V:[],G:[0],B:[1],D:[3,4,5],K:[6,7]};
+                const available = (r.p || '').toUpperCase().includes(part) ||
+                    chartGroups[part].some(group => hasChartGroup(r,group));
+                if (!available && (ch === '.' || ch === '?' || ch === undefined)) continue;
 
                 const n = decodeTier(ch);
                 let partLabel = PART_LABELS[part];
