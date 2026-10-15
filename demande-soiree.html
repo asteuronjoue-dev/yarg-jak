@@ -41,7 +41,19 @@ function chooseMode(category, priorMode=''){
 let members=[];let nextId=0;let bandDirectory=[];let ownBandProfile=null;
 const guitarNames=[['','Peu importe — je prendrai une guitare restante'],['osp uze','OSPUZE - Rockband'],['crkd','Blue Guitar - CRKD'],['sunburst','Sunburst - Guitar Hero']];
 const guitarPhotos={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png'};
-function showGuitarPhoto(m,card){const img=card.querySelector('[data-guitar-photo]');if(!img)return;img.hidden=!m.guitarChoice;if(m.guitarChoice)img.src=guitarPhotos[m.guitarChoice]||''}
+function showGuitarPhoto(m,card){
+ const img=card.querySelector('[data-guitar-photo]');
+ if(!img)return;
+ const path=guitarPhotos[m.guitarChoice];
+ img.hidden=true;
+ if(!path){img.removeAttribute('src');return;}
+ img.onerror=()=>{img.hidden=true;console.warn('Aperçu de guitare indisponible :',path)};
+ img.onload=()=>{if(m.guitarChoice&&guitarPhotos[m.guitarChoice]===path)img.hidden=false};
+ // A cached image may already be complete, in which case onload may not fire again.
+ if(img.getAttribute('src')===path){if(img.complete&&img.naturalWidth>0)img.hidden=false;return;}
+ img.src=path;
+ if(img.complete&&img.naturalWidth>0)img.hidden=false;
+}
 async function loadBandDirectory(){try{const c=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);const {data,error}=await c.rpc('yarg_band_directory');if(error)throw error;bandDirectory=(data||[]).sort((a,b)=>Number(b.active_this_party)-Number(a.active_this_party)||a.rockstar_name.localeCompare(b.rockstar_name,'fr'));render()}catch(e){console.warn('Annuaire Rockstar indisponible, les invités peuvent entrer leurs noms.',e)}}
 
 
@@ -103,7 +115,7 @@ function render(){
     const note=document.createElement('small');note.className='mode-note';note.textContent=MODE_DESCRIPTIONS[m.mode]||'';wrap.append(note);
   }
   if(m.mode==='vocals')m.difficulty='medium';
-  if(m.mode!=='vocals'){const guitarModes=['guitar','rhythm_guitar','bass'];if(guitarModes.includes(m.mode)){const guitar=document.createElement('select');for(const [value,label] of guitarNames){let o=document.createElement('option');o.value=value;o.textContent=label;guitar.append(o)}guitar.value=m.guitarChoice;guitar.onchange=()=>{m.guitarChoice=guitar.value;showGuitarPhoto(m,card)};const guitarWrap=field('Choix de guitare (facultatif)',guitar);const photo=document.createElement('img');photo.className='guitar-photo';photo.alt='Manette guitare réservée';photo.dataset.guitarPhoto=String(m.id);guitarWrap.append(photo);const guitarHelp=document.createElement('small');guitarHelp.className='mode-note';guitarHelp.textContent='Peu importe : aucune guitare précise n’est réservée. Les autres peuvent choisir la leur, et tu prendras celle qui reste.';guitarWrap.append(guitarHelp);showGuitarPhoto(m,card)}}
+  if(m.mode!=='vocals'){const guitarModes=['guitar','rhythm_guitar','bass'];if(guitarModes.includes(m.mode)){const guitar=document.createElement('select');for(const [value,label] of guitarNames){let o=document.createElement('option');o.value=value;o.textContent=label;guitar.append(o)}guitar.value=m.guitarChoice;guitar.onchange=()=>{m.guitarChoice=guitar.value;showGuitarPhoto(m,card)};const guitarWrap=field('Choix de guitare (facultatif)',guitar);const photo=document.createElement('img');photo.className='guitar-photo';photo.hidden=true;photo.alt='Manette guitare réservée';photo.dataset.guitarPhoto=String(m.id);guitarWrap.append(photo);const guitarHelp=document.createElement('small');guitarHelp.className='mode-note';guitarHelp.textContent='Peu importe : aucune guitare précise n’est réservée. Les autres peuvent choisir la leur, et tu prendras celle qui reste.';guitarWrap.append(guitarHelp)}}
   if(m.mode!=='vocals'){const profileChoice=document.createElement('select');let none=document.createElement('option');none.value='';none.textContent='Compte non associé (invité)';profileChoice.append(none);for(const entry of (ownBandProfile && !bandDirectory.some(x=>x.user_id===ownBandProfile.user_id)?[ownBandProfile,...bandDirectory]:bandDirectory)){const o=document.createElement('option');o.value=entry.user_id;o.textContent=entry.user_id===ownBandProfile?.user_id?entry.rockstar_name+' (moi)':entry.rockstar_name;profileChoice.append(o)}profileChoice.value=m.profileId;profileChoice.onchange=()=>{m.profileId=profileChoice.value;const match=[ownBandProfile,...bandDirectory].filter(Boolean).find(x=>x.user_id===m.profileId);if(match){m.name=match.rockstar_name;render()}};const wrap=field('Associer un compte Rockstar (invitation)',profileChoice);const info=document.createElement('small');info.className='mode-note';info.textContent='Les rockstars qui ont choisi d’apparaître dans l’annuaire peuvent être invitées. Elles confirmeront leur participation depuis Mon Profil.';wrap.append(info)}else{const profileChoice=document.createElement('select');let none=document.createElement('option');none.value='';none.textContent='Compte non associé (invité)';profileChoice.append(none);for(const entry of (ownBandProfile && !bandDirectory.some(x=>x.user_id===ownBandProfile.user_id)?[ownBandProfile,...bandDirectory]:bandDirectory)){const o=document.createElement('option');o.value=entry.user_id;o.textContent=entry.user_id===ownBandProfile?.user_id?entry.rockstar_name+' (moi)':entry.rockstar_name;profileChoice.append(o)}profileChoice.value=m.profileId;profileChoice.onchange=()=>{m.profileId=profileChoice.value;const match=[ownBandProfile,...bandDirectory].filter(Boolean).find(x=>x.user_id===m.profileId);if(match){m.name=match.rockstar_name;render()}};field('Associer un compte Rockstar (invitation)',profileChoice)}
   const diff=document.createElement('select');
   const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choisir une difficulté';placeholder.disabled=true;diff.append(placeholder);
@@ -124,7 +136,7 @@ function render(){
     wrap.append(mic,info);grid.append(wrap);
   }
   if(m.mode==='vocals'||m.microphone){const harmony=document.createElement('select');for(let n=1;n<=vocalParts;n++){const o=document.createElement('option');o.value=n;o.textContent=n===1?'Chant principal':`Harmonie ${n}`;harmony.append(o)}harmony.value=String(m.harmony<=vocalParts?m.harmony:1);harmony.onchange=()=>m.harmony=Number(harmony.value);field('Partie vocale',harmony)}
-  card.append(heading,grid);host.append(card);
+  card.append(heading,grid);host.append(card);showGuitarPhoto(m,card);
  });
  $('add-member').disabled=members.length>=8;message();
 }
