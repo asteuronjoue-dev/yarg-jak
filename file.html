@@ -341,7 +341,7 @@ function render(){
 
 async function loadSettings(){
   const {data,error} = await sb.from("party_settings")
-    .select("party_name,mc_name,performance_requests_enabled")
+    .select("party_name,mc_name,performance_requests_enabled,current_session_id")
     .eq("id",1).single();
   if(error) throw error;
   settings=data;
@@ -351,8 +351,14 @@ async function loadSettings(){
 }
 
 async function loadQueue(){
+  // The MC admin snapshot is scoped to current_session_id. Match that scope:
+  // otherwise stale waiting requests from earlier parties appear on the public queue.
+  if(!settings?.current_session_id){
+    requests=[];members=[];render();return;
+  }
   const {data:r,error:e1}=await sb.from("performance_requests")
     .select("id,guest_user_id,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,queue_position,started_at,created_at")
+    .eq("party_session_id",settings.current_session_id)
     .in("status",["waiting","full","playing"])
     .order("queue_position",{ascending:true,nullsFirst:false});
   if(e1) throw e1;
