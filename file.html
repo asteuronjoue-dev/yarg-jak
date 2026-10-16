@@ -44,12 +44,10 @@
       animation:partyRainbowText 5s linear infinite;
     }
     @keyframes partyRainbowBg{
-      from{background-position:0% center}
-      to{background-position:100% center}
+      to{background-position:300% center}
     }
     @keyframes partyRainbowText{
-      from{background-position:0% center}
-      to{background-position:100% center}
+      to{background-position:300% center}
     }
     main{padding:26px 0 70px}
     section{margin-bottom:34px}
@@ -75,9 +73,6 @@
     .band-name{font-weight:900;margin-bottom:8px}
     .member{display:flex;gap:8px;flex-wrap:wrap;color:#dce2e5;margin:5px 0;font-size:14px}
     .member b{color:#fff}
-    .withdraw-member{margin-left:auto;padding:3px 9px;font:inherit;font-size:12px;font-weight:800;color:#ffbac2;background:#321d24;border:1px solid #925064;border-radius:8px;cursor:pointer}
-    .withdraw-member:hover{background:#4c2631}
-    .member{align-items:center}
     .open-slots{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
     .slot{cursor:pointer;font:inherit;font-weight:800}.slot:hover{background:rgba(31,200,189,.22)}
     .join-form{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
@@ -86,6 +81,9 @@
     .join-form .join-mic-choice{display:flex;align-items:center;gap:8px}.join-form .join-mic-choice input{width:auto;margin:0}.join-form [hidden]{display:none!important}.join-form .join-submit{margin-top:10px;padding:10px 14px;border:0;border-radius:9px;background:var(--teal);color:#071016;font-weight:900;cursor:pointer}
     .join-form .join-cancel{margin-left:8px;background:transparent;color:var(--muted);border:0;cursor:pointer}
     .join-form .join-message{color:#ffb2b2;margin-top:8px;font-size:13px}
+    .join-guitar-photo{display:block;width:min(100%,240px);height:110px;object-fit:contain;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:8px;margin:10px auto 4px}
+    .join-guitar-photo[hidden]{display:none!important}
+    .join-guitar-note{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-top:5px}
     .slot{padding:5px 8px;border-radius:999px;background:rgba(31,200,189,.1);color:var(--teal2);border:1px dashed rgba(31,200,189,.42);font-size:12px;font-weight:800}
     .empty{border:1px dashed var(--line);border-radius:18px;padding:28px;text-align:center;color:var(--muted);background:rgba(255,255,255,.015)}
     .livebar{display:none;margin-bottom:16px;padding:12px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(255,138,36,.16),rgba(31,200,189,.13));border:1px solid rgba(255,138,36,.28);font-weight:850}
@@ -100,8 +98,6 @@
       background-size:250% auto;color:transparent;background-clip:text;-webkit-background-clip:text;animation:rainbow 1.5s linear infinite}
     @keyframes rainbow{to{background-position:250% center}}
     @keyframes skittlePulse{from{transform:scale(1);box-shadow:0 0 15px rgba(255,138,36,.16)}to{transform:scale(1.008);box-shadow:0 0 35px rgba(31,200,189,.23)}}
-    .fair-rank{font-size:12px;font-weight:800;color:var(--teal);margin-bottom:8px}
-    .fair-note{font-size:13px;color:var(--muted);margin:-2px 0 14px;line-height:1.45}
     .error{display:none;margin:0 0 18px;padding:12px;border-radius:12px;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:#ffc1c1}
     .error.show{display:block}
     @media(max-width:650px){
@@ -110,91 +106,44 @@
       .eta{text-align:left}
       header{padding-top:20px}
     }
-  
-/* Historical accordions and explicit closed-party state. */
-[hidden]{display:none!important}
-.hall-party{background:#181c1f;border:1px solid #30383d;border-radius:16px;overflow:hidden}
-.hall-party summary{padding:18px;cursor:pointer;font-weight:850;list-style-position:inside}
-.hall-party[open] summary{border-bottom:1px solid #30383d;color:#78eee5}
-.hall-sub{display:block;font-weight:500;font-size:13px;color:#aeb8bd;margin:7px 0 0 20px}
-.hall-content{padding:8px 22px 18px;overflow-wrap:anywhere}
-.hall-content h3{font-size:15px;color:#ffad42;margin:18px 0 8px}
-.hall-content li{padding:4px 0;line-height:1.5}
-.history-card .song{font-size:16px}
-/* Navigation partagée : visible sur toutes les pages, sans bloquer l'accès invité. */
-.yarg-navigation{display:flex;align-items:center;justify-content:flex-end;gap:.4rem;flex-wrap:wrap}
-.yarg-navigation a{color:#eaf1f3;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #3b4b53;border-radius:10px;padding:.48rem .7rem;background:#1b2429;font-size:.85rem;font-weight:800;white-space:nowrap}
-.yarg-navigation a:hover,.yarg-navigation a:focus-visible{border-color:#1fc8bd;background:#263338;color:#fff}
-.yarg-navigation a[aria-current="page"]{background:#ff8a24;color:#111;border-color:#ff8a24}
-@media(max-width:670px){.yarg-navigation{width:100%;justify-content:stretch}.yarg-navigation a{flex:1 1 calc(50% - .4rem);font-size:.8rem;padding:.5rem .3rem}}
-.yarg-navigation a[href="admin.html"][hidden]{display:none!important}
-.yarg-up-next{position:sticky;top:0;z-index:50;text-align:center;font-weight:1000;font-size:clamp(18px,3.5vw,28px);padding:16px;color:#111;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);background-size:200% 100%;animation:partyRainbowBg 1.5s ease-in-out infinite alternate}.newbie-tips{max-width:1100px;margin:16px auto;padding:16px;border:1px solid #2f7776;border-radius:13px;background:#163039}.newbie-tips button{float:right;border:1px solid #46636b;background:#203a40;color:white;border-radius:8px;padding:6px}</style>
-
-<style>
-/* YARG shared banner: animated forward, reverse, without jump */
-.yarg-up-next-shared{position:sticky;top:0;z-index:1100;display:block;width:100%;text-align:center;
- font:1000 clamp(17px,3.7vw,27px)/1.25 system-ui,sans-serif;color:#13151a!important;
- padding:15px 20px;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);
- background-size:200% 100%;animation:yarg-banner-pingpong 2.2s ease-in-out infinite alternate;
- box-shadow:0 5px 20px rgba(0,0,0,.22)}
-.yarg-up-next-shared[hidden]{display:none!important}
-@keyframes yarg-banner-pingpong{from{background-position:0% center}to{background-position:100% center}}
-@media(prefers-reduced-motion:reduce){.yarg-up-next-shared{animation:none}}
-</style>
+  </style>
 </head>
 <body>
-<div id="yarg-up-next-shared" class="yarg-up-next-shared" role="status" aria-live="polite" hidden></div>
 <header>
   <div class="wrap">
     <div class="topline">
       <div>
-        <h1 id="partyTitle">Les Rockstars sur scène</h1>
+        <h1 id="partyTitle">File de la soirée</h1>
         <div class="mc">🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
       </div>
-      <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html" aria-current="page">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a></nav>
+      <a class="back" href="index.html">← Retour au catalogue</a>
     </div>
   </div>
 </header>
 
-<aside id="yarg-tips-file" class="newbie-tips"><button id="yarg-tip-file-off" type="button">Ne plus afficher</button><strong>🎤 Comment fonctionne la file?</strong><p>Les demandes sont classées selon le temps de scène déjà consommé : les chansons longues ajoutent plus de points après avoir été jouées. Deux chansons de suite maximum par demandeur ou artiste si d’autres choix sont possibles. Tu peux rejoindre les groupes ouverts sans points supplémentaires. Les demandes de chacun respectent leur ordre d’inscription.</p></aside><main class="wrap">
+<main class="wrap">
   <div class="error" id="errorBox"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
 
-  <section id="mineSection">
+  <section>
     <div class="section-head">
       <div>
-        <h2>🎸 Mes Demandes</h2>
-        <div class="hint">Tes prestations sont affichées selon l’ordre équitable de la soirée.</div>
+        <h2>🎸 Mes demandes</h2>
+        <div class="hint">Les demandes faites avec ce navigateur apparaissent ici.</div>
       </div>
       <button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button>
     </div>
     <div class="cards" id="myRequests"></div>
   </section>
 
-  <section id="joinSection">
+  <section>
     <div class="section-head">
       <div>
-        <h2>🎤 Chansons que je peux rejoindre</h2>
-        <div class="hint">Prestations ouvertes à d’autres rockstars, selon leur rang dans la file.</div>
+        <h2>🎤 File de la soirée</h2>
+        <div class="hint">Toutes les chansons demandées pour ce party, mises à jour en direct.</div>
       </div>
     </div>
-    <p class="fair-note">⚖️ Le temps de scène consommé détermine la priorité. Tes demandes jouent toujours dans leur ordre d’inscription.</p>
     <div class="cards" id="publicQueue"></div>
-  </section>
-  <section id="fullSection">
-    <div class="section-head"><div><h2>🔒 Chansons complètes</h2><div class="hint">Groupes fermés ou sans place restante.</div></div></div>
-    <div class="cards" id="fullQueue"></div>
-  </section>
-  <section id="historySection">
-    <div class="section-head"><div><h2>🎶 Historique</h2><div class="hint">Chansons terminées pendant la soirée actuelle.</div></div></div>
-    <div class="cards" id="currentHistory"></div>
-  </section>
-  <section id="closedSection" hidden>
-    <div class="empty">🎤 Aucune soirée en préparation pour le moment : les demandes sont fermées. <a href="index.html">Ajoute des chansons à tes favoris</a> pour la prochaine fois!</div>
-  </section>
-  <section id="hallSection">
-    <div class="section-head"><div><h2>🏆 Hall of Fame</h2><div class="hint">Les anciennes soirées, leurs setlists, les rockstars et le temps de scène. Ouvre une soirée pour consulter les détails.</div></div></div>
-    <div id="hallOfFame" class="cards"><div class="empty">Chargement des archives…</div></div>
   </section>
 </main>
 
@@ -204,7 +153,7 @@ const SUPABASE_URL = "https://xbhfjzurytdknbqvksjq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM";
 
 const TURNOVER_SECONDS = 120;
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);if(localStorage.getItem('yarg_tips_file_v1'))document.getElementById('yarg-tips-file').hidden=true;document.getElementById('yarg-tip-file-off').onclick=()=>{document.getElementById('yarg-tips-file').hidden=true;localStorage.setItem('yarg_tips_file_v1','1')};
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const OWNED_REQUESTS_KEY = "yarg_owned_performance_requests";
 function ownedRequestIds(){
@@ -217,30 +166,16 @@ function isMyRequest(r){return ownedRequestIds().has(String(r.id));}
 let settings = null;
 let requests = [];
 let members = [];
-let completedRequests = [];
-let hallSessions = [];
-let fairRanks = new Map(); // authoritative positions calculated by Supabase
 let previousStates = new Map();
-let currentGuestUid=null;
 let joining = null; // {requestId, instrument} — garder le formulaire ouvert pendant les rafraîchissements
 const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
 function joinedRequestIds(){try{return new Set(JSON.parse(localStorage.getItem(JOINED_REQUESTS_KEY)||"[]").map(String))}catch{return new Set()}}
 function rememberJoined(id){const ids=joinedRequestIds();ids.add(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
-function isMyPerformance(r){return (currentGuestUid && r.guest_user_id===currentGuestUid) ||
-  membersFor(r.id).some(m=>currentGuestUid && (m.guest_user_id===currentGuestUid||m.rockstar_profile_id===currentGuestUid)) ||
-  isMyRequest(r)||joinedRequestIds().has(String(r.id))}
+function isMyPerformance(r){return isMyRequest(r)||joinedRequestIds().has(String(r.id))}
 
-async function ensureGuestSession(){
-  const {data,error}=await sb.auth.getSession();
-  if(error)throw error;
-  if(data?.session?.user?.id){currentGuestUid=data.session.user.id;return;}
-  const {data:guest,error:signInError}=await sb.auth.signInAnonymously();
-  if(signInError)throw signInError;
-  currentGuestUid=guest.user.id;
-}
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie 4-Lane",pro_drums:"Pro Drums",keys:"Keys",pro_keys:"Pro Keys"};
+const instruments = {vocals:"Voix",guitar:"Guitare",bass:"Basse",drums:"Batterie",keys:"Clavier"};
 const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
 
 function showError(message){
@@ -266,10 +201,9 @@ function sortedActive(){
   return requests
     .filter(r => ["waiting","full","playing"].includes(r.status))
     .sort((a,b) => {
-      if(a.status === "playing" && b.status !== "playing")return -1;
-      if(b.status === "playing" && a.status !== "playing")return 1;
-      const ap=fairRanks.get(a.id)?.fair_position ?? Number.MAX_SAFE_INTEGER;
-      const bp=fairRanks.get(b.id)?.fair_position ?? Number.MAX_SAFE_INTEGER;
+      if (a.status === "playing" && b.status !== "playing") return -1;
+      if (b.status === "playing" && a.status !== "playing") return 1;
+      const ap = a.queue_position ?? 999999, bp = b.queue_position ?? 999999;
       return ap-bp || new Date(a.created_at)-new Date(b.created_at);
     });
 }
@@ -300,84 +234,53 @@ function calculateEtas(queue){
 
 function membersFor(id){ return members.filter(m => m.performance_request_id === id); }
 
-function memberLine(name,instrument,difficulty,microphone,harmony,instrumentMode,guitarChoice){
- const shown = instrumentMode || instrument;
- const inst=instruments[shown]||instruments[instrument]||shown||"Auditeur";
+function memberLine(name,instrument,difficulty,microphone,harmony){
+ const inst=instruments[instrument]||instrument||"Auditeur";
  const singing=instrument==="vocals"||microphone;
  const vocal=singing?` · Harmonie ${harmony||1} (voix : Moyen)`:"";
  const diff=instrument==="vocals"||!instrument?"":` · ${difficulties[difficulty]||difficulty||"—"}`;
- const guitarLabel=({"osp uze":"OSPUZE - Rockband",crkd:"Blue Guitar - CRKD",sunburst:"Sunburst - Guitar Hero"})[guitarChoice];
- return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 Réservée : ${esc(guitarLabel)}`:""}</div>`;
+ return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}</div>`;
 }
-function memberHtml(m,r){
-  const canWithdraw=!!currentGuestUid && m.guest_user_id===currentGuestUid && ['waiting','full'].includes(r.status);
-  const base=memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.instrument_mode,m.preferred_guitar);
-  if(!canWithdraw)return base;
-  const button=`<button class="withdraw-member" type="button" data-leave-member="${esc(m.id)}" data-leave-name="${esc(m.rockstar_name)}">Me retirer</button>`;
-  return base.replace('</div>',button+'</div>');
+function openInstruments(r){
+ if(!settings?.performance_requests_enabled||!r.allow_band_fill||!["waiting","full"].includes(r.status))return [];
+ const occupied=new Set(membersFor(r.id).map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
+ if(r.requester_instrument&&r.requester_instrument!=="vocals")occupied.add(r.requester_instrument);
+ return [...new Set(Array.isArray(r.fillable_instruments)?r.fillable_instruments:[])].filter(i=>instruments[i]&&(i==="vocals"||!occupied.has(i)));
 }
-// The request's song-specific chart metadata is authoritative for group requests.
-// Legacy requests may have only fillable_instruments; keep that older behavior.
-const GUITAR_ROLES = ["guitar", "rhythm_guitar", "bass"];
-function permittedParts(r){
-  const advertised = Array.isArray(r.available_parts) ? r.available_parts : [];
-  if(r.is_group_request){
-    return new Set(advertised.filter(i=>["vocals","guitar","bass","drums","keys"].includes(i)));
-  }
-  // The older single-player form did not record available_parts.
-  return new Set((advertised.length ? advertised : (r.fillable_instruments||[]))
-    .filter(i=>["vocals","guitar","bass","drums","keys"].includes(i)));
-}
-function permittedGuitarRoles(r){
-  const parts=permittedParts(r);
-  const advertised=Array.isArray(r.available_guitar_roles) ? r.available_guitar_roles : [];
-  if(r.is_group_request){
-    return GUITAR_ROLES.filter(role=>advertised.includes(role) && parts.has(role==='bass'?'bass':'guitar'));
-  }
-  const olderRoles=advertised.length?advertised:(r.fillable_instruments||[]);
-  return GUITAR_ROLES.filter(role=>olderRoles.includes(role) && parts.has(role==='bass'?'bass':'guitar'));
-}
-function openInstrumentsFor(r, bandMembers){
-  if(!settings?.performance_requests_enabled || !r.allow_band_fill || !["waiting","full"].includes(r.status))return [];
-  const parts=permittedParts(r);
-  const roles=permittedGuitarRoles(r);
-  // Group requests store the original player in performance_members too.
-  // Counting requester_instrument as well would count the leader twice.
-  const players=[...bandMembers];
-  if(!r.is_group_request && r.requester_instrument && !r.requester_withdrawn_at){
-    players.unshift({instrument:r.requester_instrument,instrument_mode:r.requester_instrument_mode,microphone:r.requester_microphone});
-  }
-  const assignedGuitarRoles=players.map(m=>m.instrument_mode||m.instrument).filter(v=>GUITAR_ROLES.includes(v));
-  const takenGuitars=new Set(assignedGuitarRoles);
-  const occupied=new Set(players.map(m=>m.instrument));
-  const microphoneCount=players.filter(m=>m.instrument==='vocals'||m.microphone).length;
-  const result=[];
-  if(parts.has('vocals') && Number(r.vocal_parts)>0 && microphoneCount<3)result.push('vocals');
-  if(assignedGuitarRoles.length<3){
-    const uniqueNeeded=roles.filter(role=>!takenGuitars.has(role));
-    result.push(...(uniqueNeeded.length?uniqueNeeded:roles));
-  }
-  if(parts.has('drums') && !occupied.has('drums'))result.push('drums');
-  if(parts.has('keys') && !occupied.has('keys'))result.push('keys');
-  return [...new Set(result)];
-}
-function openInstruments(r){return openInstrumentsFor(r,membersFor(r.id));}
 function harmonyOptions(r){
  const count=Math.max(1,Math.min(3,Number(r.vocal_parts)||1));
  return Array.from({length:count},(_,i)=>`<option value="${i+1}">Harmonie ${i+1}${i===0?" (chant principal)":""}</option>`).join("");
+}
+const joinGuitars=[['','Peu importe — je prendrai une guitare restante'],['osp uze','OSPUZE - Rockband'],['crkd','Blue Guitar - CRKD'],['sunburst','Sunburst - Guitar Hero']];
+const joinGuitarPhotos={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png'};
+function updateJoinGuitarPhoto(form){
+ const select=form?.querySelector('select[name="preferred_guitar"]');
+ const img=form?.querySelector('.join-guitar-photo');
+ if(!select||!img)return;
+ const path=joinGuitarPhotos[select.value];
+ img.hidden=true;
+ img.onload=null;img.onerror=null;
+ if(!path){img.removeAttribute('src');return}
+ img.onload=()=>{if(joinGuitarPhotos[select.value]===path)img.hidden=false};
+ img.onerror=()=>{img.hidden=true};
+ img.src=path;
+ if(img.complete&&img.naturalWidth>0)img.hidden=false;
+}
+function joinGuitarChoices(r){
+ const taken=new Set(membersFor(r.id).map(m=>m.preferred_guitar).filter(Boolean));
+ return `<label>Choix de guitare (facultatif)<select name="preferred_guitar">${joinGuitars.map(([id,name])=>`<option value="${esc(id)}" ${taken.has(id)?'disabled':''}>${esc(name)}${taken.has(id)?' — déjà réservée':''}</option>`).join('')}</select><img class="join-guitar-photo" alt="Aperçu de la guitare choisie" hidden><small class="join-guitar-note">« Peu importe » ne réserve aucune guitare précise. Tu prendras celle qui reste.</small></label>`;
 }
 function joinFormHtml(r){
  if(!joining||joining.requestId!==String(r.id))return "";
  const instrument=joining.instrument;
  if(!openInstruments(r).includes(instrument))return "";
  const vocals=instrument==="vocals";
- const canSing=permittedParts(r).has("vocals") && Number(r.vocal_parts)>0;
+ const canSing=Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone;
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instruments[instrument])}</strong>
  <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required placeholder="Ton nom sur scène" autocomplete="nickname"></label>
- ${instrument==='drums'?`<label>Type de batterie <select name="instrument_mode"><option value="drums_4lane">4-Lane — quatre surfaces de frappe</option><option value="pro_drums">Pro Drums — cymbales séparées</option></select><small>Choisis uniquement une variante qui apparaît dans les pistes de cette chanson.</small></label>`:''}
- ${instrument==='keys'?`<label>Type de clavier <select name="instrument_mode"><option value="keys">Keys — notes simplifiées</option><option value="pro_keys">Pro Keys — jeu de clavier plus réaliste</option></select><small>Choisis uniquement une variante qui apparaît dans les pistes de cette chanson.</small></label>`:''}
- ${vocals?"":`<label>Difficulté <select name="difficulty">${["easy","medium","hard","expert"].map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
+ ${vocals?"":`<label>Difficulté <select name="difficulty">${["beginner","easy","medium","hard","expert"].map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
+ ${["guitar","bass","rhythm_guitar"].includes(instrument)?joinGuitarChoices(r):""}
  ${vocals?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${canSing?"":"disabled"}> Je veux aussi chanter au micro</label>`}
  <label class="join-harmony" ${vocals?"":"hidden"}>Partie vocale (difficulté Moyen)<select name="harmony">${harmonyOptions(r)}</select></label>
  <button class="join-submit" type="submit">Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
@@ -385,14 +288,11 @@ function joinFormHtml(r){
 }
 function cardHtml(r, eta, mine=false){
   const bandMembers = membersFor(r.id);
-  const canWithdrawLeader=!r.is_group_request && !r.requester_withdrawn_at && currentGuestUid && r.guest_user_id===currentGuestUid && ['waiting','full'].includes(r.status);
-  const own = r.is_group_request || r.requester_withdrawn_at ? "" : memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone,r.vocal_harmony,r.requester_instrument_mode)
-    .replace('</div>',canWithdrawLeader?`<button class="withdraw-member" type="button" data-leave-leader="${esc(r.id)}" data-leave-name="${esc(r.rockstar_name)}">Me retirer</button></div>`:'</div>');
-  const extras = bandMembers.map(m => memberHtml(m,r)).join("");
+  const own = memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone,r.vocal_harmony);
+  const extras = bandMembers.map(m => memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony)).join("");
   const open = openInstruments(r).map(i => `<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instruments[i])}</button>`).join("");
 
   const isPlaying = r.status === "playing";
-  const fairPosition=fairRanks.get(r.id)?.fair_position;
   const classes = ["card",mine?"mine":"",isPlaying?"playing":"",mine&&isPlaying?"skittles":""].filter(Boolean).join(" ");
   const etaHtml = isPlaying
     ? `<div class="eta"><strong>🔥 EN COURS</strong><span>Sur scène maintenant</span></div>`
@@ -404,9 +304,8 @@ function cardHtml(r, eta, mine=false){
     ? `<div class="skittle-banner">🌈🔥 EN COURS — C'EST À TOI! 🔥🌈</div>`
     : "";
 
-  return `<article class="${classes}" id="demande-${esc(r.id)}" data-request-id="${esc(r.id)}">
+  return `<article class="${classes}" data-request-id="${esc(r.id)}">
     ${skittles}
-    ${!isPlaying && fairPosition ? `<div class="fair-rank">🎵 Passage #${fairPosition} dans la file</div>` : ""}
     <div class="songline">
       <div>
         <div class="song">${esc(r.song_title || "Chanson")}</div>
@@ -424,130 +323,52 @@ function cardHtml(r, eta, mine=false){
   </article>`;
 }
 
-function historicalCard(r){
- const band=membersFor(r.id).map(m=>m.rockstar_name).filter(Boolean);
- const names=[...(r.is_group_request?[]:[r.rockstar_name]),...band].filter(Boolean);
- const unique=[...new Set(names)];
- return `<article class="card history-card"><div class="song">${esc(r.song_title)}</div>
- <div class="artist">${esc(r.song_artist||'')} · ${esc(unique.join(', ')||r.rockstar_name||'')} · ${formatDuration(r.song_duration_seconds)}</div></article>`;
-}
-function formatDuration(sec){const n=Math.max(0,Number(sec)||0);return `${Math.floor(n/60)} min ${String(n%60).padStart(2,'0')} s`;}
 function render(){
- const open=!!settings?.performance_requests_enabled;
- for(const id of ['mineSection','joinSection','fullSection','historySection']) $("#"+id).hidden=!open;
- $("#closedSection").hidden=open;
- if(!open)return;
- const queue=sortedActive();const etas=calculateEtas(queue);
- const mine=queue.filter(isMyPerformance);
- const canJoin=r=>r.status!=='playing' && openInstruments(r).length>0 && !isMyPerformance(r);
- const join=queue.filter(canJoin);
- const full=queue.filter(r=>r.status==='playing'||openInstruments(r).length===0);
- $("#myRequests").innerHTML=mine.length?mine.map(r=>cardHtml(r,etas.get(r.id),true)).join(''):
-   `<div class="empty">Aucune demande de ton côté pour l’instant.</div>`;
- $("#publicQueue").innerHTML=join.length?join.map(r=>cardHtml(r,etas.get(r.id),false)).join(''):
-   `<div class="empty">Aucun groupe ouvert en ce moment.</div>`;
- $("#fullQueue").innerHTML=full.length?full.map(r=>cardHtml(r,etas.get(r.id),false)).join(''):
-   `<div class="empty">Aucune chanson complète pour le moment.</div>`;
- $("#currentHistory").innerHTML=completedRequests.length?completedRequests.map(historicalCard).join(''):
-   `<div class="empty">Aucune chanson terminée pour l’instant.</div>`;
- maybeNotify(queue,etas);
- const hash=decodeURIComponent(location.hash.slice(1));
- if(hash.startsWith('demande-')){const target=document.getElementById(hash);if(target&& !target.dataset.scrolled){target.dataset.scrolled='1';target.scrollIntoView({behavior:'smooth',block:'center'});}}
-}
-function renderHall(){
- const dest=$("#hallOfFame");
- if(!hallSessions.length){dest.innerHTML=`<div class="empty">Aucune soirée passée disponible pour le moment.</div>`;return;}
- dest.innerHTML=hallSessions.map((session,i)=>{
-  const songs=Array.isArray(session.setlist)?session.setlist:[];
-  const credits=new Map();let seconds=0;
-  const requests=Array.isArray(session.requests)?session.requests:[];
-  for(const req of requests){const name=req.requester||'Rockstar';const record=credits.get(name)||{requests:0,played:0,seconds:0};record.requests++;credits.set(name,record);}
-  for(const song of songs){const n=Math.max(0,Number(song.seconds)||0);seconds+=n;
-   const name=song.requester||'Rockstar';const record=credits.get(name)||{requests:0,played:0,seconds:0};
-   record.played++;record.seconds+=n;credits.set(name,record);
-  }
-  const stats=[...credits.entries()].sort((a,b)=>b[1].requests-a[1].requests).map(([name,v])=>
-    `<li><b>${esc(name)}</b> : ${v.requests} demande(s), ${v.played} jouée(s), ${formatDuration(v.seconds)} demandées et jouées</li>`).join('');
-  const setlist=songs.map((song,j)=>{
-    const performers=[...new Set((Array.isArray(song.members)?song.members:[]).filter(Boolean))];
-    return `<li><strong>${j+1}. ${esc(song.title)}</strong> — ${esc(song.artist||'')} · demande de ${esc(song.requester||'')} (${formatDuration(song.seconds)})${performers.length?`<div class="hall-sub">Sur scène : ${esc(performers.join(', '))}</div>`:''}</li>`;
-  }).join('');
-  const date=session.started_at?new Date(session.started_at).toLocaleDateString('fr-CA'):'';
-  return `<details class="hall-party"><summary>${esc(session.name||'Soirée YARG')} <span class="hall-sub">${esc(date)} · ${songs.length} chansons · ${formatDuration(seconds)}</span></summary>
-  <div class="hall-content"><h3>Statistiques des demandes</h3><ul>${stats||'<li>Aucune chanson terminée</li>'}</ul>
-  <h3>Setlist</h3><ol>${setlist||'<li>Aucune chanson terminée</li>'}</ol></div></details>`;
- }).join('');
-}
-async function loadHall(){
- const {data,error}=await sb.rpc('yarg_public_hall_of_fame');
- if(error){$("#hallOfFame").innerHTML=`<div class="empty">Archives indisponibles : applique la migration SQL du Hall of Fame.</div>`;return;}
- hallSessions=Array.isArray(data)?data:[];renderHall();
+  const queue = sortedActive();
+  const etas = calculateEtas(queue);
+
+  const mine = queue.filter(isMyPerformance);
+  $("#myRequests").innerHTML = mine.length
+    ? mine.map(r => cardHtml(r,etas.get(r.id),true)).join("")
+    : `<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment. Va donc nous en pousser une p'tite.</div>`;
+
+  $("#publicQueue").innerHTML = queue.length
+    ? queue.map(r => cardHtml(r,etas.get(r.id),false)).join("")
+    : `<div class="empty">La file est vide. Quelqu'un doit bien avoir envie de massacrer une chanson, non? 🎸</div>`;
+
+  maybeNotify(queue, etas);
 }
 
 async function loadSettings(){
   const {data,error} = await sb.from("party_settings")
-    .select("party_name,mc_name,performance_requests_enabled,current_session_id,party_mode_until")
+    .select("party_name,mc_name,performance_requests_enabled")
     .eq("id",1).single();
   if(error) throw error;
-  settings=data;settings.performance_requests_enabled=!!data.performance_requests_enabled && (!data.party_mode_until || new Date(data.party_mode_until).getTime()>Date.now());
-  $("#partyTitle").textContent = settings.performance_requests_enabled ? (data.party_name || "Party YARG") : "Les Rockstars sur scène";
+  settings=data;
+  $("#partyTitle").textContent = data.party_name || "Party YARG";
   $("#mcName").textContent = data.mc_name || "Mystère";
-  const mcLine = $("#mcName").closest(".mc"); if(mcLine) mcLine.hidden = !settings.performance_requests_enabled;
   $("#partyTitle").classList.toggle("party-rainbow", !!data.performance_requests_enabled);
 }
 
 async function loadQueue(){
-  if(!settings?.current_session_id){requests=[];members=[];completedRequests=[];fairRanks.clear();render();return;}
-  const {data:ranking,error:rankingError}=await sb.rpc('yarg_get_fair_queue');
-  if(rankingError)throw rankingError;
-  fairRanks=new Map((ranking||[]).map(row=>[row.request_id,row]));
   const {data:r,error:e1}=await sb.from("performance_requests")
-    .select("id,guest_user_id,requester_withdrawn_at,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,is_group_request,rockstar_name,band_name,requester_instrument,requester_instrument_mode,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,status,queue_position,started_at,created_at")
+    .select("id,guest_user_id,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,queue_position,started_at,created_at")
     .in("status",["waiting","full","playing"])
-    .eq("party_session_id",settings.current_session_id)
-    .order("created_at",{ascending:true});
+    .order("queue_position",{ascending:true,nullsFirst:false});
   if(e1) throw e1;
-  requests=(r||[]).filter(row=>fairRanks.has(row.id));
-  const {data:history,error:historyError}=await sb.from('performance_requests')
-    .select('id,song_title,song_artist,song_duration_seconds,is_group_request,rockstar_name,finished_at,started_at,created_at')
-    .eq('party_session_id',settings.current_session_id).in('status',['completed','played'])
-    .order('finished_at',{ascending:false}).limit(1000);
-  if(historyError)throw historyError;
-  completedRequests=history||[];
+  requests=r||[];
 
-  const ids=[...new Set([...requests,...completedRequests].map(x=>x.id))];
+  const ids=requests.map(x=>x.id);
   if(!ids.length){ members=[]; render(); return; }
 
   const {data:m,error:e2}=await sb.from("performance_members")
-    .select("id,performance_request_id,guest_user_id,rockstar_profile_id,rockstar_name,instrument,instrument_mode,difficulty,microphone,vocal_harmony,preferred_guitar,created_at")
-    .in("performance_request_id",ids)
-    .is("withdrawn_at",null);
+    .select("id,performance_request_id,rockstar_name,instrument,difficulty,microphone,vocal_harmony,preferred_guitar,created_at")
+    .in("performance_request_id",ids);
   if(e2) throw e2;
   members=m||[];
   render();
 }
 
-// Retirer UNE participation, même si plusieurs rockstars ont utilisé le même téléphone.
-document.addEventListener('click',async e=>{
-  const member=e.target.closest('[data-leave-member]');
-  const leader=e.target.closest('[data-leave-leader]');
-  if(!member&&!leader)return;
-  const label=(member||leader).dataset.leaveName||'cette rockstar';
-  if(!confirm(`Retirer ${label} de cette prestation? Si c’est la dernière personne, la demande sera annulée.`))return;
-  const button=member||leader;
-  button.disabled=true;
-  try{
-    await ensureGuestSession();
-    const functionName=member?'yarg_leave_band':'yarg_leave_legacy_leader';
-    const params=member?{p_member_id:member.dataset.leaveMember}:{p_request_id:leader.dataset.leaveLeader};
-    const {data,error}=await sb.rpc(functionName,params);
-    if(error)throw error;
-    if(data?.cancelled)showError('La dernière rockstar s’est retirée : demande annulée.');
-    else showError('');
-    await loadQueue();
-  }catch(err){console.error('Retrait refusé',err);showError(err.message||'Impossible de retirer cette participation.');}
-  finally{button.disabled=false;}
-});
 // Délégation des événements: les cartes sont recréées à chaque mise à jour.
 document.addEventListener("click",e=>{
   const cancel=e.target.closest(".join-cancel");
@@ -560,6 +381,9 @@ document.addEventListener("click",e=>{
   form?.querySelector("input[name=rockstar]")?.focus();
 });
 document.addEventListener("change",e=>{
+ if(e.target.matches('.join-form select[name="preferred_guitar"]')){updateJoinGuitarPhoto(e.target.closest('.join-form'));return}
+});
+document.addEventListener("change",e=>{
  if(!e.target.matches('.join-form input[name="microphone"]'))return;
  const form=e.target.closest('.join-form');form.querySelector('.join-harmony').hidden=!e.target.checked;
 });
@@ -570,22 +394,37 @@ document.addEventListener("submit",async e=>{
   const singing=instrument==="vocals"||!!form.elements.microphone?.checked;
   const harmony=singing?Number(form.elements.harmony.value):null;
   const name=form.elements.rockstar.value.trim();
+  const preferredGuitar=form.elements.preferred_guitar?.value||null;
   const message=form.querySelector(".join-message"),submit=form.querySelector(".join-submit");
   if(!name){message.textContent="Entre ton nom de ROCKSTAR.";return}
   submit.disabled=true;message.textContent="Vérification de la place…";
   try{
-    await ensureGuestSession();
-    // All authoritative checks and insertion happen atomically in Supabase.
-    const difficulty=instrument==='vocals'?'medium':form.elements.difficulty.value;
-    const selectedMode=form.elements.instrument_mode?.value||instrument;
-    const {error}=await sb.rpc('yarg_join_band',{
-      p_request_id:id,p_rockstar_name:name,p_instrument_mode:selectedMode,
-      p_difficulty:difficulty,p_microphone:instrument!=='vocals'&&singing,
-      p_vocal_harmony:harmony
-    });
+    // Relire l'état juste avant l'insertion pour éviter les places déjà prises.
+    const {data:request,error:re}=await sb.from("performance_requests")
+      .select("id,status,allow_band_fill,fillable_instruments,requester_instrument,requester_microphone,vocal_parts")
+      .eq("id",id).single();
+    if(re)throw re;
+    const {data:existing,error:me}=await sb.from("performance_members")
+      .select("instrument,microphone,preferred_guitar").eq("performance_request_id",id);
+    if(me)throw me;
+    const occupied=new Set((existing||[]).map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
+    if(request.requester_instrument&&request.requester_instrument!=="vocals")occupied.add(request.requester_instrument);
+    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || (instrument!=="vocals"&&occupied.has(instrument)) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
+      message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
+    }
+    if(preferredGuitar&&(!joinGuitarPhotos[preferredGuitar]||existing.some(m=>m.preferred_guitar===preferredGuitar))){
+      message.textContent="Cette guitare vient d’être réservée. Choisis-en une autre ou « Peu importe ».";return;
+    }
+    const difficulty=instrument==="vocals"?"medium":form.elements.difficulty.value;
+    const {error}=await sb.from("performance_members").insert({performance_request_id:id,rockstar_name:name,instrument,difficulty,microphone:instrument!=="vocals"&&singing,vocal_harmony:harmony,preferred_guitar:preferredGuitar});
     if(error){
-      console.error('Supabase refused the join:',error);
-      message.textContent=error.message||'Cette place n’est plus disponible.';
+      console.error("Supabase refused the band member insert:",error);
+      const hint=error.code==="23505"
+        ? "Cette guitare vient d’être réservée. Choisis-en une autre ou « Peu importe »."
+        : (error.code==="42501" || /row.level.security|permission denied/i.test(error.message||""))
+          ? "Supabase refuse l’ajout (politique RLS de performance_members). L’organisateur doit autoriser les inscriptions."
+          : "Supabase a refusé l’inscription. Réessaie ou contacte le MC.";
+      message.textContent=hint;
       return;
     }
     rememberJoined(id);joining=null;await loadQueue();
@@ -594,11 +433,6 @@ document.addEventListener("submit",async e=>{
 });
 
 function maybeNotify(queue,etas){
- const active=queue.filter(r=>r.status==='playing');const next=queue.find(r=>r.status!=='playing');
- const onDeck=next&&isMyPerformance(next);
-
- if(onDeck&&previousStates.get(next.id)!=='up-next'&&'Notification' in window&&Notification.permission==='granted')new Notification('🌈 TU PASSES JUSTE APRÈS!',{body:next.song_title+' — '+next.song_artist});
- if(onDeck)previousStates.set(next.id,'up-next');
   if (!("Notification" in window) || Notification.permission!=="granted") return;
   const mine=queue.filter(isMyPerformance);
   for(const r of mine){
@@ -633,14 +467,14 @@ function flashLive(){
 }
 
 async function refresh(){
-  try{ showError(""); await loadSettings(); await Promise.all([loadQueue(),loadHall()]); }
+  try{ showError(""); await loadSettings(); await loadQueue(); }
   catch(err){ console.error(err); showError("Impossible de charger la file pour le moment. Vérifie la configuration Supabase."); }
 }
 
 async function startRealtime(){
   sb.channel("yarg-party-queue")
-    .on("postgres_changes",{event:"*",schema:"public",table:"performance_requests"},async()=>{flashLive();await loadQueue();await loadHall();})
-    .on("postgres_changes",{event:"*",schema:"public",table:"performance_members"},async()=>{flashLive();await loadQueue();await loadHall();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"performance_requests"},async()=>{flashLive();await loadQueue();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"performance_members"},async()=>{flashLive();await loadQueue();})
     .on("postgres_changes",{event:"UPDATE",schema:"public",table:"party_settings",filter:"id=eq.1"},async()=>{flashLive();await loadSettings();})
     .subscribe();
 }
@@ -648,28 +482,7 @@ async function startRealtime(){
 /* Refresh relative countdown text even if no database event occurs. */
 setInterval(()=>render(),30000);
 
-(async()=>{
-  try{await ensureGuestSession();}
-  catch(err){console.warn('Anonymous Sign-In unavailable:',err);showError('Connexion invitée indisponible : tu peux voir la file, mais pas rejoindre ou quitter un groupe.');}
-  await refresh(); await startRealtime();
-})();
+(async()=>{ await refresh(); await startRealtime(); })();
 </script>
-
-<script>
-/* The MC navigation is only displayed after Supabase confirms permissions. */
-(async function(){
- const links=document.querySelectorAll('.yarg-navigation a[href="admin.html"]');
- links.forEach(a=>a.hidden=true);
- if(!links.length || !window.supabase)return;
- try{
-  const client=window.supabase.createClient('https://xbhfjzurytdknbqvksjq.supabase.co','sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM');
-  const {data:{user}}=await client.auth.getUser();
-  if(!user || user.is_anonymous)return;
-  const {data:allowed,error}=await client.rpc('yarg_admin_whoami');
-  if(!error&&allowed)links.forEach(a=>a.hidden=false);
- }catch(e){console.warn('Vérification MC impossible',e)}
-})();
-</script>
-<script defer src="yarg-up-next.js"></script>
 </body>
 </html>
