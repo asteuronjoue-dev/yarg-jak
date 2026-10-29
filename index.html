@@ -881,7 +881,50 @@
  .filter-line .chip.chip-fav .fav-heart {display:inline!important;}
  .catalog-jump {display:inline-flex;align-items:center;border:1px solid #365a57;border-radius:8px;padding:5px 8px;}
 }
-.newbie-tips-index{position:relative;z-index:2;margin:12px auto;padding:13px 16px;max-width:1000px;color:#e8faf7;background:#163039;border:1px solid #398481;border-radius:12px;font:14px system-ui}.newbie-tips-index button{float:right;margin:0 0 8px 12px;background:#223b40;color:white;border:1px solid #4f7779;border-radius:8px;padding:5px 9px}.newbie-tips-index[hidden]{display:none!important}</style>
+.newbie-tips-index{position:relative;z-index:2;margin:12px auto;padding:13px 16px;max-width:1000px;color:#e8faf7;background:#163039;border:1px solid #398481;border-radius:12px;font:14px system-ui}.newbie-tips-index button{float:right;margin:0 0 8px 12px;background:#223b40;color:white;border:1px solid #4f7779;border-radius:8px;padding:5px 9px}.newbie-tips-index[hidden]{display:none!important}
+/* ===== Accessible song list across screen sizes (2026-10-29) =====
+   The header/discovery area may be taller than the viewport. Never trap the
+   catalogue in a fixed-height flex page: keep document scrolling available.
+   #scroll remains a real scroller for virtualized song rows. */
+html { scroll-behavior: auto; }
+body,
+body:has(.games-discovery[open]),
+body:has(#public-playlists-discovery[open]) {
+  display: block !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+header,
+body:has(.games-discovery[open]) header {
+  max-height: none !important;
+  overflow: visible !important;
+}
+#scroll,
+body:has(.games-discovery[open]) #scroll,
+body:has(#public-playlists-discovery[open]) #scroll {
+  box-sizing: border-box;
+  display: block;
+  flex: none !important;
+  width: 100%;
+  height: clamp(380px, 68dvh, 900px) !important;
+  min-height: 380px !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain;
+  scroll-margin-top: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 680px) {
+  #scroll,
+  body:has(.games-discovery[open]) #scroll,
+  body:has(#public-playlists-discovery[open]) #scroll {
+    height: clamp(380px, 68dvh, 730px) !important;
+    min-height: 380px !important;
+  }
+}
+
+</style>
 
 <style>
 /* YARG shared banner: animated forward, reverse, without jump */
