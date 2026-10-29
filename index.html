@@ -1547,7 +1547,10 @@ body:has(#public-playlists-discovery[open]) #scroll {
         // Registered Rockstar favourites + public MC-curated playlists.
         // Catalogue ids are stable keys stored in songs.json.
         const collectionsSb=getPartyClient();
-        let signedInRockstar=null, mcCanEdit=false, publicPlaylists=[],myFavoriteSongIds=new Set(),publicPlaylistSongIds=new Set();
+        let signedInRockstar=null, mcCanEdit=false, publicPlaylists=[],myFavoriteSongIds=new Set(),publicPlaylistSongIds=new Set(),publicPlaylistSongKeys=new Set();
+        // Song IDs from historical imports can differ from catalogue IDs.
+        // Match on the stored title + artist when an ID doesn't resolve.
+        const playlistSongKey=(title,artist)=>[title,artist].map(v=>String(v||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ')).join('\u001f');
         const favFilterButton=document.getElementById('favorites-only');
         const curatedPicker=document.getElementById('mc-playlist-picker');
         const favouriteButton=document.getElementById('sheet-favourite');
@@ -1699,15 +1702,16 @@ body:has(#public-playlists-discovery[open]) #scroll {
           favFilterButton.setAttribute('aria-pressed',String(state.favoritesOnly));drawPlaylistCards();filter();
         };
         curatedPicker.onchange=async()=>{
-          state.publicPlaylistId=curatedPicker.value;publicPlaylistSongIds=new Set();
+          state.publicPlaylistId=curatedPicker.value;publicPlaylistSongIds=new Set();publicPlaylistSongKeys=new Set();
           if(state.publicPlaylistId){
-            const {data,error}=await collectionsSb.from('yarg_public_playlist_songs').select('song_id').eq('playlist_id',state.publicPlaylistId);
+            const {data,error}=await collectionsSb.from('yarg_public_playlist_songs').select('song_id,song_title,song_artist').eq('playlist_id',state.publicPlaylistId);
             if(error){alert('Impossible de lire la playlist : '+error.message);return;}
-            publicPlaylistSongIds=new Set((data||[]).map(x=>x.song_id));
+            publicPlaylistSongIds=new Set((data||[]).map(x=>String(x.song_id)));
+            publicPlaylistSongKeys=new Set((data||[]).filter(x=>x.song_title&&x.song_artist).map(x=>playlistSongKey(x.song_title,x.song_artist)));
           }drawPlaylistCards();filter();
         };
         document.getElementById('collection-clear').onclick=()=>{
-          state.favoritesOnly=false;state.publicPlaylistId='';publicPlaylistSongIds.clear();
+          state.favoritesOnly=false;state.publicPlaylistId='';publicPlaylistSongIds.clear();publicPlaylistSongKeys.clear();
           favFilterButton.setAttribute('aria-pressed','false');curatedPicker.value='';drawPlaylistCards();filter();
         };
         favouriteButton.onclick=async()=>{
@@ -1729,7 +1733,7 @@ body:has(#public-playlists-discovery[open]) #scroll {
           const {error}=await collectionsSb.from('yarg_public_playlist_songs').upsert({playlist_id:mcSheetPicker.value,song_id:String(CURRENT_SHEET_SONG.id),song_title:CURRENT_SHEET_SONG.t,song_artist:CURRENT_SHEET_SONG.a},{onConflict:'playlist_id,song_id',ignoreDuplicates:true});
           button.disabled=false;
           label.textContent=error?'Erreur : '+error.message:'Chanson ajoutée à la playlist !';
-          if(!error&&state.publicPlaylistId===mcSheetPicker.value){publicPlaylistSongIds.add(String(CURRENT_SHEET_SONG.id));filter();}
+          if(!error&&state.publicPlaylistId===mcSheetPicker.value){publicPlaylistSongIds.add(String(CURRENT_SHEET_SONG.id));publicPlaylistSongKeys.add(playlistSongKey(CURRENT_SHEET_SONG.t,CURRENT_SHEET_SONG.a));filter();}
         };
         if(collectionsSb){collectionsSb.auth.onAuthStateChange(()=>{setTimeout(initCollections,0)});setTimeout(initCollections,0)}
         let filtered = [...DATA];
@@ -1774,7 +1778,7 @@ body:has(#public-playlists-discovery[open]) #scroll {
             }
 
             if (state.favoritesOnly && !myFavoriteSongIds.has(String(r.id))) return false;
-            if (state.publicPlaylistId && !publicPlaylistSongIds.has(String(r.id))) return false;
+            if (state.publicPlaylistId && !publicPlaylistSongIds.has(String(r.id)) && !publicPlaylistSongKeys.has(playlistSongKey(r.t,r.a))) return false;
             if (state.playlist && !r.gameIds.has(state.playlist)) return false;
 
 
