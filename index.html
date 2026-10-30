@@ -853,6 +853,40 @@
 .catalog-credits-controls button{width:100%;min-width:0;min-height:42px;padding:9px 10px;white-space:normal;text-align:center;overflow-wrap:anywhere;border:1px solid #405059;border-radius:9px;background:#253238;color:#f1f5f5;font-size:13px;font-weight:700;cursor:pointer}
 .catalog-credits-controls select:focus-visible,.catalog-credits-controls input:focus-visible,.catalog-credits-controls button:focus-visible{outline:2px solid #18c4bf;outline-offset:2px}
 @media(max-width:680px){.catalog-credits-filter{margin:10px 0;padding:12px}.catalog-credits-controls{grid-template-columns:minmax(0,1fr);gap:10px}.catalog-credits-controls label,.catalog-credits-controls button{width:100%;min-width:0}}
+
+/* Fix: desktop page scrolling + a usable song-list height. */
+html { scroll-behavior: auto; }
+body, body:has(.games-discovery[open]), body:has(#public-playlists-discovery[open]) {
+  display: block !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+header, body:has(.games-discovery[open]) header {
+  max-height: none !important;
+  overflow: visible !important;
+}
+#scroll, body:has(.games-discovery[open]) #scroll,
+body:has(#public-playlists-discovery[open]) #scroll {
+  box-sizing: border-box;
+  display: block;
+  flex: none !important;
+  width: 100%;
+  height: clamp(380px, 68dvh, 900px) !important;
+  min-height: 380px !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain;
+  scroll-margin-top: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 680px) {
+  #scroll, body:has(.games-discovery[open]) #scroll,
+  body:has(#public-playlists-discovery[open]) #scroll {
+    height: clamp(380px, 68dvh, 730px) !important;
+    min-height: 380px !important;
+  }
+}
 </style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong>🎸 Bienvenue! Trouve ta première chanson!</strong><p>Tu peux filtrer par instrument et difficultés, découvrir 10 chansons au hasard, filtrer par playlists ou par jeu. Optionnellement, crée un compte Rockstar pour sauvegarder tes favoris et tes stats! Amuses-toi!</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
