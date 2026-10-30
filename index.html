@@ -504,7 +504,10 @@
         body{background:#101214;color:#f5f7f8}
         header{background:radial-gradient(circle at 10% 0%,rgba(255,138,36,.13),transparent 34%),radial-gradient(circle at 90% 0%,rgba(31,200,189,.12),transparent 34%),#101214;padding:1rem 1.15rem .85rem;border-bottom:1px solid #30383d}
         .site-topline{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.9rem}
-        .site-identity{min-width:0}
+        .site-identity{min-width:0;display:flex;align-items:center;gap:14px}
+        .site-logo{display:block;width:68px;height:68px;object-fit:contain;flex:none}
+        .site-title-stack{min-width:0}
+        @media(max-width:600px){.site-identity{gap:9px}.site-logo{width:48px;height:48px}}
         #catalog-title,.party-title{margin:0;font-size:clamp(1.35rem,3vw,2.1rem);line-height:1.05;font-weight:900;letter-spacing:-.025em}
         #catalog-title{color:#f5f7f8!important}
         .party-info{margin:0}.party-info.active{display:block}
@@ -856,10 +859,13 @@
     <header>
         <div class="site-topline">
             <div class="site-identity">
-                <h1 id="catalog-title">Librairie de chansons YARG à Jak</h1>
-                <div class="party-info" id="party-info" aria-live="polite">
-                    <div class="party-title" id="party-title"></div>
-                    <div class="party-mc">Votre MC pour la soirée : <strong id="party-mc"></strong></div>
+                <img class="site-logo" src="assets/favicon.png" alt="" aria-hidden="true" width="68" height="68">
+                <div class="site-title-stack">
+                    <h1 id="catalog-title">La bibliothèque musicale à Jak</h1>
+                    <div class="party-info" id="party-info" aria-live="polite">
+                        <div class="party-title" id="party-title"></div>
+                        <div class="party-mc">Votre MC pour la soirée : <strong id="party-mc"></strong></div>
+                    </div>
                 </div>
             </div>
             <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html" aria-current="page">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a></nav>
@@ -1023,8 +1029,8 @@
         }
 
         async function loadPartyMode() {
-            const normalTitle = 'Librairie de chansons YARG à Jak';
             const catalogTitle = document.getElementById('catalog-title');
+            const normalTitle = catalogTitle.textContent.trim();
             const partyInfo = document.getElementById('party-info');
             const partyTitle = document.getElementById('party-title');
             const partyMc = document.getElementById('party-mc');
