@@ -895,7 +895,19 @@ body:has(#public-playlists-discovery[open]) #scroll {
 .yarg-up-next-shared:not([hidden]){text-align:center!important;}
 @keyframes yarg-banner-pingpong{from{background-position:0% center}to{background-position:100% center}}
 @media(prefers-reduced-motion:reduce){.yarg-up-next-shared{animation:none}}
-@media(max-width:680px){.yarg-up-next-shared:not([hidden]){position:fixed;top:0;left:0;right:0;z-index:1200}}
+/* The upcoming-song banner stays visible at the top at every screen width. */
+.yarg-up-next-shared:not([hidden]){
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:1200;
+  margin:0;
+}
+/* Preserve normal access to content underneath the fixed banner. */
+header { padding-top: calc(1rem + var(--yarg-next-banner-height, 0px)) !important; }
+html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
+#scroll { scroll-margin-top: calc(12px + var(--yarg-next-banner-height, 0px)) !important; }
 #playlist-hidden-controls, #playlist-hidden-controls * {display:none!important}
 #favorites-only{display:none!important} /* Mes Favoris se choisit avec les grandes cartes */
 #song-suggestions {margin: 11px 0}
@@ -2324,6 +2336,35 @@ body:has(#public-playlists-discovery[open]) #scroll {
   const {data:allowed,error}=await client.rpc('yarg_admin_whoami');
   if(!error&&allowed)links.forEach(a=>a.hidden=false);
  }catch(e){console.warn('Vérification MC impossible',e)}
+})();
+</script>
+<script>
+/* Keep all header content visible underneath the fixed, responsive next-song banner. */
+(function(){
+  const init = () => {
+    const banner = document.getElementById('yarg-up-next-shared');
+    if (!banner) return;
+    const root = document.documentElement;
+    let previous = null;
+    function syncBannerHeight(){
+      const shown = !banner.hidden && getComputedStyle(banner).display !== 'none';
+      const height = shown ? Math.ceil(banner.getBoundingClientRect().height) : 0;
+      if (height === previous) return;
+      previous = height;
+      root.style.setProperty('--yarg-next-banner-height', height + 'px');
+    }
+    new MutationObserver(syncBannerHeight).observe(banner, {
+      attributes: true, attributeFilter: ['hidden', 'style', 'class'],
+      childList: true, characterData: true, subtree: true
+    });
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(syncBannerHeight).observe(banner);
+    }
+    window.addEventListener('resize', syncBannerHeight, {passive:true});
+    syncBannerHeight();
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
+  else init();
 })();
 </script>
 <script src="yarg-up-next.js" defer></script>
