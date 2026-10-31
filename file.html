@@ -107,6 +107,18 @@
       .eta{text-align:left}
       header{padding-top:20px}
     }
+
+    /* Sections de la file, archives et état hors soirée. */
+    [hidden]{display:none!important}
+    .fair-note{font-size:13px;color:var(--muted);margin:-2px 0 14px;line-height:1.45}
+    .hall-party{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+    .hall-party summary{padding:18px;cursor:pointer;font-weight:850;list-style-position:inside}
+    .hall-party[open] summary{border-bottom:1px solid var(--line);color:var(--teal2)}
+    .hall-sub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin:7px 0 0 20px}
+    .hall-content{padding:8px 22px 18px;overflow-wrap:anywhere}
+    .hall-content h3{font-size:15px;color:var(--orange2);margin:18px 0 8px}
+    .hall-content li{padding:4px 0;line-height:1.5}
+    .history-card .song{font-size:16px}
   </style>
 </head>
 <body>
@@ -126,25 +138,52 @@
   <div class="error" id="errorBox"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
 
-  <section>
+  <section id="mineSection" hidden>
     <div class="section-head">
       <div>
-        <h2>🎸 Mes demandes</h2>
-        <div class="hint">Les demandes faites avec ce navigateur apparaissent ici.</div>
+        <h2>🎸 Mes Demandes</h2>
+        <div class="hint">Tes prestations, selon leur rang dans la file.</div>
       </div>
       <button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button>
     </div>
     <div class="cards" id="myRequests"></div>
   </section>
 
-  <section>
-    <div class="section-head">
-      <div>
-        <h2>🎤 File de la soirée</h2>
-        <div class="hint">Toutes les chansons demandées pour ce party, mises à jour en direct.</div>
-      </div>
-    </div>
+  <section id="joinSection" hidden>
+    <div class="section-head"><div>
+      <h2>🎤 Chansons que je peux rejoindre</h2>
+      <div class="hint">Groupes ayant au moins une place disponible, selon leur rang dans la file.</div>
+    </div></div>
+    <p class="fair-note">⚖️ Les demandes sont affichées selon leur position dans la file, sans changer leur priorité.</p>
     <div class="cards" id="publicQueue"></div>
+  </section>
+
+  <section id="fullSection" hidden>
+    <div class="section-head"><div>
+      <h2>🔒 Chansons complètes</h2>
+      <div class="hint">Groupes complets, fermés ou actuellement sur scène.</div>
+    </div></div>
+    <div class="cards" id="fullQueue"></div>
+  </section>
+
+  <section id="historySection" hidden>
+    <div class="section-head"><div>
+      <h2>🎶 Historique</h2>
+      <div class="hint">Prestations terminées pendant la soirée actuelle.</div>
+    </div></div>
+    <div class="cards" id="currentHistory"></div>
+  </section>
+
+  <section id="closedSection" hidden>
+    <div class="empty">🎤 La soirée n'est pas ouverte pour le moment. <a href="index.html">Consulte le catalogue</a> en attendant la prochaine!</div>
+  </section>
+
+  <section id="hallSection">
+    <div class="section-head"><div>
+      <h2>🏆 Hall of Fame</h2>
+      <div class="hint">Les soirées passées, leurs setlists et les rockstars sur scène.</div>
+    </div></div>
+    <div class="cards" id="hallOfFame"><div class="empty">Chargement des archives…</div></div>
   </section>
 </main>
 
@@ -167,6 +206,8 @@ function isMyRequest(r){return ownedRequestIds().has(String(r.id));}
 let settings = null;
 let requests = [];
 let members = [];
+let completedRequests = [];
+let historyLoadError = "";
 let previousStates = new Map();
 let joining = null; // {requestId, instrument} — garder le formulaire ouvert pendant les rafraîchissements
 const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
@@ -176,7 +217,7 @@ function isMyPerformance(r){return isMyRequest(r)||joinedRequestIds().has(String
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const instruments = {vocals:"Voix",guitar:"Guitare",bass:"Basse",drums:"Batterie",keys:"Clavier"};
+const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie 4-Lane",pro_drums:"Pro Drums",keys:"Clavier",pro_keys:"Pro Keys"};
 const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
 
 function showError(message){
@@ -233,20 +274,45 @@ function calculateEtas(queue){
   return etas;
 }
 
-function membersFor(id){ return members.filter(m => m.performance_request_id === id); }
+function membersFor(id){return members.filter(m=>String(m.performance_request_id)===String(id));}
 
-function memberLine(name,instrument,difficulty,microphone,harmony){
+// Les demandes de groupe ont déjà leur créateur dans performance_members.
+// Les anciennes demandes individuelles peuvent aussi y avoir une copie du demandeur.
+// Toujours afficher chaque inscription une seule fois, sans rien effacer dans Supabase.
+function performerEntries(r){
+  const entries=membersFor(r.id);
+  const useLegacyLeader=!r.is_group_request || entries.length===0;
+  const all=useLegacyLeader?[{
+    rockstar_name:r.rockstar_name,instrument:r.requester_instrument,
+    difficulty:r.requester_difficulty,microphone:r.requester_microphone,
+    vocal_harmony:r.vocal_harmony,preferred_guitar:null
+  },...entries]:entries;
+  const seen=new Set();
+  return all.filter(m=>{
+    const key=[String(m.rockstar_name||'').trim().toLocaleLowerCase(),m.instrument||'',
+      m.difficulty||'',!!m.microphone,
+      (m.instrument==='vocals'||m.microphone)?Number(m.vocal_harmony||1):0].join('|');
+    if(seen.has(key))return false;
+    seen.add(key);return true;
+  });
+}
+
+function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuitar){
  const inst=instruments[instrument]||instrument||"Auditeur";
  const singing=instrument==="vocals"||microphone;
  const vocal=singing?` · Harmonie ${harmony||1} (voix : Moyen)`:"";
  const diff=instrument==="vocals"||!instrument?"":` · ${difficulties[difficulty]||difficulty||"—"}`;
- return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}</div>`;
+ const guitarLabel=({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[preferredGuitar];
+ return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 ${esc(guitarLabel)}`:''}</div>`;
 }
 function openInstruments(r){
  if(!settings?.performance_requests_enabled||!r.allow_band_fill||!["waiting","full"].includes(r.status))return [];
- const occupied=new Set(membersFor(r.id).map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
- if(r.requester_instrument&&r.requester_instrument!=="vocals")occupied.add(r.requester_instrument);
- return [...new Set(Array.isArray(r.fillable_instruments)?r.fillable_instruments:[])].filter(i=>instruments[i]&&(i==="vocals"||!occupied.has(i)));
+ const players=performerEntries(r);
+ const occupied=new Set(players.map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
+ const singers=players.filter(m=>m.instrument==="vocals"||m.microphone).length;
+ const capacity=Math.max(0,Math.min(3,Number(r.vocal_parts)||0));
+ return [...new Set(Array.isArray(r.fillable_instruments)?r.fillable_instruments:[])]
+   .filter(i=>instruments[i]&&(i==="vocals"?(capacity>0&&singers<capacity):!occupied.has(i)));
 }
 function harmonyOptions(r){
  const count=Math.max(1,Math.min(3,Number(r.vocal_parts)||1));
@@ -288,56 +354,100 @@ function joinFormHtml(r){
  <div class="join-message" role="status"></div></form>`;
 }
 function cardHtml(r, eta, mine=false){
-  const bandMembers = membersFor(r.id);
-  const own = memberLine(r.rockstar_name,r.requester_instrument,r.requester_difficulty,r.requester_microphone,r.vocal_harmony);
-  const extras = bandMembers.map(m => memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony)).join("");
-  const open = openInstruments(r).map(i => `<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instruments[i])}</button>`).join("");
-
-  const isPlaying = r.status === "playing";
-  const classes = ["card",mine?"mine":"",isPlaying?"playing":"",mine&&isPlaying?"skittles":""].filter(Boolean).join(" ");
-  const etaHtml = isPlaying
+  const performers=performerEntries(r);
+  const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar)).join("");
+  const available=openInstruments(r);
+  const slots=available.map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instruments[i])}</button>`).join("");
+  const isPlaying=r.status==="playing";
+  const classes=["card",mine?"mine":"",isPlaying?"playing":"",mine&&isPlaying?"skittles":""].filter(Boolean).join(" ");
+  const etaHtml=isPlaying
     ? `<div class="eta"><strong>🔥 EN COURS</strong><span>Sur scène maintenant</span></div>`
     : eta?.at
       ? `<div class="eta"><strong>⏱ ${formatClock(eta.at)}</strong><span>${relativeMinutes(eta.at)}</span></div>`
       : `<div class="eta"><strong>⏱ —</strong><span>Estimation à venir</span></div>`;
-
-  const skittles = mine && isPlaying
-    ? `<div class="skittle-banner">🌈🔥 EN COURS — C'EST À TOI! 🔥🌈</div>`
-    : "";
-
-  return `<article class="${classes}" data-request-id="${esc(r.id)}">
+  const statusLabel=isPlaying?'En cours':available.length>0?'En attente':
+    (!r.allow_band_fill?'Groupe fermé':'Groupe complet');
+  const skittles=mine&&isPlaying?`<div class="skittle-banner">🌈🔥 EN COURS — C'EST À TOI! 🔥🌈</div>`:'';
+  return `<article class="${classes}" data-request-id="${esc(r.id)}" id="demande-${esc(r.id)}">
     ${skittles}
-    <div class="songline">
-      <div>
-        <div class="song">${esc(r.song_title || "Chanson")}</div>
-        <div class="artist">${esc(r.song_artist || "")}</div>
-        <span class="status ${isPlaying?"playing":""}">${isPlaying?"En cours":r.status==="full"?"Groupe complet":"En attente"}</span>
-      </div>
-      ${etaHtml}
-    </div>
+    <div class="songline"><div>
+      <div class="song">${esc(r.song_title||"Chanson")}</div>
+      <div class="artist">${esc(r.song_artist||"")}</div>
+      <span class="status ${isPlaying?'playing':''}">${statusLabel}</span>
+    </div>${etaHtml}</div>
     <div class="band">
-      ${r.band_name ? `<div class="band-name">🤘 ${esc(r.band_name)}</div>` : ""}
-      ${own}${extras}
-      ${open ? `<div class="open-slots">${open}</div>` : ""}
+      ${r.band_name?`<div class="band-name">🤘 ${esc(r.band_name)}</div>`:''}
+      ${displayed}
+      ${slots?`<div class="open-slots">${slots}</div>`:''}
       ${joinFormHtml(r)}
     </div>
   </article>`;
 }
 
+function formatDuration(sec){const n=Math.max(0,Number(sec)||0);return `${Math.floor(n/60)} min ${String(n%60).padStart(2,'0')} s`;}
+function historicalCard(r){
+  const names=[...new Set(performerEntries(r).map(m=>m.rockstar_name).filter(Boolean))];
+  return `<article class="card history-card"><div class="song">${esc(r.song_title||'Chanson')}</div>
+    <div class="artist">${esc(r.song_artist||'')} · ${esc(names.join(', ')||r.rockstar_name||'')} · ${formatDuration(r.song_duration_seconds)}</div></article>`;
+}
 function render(){
-  const queue = sortedActive();
-  const etas = calculateEtas(queue);
+  const active=!!settings?.performance_requests_enabled;
+  for(const id of ['mineSection','joinSection','fullSection','historySection'])$('#'+id).hidden=!active;
+  $('#closedSection').hidden=active;
+  if(!active)return;
 
-  const mine = queue.filter(isMyPerformance);
-  $("#myRequests").innerHTML = mine.length
-    ? mine.map(r => cardHtml(r,etas.get(r.id),true)).join("")
-    : `<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment. Va donc nous en pousser une p'tite.</div>`;
+  const queue=sortedActive();
+  const etas=calculateEtas(queue);
+  const mine=queue.filter(isMyPerformance);
+  const joinable=queue.filter(r=>r.status!=='playing'&&!isMyPerformance(r)&&openInstruments(r).length>0);
+  const full=queue.filter(r=>r.status==='playing'||openInstruments(r).length===0);
 
-  $("#publicQueue").innerHTML = queue.length
-    ? queue.map(r => cardHtml(r,etas.get(r.id),false)).join("")
-    : `<div class="empty">La file est vide. Quelqu'un doit bien avoir envie de massacrer une chanson, non? 🎸</div>`;
+  $('#myRequests').innerHTML=mine.length
+    ?mine.map(r=>cardHtml(r,etas.get(r.id),true)).join('')
+    :`<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment.</div>`;
+  $('#publicQueue').innerHTML=joinable.length
+    ?joinable.map(r=>cardHtml(r,etas.get(r.id))).join('')
+    :`<div class="empty">Aucun groupe à rejoindre en ce moment.</div>`;
+  $('#fullQueue').innerHTML=full.length
+    ?full.map(r=>cardHtml(r,etas.get(r.id))).join('')
+    :`<div class="empty">Aucune chanson complète pour le moment.</div>`;
+  $('#currentHistory').innerHTML=historyLoadError
+    ?`<div class="empty">Historique indisponible pour le moment.</div>`
+    :completedRequests.length?completedRequests.map(historicalCard).join('')
+    :`<div class="empty">Aucune chanson terminée pour l’instant.</div>`;
+  maybeNotify(queue,etas);
+}
 
-  maybeNotify(queue, etas);
+function renderHall(sessions){
+ const dest=$('#hallOfFame');
+ if(!Array.isArray(sessions)||!sessions.length){dest.innerHTML=`<div class="empty">Aucune ancienne soirée disponible pour le moment.</div>`;return;}
+ dest.innerHTML=sessions.map(session=>{
+  const songs=Array.isArray(session.setlist)?session.setlist:[];
+  const credits=new Map();let seconds=0;
+  for(const req of (Array.isArray(session.requests)?session.requests:[])){
+    const name=req.requester||'Rockstar',data=credits.get(name)||{requests:0,played:0};data.requests++;credits.set(name,data);
+  }
+  for(const song of songs){seconds+=Math.max(0,Number(song.seconds)||0);const name=song.requester||'Rockstar';const data=credits.get(name)||{requests:0,played:0};data.played++;credits.set(name,data);}
+  const stats=[...credits.entries()].sort((a,b)=>b[1].requests-a[1].requests).map(([name,v])=>
+    `<li><b>${esc(name)}</b> : ${v.requests} demande(s), ${v.played} jouée(s)</li>`).join('');
+  const setlist=songs.map((song,i)=>{
+    const players=[...new Set((Array.isArray(song.members)?song.members:[]).filter(Boolean))];
+    return `<li><strong>${i+1}. ${esc(song.title)}</strong> — ${esc(song.artist||'')} · demande de ${esc(song.requester||'')} (${formatDuration(song.seconds)})${players.length?`<div class="hall-sub">Sur scène : ${esc(players.join(', '))}</div>`:''}</li>`;
+  }).join('');
+  const date=session.started_at?new Date(session.started_at).toLocaleDateString('fr-CA'):'';
+  return `<details class="hall-party"><summary>${esc(session.name||'Soirée YARG')}<span class="hall-sub">${esc(date)} · ${songs.length} chansons · ${formatDuration(seconds)}</span></summary>
+    <div class="hall-content"><h3>Statistiques des demandes</h3><ul>${stats||'<li>Aucune demande enregistrée</li>'}</ul><h3>Setlist</h3><ol>${setlist||'<li>Aucune chanson terminée</li>'}</ol></div></details>`;
+ }).join('');
+}
+async function loadHall(){
+ try{
+   const {data,error}=await sb.rpc('yarg_public_hall_of_fame');
+   if(error)throw error;
+   renderHall(data);
+ }catch(error){
+   console.warn('Archives non disponibles :',error);
+   $('#hallOfFame').innerHTML=`<div class="empty">Hall of Fame indisponible pour le moment.</div>`;
+ }
 }
 
 async function loadSettings(){
@@ -355,23 +465,37 @@ async function loadQueue(){
   // The MC admin snapshot is scoped to current_session_id. Match that scope:
   // otherwise stale waiting requests from earlier parties appear on the public queue.
   if(!settings?.current_session_id){
-    requests=[];members=[];render();return;
+    requests=[];members=[];completedRequests=[];historyLoadError="";render();return;
   }
   const {data:r,error:e1}=await sb.from("performance_requests")
-    .select("id,guest_user_id,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,queue_position,started_at,created_at")
+    .select("id,guest_user_id,is_group_request,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,queue_position,started_at,created_at")
     .eq("party_session_id",settings.current_session_id)
     .in("status",["waiting","full","playing"])
     .order("queue_position",{ascending:true,nullsFirst:false});
   if(e1) throw e1;
   requests=r||[];
 
-  const ids=requests.map(x=>x.id);
-  if(!ids.length){ members=[]; render(); return; }
+  // Historique facultatif : son indisponibilité ne doit pas bloquer la file active.
+  try{
+    const {data:history,error}=await sb.from('performance_requests')
+      .select('id,is_group_request,rockstar_name,song_title,song_artist,song_duration_seconds,status,finished_at')
+      .eq('party_session_id',settings.current_session_id)
+      .in('status',['completed','played'])
+      .order('finished_at',{ascending:false}).limit(1000);
+    if(error)throw error;
+    completedRequests=history||[];historyLoadError='';
+  }catch(error){
+    console.warn('Historique non disponible :',error);
+    completedRequests=[];historyLoadError=error.message||'unavailable';
+  }
 
-  const {data:m,error:e2}=await sb.from("performance_members")
-    .select("id,performance_request_id,rockstar_name,instrument,difficulty,microphone,vocal_harmony,preferred_guitar,created_at")
-    .in("performance_request_id",ids);
-  if(e2) throw e2;
+  const ids=[...new Set([...requests,...completedRequests].map(x=>x.id))];
+  if(!ids.length){members=[];render();return;}
+
+  const {data:m,error:e2}=await sb.from('performance_members')
+    .select('id,performance_request_id,rockstar_name,instrument,difficulty,microphone,vocal_harmony,preferred_guitar,created_at')
+    .in('performance_request_id',ids);
+  if(e2)throw e2;
   members=m||[];
   render();
 }
@@ -480,7 +604,7 @@ async function refresh(){
 
 async function startRealtime(){
   sb.channel("yarg-party-queue")
-    .on("postgres_changes",{event:"*",schema:"public",table:"performance_requests"},async()=>{flashLive();await loadQueue();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"performance_requests"},async()=>{flashLive();await loadQueue();await loadHall();})
     .on("postgres_changes",{event:"*",schema:"public",table:"performance_members"},async()=>{flashLive();await loadQueue();})
     .on("postgres_changes",{event:"UPDATE",schema:"public",table:"party_settings",filter:"id=eq.1"},async()=>{flashLive();await loadSettings();})
     .subscribe();
@@ -489,7 +613,7 @@ async function startRealtime(){
 /* Refresh relative countdown text even if no database event occurs. */
 setInterval(()=>render(),30000);
 
-(async()=>{ await refresh(); await startRealtime(); })();
+(async()=>{await refresh();await loadHall();await startRealtime();})();
 </script>
 </body>
 </html>
