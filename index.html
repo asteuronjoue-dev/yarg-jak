@@ -966,6 +966,11 @@ body:has(#public-playlists-discovery[open]) #scroll {
 }
 @media(prefers-reduced-motion:reduce){#sheet-favourite,.official-game-card{transition:none}}
 
+
+/* Les favoris Rockstar : message de diagnostic lisible sans masquer les playlists. */
+.catalog-account-hint{color:#a8ded5;font-size:.84rem;line-height:1.4;margin:4px 0 12px}
+.catalog-account-hint.error{color:#ffc1b9}
+
 </style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong>🎸 Bienvenue! Trouve ta première chanson!</strong><p>Tu peux filtrer par instrument et difficultés, découvrir 10 chansons au hasard, filtrer par playlists ou par jeu. Optionnellement, crée un compte Rockstar pour sauvegarder tes favoris et tes stats! Amuses-toi!</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
@@ -1042,6 +1047,7 @@ body:has(#public-playlists-discovery[open]) #scroll {
         <details class="games-discovery" id="public-playlists-discovery" aria-label="Playlists publiques et favoris">
           <summary class="catalog-credits-heading">🎵 Playlists publiques et Mes Favoris</summary>
           <p class="games-discovery-intro">Explore les playlists publiques ou retrouve les favoris de ton compte Rockstar.</p>
+          <p id="catalog-account-hint" class="catalog-account-hint" role="status" aria-live="polite">Vérification des favoris Rockstar…</p>
           <div id="public-playlist-cards" class="official-game-cards" aria-label="Choisir une playlist"></div>
           <button id="clear-visual-playlists" class="discovery-clear" type="button" hidden>✕ Effacer la sélection</button>
         </details>
@@ -1428,6 +1434,10 @@ body:has(#public-playlists-discovery[open]) #scroll {
         // Registered Rockstar favourites + public MC-curated playlists.
         // Catalogue ids are stable keys; content is loaded from songs.json.
         const collectionsSb=getPartyClient();
+        if(!collectionsSb){
+          const favMessage=document.getElementById('catalog-account-hint');
+          if(favMessage){favMessage.classList.add('error');favMessage.textContent='⚠ Connexion Supabase indisponible. Les favoris n’ont pas été effacés : vérifie ta connexion et recharge la page.';}
+        }
         let signedInRockstar=null, mcCanEdit=false, publicPlaylists=[],myFavoriteSongIds=new Set(),publicPlaylistSongIds=new Set();
         const favFilterButton=document.getElementById('favorites-only');
         const curatedPicker=document.getElementById('mc-playlist-picker');
@@ -1604,10 +1614,34 @@ body:has(#public-playlists-discovery[open]) #scroll {
         }
         loadOfficialGamesFromFiles();
 
+        // Compatibilité : sauvegardes provenant d'anciens exports YARG.
+        // Les valeurs Supabase restent intactes. Nous reconnaissons également
+        // l'ID historique si l'album, la durée ou un doublon a changé.
+        const LEGACY_SONG_ID_ALIASES = {"yarg-babymetal-gimme-chocolate-babymetal-2014-232":"yarg-babymetal-gimme-chocolate-babymetal-2014-231","yarg-buckcherry-rescue-me-black-butterfly-2008-193-2":"yarg-buckcherry-rescue-me-black-butterfly-2008-193","yarg-corinne-bailey-rae-put-your-records-on-corinne-bailey-rae-2006-218":"yarg-corinne-bailey-rae-put-your-records-on-corinne-bailey-rae-2006-220","yarg-dethklok-laser-cannon-deth-sentence-dethalbum-ii-2009-276":"yarg-dethklok-laser-cannon-deth-sentence-dethalbum-ii-2009-278","yarg-dethklok-thunderhorse-the-dethalbum-2007-154":"yarg-dethklok-thunderhorse-the-dethalbum-2007-156","yarg-dream-theater-constant-motion-systematic-chaos-2007-421":"yarg-dream-theater-constant-motion-systematic-chaos-2007-419","yarg-earth-wind-fire-september-the-best-of-earth-wind-fire-vol-1-1978-222":"yarg-earth-wind-fire-september-the-best-of-earth-wind-fire-vol-1-1978-220","yarg-fear-and-loathing-in-las-vegas-let-me-hear-feeling-of-unity-2015-226-2":"yarg-fear-and-loathing-in-las-vegas-let-me-hear-feeling-of-unity-2015-226","yarg-free-spirit-far-away-from-heaven-pale-sister-of-light-2009-228-2":"yarg-free-spirit-far-away-from-heaven-pale-sister-of-light-2009-228","yarg-gerry-rafferty-baker-street-city-to-city-1978-366-2":"yarg-gerry-rafferty-baker-street-city-to-city-1978-366","yarg-kana-boon-star-marker-star-marker-2020-216-2":"yarg-kana-boon-star-marker-star-marker-2020-216","yarg-kessoku-band-ano-band-kessoku-band-2022-248":"yarg-kessoku-band-ano-band-ano-band-2022-215","yarg-kessoku-band-flashbacker-kessoku-band-2022-278":"yarg-kessoku-band-flashbacker-flashbacker-2022-275","yarg-kessoku-band-karakara-kessoku-band-2022-266":"yarg-kessoku-band-karakara-karakara-2022-267","yarg-mgmt-kids-oracular-spectacular-2007-302-2":"yarg-mgmt-kids-oracular-spectacular-2007-302","yarg-mrs-green-apple-inferno-inferno-2019-215":"yarg-mrs-green-apple-inferno-attitude-2019-216","yarg-muse-knights-of-cydonia-black-holes-and-revelations-2006-350":"yarg-muse-knights-of-cydonia-black-holes-and-revelations-2006-346","yarg-red-hot-chili-peppers-can-t-stop-by-the-way-2002-273":"yarg-red-hot-chili-peppers-can-t-stop-by-the-way-2002-272","yarg-the-rolling-stones-paint-it-black-aftermath-1966-233":"yarg-the-rolling-stones-paint-it-black-aftermath-1966-230","yarg-toto-hold-the-line-toto-1978-240":"yarg-toto-hold-the-line-toto-1978-246"};
+        const currentSongId = oldId => LEGACY_SONG_ID_ALIASES[String(oldId)] || String(oldId);
+        let resolvedFavoriteSongIds = new Set();
+        let resolvedPublicPlaylistSongIds = new Set();
+        function refreshResolvedFavorites(){
+          resolvedFavoriteSongIds=new Set([...myFavoriteSongIds].map(currentSongId));
+          const status=document.getElementById('catalog-account-hint');
+          if(status&&signedInRockstar){
+            const catalogueIds=new Set(DATA.map(r=>String(r.id)));
+            const recognized=[...resolvedFavoriteSongIds].filter(id=>catalogueIds.has(id)).length;
+            const unknown=[...myFavoriteSongIds].filter(id=>!catalogueIds.has(currentSongId(id))).length;
+            status.classList.remove('error');
+            status.textContent='♥ '+recognized+' favoris retrouvés dans le catalogue'
+              +(unknown>0?' · '+unknown+' ancienne(s) entrée(s) encore introuvable(s)':'')
+              +' · Enregistrés dans ton compte Rockstar.';
+          }
+        }
+        function refreshResolvedPublicPlaylist(){
+          resolvedPublicPlaylistSongIds=new Set([...publicPlaylistSongIds].map(currentSongId));
+        }
+
         const updateFavoriteButton=()=>{
           if(!CURRENT_SHEET_SONG)return;
           favouriteButton.hidden=!signedInRockstar;
-          const on=myFavoriteSongIds.has(String(CURRENT_SHEET_SONG.id));
+          const on=resolvedFavoriteSongIds.has(String(CURRENT_SHEET_SONG.id));
           favouriteButton.dataset.on=String(on);
           favouriteButton.textContent=on?'♥ Dans mes favoris · Retirer':'♥ Ajouter à mes favoris';
           mcSheetBox.hidden=!mcCanEdit;
@@ -1625,11 +1659,20 @@ body:has(#public-playlists-discovery[open]) #scroll {
           drawPlaylistCards();
         }
         async function loadFavouriteIds(){
-          myFavoriteSongIds=new Set();
-          if(signedInRockstar){
+          const status=document.getElementById('catalog-account-hint');
+          if(!signedInRockstar){
+            myFavoriteSongIds=new Set();
+            refreshResolvedFavorites();
+            if(status){status.classList.remove('error');status.textContent='Connecte-toi dans Mon profil pour retrouver tes favoris Rockstar.';}
+          }else{
             const {data,error}=await collectionsSb.from('yarg_song_favorites').select('song_id').eq('user_id',signedInRockstar.id);
-            if(error)console.warn('Favoris non disponibles',error);
-            else myFavoriteSongIds=new Set((data||[]).map(x=>x.song_id));
+            if(error){
+              console.warn('Favoris non disponibles',error);
+              if(status){status.classList.add('error');status.textContent='⚠ Impossible de lire tes favoris depuis Supabase : '+error.message;}
+            }else{
+              myFavoriteSongIds=new Set((data||[]).map(x=>String(x.song_id)));
+              refreshResolvedFavorites();
+            }
           }
           updateFavoriteButton();drawPlaylistCards();if(state.favoritesOnly)filter();
         }
@@ -1639,8 +1682,8 @@ body:has(#public-playlists-discovery[open]) #scroll {
           const {data:{user}}=await collectionsSb.auth.getUser();
           signedInRockstar=user&&!user.is_anonymous?user:null;
           const hint=document.getElementById('catalog-account-hint');
-          if(signedInRockstar){hint.textContent='♥ Tes favoris restent associés à ton compte Rockstar, sur tous tes appareils.';}
-          else {hint.textContent='Pour sauvegarder des favoris, connecte-toi dans Mon profil. Les playlists publiques restent accessibles à tous.';}
+          if(signedInRockstar&&hint){hint.textContent='Chargement de tes favoris Rockstar…';}
+          else if(hint){hint.textContent='Pour sauvegarder des favoris, connecte-toi dans Mon profil.';}
           favFilterButton.disabled=!signedInRockstar;
           if(!signedInRockstar&&state.favoritesOnly){state.favoritesOnly=false;favFilterButton.setAttribute('aria-pressed','false');}
           await loadFavouriteIds();
@@ -1655,12 +1698,12 @@ body:has(#public-playlists-discovery[open]) #scroll {
           favFilterButton.setAttribute('aria-pressed',String(state.favoritesOnly));drawPlaylistCards();filter();
         };
         curatedPicker.onchange=async()=>{
-          state.publicPlaylistId=curatedPicker.value;publicPlaylistSongIds=new Set();
+          state.publicPlaylistId=curatedPicker.value;publicPlaylistSongIds=new Set();refreshResolvedPublicPlaylist();
           if(state.publicPlaylistId){state.favoritesOnly=false;favFilterButton.setAttribute('aria-pressed','false');}
           if(state.publicPlaylistId){
             const {data,error}=await collectionsSb.from('yarg_public_playlist_songs').select('song_id').eq('playlist_id',state.publicPlaylistId);
             if(error){alert('Impossible de lire la playlist : '+error.message);return;}
-            publicPlaylistSongIds=new Set((data||[]).map(x=>x.song_id));
+            publicPlaylistSongIds=new Set((data||[]).map(x=>String(x.song_id)));refreshResolvedPublicPlaylist();
           }drawPlaylistCards();filter();
         };
         document.getElementById('collection-clear').onclick=()=>{
@@ -1669,13 +1712,23 @@ body:has(#public-playlists-discovery[open]) #scroll {
         };
         favouriteButton.onclick=async()=>{
           if(!signedInRockstar||!CURRENT_SHEET_SONG)return;
-          const songId=String(CURRENT_SHEET_SONG.id),on=myFavoriteSongIds.has(songId);
+          const songId=String(CURRENT_SHEET_SONG.id),on=resolvedFavoriteSongIds.has(songId);
+          const recordedIds=[...myFavoriteSongIds].filter(id=>currentSongId(id)===songId);
           favouriteButton.disabled=true;
-          const result=on?await collectionsSb.from('yarg_song_favorites').delete().eq('user_id',signedInRockstar.id).eq('song_id',songId)
-            :await collectionsSb.from('yarg_song_favorites').insert({user_id:signedInRockstar.id,song_id:songId});
+          let result={error:null};
+          if(on){
+            for(const savedId of recordedIds){
+              result=await collectionsSb.from('yarg_song_favorites').delete().eq('user_id',signedInRockstar.id).eq('song_id',savedId);
+              if(result.error)break;
+              myFavoriteSongIds.delete(savedId);
+            }
+          }else{
+            result=await collectionsSb.from('yarg_song_favorites').insert({user_id:signedInRockstar.id,song_id:songId});
+            if(!result.error)myFavoriteSongIds.add(songId);
+          }
           favouriteButton.disabled=false;
+          refreshResolvedFavorites();
           if(result.error){alert('Favori non enregistré : '+result.error.message);return;}
-          if(on)myFavoriteSongIds.delete(songId);else myFavoriteSongIds.add(songId);
           updateFavoriteButton();if(state.favoritesOnly)filter();
         };
         document.getElementById('sheet-add-playlist').onclick=async()=>{
@@ -1685,7 +1738,7 @@ body:has(#public-playlists-discovery[open]) #scroll {
           const {error}=await collectionsSb.from('yarg_public_playlist_songs').upsert({playlist_id:mcSheetPicker.value,song_id:String(CURRENT_SHEET_SONG.id),song_title:CURRENT_SHEET_SONG.t,song_artist:CURRENT_SHEET_SONG.a},{onConflict:'playlist_id,song_id',ignoreDuplicates:true});
           button.disabled=false;
           label.textContent=error?'Erreur : '+error.message:'Chanson ajoutée à la playlist !';
-          if(!error&&state.publicPlaylistId===mcSheetPicker.value){publicPlaylistSongIds.add(String(CURRENT_SHEET_SONG.id));filter();}
+          if(!error&&state.publicPlaylistId===mcSheetPicker.value){publicPlaylistSongIds.add(String(CURRENT_SHEET_SONG.id));refreshResolvedPublicPlaylist();filter();}
         };
         if(collectionsSb){collectionsSb.auth.onAuthStateChange(()=>{setTimeout(initCollections,0)});setTimeout(initCollections,0)}
         let filtered = [...DATA];
@@ -1729,8 +1782,8 @@ body:has(#public-playlists-discovery[open]) #scroll {
                 if (!hay.includes(term)) return false;
             }
 
-            if (state.favoritesOnly && !myFavoriteSongIds.has(String(r.id))) return false;
-            if (state.publicPlaylistId && !publicPlaylistSongIds.has(String(r.id))) return false;
+            if (state.favoritesOnly && !resolvedFavoriteSongIds.has(String(r.id))) return false;
+            if (state.publicPlaylistId && !resolvedPublicPlaylistSongIds.has(String(r.id))) return false;
             if (state.playlist && !(r.gameIds && r.gameIds.has(state.playlist))) return false;
             if (state.charterQuery && !(r._hayCharter || '').includes(state.charterQuery)) return false;
 
