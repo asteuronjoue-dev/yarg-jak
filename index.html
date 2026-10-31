@@ -892,6 +892,7 @@ body:has(#public-playlists-discovery[open]) #scroll {
 .yarg-up-next-shared{display:block;position:relative;min-height:0;border-radius:10px;margin:0 0 10px;padding:0}
 .yarg-up-next-shared[hidden]{display:none!important}
 .yarg-up-next-shared:not([hidden]){font:1000 clamp(17px,3.7vw,27px)/1.25 system-ui,sans-serif;color:#13151a!important;padding:15px 20px;background:linear-gradient(90deg,#ff355e,#ffba37,#ffe66d,#48e9bf,#6eb8ff,#c990ff);background-size:200% 100%;animation:yarg-banner-pingpong 2.2s ease-in-out infinite alternate;box-shadow:0 5px 20px rgba(0,0,0,.22)}
+.yarg-up-next-shared:not([hidden]){text-align:center!important;}
 @keyframes yarg-banner-pingpong{from{background-position:0% center}to{background-position:100% center}}
 @media(prefers-reduced-motion:reduce){.yarg-up-next-shared{animation:none}}
 @media(max-width:680px){.yarg-up-next-shared:not([hidden]){position:fixed;top:0;left:0;right:0;z-index:1200}}
@@ -2326,5 +2327,27 @@ body:has(#public-playlists-discovery[open]) #scroll {
 })();
 </script>
 <script src="yarg-up-next.js" defer></script>
+<script>
+/* Centered upcoming-song banner: remove the decorative rainbow emoji only. */
+(function(){
+  function tidy(){
+    const banner=document.getElementById('yarg-up-next-shared');
+    if(!banner)return;
+    const walker=document.createTreeWalker(banner,NodeFilter.SHOW_TEXT);
+    const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+    for(const node of nodes){
+      const clean=node.nodeValue.replace(/🌈\uFE0F?\s*/gu,'');
+      if(clean!==node.nodeValue)node.nodeValue=clean;
+    }
+  }
+  function init(){
+    const banner=document.getElementById('yarg-up-next-shared');
+    if(!banner)return;
+    new MutationObserver(tidy).observe(banner,{childList:true,subtree:true,characterData:true});
+    tidy();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
 </body>
 </html>
