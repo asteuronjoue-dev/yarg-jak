@@ -24,6 +24,20 @@
     h1{font-size:clamp(28px,5vw,48px);line-height:1;margin:0 0 10px}
     .mc{color:var(--muted);font-weight:700}
     .mc strong{color:var(--teal2)}
+    .yarg-navigation{display:flex;align-items:center;justify-content:flex-end;gap:.4rem;flex-wrap:wrap}
+    .yarg-navigation a{color:#eaf1f3;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #3b4b53;border-radius:10px;padding:.48rem .7rem;background:#1b2429;font-size:.85rem;font-weight:800;white-space:nowrap}
+    .yarg-navigation a:hover,.yarg-navigation a:focus-visible{border-color:#1fc8bd;background:#263338;color:#fff}
+    .yarg-navigation a[aria-current="page"]{background:#ff8a24;color:#111;border-color:#ff8a24}
+    .yarg-navigation a[hidden]{display:none!important}
+    @media(max-width:670px){.yarg-navigation{width:100%;justify-content:stretch}.yarg-navigation a{flex:1 1 calc(50% - .4rem);font-size:.8rem;padding:.5rem .3rem}}
+    .pointbox{border:1px solid var(--line);border-radius:14px;padding:15px;background:var(--panel);margin-bottom:24px}
+    .pointgrid{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}.pointchip{border:1px solid var(--line);border-radius:10px;padding:9px 13px;background:var(--panel2);font-size:14px}
+    .points-note{font-size:13px;color:var(--muted);line-height:1.5}.pointbox summary{cursor:pointer;font-weight:800;color:var(--teal2)}
+    .my-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}.my-actions button{padding:9px 12px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;cursor:pointer;font-weight:750}
+    .my-actions button:hover{border-color:var(--teal)}.my-actions button.danger{border-color:var(--danger);color:#ffc1c1}
+    .member-editor{border:1px solid var(--line);padding:12px;border-radius:12px;margin-top:12px;background:var(--panel2)}
+    .member-editor label{display:block;margin:8px 0;font-size:13px}.member-editor select{display:block;margin-top:5px;width:100%;padding:8px;background:var(--bg);color:white;border:1px solid var(--line);border-radius:7px}
+    .member-editor button{cursor:pointer;padding:9px 12px;margin:5px;border:1px solid var(--line);background:#26353a;border-radius:8px;color:#fff}
     .back{display:inline-flex;align-items:center;text-decoration:none;border:1px solid transparent;padding:.62rem .78rem;border-radius:11px;background:#181c1f;color:#e7edef;font-size:.88rem;font-weight:800}.back:hover{border-color:#30383d;background:#20262a}
     .party-pill{display:inline-block;margin-top:14px;padding:7px 11px;border-radius:999px;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
     .party-pill.on{background:rgba(31,200,189,.14);color:var(--teal2);border:1px solid rgba(31,200,189,.35)}
@@ -129,13 +143,15 @@
         <h1 id="partyTitle">File de la soirée</h1>
         <div class="mc">🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
       </div>
-      <a class="back" href="index.html">← Retour au catalogue</a>
+      <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html" aria-current="page">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a></nav>
     </div>
   </div>
 </header>
 
 <main class="wrap">
   <div class="error" id="errorBox"></div>
+  <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
+    <details><summary>Comment gagner ou perdre des points?</summary><p class="points-note">Le plus petit score passe en premier. Le demandeur reçoit +1 point par seconde de sa chanson (4 min = +240). Rejoindre un autre groupe donne −60 points, pris en compte à partir du passage de ce groupe. Les Initiés partent à −1. Une chanson passée sans être jouée ne donne ni coût ni récompense. La prochaine prestation annoncée reste protégée.</p></details></section>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
 
   <section id="mineSection" hidden>
@@ -211,7 +227,11 @@ let historyLoadError = "";
 let previousStates = new Map();
 let joining = null; // {requestId, instrument} — garder le formulaire ouvert pendant les rafraîchissements
 const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
+const BAND_TOKEN_KEY='yarg_band_secret_v1';
+function myBandToken(){let t=localStorage.getItem(BAND_TOKEN_KEY);if(!t){t=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem(BAND_TOKEN_KEY,t)}return t}
+let scoreRows=[];let managing=null;
 function joinedRequestIds(){try{return new Set(JSON.parse(localStorage.getItem(JOINED_REQUESTS_KEY)||"[]").map(String))}catch{return new Set()}}
+function forgetJoined(id){const ids=joinedRequestIds();ids.delete(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
 function rememberJoined(id){const ids=joinedRequestIds();ids.add(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
 function isMyPerformance(r){return isMyRequest(r)||joinedRequestIds().has(String(r.id))}
 
@@ -274,7 +294,7 @@ function calculateEtas(queue){
   return etas;
 }
 
-function membersFor(id){return members.filter(m=>String(m.performance_request_id)===String(id));}
+function membersFor(id){return members.filter(m=>String(m.performance_request_id)===String(id)&&!m.withdrawn_at);}
 
 // Les demandes de groupe ont déjà leur créateur dans performance_members.
 // Les anciennes demandes individuelles peuvent aussi y avoir une copie du demandeur.
@@ -493,7 +513,7 @@ async function loadQueue(){
   if(!ids.length){members=[];render();return;}
 
   const {data:m,error:e2}=await sb.from('performance_members')
-    .select('id,performance_request_id,rockstar_name,instrument,difficulty,microphone,vocal_harmony,preferred_guitar,created_at')
+    .select('id,performance_request_id,rockstar_name,instrument,difficulty,microphone,vocal_harmony,preferred_guitar,withdrawn_at,created_at')
     .in('performance_request_id',ids);
   if(e2)throw e2;
   members=m||[];
