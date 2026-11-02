@@ -535,13 +535,20 @@ async function loadQueue(){
   render();
 }
 
+function isGuitarInstrument(i){return ['guitar','rhythm_guitar','bass'].includes(i)}
+function syncBandEditGuitar(form){
+ const field=form?.querySelector('[data-guitar-field]');if(!field)return;
+ const applicable=isGuitarInstrument(form.elements.instrument.value);
+ field.hidden=!applicable;field.querySelector('select').disabled=!applicable;
+ if(!applicable)field.querySelector('select').value='';
+}
 function bandEditFormHtml(r){
  const m=myBandMember(r);if(!m)return '';
  const choices=[...new Set((r.fillable_instruments||[]).concat([m.instrument]))].filter(i=>instruments[i]);
- return `<form class="join-form band-change-form" data-band-change="${esc(r.id)}"><label>Instrument<select name="instrument">${choices.map(i=>`<option value="${esc(i)}" ${m.instrument===i?'selected':''}>${esc(instruments[i])}</option>`).join('')}</select></label><label>Difficulté<select name="difficulty">${Object.entries(difficulties).filter(([i])=>i!=='any').map(([i,label])=>`<option value="${i}" ${m.difficulty===i?'selected':''}>${esc(label)}</option>`).join('')}</select></label><label>Guitare physique<select name="preferred_guitar">${joinGuitars.map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label><label><input type="checkbox" name="microphone" ${m.microphone?'checked':''}> Chanter aussi</label><label>Harmonie<select name="harmony">${harmonyOptions(r).replace(`value="${m.vocal_harmony}"`,`value="${m.vocal_harmony}" selected`)}</select></label><button type="submit">Enregistrer</button><button type="button" data-band-cancel>Annuler</button><div class="join-message" role="status"></div></form>`
+ return `<form class="join-form band-change-form" data-band-change="${esc(r.id)}"><label>Instrument<select name="instrument">${choices.map(i=>`<option value="${esc(i)}" ${m.instrument===i?'selected':''}>${esc(instruments[i])}</option>`).join('')}</select></label><label>Difficulté<select name="difficulty">${Object.entries(difficulties).filter(([i])=>i!=='any').map(([i,label])=>`<option value="${i}" ${m.difficulty===i?'selected':''}>${esc(label)}</option>`).join('')}</select></label><label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label><label><input type="checkbox" name="microphone" ${m.microphone?'checked':''}> Chanter aussi</label><label>Harmonie<select name="harmony">${harmonyOptions(r).replace(`value="${m.vocal_harmony}"`,`value="${m.vocal_harmony}" selected`)}</select></label><button type="submit">Enregistrer</button><button type="button" data-band-cancel>Annuler</button><div class="join-message" role="status"></div></form>`
 }
 document.addEventListener('click',async e=>{
- const edit=e.target.closest('[data-band-edit]');if(edit){managing=edit.dataset.bandEdit;render();return}
+ const edit=e.target.closest('[data-band-edit]');if(edit){managing=edit.dataset.bandEdit;render();document.querySelectorAll('.band-change-form').forEach(syncBandEditGuitar);return}
  const cancel=e.target.closest('[data-band-cancel]');if(cancel){managing=null;render();return}
  const leave=e.target.closest('[data-band-leave]');if(!leave)return;
  const id=leave.dataset.bandLeave,token=savedBandTokens()[id];if(!token){alert('Cette participation plus ancienne doit être modifiée par le MC.');return}
@@ -556,10 +563,11 @@ document.addEventListener('submit',async e=>{
  const id=f.dataset.bandChange,token=savedBandTokens()[id];if(!token)return;
  const instrument=f.elements.instrument.value;
  const singing=instrument==='vocals'||f.elements.microphone.checked;
- const {error}=await sb.rpc('yarg_manage_band_member',{p_request_id:id,p_token:token,p_action:'edit',p_instrument:instrument,p_difficulty:instrument==='vocals'?'medium':f.elements.difficulty.value,p_microphone:instrument==='vocals'?false:f.elements.microphone.checked,p_harmony:singing?Number(f.elements.harmony.value):null,p_preferred_guitar:f.elements.preferred_guitar.value||null});
+ const {error}=await sb.rpc('yarg_manage_band_member',{p_request_id:id,p_token:token,p_action:'edit',p_instrument:instrument,p_difficulty:instrument==='vocals'?'medium':f.elements.difficulty.value,p_microphone:instrument==='vocals'?false:f.elements.microphone.checked,p_harmony:singing?Number(f.elements.harmony.value):null,p_preferred_guitar:isGuitarInstrument(instrument)?(f.elements.preferred_guitar?.value||null):null});
  if(error){f.querySelector('.join-message').textContent=error.message;return}
  managing=null;await loadQueue();
 });
+document.addEventListener('change',e=>{if(e.target.matches('.band-change-form select[name="instrument"]'))syncBandEditGuitar(e.target.closest('.band-change-form'));});
 // Délégation des événements: les cartes sont recréées à chaque mise à jour.
 document.addEventListener("click",e=>{
   const cancel=e.target.closest(".join-cancel");
