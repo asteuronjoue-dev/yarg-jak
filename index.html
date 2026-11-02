@@ -1361,7 +1361,11 @@ body:has(#public-playlists-discovery[open]) #scroll {
           const result=on?await collectionsSb.from('yarg_song_favorites').delete().eq('user_id',signedInRockstar.id).eq('song_id',songId)
             :await collectionsSb.from('yarg_song_favorites').insert({user_id:signedInRockstar.id,song_id:songId});
           favouriteButton.disabled=false;
-          if(result.error){alert('Favori non enregistré : '+result.error.message);return;}
+          // A recovered account may already have this favorite even when the local
+          // favorites cache did not contain it. A duplicate is already a success.
+          const alreadySaved=!on && result.error && (result.error.code==='23505' ||
+            /duplicate key value|yarg_song_favorites_pkey/i.test(result.error.message||''));
+          if(result.error && !alreadySaved){alert('Favori non enregistré : '+result.error.message);return;}
           if(on)myFavoriteSongIds.delete(songId);else myFavoriteSongIds.add(songId);
           updateFavoriteButton();if(state.favoritesOnly)filter();
         };
