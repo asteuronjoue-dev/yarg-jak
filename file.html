@@ -706,6 +706,24 @@ setInterval(()=>render(),30000);
 (async()=>{await refresh();await loadHall();await startRealtime();})();
 </script>
 <script>
+/* Afficher Régie MC uniquement aux comptes autorisés par Supabase. */
+(async function(){
+  const links=document.querySelectorAll('.yarg-navigation a[href="admin.html"]');
+  links.forEach(a=>a.hidden=true);
+  if(!links.length || !window.supabase)return;
+  try{
+    const client=window.supabase.createClient(
+      'https://xbhfjzurytdknbqvksjq.supabase.co',
+      'sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM'
+    );
+    const {data:{user},error:authError}=await client.auth.getUser();
+    if(authError || !user || user.is_anonymous)return;
+    const {data:allowed,error}=await client.rpc('yarg_admin_whoami');
+    if(!error && allowed===true)links.forEach(a=>a.hidden=false);
+  }catch(err){console.warn('Vérification accès Régie MC :',err);}
+})();
+</script>
+<script>
 /* Invitations entrantes pour le compte Rockstar connecté. */
 (function(){
  const box=document.getElementById('yarg-invite-tray');if(!box||!window.supabase)return;
