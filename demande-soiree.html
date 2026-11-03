@@ -70,7 +70,7 @@ async function prefillSignedInRockstar(){
     .select('rockstar_name,preferred_band_name').eq('user_id',user.id).maybeSingle();
   if(profileError||!profile)return;
   if(profile.preferred_band_name&&!$('band-name').value.trim())$('band-name').value=profile.preferred_band_name;
-  if(profile.rockstar_name && members.length && !members[0].name.trim()){
+  if(profile.rockstar_name && members.length){
     ownBandProfile={user_id:user.id,rockstar_name:profile.rockstar_name};members[0].profileId=user.id;members[0].name=profile.rockstar_name;render();
   }
  }catch(err){console.warn('Préremplissage du profil indisponible',err)}
@@ -98,10 +98,10 @@ function render(){
   const card=document.createElement('section');card.className='member';
   const heading=document.createElement('div');heading.className='member-head';
   const h=document.createElement('h2');h.textContent=`Rockstar ${i+1}`;heading.append(h);
-  if(members.length>1){const remove=document.createElement('button');remove.type='button';remove.className='remove';remove.textContent='Retirer';remove.onclick=()=>{members=members.filter(x=>x!==m);render()};heading.append(remove)}
+  if(members.length>1&&!(i===0&&ownBandProfile)){const remove=document.createElement('button');remove.type='button';remove.className='remove';remove.textContent='Retirer';remove.onclick=()=>{members=members.filter(x=>x!==m);render()};heading.append(remove)}
   const grid=document.createElement('div');grid.className='grid';
   function field(label,el){const wrap=document.createElement('label');wrap.className='field';const span=document.createElement('span');span.textContent=label;wrap.append(span,el);grid.append(wrap);return wrap}
-  const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de rockstar';name.value=m.name;name.oninput=()=>m.name=name.value;field('Nom de rockstar *',name);
+  const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de rockstar';name.value=m.name;name.readOnly=Boolean(i===0&&ownBandProfile);name.oninput=()=>m.name=name.value;field('Nom de rockstar *',name);
   const instrument=document.createElement('select');for(const [value,label] of options){const o=document.createElement('option');o.value=value;o.textContent=label;o.disabled=!allowed(m,chooseMode(value,m.mode));instrument.append(o)}
   instrument.value=categoryOf(m.mode);
   instrument.onchange=()=>{m.mode=chooseMode(instrument.value,m.mode);if(m.mode==='vocals'){m.microphone=false;m.difficulty='medium'}render()};
@@ -119,7 +119,31 @@ function render(){
   }
   if(m.mode==='vocals')m.difficulty='medium';
   if(m.mode!=='vocals'){const guitarModes=['guitar','rhythm_guitar','bass'];if(guitarModes.includes(m.mode)){const guitar=document.createElement('select');for(const [value,label] of guitarNames){let o=document.createElement('option');o.value=value;o.textContent=label;guitar.append(o)}guitar.value=m.guitarChoice;guitar.onchange=()=>{m.guitarChoice=guitar.value;showGuitarPhoto(m,card)};const guitarWrap=field('Choix de guitare (facultatif)',guitar);const photo=document.createElement('img');photo.className='guitar-photo';photo.hidden=true;photo.alt='Manette guitare réservée';photo.dataset.guitarPhoto=String(m.id);guitarWrap.append(photo);const guitarHelp=document.createElement('small');guitarHelp.className='mode-note';guitarHelp.textContent='Peu importe : aucune guitare précise n’est réservée. Les autres peuvent choisir la leur, et tu prendras celle qui reste.';guitarWrap.append(guitarHelp)}}
-  if(m.mode!=='vocals'){const profileChoice=document.createElement('select');let none=document.createElement('option');none.value='';none.textContent='Compte non associé (invité)';profileChoice.append(none);for(const entry of (ownBandProfile && !bandDirectory.some(x=>x.user_id===ownBandProfile.user_id)?[ownBandProfile,...bandDirectory]:bandDirectory)){const o=document.createElement('option');o.value=entry.user_id;o.textContent=entry.user_id===ownBandProfile?.user_id?entry.rockstar_name+' (moi)':entry.rockstar_name;profileChoice.append(o)}profileChoice.value=m.profileId;profileChoice.onchange=()=>{m.profileId=profileChoice.value;const match=[ownBandProfile,...bandDirectory].filter(Boolean).find(x=>x.user_id===m.profileId);if(match){m.name=match.rockstar_name;render()}};const wrap=field('Associer un compte Rockstar (invitation)',profileChoice);const info=document.createElement('small');info.className='mode-note';info.textContent='Les rockstars qui ont choisi d’apparaître dans l’annuaire peuvent être invitées. Elles confirmeront leur participation depuis Mon Profil.';wrap.append(info)}else{const profileChoice=document.createElement('select');let none=document.createElement('option');none.value='';none.textContent='Compte non associé (invité)';profileChoice.append(none);for(const entry of (ownBandProfile && !bandDirectory.some(x=>x.user_id===ownBandProfile.user_id)?[ownBandProfile,...bandDirectory]:bandDirectory)){const o=document.createElement('option');o.value=entry.user_id;o.textContent=entry.user_id===ownBandProfile?.user_id?entry.rockstar_name+' (moi)':entry.rockstar_name;profileChoice.append(o)}profileChoice.value=m.profileId;profileChoice.onchange=()=>{m.profileId=profileChoice.value;const match=[ownBandProfile,...bandDirectory].filter(Boolean).find(x=>x.user_id===m.profileId);if(match){m.name=match.rockstar_name;render()}};field('Associer un compte Rockstar (invitation)',profileChoice)}
+     if(i===0&&ownBandProfile){
+     // The requesting Rockstar is always associated with their own signed-in account.
+     m.profileId=ownBandProfile.user_id;
+     m.name=ownBandProfile.rockstar_name;
+     const info=document.createElement('div');info.className='mode-note';
+     info.textContent='Compte Rockstar associé automatiquement : '+ownBandProfile.rockstar_name+' (moi)';
+     grid.append(info);
+   }else{
+     // Other band members may still be invited to their own existing accounts.
+     const profileChoice=document.createElement('select');
+     const none=document.createElement('option');none.value='';none.textContent='Compte non associé (invité)';profileChoice.append(none);
+     for(const entry of bandDirectory.filter(x=>x.user_id!==ownBandProfile?.user_id)){
+       const o=document.createElement('option');o.value=entry.user_id;o.textContent=entry.rockstar_name;profileChoice.append(o);
+     }
+     profileChoice.value=m.profileId;
+     profileChoice.onchange=()=>{
+       m.profileId=profileChoice.value;
+       const match=bandDirectory.find(x=>x.user_id===m.profileId);
+       if(match){m.name=match.rockstar_name;render()}
+     };
+     const wrap=field('Inviter un compte Rockstar (facultatif)',profileChoice);
+     const info=document.createElement('small');info.className='mode-note';
+     info.textContent='Les rockstars présentes dans l’annuaire peuvent être invitées. Elles confirmeront leur participation depuis Mon Profil.';
+     wrap.append(info);
+   }
   const diff=document.createElement('select');
   const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choisir une difficulté';placeholder.disabled=true;diff.append(placeholder);
   for(const [value,label] of diffOptions){const o=document.createElement('option');o.value=value;o.textContent=label;diff.append(o)}
