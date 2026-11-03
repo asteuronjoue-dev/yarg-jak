@@ -1248,6 +1248,43 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
             try { return (BigInt(song.chartMask || '0') >> (BigInt(group) * 6n)) & 63n; }
             catch (_) { return 0n; }
         }
+        // Read optional per-instrument intensity metadata if a future YARG export
+        // supplies it. A missing rating remains unknown; chart availability is
+        // determined separately from chartsAvailable.
+        function readExportedTiers(item) {
+            const parts = [
+                ['V', ['Vocals', 'Vocal', 'Voice', 'Singing']],
+                ['G', ['Guitar']],
+                ['D', ['Drums', 'Drum']],
+                ['K', ['Keys', 'Keyboard']],
+                ['B', ['Bass']]
+            ];
+            const matchKey = (key) => key.toLowerCase().replace(/[^a-z0-9]/g, '');
+            function tierValue(value) {
+                if (value === null || value === undefined || value === '') return '.';
+                const valueText = String(value).trim();
+                return /^[0-6]$/.test(valueText) ? valueText : '.';
+            }
+            const embedded = item.intensities || item.Intensities || item.intensity || item.Intensity ||
+                             item.tiers || item.Tiers || item.ranks || item.Ranks;
+            const sources = [item];
+            if (embedded && typeof embedded === 'object' && !Array.isArray(embedded)) sources.unshift(embedded);
+            return parts.map(([code, aliases]) => {
+                for (const source of sources) {
+                    for (const [key, value] of Object.entries(source)) {
+                        const normalized = matchKey(key);
+                        if (aliases.some(alias => {
+                            const a = alias.toLowerCase();
+                            return normalized === a+'intensity' || normalized === 'intensity'+a ||
+                                   normalized === a+'tier' || normalized === 'tier'+a ||
+                                   normalized === a+'rank' || normalized === 'rank'+a;
+                        })) return tierValue(value);
+                    }
+                }
+                return '.';
+            }).join('');
+        }
+
         function compactSong(item){
             const rawYear = String(item.Year ?? '').trim();
             const year = /^\d{4}$/.test(rawYear) ? Number(rawYear) : null;
@@ -1258,7 +1295,10 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
                 a:String(item.Artist || ''),t:String(item.Name || ''),
                 al:String(item.Album || ''),y:year,l:seconds,
                 pl:String(item.Playlist || ''),ch:String(item.Charter || ''),
-                g:String(item.Genre || ''),chartMask:chartMask,vp:0,p:'',d:'.....'
+                g:String(item.Genre || ''),chartMask:chartMask,vp:0,p:'',d:'.....',
+                // Optional intensity metadata from newer/custom exports.
+                // Standard YARG songs.json only contains chartsAvailable.
+                _sourceTiers: readExportedTiers(item)
             };
             const v=chartBits(r,8)!==0n, harmonies=chartBits(r,9);
             r.vp=!v?0:harmonies>=7n?3:harmonies>=3n?2:1;
@@ -1292,7 +1332,14 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
             const base=catalogBase(r), count=(_idCounts.get(base)||0)+1;
             _idCounts.set(base,count);
             r.id='yarg-'+base+(count>1?'-'+count:'');
-            r.d=HISTORIC_TIERS[r.id]||'.....';
+            // New exports win when they explicitly supply a rating. For fields
+            // they omit, retain any existing historical rating without changes.
+            const historic = HISTORIC_TIERS[r.id] || '.....';
+            r.d = Array.from({length:5}, (_, i) =>
+                r._sourceTiers?.[i] !== '.' && r._sourceTiers?.[i] !== undefined
+                    ? r._sourceTiers[i] : (historic[i] || '.')
+            ).join('');
+            delete r._sourceTiers;
         });
         const META = {source:'songs.json',count:DATA.length};
         // La liste GENRES reste disponible pour compatibilité avec les anciennes
@@ -2151,9 +2198,17 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
         const sheet = document.getElementById('sheet');
 
         function decodeTier(ch) {
+            // Retain the older base-36 decoder for historic YARG ratings.
             if (ch === '?' || ch === '.' || ch === undefined || ch === null) return null;
             const n = parseInt(ch, 36);
             return Number.isNaN(n) ? null : n;
+        }
+
+        function songHasPlayablePart(r, part) {
+            if (part === 'V') return Number(r.vp) > 0 || hasChartGroup(r, 8);
+            const groups = {G:[0], B:[1], D:[3,4,5], K:[6,7]}[part] || [];
+            return groups.some(group => hasChartGroup(r, group)) ||
+                (part === 'K' ? /[Kk]/.test(r.p || '') : (r.p || '').includes(part));
         }
 
         function diffLabel(n) {
@@ -2206,10 +2261,9 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
             for (let i = 0; i < PART_ORDER.length; i++) {
                 const part = PART_ORDER[i];
                 const ch = r.d ? r.d['VGDKB'.indexOf(part)] : '.';
-                // A playable guitar chart can exist even if YARG exports no intensity rating.
-                // Keep it in the combined guitar/rhythm row in that case.
-                const hasGuitarChart = part === 'G' && (r.p?.includes('G') || hasChartGroup(r,0));
-                if (ch === '.' && !hasGuitarChart) continue;
+                // Playability is determined by YARG's chartsAvailable mask, not
+                // whether its optional intensity rating happens to be populated.
+                if (!songHasPlayablePart(r, part)) continue;
 
                 const n = decodeTier(ch);
                 let partLabel = PART_LABELS[part];
