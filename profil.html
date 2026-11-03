@@ -28,7 +28,19 @@ header{padding-bottom:20px;border-bottom:1px solid #354047;margin-bottom:32px}
 body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);background-size:300% auto;color:transparent;background-clip:text;-webkit-background-clip:text;animation:yargPartyRainbow 5s linear infinite}
 @keyframes yargPartyRainbow{to{background-position:300% center}}
 .yarg-navigation a[href="admin.html"][hidden]{display:none!important}
-.yarg-newbie-note{background:#163039;border:1px solid #328585;border-radius:12px;padding:14px 16px;margin:12px auto;color:#e5f5f3;max-width:1000px}.yarg-newbie-note button{float:right;background:#284047;color:white;border:1px solid #4f8086;border-radius:8px;padding:6px 9px}.yarg-newbie-note[hidden]{display:none!important}</style>
+.yarg-newbie-note{background:#163039;border:1px solid #328585;border-radius:12px;padding:14px 16px;margin:12px auto;color:#e5f5f3;max-width:1000px}.yarg-newbie-note button{float:right;background:#284047;color:white;border:1px solid #4f8086;border-radius:8px;padding:6px 9px}.yarg-newbie-note[hidden]{display:none!important}
+/* Profil compact / onglets */
+#profile-heading + p{margin:3px 0 12px;max-width:800px}
+#notice{min-height:0;margin:0 0 10px}#notice:empty{display:none}
+#profile>.card:first-child{margin-top:8px}
+.profile-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:6px;background:#191e22;border:1px solid #354047;border-radius:12px;margin:12px 0 15px}
+.profile-tab{flex:1 1 135px;background:transparent;border-color:transparent;color:#c6d1d4}
+.profile-tab[aria-selected="true"]{background:#ff8a24;color:#17120e;border-color:#ff8a24}
+.profile-panel>.card:first-child{margin-top:0}
+.title-item{margin:9px 0}.achievement-tier-label{color:#a8bac1;font-size:.75rem;font-weight:850;margin:10px 0 5px;text-transform:uppercase;letter-spacing:.045em}
+.fav-profile-list{display:grid;gap:9px;margin-top:12px}.fav-profile-song{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#222a2f;border:1px solid #37474f;border-radius:10px;padding:11px 13px}.fav-profile-song strong{display:block}.fav-profile-song small{color:var(--muted)}.fav-profile-song .remove-favorite{flex-shrink:0;background:#3d2930;border-color:#80515b;color:#ffe2e6;font-size:.83rem;padding:9px 12px}.fav-profile-song .remove-favorite:hover:not(:disabled){background:#63333c;border-color:#ff9aa8}@media(max-width:510px){.fav-profile-song{align-items:flex-start;flex-direction:column}.fav-profile-song .remove-favorite{align-self:flex-end}}
+@media(max-width:670px){.profile-tabs{gap:4px}.profile-tab{padding:10px 5px;flex-basis:100px;font-size:.85rem}}
+</style>
 </head>
 <body><aside id="newbie-note-yarg_tips_profile_v1" class="yarg-newbie-note"><button type="button" onclick="localStorage.setItem('yarg_tips_profile_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🌟 Ton profil Rockstar</strong><p>Un compte est facultatif. Si tu en crées un, tes titres et statistiques peuvent suivre ton compte entre les soirées. Pour créditer une co-star, accepte ses invitations dans ton profil.</p></aside><script>if(localStorage.getItem('yarg_tips_profile_v1'))document.getElementById('newbie-note-yarg_tips_profile_v1').hidden=true</script>
 <main>
@@ -42,9 +54,17 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <section id="profile" hidden>
 <div class="card"><div class="topline"><div><h2 id="shown-name">Rockstar</h2><div class="meta"><span class="tag" id="initie-tag">Statut : à déterminer</span><span class="featured" id="equipped-preview"></span></div></div><button id="logout" class="small ghost">Se déconnecter</button></div><p id="privilege-note" class="hint"></p>
 <form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><button type="submit" class="primary" style="margin-top:14px">Enregistrer mon profil</button></form></div>
-<div id="account-warning" class="disclaimer" hidden>Les statistiques ne couvrent pour l'instant que les prestations reliées explicitement à ton profil. Les anciennes demandes faites sans compte ne sont pas rattachées automatiquement.</div>
-<div class="card"><h2>Co-stars et statistiques</h2><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="band-opt-in"> Apparaître dans la liste des co-stars (nom de Rockstar seulement)</label><p class="hint">Pour éviter que quelqu’un d’autre utilise ton compte sans permission, les invitations demandent ta confirmation. Les anciennes performances sans association ne sont pas créditées automatiquement.</p><button id="reload-invites" type="button">Vérifier mes invitations</button><div id="band-invites"></div></div><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div>
-<div class="card"><div class="topline"><h2>Collection de titres</h2><span class="hint">Choisis un titre pour l'afficher avec ton nom dans la file.</span></div><p class="hint">« Initié » apparaît toujours comme statut de privilège ici, même si tu équipes un autre titre. Les titres cosmétiques n'ajoutent aucun avantage à la file.</p><div id="titles"></div></div>
+
+<div class="profile-tabs" role="tablist" aria-label="Sections du profil">
+<button type="button" class="profile-tab" data-profile-tab="statistics" aria-selected="true">📊 Statistiques</button>
+<button type="button" class="profile-tab" data-profile-tab="achievements" aria-selected="false">🏆 Exploits</button>
+<button type="button" class="profile-tab" data-profile-tab="favorites" aria-selected="false">♥ Mes favoris</button>
+<button type="button" class="profile-tab" data-profile-tab="costars" aria-selected="false">🎸 Co-stars</button>
+</div>
+<div class="profile-panel" id="statistics-panel"><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div></div>
+<div class="profile-panel" id="achievements-panel" hidden><div class="card"><div class="topline"><h2>Collection de titres</h2><span class="hint">Dernier palier débloqué et prochain objectif dans chaque catégorie.</span></div><p class="hint">Un titre débloqué peut être équipé pour s'afficher avec ton nom dans la file. Le privilège Initié reste indépendant des titres cosmétiques.</p><div id="titles"></div></div></div>
+<div class="profile-panel" id="favorites-panel" hidden><div class="card"><div class="topline"><h2>♥ Mes favoris</h2><a href="index.html" class="primary" style="padding:10px 13px;border-radius:10px;font-weight:800">Ouvrir le catalogue</a></div><p id="favorites-status" class="hint">Chargement de tes favoris…</p><div id="profile-favorites" class="fav-profile-list"></div></div></div>
+<div class="profile-panel" id="costars-panel" hidden><div class="card"><h2>Co-stars et invitations</h2><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="band-opt-in"> Apparaître dans la liste des co-stars (nom de Rockstar seulement)</label><p class="hint">Après ta première demande dans la soirée, ton nom devient automatiquement disponible pour les invitations jusqu'à la fin de la fenêtre de 36 heures. Tu peux refuser une invitation.</p><button id="reload-invites" type="button">Vérifier mes invitations</button><div id="band-invites"></div></div></div>
 </section>
 <footer><p class="hint">Profil facultatif • Tu peux toujours participer sans compte.</p></footer>
 </main>
@@ -75,18 +95,31 @@ async function fetchStats(){
 }
 function renderStats(){const list=['played','parties','stage_minutes','guitar','bass','drums','keys','vocals','library_requests'];$('stats').replaceChildren();for(const metric of list){const box=document.createElement('div');box.className='stat';const strong=document.createElement('strong');strong.textContent=String(state.progress[metric]||0);const label=document.createElement('span');label.textContent=metrics[metric];box.append(strong,label);$('stats').append(box)}}
 function renderTitles(){
- const parent=$('titles');parent.replaceChildren();let lastCategory='';
- for(const t of state.catalog){
-  if(lastCategory!==t.category){lastCategory=t.category;const heading=document.createElement('div');heading.className='sectionlabel';heading.textContent=groupNames[t.category]||t.category;parent.append(heading)}
-  const owned=state.unlocked.has(t.code);const equipped=state.profile?.equipped_title===t.code;
-  const box=document.createElement('div');box.className='title-item'+(owned?'':' locked')+(equipped?' equipped':'');
-  const head=document.createElement('div');head.className='title-heading';const name=document.createElement('strong');name.textContent=(owned?'🏆 ':'🔒 ')+t.label;
-  const btn=document.createElement('button');btn.type='button';btn.className='small';btn.textContent=equipped?'Équipé':(owned?'Équiper':'Verrouillé');btn.disabled=!owned||equipped;
-  btn.addEventListener('click',()=>equip(t.code));head.append(name,btn);box.append(head);
-  const n=t.metric==='past_parties'?(state.initie?1:0):(state.progress[t.metric]||0);const denominator=t.threshold;
-  const detail=document.createElement('div');detail.className='hint';detail.textContent=`${Math.min(n,denominator)} / ${denominator}${t.metric==='stage_minutes'?' minutes':''}`;const bar=document.createElement('div');bar.className='progress';const fill=document.createElement('span');fill.style.width=`${Math.min(100,100*n/denominator)}%`;bar.append(fill);box.append(bar,detail);parent.append(box);
+ const parent=$('titles');parent.replaceChildren();
+ const categories=new Map();
+ for(const t of state.catalog){const key=String(t.category||'other')+'|'+String(t.metric||'');if(!categories.has(key))categories.set(key,[]);categories.get(key).push(t)}
+ for(const [key,tiers] of categories){
+   tiers.sort((a,b)=>Number(a.threshold||0)-Number(b.threshold||0)||Number(a.sort_order||0)-Number(b.sort_order||0));
+   const unlocked=tiers.filter(t=>state.unlocked.has(t.code));
+   const last=unlocked.length?unlocked[unlocked.length-1]:null;
+   const next=tiers.find(t=>!state.unlocked.has(t.code))||null;
+   const heading=document.createElement('div');heading.className='sectionlabel';heading.textContent=groupNames[tiers[0].category]||tiers[0].category;parent.append(heading);
+   if(last)parent.append(achievementCard(last,true,'Dernier palier débloqué'));
+   if(next)parent.append(achievementCard(next,false,'Prochain palier'));
+   if(!last&&!next){const e=document.createElement('p');e.className='hint';e.textContent='Aucun palier disponible.';parent.append(e)}
  }
 }
+function achievementCard(t,owned,label){
+ const wrap=document.createElement('div'),caption=document.createElement('div');caption.className='achievement-tier-label';caption.textContent=label;wrap.append(caption);
+ const equipped=state.profile?.equipped_title===t.code,box=document.createElement('div');box.className='title-item'+(owned?'':' locked')+(equipped?' equipped':'');
+ const head=document.createElement('div');head.className='title-heading';const name=document.createElement('strong');name.textContent=(owned?'🏆 ':'🔒 ')+t.label;
+ const btn=document.createElement('button');btn.type='button';btn.className='small';btn.textContent=equipped?'Équipé':(owned?'Équiper':'Verrouillé');btn.disabled=!owned||equipped;
+ btn.onclick=()=>equip(t.code);head.append(name,btn);box.append(head);
+ const n=t.metric==='past_parties'?(state.initie?1:0):(state.progress[t.metric]||0),threshold=Number(t.threshold)||1;
+ const detail=document.createElement('div');detail.className='hint';detail.textContent=`${Math.min(n,threshold)} / ${threshold}${t.metric==='stage_minutes'?' minutes':''}`;
+ const bar=document.createElement('div');bar.className='progress';const fill=document.createElement('span');fill.style.width=`${Math.min(100,100*n/threshold)}%`;bar.append(fill);box.append(bar,detail);wrap.append(box);return wrap;
+}
+
 function renderProfile(){
  const p=state.profile;$('profile').hidden=false;$('auth').hidden=true;
  $('shown-name').textContent=p.rockstar_name;$('rockstar-name').value=p.rockstar_name;$('band-name').value=p.preferred_band_name||'';
@@ -142,6 +175,52 @@ async function initialize(){
   await fetchStats();renderProfile();
  }catch(err){$('auth').hidden=false;message('Erreur de profil : '+err.message,true)}
 }
+// Navigation des onglets, sans perdre les données du profil.
+document.querySelectorAll('[data-profile-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+ document.querySelectorAll('[data-profile-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===btn)));
+ document.querySelectorAll('.profile-panel').forEach(panel=>panel.hidden=panel.id!==btn.dataset.profileTab+'-panel');
+ if(btn.dataset.profileTab==='favorites')loadProfileFavorites();
+}));
+let favoritesLoading=false;
+const favSlug=s=>String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,150)||'song';
+async function loadProfileFavorites(){
+ if(favoritesLoading||!state.user)return;favoritesLoading=true;
+ const status=$('favorites-status'),host=$('profile-favorites');status.textContent='Chargement de tes favoris…';host.replaceChildren();
+ try{
+  const {data,error}=await sb.from('yarg_song_favorites').select('song_id').eq('user_id',state.user.id);
+  if(error)throw error;const ids=new Set((data||[]).map(x=>String(x.song_id)));
+  if(!ids.size){status.textContent='Aucun favori pour le moment. Ajoutes-en depuis le catalogue !';return}
+  // Même identifiant stable que le catalogue : artiste, titre, album, année, durée.
+  let matches=new Map();
+  try{
+   const response=await fetch('songs.json',{cache:'no-cache'});if(!response.ok)throw Error('Catalogue indisponible');
+   const songs=await response.json(),ordered=songs.map(x=>({raw:x,base:favSlug([x.Artist||'',x.Name||'',x.Album||'',/^\d{4}$/.test(String(x.Year||''))?Number(x.Year):'',Math.floor(Number(x.songlength||0)/1000)].join('|'))}));
+   ordered.sort((a,b)=>a.base.localeCompare(b.base)||(String(a.raw.Charter||'')+'|'+String(a.raw.Playlist||'')+'|'+String(a.raw.chartsAvailable||'')).localeCompare(String(b.raw.Charter||'')+'|'+String(b.raw.Playlist||'')+'|'+String(b.raw.chartsAvailable||'')));
+   const counts=new Map();for(const x of ordered){const n=(counts.get(x.base)||0)+1;counts.set(x.base,n);matches.set('yarg-'+x.base+(n>1?'-'+n:''),x.raw)}
+  }catch(e){console.warn('Métadonnées des favoris indisponibles',e)}
+  status.textContent=`${ids.size} chanson${ids.size>1?'s':''} dans tes favoris Rockstar.`;
+  for(const id of ids){const song=matches.get(id);const card=document.createElement('div');card.className='fav-profile-song';
+   const text=document.createElement('div'),title=document.createElement('strong'),artist=document.createElement('small');
+   title.textContent=song?.Name||'Favori enregistré';artist.textContent=song?.Artist||'Cette chanson n’est pas reconnue dans la version actuelle du catalogue.';
+   const remove=document.createElement('button');remove.type='button';remove.className='remove-favorite';remove.textContent='♥ Retirer des favoris';
+   remove.setAttribute('aria-label','Retirer '+(song?.Name||'ce morceau')+' des favoris');
+   remove.addEventListener('click',async()=>{
+    if(!confirm('Retirer « '+(song?.Name||'ce morceau')+' » de tes favoris ?'))return;
+    remove.disabled=true;remove.textContent='Suppression…';
+    try{
+     const {data,error}=await sb.from('yarg_song_favorites').delete().eq('user_id',state.user.id).eq('song_id',id).select('song_id');
+     if(error)throw error;
+     // Si aucune ligne n'a été supprimée (ex. RLS), ne pas prétendre que l'opération a réussi.
+     if(!data?.length)throw Error('Aucun favori supprimé. Vérifie tes droits d’accès.');
+     ids.delete(id);card.remove();
+     status.textContent=ids.size?`${ids.size} chanson${ids.size>1?'s':''} dans tes favoris Rockstar.`:'Aucun favori pour le moment. Ajoutes-en depuis le catalogue !';
+    }catch(err){message('Impossible de retirer ce favori : '+err.message,true);remove.disabled=false;remove.textContent='♥ Retirer des favoris'}
+   });
+   text.append(title,artist);card.append(text,remove);host.append(card)}
+ }catch(e){status.textContent='Impossible de charger tes favoris : '+e.message}
+ finally{favoritesLoading=false}
+}
+
 initialize();
 
 async function yargProfileBandInit(){
