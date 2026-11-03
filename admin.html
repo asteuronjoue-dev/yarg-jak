@@ -154,8 +154,8 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section class="card stage"><div class="flex"><h2>Sur scène</h2><span class="pill live">● EN COURS</span></div><div id="playing"></div></section>
 <section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section></div>
 <div id="history-tab" hidden><section class="card"><h2>Chansons passées / sautées</h2><p class="help">Une chanson passée peut retourner dans la file. Une chanson terminée demeure dans l'historique de cette soirée.</p><div id="history"></div></section></div>
-<div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><div class="preopen-control"><h3>Soirée et préinscriptions</h3><p id="preopen-status" class="help">Active le Mode soirée pour recevoir les demandes à l’avance, sans compte à rebours. Le jour J, lance la fenêtre de 36 heures.</p><button type="button" id="begin-live-party" class="primary" hidden>▶ Démarrer la soirée (36 h)</button></div><div class="preopen-control"><h3>Mode test et clôture</h3><p class="help">Le mode test sert aux répétitions. Ses données seront identifiées comme des essais; ne l’utilise pas pour une vraie soirée.</p><button id="toggle-test-party" type="button">🧪 Activer le mode test</button><button id="end-current-party" type="button" class="danger">⏹ Terminer et archiver la soirée</button><p class="help" id="test-party-status"></p></div></section>
-<section class="card"><h2>Commencer une nouvelle soirée</h2><p>Clôture la session actuelle et démarre une nouvelle file. L'historique reste en base, mais les demandes de l'ancienne session ne passent pas dans la nouvelle.</p><form id="new-party-form"><label>Nom de la nouvelle soirée<input id="new-party-name" maxlength="100" placeholder="Soirée YARG" required></label><button type="submit" class="danger">Commencer une nouvelle soirée</button></form><p class="help">Par sécurité, le Mode soirée sera désactivé sur la nouvelle session jusqu'à ce que tu l'actives.</p></section></div>
+<div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><div class="preopen-control"><h3>Soirée et préinscriptions</h3><p id="preopen-status" class="help">Active le Mode soirée pour recevoir les demandes à l’avance, sans compte à rebours. Le jour J, lance la fenêtre de 36 heures.</p><button type="button" id="begin-live-party" class="primary" hidden>▶ Démarrer la soirée (36 h)</button></div></section>
+<section class="card"><h2>Terminer et archiver la soirée</h2><p>Clôture la soirée en cours, conserve son historique et prépare une nouvelle session fermée. Termine ou passe d’abord toute chanson encore sur scène.</p><button type="button" id="archive-party-button" class="danger">⏹ Terminer et archiver la soirée</button><p class="help">Le nom de la soirée se modifie dans « Configuration de la soirée », juste au-dessus.</p></section></div>
 <section id="playlists-tab" hidden>
   <section class="card">
     <h2>🎶 Playlists publiques</h2>
@@ -241,13 +241,24 @@ function render(){
  $('total-waiting').textContent=String(upcoming.length);$('total-library').textContent=String(snapshot.library_pending||0);
  if(!hasLoadedSettings){$('party-name').value=s.party_name||'';$('mc-name').value=s.mc_name||'';$('party-mode').checked=partyStillOn(s);hasLoadedSettings=true;}
 }
-async function load(){if(busy)return;const {data,error}=await sb.rpc('yarg_admin_snapshot');if(error){notice('Lecture impossible : '+error.message,true);return}snapshot=data;const {data:testFlag,error:testErr}=await sb.rpc('yarg_mc_test_status');if(!testErr)snapshot.settings.yarg_test_mode=!!testFlag;render();}
+async function load(){if(busy)return;const {data,error}=await sb.rpc('yarg_admin_snapshot');if(error){notice('Lecture impossible : '+error.message,true);return}snapshot=data;render();}
 async function loadMcRockstars(){const {data,error}=await sb.rpc('yarg_mc_rockstars');if(error){notice('Comptes Rockstar : '+error.message,true);return}mcRockstars=data||[];render();}
 async function mcChange(name,args){try{const {error}=await sb.rpc(name,args);if(error)throw error;notice('Modification enregistrée.');await load()}catch(e){notice(e.message||String(e),true)}}
 document.addEventListener('submit',async e=>{const form=e.target.closest('form[data-mc-assignment]');if(!form)return;e.preventDefault();const id=form.dataset.mcAssignment,profile=form.elements.profile.value,instrument=form.elements.instrument.value;if(!profile)return;if(!confirm('Attribuer '+instrument+' au compte sélectionné pour cette chanson ?'))return;await mcChange('yarg_mc_assign_player',{p_request_id:id,p_user_id:profile,p_instrument:instrument})});
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-mc-remove]');if(!b)return;const id=b.dataset.mcRemove;if(!confirm('Retirer ce participant de la chanson ?'))return;await mcChange('yarg_mc_remove_player',{p_request_id:id,p_member_id:b.dataset.member||null,p_user_id:b.dataset.profile||null,p_is_requester:b.dataset.requester==='true'})});
-$('toggle-test-party').onclick=async()=>{if(!confirm('Changer le mode test ? Ne l’active pas pendant une vraie soirée.'))return;await mcChange('yarg_mc_set_test_mode',{p_enabled:!snapshot?.settings?.yarg_test_mode})};
-$('end-current-party').onclick=async()=>{if(!confirm('TERMINER la soirée en cours ? Les demandes restantes seront annulées et la session sera archivée.'))return;await mcChange('yarg_mc_end_party',{})};
+$('archive-party-button').onclick=async()=>{
+ if(busy)return;
+ const name=String(snapshot?.settings?.party_name||$('party-name').value||'Soirée YARG').trim();
+ if(!confirm('Terminer et archiver la soirée actuelle ? Une nouvelle session fermée sera préparée. Termine ou passe toute chanson sur scène avant de continuer.'))return;
+ busy=true;
+ try{
+   const {error}=await sb.rpc('yarg_admin_new_party',{p_name:name});
+   if(error)throw error;
+   notice('Soirée précédente archivée. Nouvelle session créée (demandes fermées).');
+   hasLoadedSettings=false;
+ }catch(e){notice('Archivage impossible : '+(e.message||String(e)),true)}
+ finally{busy=false;await load()}
+};
 async function action(id,name){
  const messages={start:'Lancer cette chanson ?',complete:'Marquer cette chanson comme terminée ?',skip:'Passer cette chanson sans créditer les rockstars ?',reactivate:'Remettre cette chanson en attente ?'};
  if(!confirm(messages[name]||'Confirmer ?'))return;
@@ -261,7 +272,7 @@ $('begin-live-party').onclick=async()=>{
 };
 $('refresh').onclick=()=>load();
 $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {error}=await sb.rpc('yarg_admin_save_settings',{p_name:$('party-name').value.trim(),p_mc:$('mc-name').value.trim(),p_party_mode:$('party-mode').checked});if(error)throw error;notice('Réglages enregistrés.');hasLoadedSettings=false;busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
-$('new-party-form').onsubmit=async e=>{e.preventDefault();const name=$('new-party-name').value.trim();if(!name)return;if(!confirm(`Commencer « ${name} » ? Les demandes de l'ancienne soirée ne seront plus dans la file actuelle.`))return;busy=true;try{const {error}=await sb.rpc('yarg_admin_new_party',{p_name:name});if(error)throw error;notice('Nouvelle soirée créée ! Active le Mode soirée pour les demandes.');hasLoadedSettings=false;$('new-party-name').value='';busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
+
 
 const ownerData={players:[],library:[],titles:[],credits:[],oldGuard:[]};
 const creditMetrics=[["parties","Soirées antérieures"],["played","Chansons terminées"],["guitar","Guitare / Rythmique"],["bass","Basse"],["drums","Batterie"],["keys","Clavier"],["vocals","Voix"],["stage_minutes","Minutes sur scène"],["confirmed_additions","Ajouts à la bibliothèque"],["library_requests","Demandes de bibliothèque"]];
