@@ -953,7 +953,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
 #sheet-favourite[data-on="true"]:hover{background:linear-gradient(135deg,rgba(37,215,207,.26),rgba(37,215,207,.12));box-shadow:0 6px 22px rgba(37,215,207,.12)}
 #sheet-favourite:focus-visible{outline:3px solid #ffc36e;outline-offset:3px}
 #sheet-favourite:disabled{cursor:wait;opacity:.65;transform:none;box-shadow:none}
-#sheet-playlist-manager[hidden]{display:none!important}
+#sheet-playlist-manager[hidden],#sheet-mc-access-note[hidden]{display:none!important}
 #sheet-playlist-manager{margin:.65rem 0 1rem;padding:14px;border:1px solid #45b9a9;border-radius:12px;background:linear-gradient(120deg,#14312f,#1d292f);color:#eafffa}
 #sheet-playlist-manager strong{display:block;font-size:1rem;margin-bottom:9px}
 #sheet-playlist-manager .mc-playlist-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -961,6 +961,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
 #sheet-add-playlist{font:800 .89rem system-ui;background:#1fc8bd;color:#071715;border:0;border-radius:8px;padding:11px 14px;cursor:pointer}
 #sheet-add-playlist:disabled{opacity:.5;cursor:not-allowed}
 #sheet-playlist-message{margin-top:7px;font-size:.83rem}
+#sheet-mc-access-note{margin:.7rem 0;padding:10px;background:#342823;border:1px solid #987053;border-radius:9px;color:#ffe0c9;font-size:.83rem}
 @media (min-width:681px){
  .games-discovery[open]{max-height:min(62dvh,590px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#48aeb1 #15242b}
  .games-discovery[open]::-webkit-scrollbar{width:11px}
@@ -983,6 +984,18 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
 .catalog-account-hint{color:#a8ded5;font-size:.84rem;line-height:1.4;margin:4px 0 12px}
 .catalog-account-hint.error{color:#ffc1b9}
 
+</style>
+<style>
+.yarg-stage-banner{position:fixed;top:0;left:0;right:0;z-index:15000;background:linear-gradient(90deg,#ff355e,#ffbd48,#dbf080,#64d9bb);color:#101214;padding:12px clamp(10px,3vw,32px);text-align:center;box-shadow:0 6px 21px #0008}
+.yarg-stage-heading{font:1000 clamp(19px,3vw,30px)/1.23 system-ui,sans-serif}
+.yarg-stage-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.yarg-stage-actions button{font:900 15px system-ui,sans-serif;min-height:43px;border:2px solid #131a1c;border-radius:10px;padding:9px 14px;cursor:pointer;color:#101214}
+.yarg-stage-actions [data-stage-answer="ready"]{background:#85eab2}
+.yarg-stage-actions [data-stage-answer="later"]{background:#ffdb61}
+.yarg-stage-actions [data-stage-answer="decline"]{background:#ff7883}
+.yarg-stage-actions button:disabled{opacity:.5}
+.yarg-stage-message{font:800 13px system-ui,sans-serif;margin-top:4px}
+@media(max-width:650px){.yarg-stage-actions{display:grid;grid-template-columns:1fr}.yarg-stage-actions button{width:100%}}
 </style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong>🎸 Bienvenue! Trouve ta première chanson!</strong><p>Tu peux filtrer par instrument et difficultés, découvrir 10 chansons au hasard, filtrer par playlists ou par jeu. Optionnellement, crée un compte Rockstar pour sauvegarder tes favoris et tes stats! Amuses-toi!</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
@@ -1110,6 +1123,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
     <div id="sheet-backdrop">
         <div id="sheet">
             <div class="sheet-header" id="sheet-title"></div>
+            <div id="sheet-mc-access-note" hidden role="status">🔒 Pour gérer les playlists publiques, connecte-toi avec un compte MC/Admin dans Mon profil.</div>
             <div id="sheet-playlist-manager" hidden>
               <strong>🎛️ Ajouter à une playlist publique (MC)</strong>
               <div class="mc-playlist-controls"><select id="sheet-mc-playlist" aria-label="Playlist de destination"><option value="">Choisir une playlist…</option></select>
@@ -1246,43 +1260,6 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
             try { return (BigInt(song.chartMask || '0') >> (BigInt(group) * 6n)) & 63n; }
             catch (_) { return 0n; }
         }
-        // Read optional per-instrument intensity metadata if a future YARG export
-        // supplies it. A missing rating remains unknown; chart availability is
-        // determined separately from chartsAvailable.
-        function readExportedTiers(item) {
-            const parts = [
-                ['V', ['Vocals', 'Vocal', 'Voice', 'Singing']],
-                ['G', ['Guitar']],
-                ['D', ['Drums', 'Drum']],
-                ['K', ['Keys', 'Keyboard']],
-                ['B', ['Bass']]
-            ];
-            const matchKey = (key) => key.toLowerCase().replace(/[^a-z0-9]/g, '');
-            function tierValue(value) {
-                if (value === null || value === undefined || value === '') return '.';
-                const valueText = String(value).trim();
-                return /^[0-6]$/.test(valueText) ? valueText : '.';
-            }
-            const embedded = item.intensities || item.Intensities || item.intensity || item.Intensity ||
-                             item.tiers || item.Tiers || item.ranks || item.Ranks;
-            const sources = [item];
-            if (embedded && typeof embedded === 'object' && !Array.isArray(embedded)) sources.unshift(embedded);
-            return parts.map(([code, aliases]) => {
-                for (const source of sources) {
-                    for (const [key, value] of Object.entries(source)) {
-                        const normalized = matchKey(key);
-                        if (aliases.some(alias => {
-                            const a = alias.toLowerCase();
-                            return normalized === a+'intensity' || normalized === 'intensity'+a ||
-                                   normalized === a+'tier' || normalized === 'tier'+a ||
-                                   normalized === a+'rank' || normalized === 'rank'+a;
-                        })) return tierValue(value);
-                    }
-                }
-                return '.';
-            }).join('');
-        }
-
         function compactSong(item){
             const rawYear = String(item.Year ?? '').trim();
             const year = /^\d{4}$/.test(rawYear) ? Number(rawYear) : null;
@@ -1293,10 +1270,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
                 a:String(item.Artist || ''),t:String(item.Name || ''),
                 al:String(item.Album || ''),y:year,l:seconds,
                 pl:String(item.Playlist || ''),ch:String(item.Charter || ''),
-                g:String(item.Genre || ''),chartMask:chartMask,vp:0,p:'',d:'.....',
-                // Optional intensity metadata from newer/custom exports.
-                // Standard YARG songs.json only contains chartsAvailable.
-                _sourceTiers: readExportedTiers(item)
+                g:String(item.Genre || ''),chartMask:chartMask,vp:0,p:'',d:'.....'
             };
             const v=chartBits(r,8)!==0n, harmonies=chartBits(r,9);
             r.vp=!v?0:harmonies>=7n?3:harmonies>=3n?2:1;
@@ -1330,14 +1304,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
             const base=catalogBase(r), count=(_idCounts.get(base)||0)+1;
             _idCounts.set(base,count);
             r.id='yarg-'+base+(count>1?'-'+count:'');
-            // New exports win when they explicitly supply a rating. For fields
-            // they omit, retain any existing historical rating without changes.
-            const historic = HISTORIC_TIERS[r.id] || '.....';
-            r.d = Array.from({length:5}, (_, i) =>
-                r._sourceTiers?.[i] !== '.' && r._sourceTiers?.[i] !== undefined
-                    ? r._sourceTiers[i] : (historic[i] || '.')
-            ).join('');
-            delete r._sourceTiers;
+            r.d=HISTORIC_TIERS[r.id]||'.....';
         });
         const META = {source:'songs.json',count:DATA.length};
         // La liste GENRES reste disponible pour compatibilité avec les anciennes
@@ -1703,6 +1670,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
           favouriteButton.dataset.on=String(on);
           favouriteButton.textContent=on?'♥ Dans mes favoris · Retirer':'♥ Ajouter à mes favoris';
           mcSheetBox.hidden=!mcCanEdit;
+          document.getElementById('sheet-mc-access-note').hidden=!!mcCanEdit||!signedInRockstar;
         };
         async function refreshPlaylistDirectory(){
           if(!collectionsSb)return;
@@ -2195,17 +2163,9 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
         const sheet = document.getElementById('sheet');
 
         function decodeTier(ch) {
-            // Retain the older base-36 decoder for historic YARG ratings.
             if (ch === '?' || ch === '.' || ch === undefined || ch === null) return null;
             const n = parseInt(ch, 36);
             return Number.isNaN(n) ? null : n;
-        }
-
-        function songHasPlayablePart(r, part) {
-            if (part === 'V') return Number(r.vp) > 0 || hasChartGroup(r, 8);
-            const groups = {G:[0], B:[1], D:[3,4,5], K:[6,7]}[part] || [];
-            return groups.some(group => hasChartGroup(r, group)) ||
-                (part === 'K' ? /[Kk]/.test(r.p || '') : (r.p || '').includes(part));
         }
 
         function diffLabel(n) {
@@ -2258,9 +2218,10 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
             for (let i = 0; i < PART_ORDER.length; i++) {
                 const part = PART_ORDER[i];
                 const ch = r.d ? r.d['VGDKB'.indexOf(part)] : '.';
-                // Playability is determined by YARG's chartsAvailable mask, not
-                // whether its optional intensity rating happens to be populated.
-                if (!songHasPlayablePart(r, part)) continue;
+                // A playable guitar chart can exist even if YARG exports no intensity rating.
+                // Keep it in the combined guitar/rhythm row in that case.
+                const hasGuitarChart = part === 'G' && (r.p?.includes('G') || hasChartGroup(r,0));
+                if (ch === '.' && !hasGuitarChart) continue;
 
                 const n = decodeTier(ch);
                 let partLabel = PART_LABELS[part];
@@ -2422,7 +2383,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
   else init();
 })();
 </script>
-<script src="yarg-up-next.js" defer></script>
+<!-- Up-next notifications are now handled by yarg-stage-response.js -->
 <script>
 /* Centered upcoming-song banner: remove the decorative rainbow emoji only. */
 (function(){
@@ -2445,5 +2406,6 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
+<script src="yarg-stage-response.js" defer></script>
 </body>
 </html>
