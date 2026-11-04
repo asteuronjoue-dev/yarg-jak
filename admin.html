@@ -195,7 +195,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">🎉 Soirée</button><button class="tab" data-tab="playlists" aria-selected="false">🎶 Playlists</button><button class="tab" id="rockstars-tab-button" data-tab="rockstars" aria-selected="false" hidden>⭐ Gestion des ROCKSTARS</button><button class="tab" id="owner-tab-button" data-tab="owner" aria-selected="false" hidden>🔒 Propriétaire</button></div>
 <div id="scene-tab"><div class="stats"><div class="stat"><b id="total-done">0</b><small>Chansons terminées</small></div><div class="stat"><b id="total-waiting">0</b><small>Demandes en attente</small></div><div class="stat"><b id="total-library">0</b><small>Demandes bibliothèque</small></div></div>
 <section class="card stage"><div class="flex"><h2>Sur scène</h2><span class="pill live">● EN COURS</span></div><p class="yarg-reply-info">Réponses des Rockstars : ✅ Prêt · ⏸ À remettre · ❌ Ne participe plus. Le MC décide de lancer, passer ou retirer un musicien.</p><div id="playing"></div></section>
-<section class="card" id="mc-withdrawals" hidden><h2>🔔 Retraits de participation</h2><p class="help">Ces Rockstars ont quitté leur prestation. Leur instrument est déjà libéré; aucune confirmation du MC n’est nécessaire.</p><div id="mc-withdrawals-list"></div></section>
+<section class="card" id="mc-withdrawals" hidden><h2>🔔 Réponses des Rockstars</h2><p class="help">⏸ À remettre : réponse reçue (un invité conserve sa place). ❌ Retrait : instrument libéré sans confirmation du MC.</p><div id="mc-withdrawals-list"></div></section>
 <section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section></div>
 <div id="history-tab" hidden>
 <details id="mc-score-details" class="history-score-details"><summary>🏆 Classement des Rockstars · points de la soirée</summary>
@@ -307,7 +307,7 @@ function renderMcWithdrawals(){
  const panel=$('mc-withdrawals'),host=$('mc-withdrawals-list');
  if(!panel||!host)return;
  const rows=snapshot?.requests||[];
- const alerts=yargStageReplies.filter(x=>x.reply==='decline')
+ const alerts=yargStageReplies.filter(x=>x.reply==='decline'||x.reply==='later')
    .sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')))
    .slice(0,16);
  panel.hidden=!alerts.length;
@@ -315,7 +315,7 @@ function renderMcWithdrawals(){
    const r=rows.find(q=>String(q.id)===String(x.request_id));
    const title=r?.song_title||'Chanson archivée';
    const when=x.updated_at?new Date(x.updated_at).toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'}):'';
-   return `<div class="mc-withdrawal"><strong>❌ ${esc(x.rockstar_name||'Rockstar')}</strong> s’est retirée de <strong>${esc(title)}</strong><span class="muted">${esc(when)}</span></div>`;
+   return `<div class="mc-withdrawal"><strong>${x.reply==='decline'?'❌':'⏸'} ${esc(x.rockstar_name||'Rockstar')}</strong> ${x.reply==='decline'?'s’est retirée de':'a indiqué « À remettre » pour'} <strong>${esc(title)}</strong><span class="muted">${esc(when)}</span></div>`;
  }).join('');
 }
 function render(){
