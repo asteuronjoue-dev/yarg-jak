@@ -185,6 +185,18 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .yarg-held-note{color:#ffcc91;font-size:13px;font-weight:800;margin-top:8px}
 body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-equipped-title{font-weight:850;color:#ffb46b;border:1px solid #745435;border-radius:999px;padding:2px 7px;font-size:.78em;white-space:nowrap}.join-form input[readonly]{opacity:.85;background:#222b30;cursor:default}
+/* Coordinated MC response banner (also used on index.html) */
+.yarg-stage-banner{position:fixed;top:0;left:0;right:0;z-index:15000;background:linear-gradient(90deg,#ff355e,#ffbd48,#dbf080,#64d9bb);color:#101214;padding:12px clamp(10px,3vw,32px);text-align:center;box-shadow:0 6px 21px #0008}
+.yarg-stage-heading{font-size:clamp(19px,3vw,30px);font-weight:1000;line-height:1.23}
+.yarg-stage-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.yarg-stage-actions button{font:inherit;font-weight:900;min-height:43px;border:2px solid #131a1c;border-radius:10px;padding:9px 14px;cursor:pointer;color:#101214}
+.yarg-stage-actions [data-stage-answer="ready"]{background:#85eab2}
+.yarg-stage-actions [data-stage-answer="later"]{background:#ffdb61}
+.yarg-stage-actions [data-stage-answer="decline"]{background:#ff7883}
+.yarg-stage-actions button:disabled{opacity:.5}
+.yarg-stage-message{font-size:13px;font-weight:800;margin-top:4px}
+@media(max-width:650px){.yarg-stage-actions{display:grid;grid-template-columns:1fr}.yarg-stage-actions button{width:100%}}
+body.yarg-display-mode .yarg-stage-banner{display:none!important}
 </style></head>
 </head>
 <body>
@@ -401,7 +413,15 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  return `<div class="member">👤 <b>${esc(name)}</b>${title?` <span class="yarg-equipped-title">✦ ${esc(title)}</span>`:""} — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 ${esc(guitarLabel)}`:''}</div>`;
 }
 function instrumentFamily(i){return ['drums','drums_4lane','pro_drums'].includes(i)?'drums':['keys','pro_keys'].includes(i)?'keys':i;}
-function joinModes(choices,instrument){return choices.filter(i=>instrumentFamily(i)===instrumentFamily(instrument));}
+function joinModes(choices,instrument){
+ const family=instrumentFamily(instrument);
+ if(!choices.some(i=>instrumentFamily(i)===family))return [];
+ // The request's legacy generic "drums"/"keys" entries represent the
+ // family; choose the actual chart mode explicitly and persist that value.
+ if(family==='drums')return ['drums_4lane','pro_drums'];
+ if(family==='keys')return ['keys','pro_keys'];
+ return [instrument];
+}
 function openInstruments(r){
  if(!settings?.performance_requests_enabled||r.yarg_not_ready||!r.allow_band_fill||!["waiting","full"].includes(r.status))return [];
  const players=performerEntries(r);
@@ -440,7 +460,7 @@ function joinFormHtml(r){
  if(!openInstruments(r).includes(instrument))return "";
  const vocals=instrument==="vocals";
  const modes=joinModes(openInstruments(r),instrument);
- const modeChoice=(instrumentFamily(instrument)==="drums"||instrumentFamily(instrument)==="keys")?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===instrument?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select></label>`:"";
+ const modeChoice=(instrumentFamily(instrument)==="drums"||instrumentFamily(instrument)==="keys")?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===(instrument==="drums"?"drums_4lane":instrument)?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select></label>`:"";
  const canSing=Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone;
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instrumentFamily(instrument)==="drums"?"Batterie":instrumentFamily(instrument)==="keys"?"Clavier":instruments[instrument])}</strong>
@@ -540,15 +560,8 @@ function render(){
   const mine=queue.filter(isMyPerformance);
   const joinable=playable.filter(r=>r.status!=='playing'&&!myActiveBand(r)&&openInstruments(r).length>0);
   const full=playable.filter(r=>r.status==='playing'||(openInstruments(r).length===0&&!myActiveBand(r)));
-  // Banner for the real on-stage/next performance, not a held request.
-  const banner=$('#yarg-my-next-banner');
-  const current=playable.find(r=>r.status==='playing');
-  const next=playable.find(r=>r.status!=='playing');
-  const announced=[current,next].filter(Boolean).find(r=>isMyPerformance(r));
-  if(announced){
-    banner.textContent=announced.status==='playing'?`🎸 C'est à toi! ${announced.song_title||'Ta chanson'} • Monte sur scène!`:`🎸 À toi bientôt! ${announced.song_title||'Ta chanson'} • Prépare tes instruments!`;
-    banner.hidden=false;
-  }else{banner.textContent='';banner.hidden=true;}
+  // "C'EST TA TOUNE" banner is rendered by yarg-stage-response.js.
+  $('#yarg-my-next-banner').hidden=true;
 
   $('#myRequests').innerHTML=mine.length
     ?mine.map(r=>cardHtml(r,etas.get(r.id),true)).join('')
@@ -770,7 +783,7 @@ document.addEventListener("submit",async e=>{
     if(me)throw me;
     const occupied=new Set((existing||[]).map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=="vocals"));
     if(request.requester_instrument&&request.requester_instrument!=="vocals")occupied.add(instrumentFamily(request.requester_instrument));
-    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || (instrument!=="vocals"&&occupied.has(instrumentFamily(instrument))) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
+    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).some(v=>instrumentFamily(v)===instrumentFamily(instrument)) || (instrument!=="vocals"&&occupied.has(instrumentFamily(instrument))) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
       message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
     }
     if(preferredGuitar&&(!joinGuitarPhotos[preferredGuitar]||existing.some(m=>m.preferred_guitar===preferredGuitar))){
@@ -914,5 +927,6 @@ setInterval(()=>render(),30000);
  refreshInvites();setInterval(refreshInvites,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshInvites()});
 })();
 </script>
+<script src="yarg-stage-response.js" defer></script>
 </body>
 </html>
