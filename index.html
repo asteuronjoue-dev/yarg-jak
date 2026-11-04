@@ -953,7 +953,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
 #sheet-favourite[data-on="true"]:hover{background:linear-gradient(135deg,rgba(37,215,207,.26),rgba(37,215,207,.12));box-shadow:0 6px 22px rgba(37,215,207,.12)}
 #sheet-favourite:focus-visible{outline:3px solid #ffc36e;outline-offset:3px}
 #sheet-favourite:disabled{cursor:wait;opacity:.65;transform:none;box-shadow:none}
-#sheet-playlist-manager[hidden],#sheet-mc-access-note[hidden]{display:none!important}
+#sheet-playlist-manager[hidden]{display:none!important}
 #sheet-playlist-manager{margin:.65rem 0 1rem;padding:14px;border:1px solid #45b9a9;border-radius:12px;background:linear-gradient(120deg,#14312f,#1d292f);color:#eafffa}
 #sheet-playlist-manager strong{display:block;font-size:1rem;margin-bottom:9px}
 #sheet-playlist-manager .mc-playlist-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -961,7 +961,6 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
 #sheet-add-playlist{font:800 .89rem system-ui;background:#1fc8bd;color:#071715;border:0;border-radius:8px;padding:11px 14px;cursor:pointer}
 #sheet-add-playlist:disabled{opacity:.5;cursor:not-allowed}
 #sheet-playlist-message{margin-top:7px;font-size:.83rem}
-#sheet-mc-access-note{margin:.7rem 0;padding:10px;background:#342823;border:1px solid #987053;border-radius:9px;color:#ffe0c9;font-size:.83rem}
 @media (min-width:681px){
  .games-discovery[open]{max-height:min(62dvh,590px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#48aeb1 #15242b}
  .games-discovery[open]::-webkit-scrollbar{width:11px}
@@ -1111,7 +1110,6 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
     <div id="sheet-backdrop">
         <div id="sheet">
             <div class="sheet-header" id="sheet-title"></div>
-            <div id="sheet-mc-access-note" hidden role="status">🔒 Pour gérer les playlists publiques, connecte-toi avec un compte MC/Admin dans Mon profil.</div>
             <div id="sheet-playlist-manager" hidden>
               <strong>🎛️ Ajouter à une playlist publique (MC)</strong>
               <div class="mc-playlist-controls"><select id="sheet-mc-playlist" aria-label="Playlist de destination"><option value="">Choisir une playlist…</option></select>
@@ -1705,7 +1703,6 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
           favouriteButton.dataset.on=String(on);
           favouriteButton.textContent=on?'♥ Dans mes favoris · Retirer':'♥ Ajouter à mes favoris';
           mcSheetBox.hidden=!mcCanEdit;
-          document.getElementById('sheet-mc-access-note').hidden=!!mcCanEdit||!signedInRockstar;
         };
         async function refreshPlaylistDirectory(){
           if(!collectionsSb)return;
