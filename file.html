@@ -295,7 +295,7 @@ function ownedRequestIds(){
     return new Set(Array.isArray(ids)?ids.map(String):[]);
   } catch(e){ return new Set(); }
 }
-function isMyRequest(r){return ownedRequestIds().has(String(r.id));}
+function isMyRequest(r){return !r.requester_withdrawn_at && ownedRequestIds().has(String(r.id));}
 let settings = null;
 let requests = [];
 let members = [];
@@ -313,13 +313,15 @@ function myAccountRequester(r){return !!(myAuthId && String(r.requester_profile_
 function myBandMember(r){return myAccountMember(r) || (!myRockstarName?null:membersFor(r.id).find(m=>String(m.rockstar_name||'').trim().toLowerCase()===myRockstarName.toLowerCase())) || null}
 function accountEditKind(r){return myAccountMember(r)?'member':myAccountRequester(r)?'requester':null}
 function myMemberToken(r){return savedBandTokens()[String(r.id)]||null}
-function myActiveBand(r){return !!(myAuthId && (String(r.guest_user_id||'')===myAuthId || String(r.requester_profile_id||'')===myAuthId)) || !!myBandMember(r) || !!myMemberToken(r) || isMyPerformance(r)}
+function myActiveBand(r){return !!myAccountRequester(r) || !!myBandMember(r) || isMyRequest(r);}
 async function loadRockstarIdentity(){try{const {data:{user}}=await sb.auth.getUser();myAuthId=user?.id||'';myRockstarName='';if(user){const {data}=await sb.from('rockstar_profiles').select('rockstar_name').eq('user_id',user.id).maybeSingle();myRockstarName=data?.rockstar_name||''}}catch(e){console.warn('Identité Rockstar',e)}}
 
 function joinedRequestIds(){try{return new Set(JSON.parse(localStorage.getItem(JOINED_REQUESTS_KEY)||"[]").map(String))}catch{return new Set()}}
 function forgetJoined(id){const ids=joinedRequestIds();ids.delete(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
 function rememberJoined(id){const ids=joinedRequestIds();ids.add(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
-function isMyPerformance(r){return myAccountRequester(r)||isMyRequest(r)||joinedRequestIds().has(String(r.id))||!!myBandMember(r)||!!myMemberToken(r)}
+document.addEventListener('yarg-stage-replied',event=>{if(event.detail?.reply!=='decline')return;const id=String(event.detail.requestId||'');if(!id)return;forgetJoined(id);const tokens=savedBandTokens();delete tokens[id];localStorage.setItem('yarg_band_tokens',JSON.stringify(tokens));joining=null;managing=null;loadQueue().catch(error=>console.warn('Actualisation après retrait :',error));});
+// Past browser join records are not proof of an active participation.
+function isMyPerformance(r){return myAccountRequester(r)||isMyRequest(r)||!!myBandMember(r);}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
@@ -558,7 +560,7 @@ function render(){
   const playable=queue.filter(r=>r.status==='playing'||(r._fairEligible!==false&&!r.yarg_not_ready));
   const etas=calculateEtas(playable);
   const mine=queue.filter(isMyPerformance);
-  const joinable=playable.filter(r=>r.status!=='playing'&&!myActiveBand(r)&&openInstruments(r).length>0);
+  const joinable=playable.filter(r=>r.status!=='playing'&&!isMyPerformance(r)&&openInstruments(r).length>0);
   const full=playable.filter(r=>r.status==='playing'||(openInstruments(r).length===0&&!myActiveBand(r)));
   // "C'EST TA TOUNE" banner is rendered by yarg-stage-response.js.
   $('#yarg-my-next-banner').hidden=true;
