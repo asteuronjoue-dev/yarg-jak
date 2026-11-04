@@ -173,6 +173,17 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-empty{padding:45px 12px;text-align:center;font-size:clamp(18px,3vw,34px);color:#bdcbd1}
 .display-error{margin:12px 0;padding:12px;background:#552727;border:1px solid #d76b6b;border-radius:10px;color:white}
 @media(max-width:680px){.display-performance{grid-template-columns:30px minmax(0,1fr) 94px;gap:9px;padding:12px 9px;min-height:83px}.display-song{font-size:18px}.display-artist{font-size:13px}.display-detail{font-size:11px}.display-time strong{font-size:21px}.display-time span{font-size:11px}.display-rank{font-size:19px}.display-top h2{font-size:26px}.display-right{gap:6px}}
+
+/* Avis personnel et disponibilité : uniquement sur la file interactive. */
+.yarg-my-next-banner{position:sticky;top:0;z-index:90;margin:0 0 15px;padding:15px 20px;text-align:center;font-weight:950;font-size:clamp(16px,2.5vw,23px);border:3px solid transparent;border-radius:14px;color:#fff;background:linear-gradient(#1b2024,#1b2024) padding-box,linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec) border-box;box-shadow:0 7px 24px #0007}
+.yarg-ready-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding:11px 12px;border:1px solid #4a5960;border-radius:12px;background:#222b30}
+.yarg-ready-controls .ready-state{font-size:13px;font-weight:800;flex:1 1 170px}
+.yarg-ready-controls button{font:inherit;font-size:14px;font-weight:900;border-radius:9px;border:1px solid #5a7077;padding:9px 13px;cursor:pointer;color:#fff;background:#2d3c42}
+.yarg-ready-controls button[data-ready-value="true"]{background:#176d55;border-color:#50b18c}
+.yarg-ready-controls button[data-ready-value="false"]{background:#79462a;border-color:#b9824a}
+.yarg-ready-controls button:disabled{opacity:.5;cursor:wait}
+.yarg-held-note{color:#ffcc91;font-size:13px;font-weight:800;margin-top:8px}
+body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 </style>
 </head>
 <body>
@@ -202,6 +213,7 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
   <div class="error" id="errorBox"></div>
   <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
     <details><summary>Comment gagner ou perdre des points?</summary><p class="points-note">Le plus petit score passe en premier. Le demandeur reçoit +1 point par seconde de sa chanson (4 min = +240). Rejoindre un autre groupe donne −60 points, pris en compte à partir du passage de ce groupe. Les Initiés partent à −1. Une chanson passée sans être jouée ne donne ni coût ni récompense. La prochaine prestation annoncée reste protégée.</p></details></section>
+  <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
 
   <section id="mineSection" hidden>
@@ -294,7 +306,7 @@ async function loadRockstarIdentity(){try{const {data:{user}}=await sb.auth.getU
 function joinedRequestIds(){try{return new Set(JSON.parse(localStorage.getItem(JOINED_REQUESTS_KEY)||"[]").map(String))}catch{return new Set()}}
 function forgetJoined(id){const ids=joinedRequestIds();ids.delete(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
 function rememberJoined(id){const ids=joinedRequestIds();ids.add(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
-function isMyPerformance(r){return isMyRequest(r)||joinedRequestIds().has(String(r.id))||!!myBandMember(r)||!!myMemberToken(r)}
+function isMyPerformance(r){return myAccountRequester(r)||isMyRequest(r)||joinedRequestIds().has(String(r.id))||!!myBandMember(r)||!!myMemberToken(r)}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
@@ -387,7 +399,7 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 ${esc(guitarLabel)}`:''}</div>`;
 }
 function openInstruments(r){
- if(!settings?.performance_requests_enabled||!r.allow_band_fill||!["waiting","full"].includes(r.status))return [];
+ if(!settings?.performance_requests_enabled||r.yarg_not_ready||!r.allow_band_fill||!["waiting","full"].includes(r.status))return [];
  const players=performerEntries(r);
  const occupied=new Set(players.map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
  const singers=players.filter(m=>m.instrument==="vocals"||m.microphone).length;
@@ -441,14 +453,18 @@ function cardHtml(r, eta, mine=false){
   const slots=(myActiveBand(r)?[]:available).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instruments[i])}</button>`).join("");
   const isPlaying=r.status==="playing";
   const classes=["card",mine?"mine":"",isPlaying?"playing":"",mine&&isPlaying?"skittles":""].filter(Boolean).join(" ");
-  const etaHtml=isPlaying
+  const etaHtml=r.yarg_not_ready
+    ? `<div class="eta"><strong>⏸ Pas prêt</strong><span>Heure suspendue</span></div>`
+    : isPlaying
     ? `<div class="eta"><strong>🔥 EN COURS</strong><span>Sur scène maintenant</span></div>`
     : eta?.at
       ? `<div class="eta"><strong>⏱ ${formatClock(eta.at)}</strong><span>${relativeMinutes(eta.at)}</span></div>`
       : `<div class="eta"><strong>⏱ —</strong><span>Estimation à venir</span></div>`;
-  const statusLabel=isPlaying?'En cours':available.length>0?'En attente':
+  const statusLabel=isPlaying?'En cours':r.yarg_not_ready?'Pas prêt':available.length>0?'En attente':
     (!r.allow_band_fill?'Groupe fermé':'Groupe complet');
   const skittles=mine&&isPlaying?`<div class="skittle-banner">🌈🔥 EN COURS — C'EST À TOI! 🔥🌈</div>`:'';
+  const canToggleReady=!!myAuthId && myAccountRequester(r) && !isPlaying;
+  const readyControl=canToggleReady?`<div class="yarg-ready-controls"><span class="ready-state">${r.yarg_not_ready?'⏸ Cette chanson est en attente : aucune heure de passage prévue.':'✅ Tu es prêt pour cette chanson.'}</span><button type="button" data-ready-request="${esc(r.id)}" data-ready-value="${r.yarg_not_ready?'true':'false'}">${r.yarg_not_ready?'✅ Je suis prêt':'⏸ Pas prêt'}</button></div>`:'';
   return `<article class="${classes}" data-request-id="${esc(r.id)}" id="demande-${esc(r.id)}">
     ${skittles}
     <div class="songline"><div>
@@ -459,6 +475,8 @@ function cardHtml(r, eta, mine=false){
     <div class="band">
       ${r.band_name?`<div class="band-name">🤘 ${esc(r.band_name)}</div>`:''}
       ${displayed}
+      ${readyControl}
+      ${r.yarg_not_ready?'<div class="yarg-held-note">Cette chanson ne sera pas appelée tant que tu ne seras pas prêt.</div>':''}
       ${slots?`<div class="open-slots">${slots}</div>`:''}
       ${!isPlaying && (accountEditKind(r)|| (myBandMember(r)&&myMemberToken(r))) ? `<div class="member-editor"><strong>🎸 Ta participation</strong><p>Tu peux modifier ton instrument ou quitter ce groupe.</p><button type="button" data-band-edit="${esc(r.id)}">✏️ Modifier</button><button type="button" data-band-leave="${esc(r.id)}">🚪 Quitter le groupe</button>${managing===String(r.id)?bandEditFormHtml(r):''}</div>` : (!isPlaying && myBandMember(r) ? `<div class="member-editor">Cette participation n'est pas reliée à ton compte : demande au MC de la rattacher.</div>` : '')}
       ${joinFormHtml(r)}
@@ -507,13 +525,23 @@ function render(){
   const active=!!settings?.performance_requests_enabled;
   for(const id of ['mineSection','joinSection','fullSection','historySection'])$('#'+id).hidden=!active;
   $('#closedSection').hidden=active;
-  if(!active)return;
+  if(!active){const banner=$('#yarg-my-next-banner');banner.hidden=true;banner.textContent='';return;}
 
   const queue=sortedActive();
-  const etas=calculateEtas(queue);
+  const playable=queue.filter(r=>r.status==='playing'||(r._fairEligible!==false&&!r.yarg_not_ready));
+  const etas=calculateEtas(playable);
   const mine=queue.filter(isMyPerformance);
-  const joinable=queue.filter(r=>r.status!=='playing'&&!myActiveBand(r)&&openInstruments(r).length>0);
-  const full=queue.filter(r=>r.status==='playing'||(openInstruments(r).length===0&&!myActiveBand(r)));
+  const joinable=playable.filter(r=>r.status!=='playing'&&!myActiveBand(r)&&openInstruments(r).length>0);
+  const full=playable.filter(r=>r.status==='playing'||(openInstruments(r).length===0&&!myActiveBand(r)));
+  // Banner for the real on-stage/next performance, not a held request.
+  const banner=$('#yarg-my-next-banner');
+  const current=playable.find(r=>r.status==='playing');
+  const next=playable.find(r=>r.status!=='playing');
+  const announced=[current,next].filter(Boolean).find(r=>isMyPerformance(r));
+  if(announced){
+    banner.textContent=announced.status==='playing'?`🎸 C'est à toi! ${announced.song_title||'Ta chanson'} • Monte sur scène!`:`🎸 À toi bientôt! ${announced.song_title||'Ta chanson'} • Prépare tes instruments!`;
+    banner.hidden=false;
+  }else{banner.textContent='';banner.hidden=true;}
 
   $('#myRequests').innerHTML=mine.length
     ?mine.map(r=>cardHtml(r,etas.get(r.id),true)).join('')
@@ -582,7 +610,7 @@ async function loadQueue(){
     requests=[];members=[];completedRequests=[];historyLoadError="";render();return;
   }
   const {data:r,error:e1}=await sb.from("performance_requests")
-    .select("id,guest_user_id,requester_profile_id,requester_withdrawn_at,is_group_request,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,queue_position,started_at,created_at")
+    .select("id,guest_user_id,requester_profile_id,requester_withdrawn_at,is_group_request,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,yarg_not_ready,queue_position,started_at,created_at")
     .eq("party_session_id",settings.current_session_id)
     .in("status",["waiting","full","playing"])
     .order("queue_position",{ascending:true,nullsFirst:false});
@@ -639,6 +667,25 @@ function syncBandEditGuitar(form){
  field.hidden=!applicable;field.querySelector('select').disabled=!applicable;
  if(!applicable)field.querySelector('select').value='';
 }
+// Only Supabase can authorize readiness changes; the UI never writes directly.
+document.addEventListener('click',async event=>{
+  const button=event.target.closest('button[data-ready-request]');
+  if(!button||button.disabled)return;
+  const id=button.dataset.readyRequest;
+  const request=requests.find(r=>String(r.id)===String(id));
+  if(!request||!myAccountRequester(request))return;
+  const ready=button.dataset.readyValue==='true';
+  button.disabled=true;
+  try{
+    const {error}=await sb.rpc('yarg_set_request_ready',{p_request_id:id,p_ready:ready});
+    if(error)throw error;
+    await loadQueue();
+  }catch(error){
+    alert('Impossible de changer ta disponibilité : '+(error.message||String(error)));
+    button.disabled=false;
+  }
+});
+
 function bandEditFormHtml(r){
  const m=myAccountMember(r) || (myAccountRequester(r)?{instrument:r.requester_instrument,difficulty:r.requester_difficulty,microphone:r.requester_microphone,vocal_harmony:r.vocal_harmony,preferred_guitar:null}:myBandMember(r));if(!m)return '';
  const choices=[...new Set((r.fillable_instruments||[]).concat([m.instrument]))].filter(i=>instruments[i]);
