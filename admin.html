@@ -178,6 +178,11 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .mc-rules-pending{border-left:3px solid #ffb36b;background:#28251f;border-radius:8px;padding:12px 15px;margin:18px 0;color:#ffe0b7}
 .mc-rules-pending ul{margin-bottom:0}
 .mc-scoring-rules p.help{margin:15px 0}
+
+/* Le classement est l’information principale ; les règles sont secondaires. */
+.mc-score-explanation{border-top:1px solid var(--line);margin-top:22px;padding-top:21px}
+.mc-score-explanation .mc-scoring-rules{margin-top:0}
+.mc-score-explanation h3:first-child{margin-top:0}
 </style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. Les outils du propriétaire sont réservés au compte autorisé.</p>
@@ -192,7 +197,11 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section></div>
 <div id="history-tab" hidden>
 <details id="mc-score-details" class="history-score-details"><summary>🏆 Classement des Rockstars · points de la soirée</summary>
-<div class="history-score-body"><div class="mc-scoring-rules">
+<div class="history-score-body">
+<p class="help">Points réellement acquis pendant cette soirée (les points anticipés servent seulement à calculer l’ordre des prochaines chansons).</p>
+<div class="flex" style="margin-bottom:10px"><span class="hint">Visible seulement dans la régie MC</span><button id="refresh-mc-points" class="quiet small" type="button">↻ Actualiser les points</button></div>
+<div id="mc-score-list" aria-live="polite"><div class="empty">Ouvre ce panneau pour charger les points.</div></div>
+<div class="mc-score-explanation"><div class="mc-scoring-rules">
 <h3>Comment l’ordre des chansons est-il déterminé?</h3>
 <ul>
 <li><strong>La Rockstar qui a le moins de points</strong> est prioritaire pour faire jouer l’une des chansons qu’elle a demandées.</li>
@@ -212,10 +221,8 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <li><strong>Chansons sautées :</strong> une chanson passée sans être lancée ne coûte aucun point à son initiatrice et ne donne aucune récompense aux participantes.</li>
 <li><strong>Points anticipés :</strong> le système tient compte des points qui seront gagnés au fil des chansons pour prévoir leur ordre de passage. Ces points n’apparaissent dans le classement réel qu’une fois les chansons lancées.</li>
 </ul>
-<p class="help">Le classement ci-dessous affiche les points réellement acquis pendant la soirée. La file tient aussi compte des points anticipés pour prévoir l’ordre des prochaines chansons.</p>
-</div>
-<div class="flex" style="margin-bottom:10px"><span class="hint">Visible seulement dans la régie MC</span><button id="refresh-mc-points" class="quiet small" type="button">↻ Actualiser les points</button></div>
-<div id="mc-score-list" aria-live="polite"><div class="empty">Ouvre ce panneau pour charger les points.</div></div></div></details>
+
+</div></div></div></details>
 <section class="card history-section"><h2>Chansons sautées</h2><p class="help">Ces chansons n’ont pas été créditées et peuvent retourner dans la file.</p><div id="history-skipped"></div></section>
 <section class="card history-section"><h2>Chansons terminées</h2><p class="help">Les prestations terminées sont conservées dans l’historique de cette soirée.</p><div id="history-completed"></div></section>
 </div>
