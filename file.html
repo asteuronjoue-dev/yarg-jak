@@ -804,12 +804,10 @@ document.addEventListener("submit",async e=>{
     if(!error){const saved=JSON.parse(localStorage.getItem('yarg_band_tokens')||'{}');saved[String(id)]=token;localStorage.setItem('yarg_band_tokens',JSON.stringify(saved));}
     if(error){
       console.error("Supabase refused the band member insert:",error);
-      const hint=error.code==="23505"
-        ? "Cette guitare vient d’être réservée. Choisis-en une autre ou « Peu importe »."
-        : (error.code==="42501" || /row.level.security|permission denied/i.test(error.message||""))
-          ? "Supabase refuse l’ajout (politique RLS de performance_members). L’organisateur doit autoriser les inscriptions."
-          : "Supabase a refusé l’inscription. Réessaie ou contacte le MC.";
-      message.textContent=hint;
+      // Show the real server error for diagnosis. Do not mislabel all uniqueness errors as guitar conflicts.
+      const code=error.code ? ` [${error.code}]` : '';
+      const details=[error.message,error.details,error.hint].filter(Boolean).join(' — ');
+      message.textContent=`Inscription refusée par Supabase${code} : ${details||'Erreur inconnue'}`;
       return;
     }
     rememberJoined(id);joining=null;await loadQueue();
