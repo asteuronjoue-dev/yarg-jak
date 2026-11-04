@@ -16,6 +16,9 @@
  for(const [value,label] of labels){const b=document.createElement('button');b.type='button';b.dataset.stageAnswer=value;b.textContent=label;actions.append(b);}
  banner.append(heading,actions,status);document.body.prepend(banner);
  let lastRequestId='',lastAnswer='',working=false;
+ // Keep a processed call dismissed while it is waiting. When it starts playing,
+ // the banner returns in read-only LIVE mode.
+ const acknowledgedWaiting=new Set();
  let scheduled=null;
  const displayMode=new URLSearchParams(location.search).get('affichage')==='1';
  const esc=s=>String(s||'');
@@ -46,6 +49,7 @@
      const playing=(reqs||[]).filter(x=>x.status==='playing').sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));
      const waiting=(reqs||[]).filter(x=>x.status!=='playing'&&!x.yarg_not_ready&&ordered.has(getUuid(x.id))).sort((a,b)=>ordered.get(getUuid(a.id))-ordered.get(getUuid(b.id)));
      const announced=[...playing.slice(0,1),...waiting.slice(0,1)];
+     for(const seen of acknowledgedWaiting){if(!announced.some(r=>getUuid(r.id)===seen))acknowledgedWaiting.delete(seen);}
      if(!announced.length){hide();return;}
      const requestIds=announced.map(x=>x.id);
      const {data:memberIds}=await client.rpc('yarg_my_band_member_ids');
@@ -57,13 +61,17 @@
        (members||[]).some(m=>getUuid(m.performance_request_id)===getUuid(r.id)&&!m.withdrawn_at&&(getUuid(m.rockstar_profile_id)===id||owned.has(getUuid(m.id)))));
      if(!target){hide();return;}
      const uuid=getUuid(target.id);
+     if(target.status!=='playing' && acknowledgedWaiting.has(uuid)){hide();return;}
      if(uuid!==lastRequestId){lastAnswer='';status.textContent='';lastRequestId=uuid;}
      heading.replaceChildren();
-     const call=document.createElement('div');call.textContent="C'EST TA TOUNE! READY TO ROCK?";
+     const call=document.createElement('div');call.textContent=target.status==='playing'?'🎤 EN COURS SUR SCÈNE !':"C'EST TA TOUNE! READY TO ROCK?";
      const track=document.createElement('div');track.textContent=`🎶${esc(target.song_title)} • ${esc(target.song_artist)}🎶`;
      heading.append(call,track);
      banner.hidden=false;
-     for(const b of actions.querySelectorAll('button')){b.disabled=working || (b.dataset.stageAnswer==='decline' && target.status==='playing');}
+     actions.hidden=target.status==='playing';
+     actions.style.display=target.status==='playing'?'none':'';
+     status.textContent=target.status==='playing'?'🎶 La chanson est en cours. ROCK ON! 🎶':'';
+     for(const b of actions.querySelectorAll('button')){b.disabled=working || target.status==='playing';}
      syncHeight();
    }catch(e){console.warn('Bannière scène YARG :',e?.message||e);}
  }
@@ -77,10 +85,13 @@
      const {error}=await client.rpc('yarg_respond_stage_call',{p_request_id:lastRequestId,p_reply:reply});
      if(error)throw error;
      lastAnswer=reply;
+     acknowledgedWaiting.add(lastRequestId);
      status.textContent=reply==='ready'?'✅ Super! Le MC voit que tu es prêt.':reply==='later'?'⏸ Le MC est averti.':'❌ Participation retirée. Ton instrument est libre; le MC est informé.';
      document.dispatchEvent(new CustomEvent('yarg-stage-replied',{detail:{requestId:lastRequestId,reply}}));
+     // No instant reappearance for a postponed bandmate's song.
+     hide();
    }catch(e){status.textContent='Impossible d’enregistrer ta réponse : '+(e?.message||e);}
-   finally{working=false;for(const b of actions.querySelectorAll('button'))b.disabled=false;if(reply==='decline'){hide();await refresh();}}
+   finally{working=false;for(const b of actions.querySelectorAll('button'))b.disabled=false;}
  });
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
  document.addEventListener('yarg-stage-replied',()=>setTimeout(refresh,700));
