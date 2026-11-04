@@ -184,7 +184,8 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .yarg-ready-controls button:disabled{opacity:.5;cursor:wait}
 .yarg-held-note{color:#ffcc91;font-size:13px;font-weight:800;margin-top:8px}
 body.yarg-display-mode #yarg-my-next-banner{display:none!important}
-</style>
+.yarg-equipped-title{font-weight:850;color:#ffb46b;border:1px solid #745435;border-radius:999px;padding:2px 7px;font-size:.78em;white-space:nowrap}.join-form input[readonly]{opacity:.85;background:#222b30;cursor:default}
+</style></head>
 </head>
 <body>
 <div id="yarg-invite-tray" class="yarg-invite-tray" hidden aria-live="polite"></div>
@@ -293,7 +294,7 @@ let joining = null; // {requestId, instrument} — garder le formulaire ouvert p
 const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
 const BAND_TOKEN_KEY='yarg_band_secret_v1';
 function myBandToken(){let t=localStorage.getItem(BAND_TOKEN_KEY);if(!t){t=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem(BAND_TOKEN_KEY,t)}return t}
-let scoreRows=[];let managing=null;let myAccountMemberIds=new Set();let myRockstarName='';let myAuthId='';
+let scoreRows=[];let managing=null;let myAccountMemberIds=new Set();let myRockstarName='';let myAuthId='';let equippedTitles=new Map();
 function savedBandTokens(){try{return JSON.parse(localStorage.getItem('yarg_band_tokens')||'{}')}catch{return {}}}
 function myAccountMember(r){return myAuthId?membersFor(r.id).find(m=>(String(m.rockstar_profile_id||'')===myAuthId || myAccountMemberIds.has(String(m.id)) || (r.is_group_request && myAccountRequester(r) && String(m.rockstar_name||'').trim().toLowerCase()===String(r.rockstar_name||'').trim().toLowerCase())))||null:null}
 function myAccountRequester(r){return !!(myAuthId && String(r.requester_profile_id||'')===myAuthId && !r.requester_withdrawn_at)}
@@ -310,7 +311,7 @@ function isMyPerformance(r){return myAccountRequester(r)||isMyRequest(r)||joined
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie 4-Lane",pro_drums:"Pro Drums",keys:"Clavier",pro_keys:"Pro Keys"};
+const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie 4-Lane",pro_drums:"Pro Drums",keys:"Clavier 5-Lane",pro_keys:"Pro Keys"};
 const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
 
 function showError(message){
@@ -376,7 +377,7 @@ function performerEntries(r){
   const entries=membersFor(r.id);
   const useLegacyLeader=!r.requester_withdrawn_at && (!r.is_group_request || entries.length===0);
   const all=useLegacyLeader?[{
-    rockstar_name:r.rockstar_name,instrument:r.requester_instrument,
+    rockstar_name:r.rockstar_name,rockstar_profile_id:r.requester_profile_id,instrument:r.requester_instrument,
     difficulty:r.requester_difficulty,microphone:r.requester_microphone,
     vocal_harmony:r.vocal_harmony,preferred_guitar:null
   },...entries]:entries;
@@ -390,22 +391,25 @@ function performerEntries(r){
   });
 }
 
-function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuitar){
+function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuitar,profileId){
  const inst=instruments[instrument]||instrument||"Auditeur";
  const singing=instrument==="vocals"||microphone;
  const vocal=singing?` · Harmonie ${harmony||1} (voix : Moyen)`:"";
  const diff=instrument==="vocals"||!instrument?"":` · ${difficulties[difficulty]||difficulty||"—"}`;
  const guitarLabel=({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[preferredGuitar];
- return `<div class="member">👤 <b>${esc(name)}</b> — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 ${esc(guitarLabel)}`:''}</div>`;
+ const title=equippedTitles.get(String(profileId||""));
+ return `<div class="member">👤 <b>${esc(name)}</b>${title?` <span class="yarg-equipped-title">✦ ${esc(title)}</span>`:""} — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 ${esc(guitarLabel)}`:''}</div>`;
 }
+function instrumentFamily(i){return ['drums','drums_4lane','pro_drums'].includes(i)?'drums':['keys','pro_keys'].includes(i)?'keys':i;}
+function joinModes(choices,instrument){return choices.filter(i=>instrumentFamily(i)===instrumentFamily(instrument));}
 function openInstruments(r){
  if(!settings?.performance_requests_enabled||r.yarg_not_ready||!r.allow_band_fill||!["waiting","full"].includes(r.status))return [];
  const players=performerEntries(r);
- const occupied=new Set(players.map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
+ const occupied=new Set(players.map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=="vocals"));
  const singers=players.filter(m=>m.instrument==="vocals"||m.microphone).length;
  const capacity=Math.max(0,Math.min(3,Number(r.vocal_parts)||0));
  return [...new Set(Array.isArray(r.fillable_instruments)?r.fillable_instruments:[])]
-   .filter(i=>instruments[i]&&(i==="vocals"?(capacity>0&&singers<capacity):!occupied.has(i)));
+   .filter(i=>instruments[i]&&(i==="vocals"?(capacity>0&&singers<capacity):!occupied.has(instrumentFamily(i))));
 }
 function harmonyOptions(r){
  const count=Math.max(1,Math.min(3,Number(r.vocal_parts)||1));
@@ -435,10 +439,13 @@ function joinFormHtml(r){
  const instrument=joining.instrument;
  if(!openInstruments(r).includes(instrument))return "";
  const vocals=instrument==="vocals";
+ const modes=joinModes(openInstruments(r),instrument);
+ const modeChoice=(instrumentFamily(instrument)==="drums"||instrumentFamily(instrument)==="keys")?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===instrument?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select></label>`:"";
  const canSing=Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone;
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
- <strong>Rejoindre : ${esc(instruments[instrument])}</strong>
- <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required placeholder="Ton nom sur scène" autocomplete="nickname"></label>
+ <strong>Rejoindre : ${esc(instrumentFamily(instrument)==="drums"?"Batterie":instrumentFamily(instrument)==="keys"?"Clavier":instruments[instrument])}</strong>
+ <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required readonly value="${esc(myRockstarName)}" placeholder="Connecte-toi à ton profil" autocomplete="nickname"></label>
+ ${modeChoice}
  ${vocals?"":`<label>Difficulté <select name="difficulty">${["beginner","easy","medium","hard","expert"].map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
  ${["guitar","bass","rhythm_guitar"].includes(instrument)?joinGuitarChoices(r):""}
  ${vocals?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${canSing?"":"disabled"}> Je veux aussi chanter au micro</label>`}
@@ -448,9 +455,9 @@ function joinFormHtml(r){
 }
 function cardHtml(r, eta, mine=false){
   const performers=performerEntries(r);
-  const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar)).join("");
+  const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id || (r.is_group_request && m.rockstar_name===r.rockstar_name?r.requester_profile_id:null))).join("");
   const available=openInstruments(r);
-  const slots=(myActiveBand(r)?[]:available).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instruments[i])}</button>`).join("");
+  const slots=(myActiveBand(r)?[]:available.filter((i,index,all)=>all.findIndex(j=>instrumentFamily(j)===instrumentFamily(i))===index)).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instrumentFamily(i)==="drums"?"Batterie":instrumentFamily(i)==="keys"?"Clavier":instruments[i])}</button>`).join("");
   const isPlaying=r.status==="playing";
   const classes=["card",mine?"mine":"",isPlaying?"playing":"",mine&&isPlaying?"skittles":""].filter(Boolean).join(" ");
   const etaHtml=r.yarg_not_ready
@@ -657,9 +664,19 @@ async function loadQueue(){
     .in('performance_request_id',ids);
   if(e2)throw e2;
   members=m||[];
+  await loadEquippedTitles();
   render();
 }
 
+async function loadEquippedTitles(){
+  equippedTitles=new Map();
+  if(!settings?.current_session_id)return;
+  try{
+    const {data,error}=await sb.rpc('yarg_public_performer_titles',{p_session_id:settings.current_session_id});
+    if(error){console.warn('Titres équipés indisponibles (migration SQL requise) :',error.message);return;}
+    equippedTitles=new Map((data||[]).filter(x=>x.user_id && x.title_label).map(x=>[String(x.user_id),String(x.title_label)]));
+  }catch(e){console.warn('Titres équipés indisponibles :',e)}
+}
 function isGuitarInstrument(i){return ['guitar','rhythm_guitar','bass'].includes(i)}
 function syncBandEditGuitar(form){
  const field=form?.querySelector('[data-guitar-field]');if(!field)return;
@@ -734,10 +751,10 @@ document.addEventListener("change",e=>{
 document.addEventListener("submit",async e=>{
   const form=e.target.closest(".join-form");if(!form)return;
   e.preventDefault();
-  const id=form.dataset.joinRequest, instrument=form.dataset.instrument;
+  const id=form.dataset.joinRequest, instrument=form.elements.instrument_mode?.value||form.dataset.instrument;
   const singing=instrument==="vocals"||!!form.elements.microphone?.checked;
   const harmony=singing?Number(form.elements.harmony.value):null;
-  let name=form.elements.rockstar.value.trim();
+  let name=myRockstarName||form.elements.rockstar.value.trim();
   const preferredGuitar=form.elements.preferred_guitar?.value||null;
   const message=form.querySelector(".join-message"),submit=form.querySelector(".join-submit");
   if(!name){message.textContent="Entre ton nom de ROCKSTAR.";return}
@@ -751,9 +768,9 @@ document.addEventListener("submit",async e=>{
     const {data:existing,error:me}=await sb.from("performance_members")
       .select("instrument,microphone,preferred_guitar").eq("performance_request_id",id);
     if(me)throw me;
-    const occupied=new Set((existing||[]).map(m=>m.instrument).filter(i=>i&&i!=="vocals"));
-    if(request.requester_instrument&&request.requester_instrument!=="vocals")occupied.add(request.requester_instrument);
-    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || (instrument!=="vocals"&&occupied.has(instrument)) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
+    const occupied=new Set((existing||[]).map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=="vocals"));
+    if(request.requester_instrument&&request.requester_instrument!=="vocals")occupied.add(instrumentFamily(request.requester_instrument));
+    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).includes(instrument) || (instrument!=="vocals"&&occupied.has(instrumentFamily(instrument))) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
       message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
     }
     if(preferredGuitar&&(!joinGuitarPhotos[preferredGuitar]||existing.some(m=>m.preferred_guitar===preferredGuitar))){
