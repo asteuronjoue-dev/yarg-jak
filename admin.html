@@ -183,6 +183,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .mc-score-explanation{border-top:1px solid var(--line);margin-top:22px;padding-top:21px}
 .mc-score-explanation .mc-scoring-rules{margin-top:0}
 .mc-score-explanation h3:first-child{margin-top:0}
+.mc-withdrawal{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)}.mc-withdrawal:first-child{border-top:0}.mc-withdrawal .muted{margin-left:auto;font-size:.82rem}
 </style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. Les outils du propriétaire sont réservés au compte autorisé.</p>
@@ -194,6 +195,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">🎉 Soirée</button><button class="tab" data-tab="playlists" aria-selected="false">🎶 Playlists</button><button class="tab" id="rockstars-tab-button" data-tab="rockstars" aria-selected="false" hidden>⭐ Gestion des ROCKSTARS</button><button class="tab" id="owner-tab-button" data-tab="owner" aria-selected="false" hidden>🔒 Propriétaire</button></div>
 <div id="scene-tab"><div class="stats"><div class="stat"><b id="total-done">0</b><small>Chansons terminées</small></div><div class="stat"><b id="total-waiting">0</b><small>Demandes en attente</small></div><div class="stat"><b id="total-library">0</b><small>Demandes bibliothèque</small></div></div>
 <section class="card stage"><div class="flex"><h2>Sur scène</h2><span class="pill live">● EN COURS</span></div><p class="yarg-reply-info">Réponses des Rockstars : ✅ Prêt · ⏸ À remettre · ❌ Ne participe plus. Le MC décide de lancer, passer ou retirer un musicien.</p><div id="playing"></div></section>
+<section class="card" id="mc-withdrawals" hidden><h2>🔔 Retraits de participation</h2><p class="help">Ces Rockstars ont quitté leur prestation. Leur instrument est déjà libéré; aucune confirmation du MC n’est nécessaire.</p><div id="mc-withdrawals-list"></div></section>
 <section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section></div>
 <div id="history-tab" hidden>
 <details id="mc-score-details" class="history-score-details"><summary>🏆 Classement des Rockstars · points de la soirée</summary>
@@ -301,8 +303,24 @@ function yargReplyFor(r,name,userId){
 function people(r){return `<div class="members">${membersFor(r).map(m=>`<span class="member">${esc(m.rockstar_name)} · ${esc(part(m.instrument_mode||m.instrument))}${yargReplyFor(r,m.rockstar_name,m.rockstar_profile_id)}${m.microphone?' + 🎤':''}${m.preferred_guitar?' · 🎸 '+esc(({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[m.preferred_guitar]||m.preferred_guitar):''}</span>`).join('')||'<span class="muted">Aucun participant actif</span>'}</div>`;}
 function row(r,idx){return `<div class="row"><div class="rank">${idx+1}</div><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'Artiste inconnu')} · ${fmt(r.song_duration_seconds)}${r.band_name?' · '+esc(r.band_name):''}</div>${people(r)}${mcMemberTools(r)}</div><div class="actions"><button class="primary" data-action="start" data-id="${esc(r.id)}">▶ Lancer</button><button data-action="skip" data-id="${esc(r.id)}">Passer</button></div></div>`;}
 function historyRow(r){return `<div class="row"><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}</div>${people(r)}</div>${r.status==='skipped'?`<div class="actions"><button data-action="reactivate" data-id="${esc(r.id)}">↩ Réactiver</button></div>`:''}</div>`;}
+function renderMcWithdrawals(){
+ const panel=$('mc-withdrawals'),host=$('mc-withdrawals-list');
+ if(!panel||!host)return;
+ const rows=snapshot?.requests||[];
+ const alerts=yargStageReplies.filter(x=>x.reply==='decline')
+   .sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')))
+   .slice(0,16);
+ panel.hidden=!alerts.length;
+ host.innerHTML=alerts.map(x=>{
+   const r=rows.find(q=>String(q.id)===String(x.request_id));
+   const title=r?.song_title||'Chanson archivée';
+   const when=x.updated_at?new Date(x.updated_at).toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'}):'';
+   return `<div class="mc-withdrawal"><strong>❌ ${esc(x.rockstar_name||'Rockstar')}</strong> s’est retirée de <strong>${esc(title)}</strong><span class="muted">${esc(when)}</span></div>`;
+ }).join('');
+}
 function render(){
  if(!snapshot)return;
+ renderMcWithdrawals();
  const s=snapshot.settings||{};const session=snapshot.session||{};
  applyAdminPartyMode(s);
  const preregistration = partyStillOn(s) && !s.party_mode_until;
