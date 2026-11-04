@@ -775,14 +775,14 @@ document.addEventListener("submit",async e=>{
   try{
     // Relire l'état juste avant l'insertion pour éviter les places déjà prises.
     const {data:request,error:re}=await sb.from("performance_requests")
-      .select("id,status,allow_band_fill,fillable_instruments,requester_instrument,requester_microphone,vocal_parts")
+      .select("id,status,allow_band_fill,fillable_instruments,requester_instrument,requester_withdrawn_at,requester_microphone,vocal_parts")
       .eq("id",id).single();
     if(re)throw re;
     const {data:existing,error:me}=await sb.from("performance_members")
-      .select("instrument,microphone,preferred_guitar").eq("performance_request_id",id);
+      .select("instrument,microphone,preferred_guitar").eq("performance_request_id",id).is("withdrawn_at",null);
     if(me)throw me;
     const occupied=new Set((existing||[]).map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=="vocals"));
-    if(request.requester_instrument&&request.requester_instrument!=="vocals")occupied.add(instrumentFamily(request.requester_instrument));
+    if(!request.requester_withdrawn_at&&request.requester_instrument&&request.requester_instrument!=="vocals")occupied.add(instrumentFamily(request.requester_instrument));
     if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(request.fillable_instruments||[]).some(v=>instrumentFamily(v)===instrumentFamily(instrument)) || (instrument!=="vocals"&&occupied.has(instrumentFamily(instrument))) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
       message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
     }
