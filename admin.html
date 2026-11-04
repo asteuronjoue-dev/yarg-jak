@@ -167,6 +167,17 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .yarg-reply.later{background:#55431e;color:#ffe29c;border-color:#91702d}
 .yarg-reply.decline{background:#592930;color:#ffb1b8;border-color:#a44f59}
 .yarg-reply-info{font-size:.8rem;color:var(--muted);margin:8px 0}
+
+/* Explications du classement MC : listes lisibles, avertissement sur les règles à venir. */
+.mc-scoring-rules{margin-bottom:18px;color:#dce7eb;line-height:1.6}
+.mc-scoring-rules h3{font-size:1.02rem;margin:18px 0 7px;color:#f5f7f8}
+.mc-scoring-rules h3:first-child{margin-top:0}
+.mc-scoring-rules ul{padding-left:1.35rem;margin:8px 0 16px}
+.mc-scoring-rules li{margin:7px 0;padding-left:2px}
+.mc-scoring-rules strong{color:#fff}
+.mc-rules-pending{border-left:3px solid #ffb36b;background:#28251f;border-radius:8px;padding:12px 15px;margin:18px 0;color:#ffe0b7}
+.mc-rules-pending ul{margin-bottom:0}
+.mc-scoring-rules p.help{margin:15px 0}
 </style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. Les outils du propriétaire sont réservés au compte autorisé.</p>
@@ -181,7 +192,28 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section></div>
 <div id="history-tab" hidden>
 <details id="mc-score-details" class="history-score-details"><summary>🏆 Classement des Rockstars · points de la soirée</summary>
-<div class="history-score-body"><p class="help">Points réellement acquis : durée de la chanson en secondes pour la personne qui l’a demandée, −60 pour les autres participants lorsque leur prestation commence. Un Initié commence à −1. Le plus petit score est prioritaire. Les chansons en attente ne sont pas encore comptées.</p>
+<div class="history-score-body"><div class="mc-scoring-rules">
+<h3>Comment l’ordre des chansons est-il déterminé?</h3>
+<ul>
+<li><strong>La Rockstar qui a le moins de points</strong> est prioritaire pour faire jouer l’une des chansons qu’elle a demandées.</li>
+<li><strong>Les deux premières chansons sont protégées :</strong> la chanson en cours et la prochaine chanson annoncée ne peuvent pas être déplacées par les changements de points.</li>
+<li><strong>Une même Rockstar ne peut pas être l’initiatrice de plus de deux chansons consécutives</strong>, dans la mesure du possible.</li>
+<li><strong>Un même artiste ne peut pas être entendu pour deux performances consécutives</strong>, dans la mesure du possible.</li>
+<li><strong>En cas d’égalité de points</strong>, la chanson demandée en premier est prioritaire.</li>
+<li><strong>Une chanson marquée « Pas prêt »</strong> est temporairement retirée de l’ordre de passage. La Rockstar qui l’a demandée peut la reporter et se déclarer prête à nouveau directement depuis la file de la soirée, sans intervention du MC.</li>
+</ul>
+<h3>Comment les points sont-ils attribués?</h3>
+<ul>
+<li><strong>Privilège Initié :</strong> Toutes les Rockstars ayant le statut « Initié » commencent chaque soirée avec <strong>−1 point</strong>. Ce statut est obtenu pour avoir participé à une soirée précédente.</li>
+<li><strong>Jouer sa propre chanson :</strong> l’initiatrice reçoit <strong>1 point par seconde</strong> de chanson. Par exemple, une chanson de 1:30 ajoute 90 points.</li>
+<li><strong>Participer à une autre chanson :</strong> chaque Rockstar qui joue dans la chanson d’une autre personne reçoit une récompense de <strong>−60 points</strong>.</li>
+<li><strong>Moment de l’attribution :</strong> Les points de la chanson et les récompenses des participantes sont comptabilisés dès que le MC marque la chanson <strong>« En cours »</strong>.</li>
+<li><strong>Plancher de 0 point :</strong> une récompense de participation ne peut jamais faire descendre le score sous 0, même pour une Initiée. Les points de récompense inutilisés ne sont pas conservés.</li>
+<li><strong>Chansons sautées :</strong> une chanson passée sans être lancée ne coûte aucun point à son initiatrice et ne donne aucune récompense aux participantes.</li>
+<li><strong>Points anticipés :</strong> le système tient compte des points qui seront gagnés au fil des chansons pour prévoir leur ordre de passage. Ces points n’apparaissent dans le classement réel qu’une fois les chansons lancées.</li>
+</ul>
+<p class="help">Le classement ci-dessous affiche les points réellement acquis pendant la soirée. La file tient aussi compte des points anticipés pour prévoir l’ordre des prochaines chansons.</p>
+</div>
 <div class="flex" style="margin-bottom:10px"><span class="hint">Visible seulement dans la régie MC</span><button id="refresh-mc-points" class="quiet small" type="button">↻ Actualiser les points</button></div>
 <div id="mc-score-list" aria-live="polite"><div class="empty">Ouvre ce panneau pour charger les points.</div></div></div></details>
 <section class="card history-section"><h2>Chansons sautées</h2><p class="help">Ces chansons n’ont pas été créditées et peuvent retourner dans la file.</p><div id="history-skipped"></div></section>
