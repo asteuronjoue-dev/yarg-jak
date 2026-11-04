@@ -43,6 +43,41 @@ function chooseMode(category, priorMode=''){
  return category;
 }
 let members=[];let nextId=0;let bandDirectory=[];let ownBandProfile=null;
+// Préférences locales par Rockstar (compte connecté ou nom de scène).
+// Aucune modification des tables Supabase nécessaire.
+const YARG_MEMBER_PREFS_KEY='yarg_song_request_member_preferences_v1';
+function preferenceIdentity(m){
+ if(m.profileId)return 'account:'+m.profileId;
+ const name=String(m.name||'').trim().toLocaleLowerCase('fr-CA');
+ return name?'name:'+name:'';
+}
+function allMemberPreferences(){
+ try{const value=JSON.parse(localStorage.getItem(YARG_MEMBER_PREFS_KEY)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch{return {}}
+}
+function memberPreferences(m){return allMemberPreferences()[preferenceIdentity(m)]||{}}
+function saveMemberPreferences(m){
+ const id=preferenceIdentity(m);if(!id)return;
+ const all=allMemberPreferences(),prefs={...(all[id]||{})};
+ const category=categoryOf(m.mode);
+ if(category==='drums'||category==='keys'){
+  prefs.modes={...(prefs.modes||{}),[category]:m.mode};
+ }
+ if(m.mode!=='vocals'&&diffOptions.some(([value])=>value===m.difficulty)){
+  prefs.difficulties={...(prefs.difficulties||{}),[category]:m.difficulty};
+ }
+ // La guitare préférée est conservée indépendamment de l'instrument choisi.
+ if(category==='guitar'||category==='rhythm_guitar'||category==='bass')prefs.guitar=m.guitarChoice;
+ all[id]=prefs;
+ try{localStorage.setItem(YARG_MEMBER_PREFS_KEY,JSON.stringify(all))}catch(e){console.warn('Préférences Rockstar non sauvegardées',e)}
+}
+function applyMemberPreferences(m){
+ const prefs=memberPreferences(m),category=categoryOf(m.mode);
+ if(category==='drums'||category==='keys')m.mode=chooseMode(category,prefs.modes?.[category]||m.mode);
+ const diff=prefs.difficulties?.[category];
+ if(diffOptions.some(([value])=>value===diff))m.difficulty=diff;
+ if(['guitar','bass','rhythm_guitar'].includes(category)&&guitarNames.some(([value])=>value===prefs.guitar))m.guitarChoice=prefs.guitar;
+}
+
 const guitarNames=[['','Peu importe — je prendrai une guitare restante'],['osp uze','OSPUZE - Rockband'],['crkd','Blue Guitar - CRKD'],['sunburst','Sunburst - Guitar Hero']];
 const guitarPhotos={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png'};
 function showGuitarPhoto(m,card){
@@ -72,7 +107,7 @@ async function prefillSignedInRockstar(){
   if(profileError||!profile)return;
   if(profile.preferred_band_name&&!$('band-name').value.trim())$('band-name').value=profile.preferred_band_name;
   if(profile.rockstar_name && members.length){
-    ownBandProfile={user_id:user.id,rockstar_name:profile.rockstar_name};members[0].profileId=user.id;members[0].name=profile.rockstar_name;render();
+    ownBandProfile={user_id:user.id,rockstar_name:profile.rockstar_name};members[0].profileId=user.id;members[0].name=profile.rockstar_name;applyMemberPreferences(members[0]);render();
   }
  }catch(err){console.warn('Préremplissage du profil indisponible',err)}
 }
@@ -103,10 +138,10 @@ function render(){
   if(members.length>1&&!(i===0&&ownBandProfile)){const remove=document.createElement('button');remove.type='button';remove.className='remove';remove.textContent='Retirer';remove.onclick=()=>{members=members.filter(x=>x!==m);render()};heading.append(remove)}
   const grid=document.createElement('div');grid.className='grid';
   function field(label,el){const wrap=document.createElement('label');wrap.className='field';const span=document.createElement('span');span.textContent=label;wrap.append(span,el);grid.append(wrap);return wrap}
-  const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de rockstar';name.value=m.name;name.readOnly=Boolean(i===0&&ownBandProfile);name.oninput=()=>m.name=name.value;field('Nom de rockstar *',name);
+  const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de rockstar';name.value=m.name;name.readOnly=Boolean(i===0&&ownBandProfile);name.oninput=()=>m.name=name.value;name.onchange=()=>{applyMemberPreferences(m);render()};field('Nom de rockstar *',name);
   const instrument=document.createElement('select');for(const [value,label] of options){const o=document.createElement('option');o.value=value;o.textContent=label;o.disabled=!allowed(m,chooseMode(value,m.mode));instrument.append(o)}
   instrument.value=categoryOf(m.mode);
-  instrument.onchange=()=>{m.mode=chooseMode(instrument.value,m.mode);if(m.mode==='vocals'){m.microphone=false;m.difficulty='medium'}render()};
+  instrument.onchange=()=>{const prefs=memberPreferences(m);m.mode=chooseMode(instrument.value,prefs.modes?.[instrument.value]||m.mode);const category=categoryOf(m.mode);m.difficulty=prefs.difficulties?.[category]||'';if(m.mode==='vocals'){m.microphone=false;m.difficulty='medium'}if(['guitar','bass','rhythm_guitar'].includes(category)){m.guitarChoice=guitarNames.some(([value])=>value===prefs.guitar)?prefs.guitar:'';}render()};
   field('Partie / instrument *',instrument);
   const category=categoryOf(m.mode);
   if(category==='drums'||category==='keys'){
@@ -114,7 +149,7 @@ function render(){
     const sub=document.createElement('select');
     for(const [value,label] of variants){const o=document.createElement('option');o.value=value;o.textContent=label;sub.append(o)}
     sub.value=m.mode;
-    sub.onchange=()=>{m.mode=sub.value;render()};
+    sub.onchange=()=>{m.mode=sub.value;saveMemberPreferences(m);render()};
     const wrap=field(category==='drums'?'Type de batterie *':'Type de clavier *',sub);
     wrap.classList.add('mode-field');
     const note=document.createElement('small');note.className='mode-note';note.textContent=MODE_DESCRIPTIONS[m.mode]||'';wrap.append(note);
@@ -127,14 +162,14 @@ function render(){
     const none=document.createElement('option');none.value='';none.textContent='Compte non associé (invité)';profileChoice.append(none);
     for(const entry of bandDirectory.filter(x=>x.user_id!==ownBandProfile?.user_id)){const o=document.createElement('option');o.value=entry.user_id;o.textContent=entry.rockstar_name;profileChoice.append(o)}
     profileChoice.value=m.profileId;
-    profileChoice.onchange=()=>{m.profileId=profileChoice.value;const match=bandDirectory.find(x=>x.user_id===m.profileId);if(match){m.name=match.rockstar_name;render()}};
+    profileChoice.onchange=()=>{m.profileId=profileChoice.value;const match=bandDirectory.find(x=>x.user_id===m.profileId);if(match){m.name=match.rockstar_name;applyMemberPreferences(m);render()}};
     const wrap=field('Inviter un compte Rockstar (facultatif)',profileChoice);
     const info=document.createElement('small');info.className='mode-note';info.textContent='Les rockstars invitées confirmeront leur participation depuis Mon Profil.';wrap.append(info);
   }
   const diff=document.createElement('select');
   const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choisir une difficulté';placeholder.disabled=true;diff.append(placeholder);
   for(const [value,label] of diffOptions){const o=document.createElement('option');o.value=value;o.textContent=label;diff.append(o)}
-  diff.value=m.difficulty;diff.required=true;diff.onchange=()=>m.difficulty=diff.value;
+  diff.value=m.difficulty;diff.required=true;diff.onchange=()=>{m.difficulty=diff.value;saveMemberPreferences(m)};
   if(m.mode==='vocals')m.difficulty='medium';
   if(m.mode!=='vocals'&&category!=='drums'&&category!=='keys')field('Difficulté de l’instrument *',diff);
   if(category==='drums'||category==='keys'){
@@ -145,6 +180,8 @@ function render(){
     if(modeField)modeField.after(diffField);
   }
   if(['guitar','rhythm_guitar','bass'].includes(m.mode)){
+    const otherGuitars=new Set(members.filter(other=>other!==m).map(other=>other.guitarChoice).filter(Boolean));
+    if(m.guitarChoice&&otherGuitars.has(m.guitarChoice))m.guitarChoice='';
     const choose=document.createElement('div');choose.className='guitar-chooser';
     const title=document.createElement('span');title.className='guitar-label';title.textContent='Choix de guitare (facultatif)';choose.append(title);
     const tiles=document.createElement('div');tiles.className='guitar-tiles';
@@ -153,7 +190,7 @@ function render(){
       if(value){const img=document.createElement('img');img.src=guitarPhotos[value];img.alt='';img.loading='lazy';tile.append(img)}
       else{const any=document.createElement('span');any.className='guitar-any';any.textContent='Peu importe';tile.append(any)}
       const caption=document.createElement('span');caption.textContent=value?label:'Peu importe';if(value)tile.append(caption);
-      tile.onclick=()=>{m.guitarChoice=value;render()};tiles.append(tile);
+      tile.onclick=()=>{m.guitarChoice=value;saveMemberPreferences(m);render()};tiles.append(tile);
     }
     choose.append(tiles);grid.append(choose);
   }
@@ -236,6 +273,8 @@ $('request-form').addEventListener('submit',async e=>{
   // PostgreSQL RPC validates the entire band in one transaction.
   const guitarReservations=members.filter(m=>instrumentFamily(m.mode)==='guitar'&&m.guitarChoice).map(m=>({name:m.name.trim(),mode:m.mode,guitar:m.guitarChoice}));
   const {data,error}=await sb.rpc('yarg_submit_group_request_with_guitars',{...args,p_guitar_reservations:guitarReservations});if(error)throw error;
+   // Mémoriser également le choix final de chaque Rockstar après confirmation.
+   members.forEach(saveMemberPreferences);
   const key='yarg_owned_performance_requests';let owned=[];try{owned=JSON.parse(localStorage.getItem(key)||'[]')}catch{}if(!Array.isArray(owned))owned=[];if(!owned.includes(data))owned.push(data);localStorage.setItem(key,JSON.stringify(owned));
   const invites=members.filter(m=>m.profileId).map(m=>({name:m.name.trim(),mode:m.mode,profile_id:m.profileId}));for(const entry of invites){const {error:linkErr}=await sb.rpc('yarg_offer_member_profile_link',{p_request_id:data,p_rockstar_name:entry.name,p_instrument_mode:entry.mode,p_profile_id:entry.profile_id});if(linkErr)console.warn('Invitation non enregistrée',linkErr)}
   status.className='status ok';status.textContent='Votre groupe est dans la file! 🤘';
