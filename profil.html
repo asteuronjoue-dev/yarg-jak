@@ -126,7 +126,7 @@ function renderProfile(){
  $('initie-tag').textContent=state.initie?'👑 Initié · priorité première chanson':'Pas encore Initié';$('initie-tag').className='tag '+(state.initie?'yes':'no');
  $('privilege-note').textContent=state.initie?'Tu as le privilège de priorité pour ta première prestation de chaque nouvelle soirée.':'Après une prestation terminée à une soirée précédente, tu peux devenir Initié.';
  $('equipped-preview').textContent=p.equipped_title?(state.catalog.find(x=>x.code===p.equipped_title)?.label||''):'Aucun titre équipé';
- $('account-warning').hidden=false;renderStats();renderTitles();
+ renderStats();renderTitles();
 }
 async function equip(code){
  if(!state.unlocked.has(code))return;
