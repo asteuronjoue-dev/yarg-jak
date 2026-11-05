@@ -327,6 +327,25 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie 4-Lane",pro_drums:"Pro Drums",keys:"Clavier 5-Lane",pro_keys:"Pro Keys"};
 const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
+// Personal defaults per logged-in Rockstar, stored only on this browser.
+const JOIN_PREFS_KEY='yarg_join_preferences_v1';
+function joinPrefs(){
+ if(!myAuthId)return {};
+ try{return JSON.parse(localStorage.getItem(JOIN_PREFS_KEY)||'{}')?.[myAuthId]||{};}catch{return {}}
+}
+function rememberJoinPrefs(form){
+ if(!form||!myAuthId)return;
+ const mode=form.elements.instrument_mode?.value||form.dataset.instrument;
+ try{
+  const all=JSON.parse(localStorage.getItem(JOIN_PREFS_KEY)||'{}')||{};
+  const current=all[myAuthId]||{},patch={};
+  if(form.elements.difficulty)patch.difficulties={...(current.difficulties||{}),[mode]:form.elements.difficulty.value};
+  if(form.elements.preferred_guitar)patch.guitar=form.elements.preferred_guitar.value;
+  if(form.elements.instrument_mode)patch.modes={...(current.modes||{}),[instrumentFamily(form.dataset.instrument)]:mode};
+  all[myAuthId]={...current,...patch};
+  localStorage.setItem(JOIN_PREFS_KEY,JSON.stringify(all));
+ }catch(e){console.warn('Préférences non enregistrées',e)}
+}
 
 function showError(message){
   $("#errorBox").textContent = message;
@@ -464,7 +483,9 @@ function updateJoinGuitarPhoto(form){
 }
 function joinGuitarChoices(r){
  const taken=new Set(membersFor(r.id).map(m=>m.preferred_guitar).filter(Boolean));
- return `<label>Choix de guitare (facultatif)<select name="preferred_guitar">${joinGuitars.map(([id,name])=>`<option value="${esc(id)}" ${taken.has(id)?'disabled':''}>${esc(name)}${taken.has(id)?' — déjà réservée':''}</option>`).join('')}</select><img class="join-guitar-photo" alt="Aperçu de la guitare choisie" hidden><small class="join-guitar-note">« Peu importe » ne réserve aucune guitare précise. Tu prendras celle qui reste.</small></label>`;
+ const saved=joinPrefs().guitar||'';
+ const preferred=!taken.has(saved)&&joinGuitars.some(([id])=>id===saved)?saved:'';
+ return `<label>Choix de guitare (facultatif)<select name="preferred_guitar">${joinGuitars.map(([id,name])=>`<option value="${esc(id)}" ${taken.has(id)?'disabled':''} ${id===preferred?'selected':''}>${esc(name)}${taken.has(id)?' — déjà réservée':''}</option>`).join('')}</select><img class="join-guitar-photo" alt="Aperçu de la guitare choisie" hidden><small class="join-guitar-note">« Peu importe » ne réserve aucune guitare précise. Tu prendras celle qui reste.</small></label>`;
 }
 function joinFormHtml(r){
  if(!joining||joining.requestId!==String(r.id))return "";
@@ -472,13 +493,16 @@ function joinFormHtml(r){
  if(!openInstruments(r).includes(instrument))return "";
  const vocals=instrument==="vocals";
  const modes=joinModes(openInstruments(r),instrument);
- const modeChoice=(instrumentFamily(instrument)==="drums"||instrumentFamily(instrument)==="keys")?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===(instrument==="drums"?"drums_4lane":instrument)?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select></label>`:"";
+ const savedMode=joinPrefs().modes?.[instrumentFamily(instrument)];
+ const defaultMode=modes.includes(savedMode)?savedMode:(instrument==="drums"?"drums_4lane":instrument);
+ const chosenDifficulty=joinPrefs().difficulties?.[defaultMode]||'beginner';
+ const modeChoice=(instrumentFamily(instrument)==="drums"||instrumentFamily(instrument)==="keys")?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===defaultMode?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select></label>`:"";
  const canSing=Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone;
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instrumentFamily(instrument)==="drums"?"Batterie":instrumentFamily(instrument)==="keys"?"Clavier":instruments[instrument])}</strong>
  <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required readonly value="${esc(myRockstarName)}" placeholder="Connecte-toi à ton profil" autocomplete="nickname"></label>
  ${modeChoice}
- ${vocals?"":`<label>Difficulté <select name="difficulty">${["beginner","easy","medium","hard","expert"].map(d=>`<option value="${d}">${esc(difficulties[d])}</option>`).join("")}</select></label>`}
+ ${vocals?"":`<label>Difficulté <select name="difficulty">${["beginner","easy","medium","hard","expert"].map(d=>`<option value="${d}" ${d===chosenDifficulty?'selected':''}>${esc(difficulties[d])}</option>`).join("")}</select></label>`}
  ${["guitar","bass","rhythm_guitar"].includes(instrument)?joinGuitarChoices(r):""}
  ${vocals?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${canSing?"":"disabled"}> Je veux aussi chanter au micro</label>`}
  <label class="join-harmony" ${vocals?"":"hidden"}>Partie vocale (difficulté Moyen)<select name="harmony">${harmonyOptions(r)}</select></label>
@@ -501,7 +525,7 @@ function cardHtml(r, eta, mine=false){
       : `<div class="eta"><strong>⏱ —</strong><span>Estimation à venir</span></div>`;
   const statusLabel=isPlaying?'En cours':r.yarg_not_ready?'Pas prêt':available.length>0?'En attente':
     (!r.allow_band_fill?'Groupe fermé':'Groupe complet');
-  const skittles=mine&&isPlaying?`<div class="skittle-banner">🌈🔥 EN COURS — C'EST À TOI! 🔥🌈</div>`:'';
+  const skittles=mine&&isPlaying?`<div class="skittle-banner">🎶EN COURS — C'EST À TOI!🎶</div>`:'';
   const canToggleReady=!!myAuthId && myAccountRequester(r) && !isPlaying;
   const readyControl=canToggleReady?`<div class="yarg-ready-controls"><span class="ready-state">${r.yarg_not_ready?'⏸ Cette chanson est en attente : aucune heure de passage prévue.':'✅ Tu es prêt pour cette chanson.'}</span><button type="button" data-ready-request="${esc(r.id)}" data-ready-value="${r.yarg_not_ready?'true':'false'}">${r.yarg_not_ready?'✅ Je suis prêt':'⏸ Pas prêt'}</button></div>`:'';
   return `<article class="${classes}" data-request-id="${esc(r.id)}" id="demande-${esc(r.id)}">
@@ -569,7 +593,8 @@ function render(){
   const queue=sortedActive();
   const playable=queue.filter(r=>r.status==='playing'||(r._fairEligible!==false&&!r.yarg_not_ready));
   const etas=calculateEtas(playable);
-  const mine=queue.filter(isMyPerformance);
+  // Personal-only sorting: hold "Pas prêt" songs at the top without changing queue fairness.
+  const mine=queue.filter(isMyPerformance).sort((a,b)=>Number(!!b.yarg_not_ready)-Number(!!a.yarg_not_ready));
   const joinable=playable.filter(r=>r.status!=='playing'&&!isMyPerformance(r)&&openInstruments(r).length>0);
   const full=playable.filter(r=>r.status==='playing'||(openInstruments(r).length===0&&!myActiveBand(r)));
   // "C'EST TA TOUNE" banner is rendered by yarg-stage-response.js.
@@ -767,7 +792,16 @@ document.addEventListener("click",e=>{
   form?.querySelector("input[name=rockstar]")?.focus();
 });
 document.addEventListener("change",e=>{
- if(e.target.matches('.join-form select[name="preferred_guitar"]')){updateJoinGuitarPhoto(e.target.closest('.join-form'));return}
+ if(e.target.matches('.join-form select[name="preferred_guitar"], .join-form select[name="difficulty"], .join-form select[name="instrument_mode"]')){
+  const form=e.target.closest('.join-form');
+  if(e.target.matches('select[name="instrument_mode"]')){
+   const previous=joinPrefs().difficulties?.[e.target.value];
+   if(previous&&form.elements.difficulty)form.elements.difficulty.value=previous;
+  }
+  rememberJoinPrefs(form);
+  if(e.target.matches('select[name="preferred_guitar"]'))updateJoinGuitarPhoto(form);
+  return;
+ }
 });
 document.addEventListener("change",e=>{
  if(!e.target.matches('.join-form input[name="microphone"]'))return;
@@ -827,6 +861,7 @@ document.addEventListener("submit",async e=>{
       message.textContent=`Inscription refusée par Supabase${code} : ${details||'Erreur inconnue'}`;
       return;
     }
+    rememberJoinPrefs(form);
     rememberJoined(id);joining=null;await loadQueue();
   }catch(err){console.error("Erreur pour rejoindre le groupe",err);message.textContent="Impossible de rejoindre le groupe. Vérifie la connexion et les autorisations Supabase."}
   finally{submit.disabled=false}
