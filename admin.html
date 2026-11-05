@@ -222,7 +222,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 
 </div></div></div></details>
 <section class="card stage"><div class="flex"><h2>Sur scène</h2><span class="pill live">● EN COURS</span></div><p class="yarg-reply-info">Réponses des Rockstars : ✅ Prêt · ⏸ À remettre · ❌ Ne participe plus. Le MC décide de lancer, passer ou retirer un musicien.</p><div id="playing"></div></section>
-<section class="card" id="mc-withdrawals" hidden><h2>🔔 Réponses des Rockstars</h2><p class="help">⏸ À remettre : réponse reçue (un invité conserve sa place). ❌ Retrait : instrument libéré sans confirmation du MC.</p><div id="mc-withdrawals-list"></div></section>
+<section class="card" id="mc-withdrawals" hidden><h2>🔔 Réponses des Rockstars</h2><p class="help">⏸ Pause : une seule notification par Rockstar, peu importe le nombre de chansons. ❌ Retrait : instrument libéré sans confirmation du MC.</p><div id="mc-withdrawals-list"></div></section>
 <section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section>
 
 </div>
@@ -260,6 +260,11 @@ const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let snapshot=null,busy=false,hasLoadedSettings=false;
 let yargStageReplies=[];
+let yargPauseOverview={paused:[],reasons:[]};
+function pausedRockstarFor(r,name){
+ const requestId=String(r.id),who=String(name||'').trim().toLocaleLowerCase();
+ return (yargPauseOverview.reasons||[]).some(x=>String(x.request_id)===requestId&&String(x.rockstar_name||'').trim().toLocaleLowerCase()===who);
+}
 const activeStatuses=new Set(['waiting','full']);
 let mcRockstars=[];let mcEditingRequest=null;
 const mcInstruments=['guitar','rhythm_guitar','bass','drums','drums_4lane','pro_drums','keys','pro_keys','vocals'];
@@ -298,10 +303,13 @@ function membersFor(r){const m=(snapshot.members||[]).filter(x=>x.performance_re
 function part(mode){return ({guitar:'Guitare',rhythm_guitar:'Guitare rythmique',bass:'Basse',vocals:'Voix',drums:'Batterie',drums_4lane:'Batterie 4-Lane',pro_drums:'Pro Drums',keys:'Clavier',pro_keys:'Pro Keys'})[mode]||mode||'—';}
 function yargReplyFor(r,name,userId){
  const who=String(name||'').trim().toLocaleLowerCase();
+ if(pausedRockstarFor(r,name))return '<span class="yarg-reply later">⏸ Pas prêt</span>';
  const reply=yargStageReplies.find(x=>String(x.request_id)===String(r.id) &&
-    (userId && String(x.user_id)===String(userId) || String(x.rockstar_name||'').trim().toLocaleLowerCase()===who));
- if(!reply)return '';
- const labels={ready:'✅ Prêt',later:'⏸ À remettre',decline:'❌ Ne participe plus'};
+    ((userId && String(x.user_id)===String(userId)) || String(x.rockstar_name||'').trim().toLocaleLowerCase()===who));
+ // Global pause creates per-song "later" rows; they must NOT be interpreted as
+ // independent pauses, nor should they label unpaused bandmates.
+ if(!reply||reply.reply==='later')return '';
+ const labels={ready:'✅ Prêt',decline:'❌ Ne participe plus'};
  return `<span class="yarg-reply ${esc(reply.reply)}">${esc(labels[reply.reply]||reply.reply)}</span>`;
 }
 function people(r){return `<div class="members">${membersFor(r).map(m=>`<span class="member">${esc(m.rockstar_name)} · ${esc(part(m.instrument_mode||m.instrument))}${yargReplyFor(r,m.rockstar_name,m.rockstar_profile_id)}${m.microphone?' + 🎤':''}${m.preferred_guitar?' · 🎸 '+esc(({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[m.preferred_guitar]||m.preferred_guitar):''}</span>`).join('')||'<span class="muted">Aucun participant actif</span>'}</div>`;}
@@ -310,16 +318,22 @@ function historyRow(r){return `<div class="row"><div class="grow"><div class="so
 function renderMcWithdrawals(){
  const panel=$('mc-withdrawals'),host=$('mc-withdrawals-list');
  if(!panel||!host)return;
- const rows=snapshot?.requests||[];
- const alerts=yargStageReplies.filter(x=>x.reply==='decline'||x.reply==='later')
-   .sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')))
-   .slice(0,16);
+ // Rockstar-wide pauses: one alert per account, not one alert per song.
+ const paused=(yargPauseOverview.paused||[]).map(p=>({
+  type:'pause',name:p.rockstar_name||'Rockstar',updated_at:p.paused_at||''
+ }));
+ // Only actual per-song withdrawals appear separately.
+ const withdrawn=yargStageReplies.filter(x=>x.reply==='decline').map(x=>({
+  type:'decline',name:x.rockstar_name||'Rockstar',request_id:x.request_id,updated_at:x.updated_at||''
+ }));
+ const alerts=[...paused,...withdrawn].sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at))).slice(0,16);
  panel.hidden=!alerts.length;
+ const rows=snapshot?.requests||[];
  host.innerHTML=alerts.map(x=>{
-   const r=rows.find(q=>String(q.id)===String(x.request_id));
-   const title=r?.song_title||'Chanson archivée';
-   const when=x.updated_at?new Date(x.updated_at).toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'}):'';
-   return `<div class="mc-withdrawal"><strong>${x.reply==='decline'?'❌':'⏸'} ${esc(x.rockstar_name||'Rockstar')}</strong> ${x.reply==='decline'?'s’est retirée de':'a indiqué « À remettre » pour'} <strong>${esc(title)}</strong><span class="muted">${esc(when)}</span></div>`;
+  const when=x.updated_at?new Date(x.updated_at).toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'}):'';
+  if(x.type==='pause')return `<div class="mc-withdrawal"><strong>⏸ ${esc(x.name)}</strong> a mis toutes ses prestations à venir en pause<span class="muted">${esc(when)}</span></div>`;
+  const r=rows.find(q=>String(q.id)===String(x.request_id));
+  return `<div class="mc-withdrawal"><strong>❌ ${esc(x.name)}</strong> s’est retiré de <strong>${esc(r?.song_title||'Chanson archivée')}</strong><span class="muted">${esc(when)}</span></div>`;
  }).join('');
 }
 function render(){
@@ -379,6 +393,9 @@ async function load(){if(busy)return;const {data,error}=await sb.rpc('yarg_admin
   const {data:replies,error:replyError}=await sb.rpc('yarg_mc_stage_responses');
   if(replyError){console.warn('Réponses Rockstar indisponibles :',replyError.message);yargStageReplies=[];}
   else yargStageReplies=replies||[];
+  const {data:pauseData,error:pauseError}=await sb.rpc('yarg_public_pause_overview');
+  if(pauseError){console.warn('Pauses Rockstar indisponibles (migration SQL v2) :',pauseError.message);yargPauseOverview={paused:[],reasons:[]};}
+  else yargPauseOverview=pauseData||{paused:[],reasons:[]};
   render();void loadActiveRequesters();if($('mc-score-details').open&&!$('scene-tab').hidden)void loadMcScores();}
 async function loadMcRockstars(){const {data,error}=await sb.rpc('yarg_mc_rockstars');if(error){notice('Comptes Rockstar : '+error.message,true);return}mcRockstars=data||[];render();}
 async function mcChange(name,args){try{const {error}=await sb.rpc(name,args);if(error)throw error;notice('Modification enregistrée.');await load()}catch(e){notice(e.message||String(e),true)}}
