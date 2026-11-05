@@ -193,10 +193,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section id="app" hidden>
 <div class="flex"><div id="session-line" class="muted">Soirée</div><button id="sign-out" class="quiet">Déconnexion</button></div>
 <div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">🎉 Soirée</button><button class="tab" data-tab="playlists" aria-selected="false">🎶 Playlists</button><button class="tab" id="rockstars-tab-button" data-tab="rockstars" aria-selected="false" hidden>⭐ Gestion des ROCKSTARS</button><button class="tab" id="owner-tab-button" data-tab="owner" aria-selected="false" hidden>🔒 Propriétaire</button></div>
-<div id="scene-tab"><div class="stats"><div class="stat"><b id="total-done">0</b><small>Chansons terminées</small></div><div class="stat"><b id="total-waiting">0</b><small>Demandes en attente</small></div><div class="stat"><b id="total-library">0</b><small>Demandes bibliothèque</small></div></div>
-<section class="card stage"><div class="flex"><h2>Sur scène</h2><span class="pill live">● EN COURS</span></div><p class="yarg-reply-info">Réponses des Rockstars : ✅ Prêt · ⏸ À remettre · ❌ Ne participe plus. Le MC décide de lancer, passer ou retirer un musicien.</p><div id="playing"></div></section>
-<section class="card" id="mc-withdrawals" hidden><h2>🔔 Réponses des Rockstars</h2><p class="help">⏸ À remettre : réponse reçue (un invité conserve sa place). ❌ Retrait : instrument libéré sans confirmation du MC.</p><div id="mc-withdrawals-list"></div></section>
-<section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section>
+<div id="scene-tab"><div class="stats"><div class="stat"><b id="total-done">0</b><small>Chansons terminées</small></div><div class="stat"><b id="total-waiting">0</b><small>Demandes en attente</small></div><div class="stat"><b id="mc-active-players">—/—</b><small>Joueurs actifs</small></div></div>
 <details id="mc-score-details" class="history-score-details"><summary>🏆 Classement des Rockstars · points de la soirée</summary>
 <div class="history-score-body">
 <p class="help">Points réellement acquis pendant cette soirée (les points anticipés servent seulement à calculer l’ordre des prochaines chansons).</p>
@@ -224,6 +221,10 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 </ul>
 
 </div></div></div></details>
+<section class="card stage"><div class="flex"><h2>Sur scène</h2><span class="pill live">● EN COURS</span></div><p class="yarg-reply-info">Réponses des Rockstars : ✅ Prêt · ⏸ À remettre · ❌ Ne participe plus. Le MC décide de lancer, passer ou retirer un musicien.</p><div id="playing"></div></section>
+<section class="card" id="mc-withdrawals" hidden><h2>🔔 Réponses des Rockstars</h2><p class="help">⏸ À remettre : réponse reçue (un invité conserve sa place). ❌ Retrait : instrument libéré sans confirmation du MC.</p><div id="mc-withdrawals-list"></div></section>
+<section class="card"><div class="flex"><h2>À suivre · ordre équitable</h2><button id="refresh">↻ Actualiser</button></div><div id="upcoming"></div></section>
+
 </div>
 <div id="history-tab" hidden>
 
@@ -244,6 +245,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
  <section class="card"><h2>🔒 Gestion des ROCKSTARS</h2><p class="help">Réservé au propriétaire : privilège Initié, titres et crédits historiques. Les crédits ne modifient jamais la file de cette soirée.</p><div id="owner-players" class="owner-list"></div></section>
 </section>
 <section id="owner-tab" hidden>
+ <div class="stats"><div class="stat"><b id="total-library">0</b><small>Demandes bibliothèque</small></div></div>
  <section class="card"><h2>Associations Guitar Hero / Rock Band</h2><p class="help">Outils de correspondance avec les chansons du catalogue. Publie le fichier game-song-matches.json après validation.</p><div class="actions"><a class="admin-tool-link" href="manquantes-guitar-hero.html">🎸 Associer Guitar Hero au catalogue</a><a class="admin-tool-link" href="manquantes-rock-band.html">🥁 Associer Rock Band au catalogue</a></div></section>
  <section class="card"><h2>Comptes MC autorisés</h2><p class="help">Le propriétaire désigne les MC qui peuvent gérer la scène. Un MC n'a pas accès aux outils Propriétaire.</p><form class="mc-add" id="mc-add-form"><label>Courriel du compte MC confirmé<input type="email" id="mc-admin-email" placeholder="mc@exemple.com" required></label><button class="primary" type="submit">Autoriser ce MC</button></form><div id="mc-accounts" class="mc-list"></div></section>
  <section class="card"><h2>Demandes de chansons pour la bibliothèque</h2><p class="help">« Téléchargée » veut dire que la chanson a bien été ajoutée à la bibliothèque. Les notifications par courriel seront ajoutées séparément.</p><div id="owner-library" class="owner-list"></div></section>
@@ -347,6 +349,20 @@ function render(){
 }
 // Récupère les scores acquis depuis un RPC réservé au MC; ne les expose pas dans file.html.
 let mcScoreLoading=false;
+let mcActiveRequestersLoading=false;
+async function loadActiveRequesters(){
+ if(mcActiveRequestersLoading)return;
+ mcActiveRequestersLoading=true;
+ try{
+  const {data,error}=await sb.rpc('yarg_mc_active_requesters');
+  if(error)throw error;
+  const active=Number(data?.active),total=Number(data?.total);
+  $('mc-active-players').textContent=Number.isInteger(active)&&Number.isInteger(total)?active+'/'+total:'—/—';
+ }catch(err){
+  $('mc-active-players').textContent='—/—';
+  console.warn('Joueurs actifs indisponibles (installer yarg-mc-joueurs-actifs.sql):',err.message||err);
+ }finally{mcActiveRequestersLoading=false;}
+}
 async function loadMcScores(){
  const host=$('mc-score-list');if(mcScoreLoading||!$('mc-score-details').open)return;
  mcScoreLoading=true;host.innerHTML='<div class="muted">Chargement des points…</div>';
@@ -363,7 +379,7 @@ async function load(){if(busy)return;const {data,error}=await sb.rpc('yarg_admin
   const {data:replies,error:replyError}=await sb.rpc('yarg_mc_stage_responses');
   if(replyError){console.warn('Réponses Rockstar indisponibles :',replyError.message);yargStageReplies=[];}
   else yargStageReplies=replies||[];
-  render();if($('mc-score-details').open&&!$('history-tab').hidden)void loadMcScores();}
+  render();void loadActiveRequesters();if($('mc-score-details').open&&!$('scene-tab').hidden)void loadMcScores();}
 async function loadMcRockstars(){const {data,error}=await sb.rpc('yarg_mc_rockstars');if(error){notice('Comptes Rockstar : '+error.message,true);return}mcRockstars=data||[];render();}
 async function mcChange(name,args){try{const {error}=await sb.rpc(name,args);if(error)throw error;notice('Modification enregistrée.');await load()}catch(e){notice(e.message||String(e),true)}}
 document.addEventListener('submit',async e=>{const form=e.target.closest('form[data-mc-assignment]');if(!form)return;e.preventDefault();const id=form.dataset.mcAssignment,profile=form.elements.profile.value,instrument=form.elements.instrument.value;if(!profile)return;if(!confirm('Attribuer '+instrument+' au compte sélectionné pour cette chanson ?'))return;await mcChange('yarg_mc_assign_player',{p_request_id:id,p_user_id:profile,p_instrument:instrument})});
