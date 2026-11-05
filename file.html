@@ -790,6 +790,7 @@ document.addEventListener("click",e=>{
   render();
   const form=[...document.querySelectorAll(".join-form")].find(f=>f.dataset.joinRequest===joining.requestId);
   form?.querySelector("input[name=rockstar]")?.focus();
+  if(form?.elements.preferred_guitar)updateJoinGuitarPhoto(form);
 });
 document.addEventListener("change",e=>{
  if(e.target.matches('.join-form select[name="preferred_guitar"], .join-form select[name="difficulty"], .join-form select[name="instrument_mode"]')){
