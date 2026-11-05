@@ -22,11 +22,6 @@
  banner.append(heading,details,actions,pauseActions,status);document.body.prepend(banner);
  const stageStyle=document.createElement('style');
  stageStyle.textContent=`
- @font-face{
-  font-family:'Eight Track';
-  src:url('assets/EIGHT___.TTF') format('truetype');
-  font-style:normal;font-weight:400 1000;font-display:swap;
- }
  @keyframes yargStageRainbow{to{background-position:300% center}}
  /* The whole fixed banner animates like the party title, not just the heading. */
  #yarg-stage-banner{
@@ -37,12 +32,6 @@
   border-bottom:4px solid #171a22;
  }
  /* White lettering with a dark outline stays legible over every rainbow color. */
- #yarg-stage-banner:not(.yarg-stage-is-pause) .yarg-stage-heading,
- #yarg-stage-banner:not(.yarg-stage-is-pause) .yarg-stage-details{
-  font-family:'Eight Track',Impact,'Arial Black',sans-serif;
-  letter-spacing:.025em;
- }
- #yarg-stage-banner:not(.yarg-stage-is-pause) .yarg-stage-actions button{font-family:'Eight Track',Impact,'Arial Black',sans-serif}
  #yarg-stage-banner .yarg-stage-heading .yarg-rainbow{
   background:none;animation:none;color:#fff;
   -webkit-text-stroke:.55px #10141c;
