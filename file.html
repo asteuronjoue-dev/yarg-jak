@@ -185,6 +185,11 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .yarg-held-note{color:#ffcc91;font-size:13px;font-weight:800;margin-top:8px}
 body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-equipped-title{font-weight:850;color:#ffb46b;border:1px solid #745435;border-radius:999px;padding:2px 7px;font-size:.78em;white-space:nowrap}.join-form input[readonly]{opacity:.85;background:#222b30;cursor:default}
+/* Global Rockstar availability control */
+.yarg-global-presence{margin:15px 0 18px;text-align:center}
+.yarg-pause-all{border:1px solid #f8cd64;color:#ffe6a6;background:#393024;border-radius:12px;padding:12px 18px;font:inherit;font-weight:850;cursor:pointer}
+.yarg-pause-all:hover{background:#594223}
+.yarg-pause-all:disabled{opacity:.6;cursor:wait}
 /* Coordinated MC response banner (also used on index.html) */
 .yarg-stage-banner{position:fixed;top:0;left:0;right:0;z-index:15000;background:linear-gradient(90deg,#ff355e,#ffbd48,#dbf080,#64d9bb);color:#101214;padding:12px clamp(10px,3vw,32px);text-align:center;box-shadow:0 6px 21px #0008}
 .yarg-stage-heading{font-size:clamp(19px,3vw,30px);font-weight:1000;line-height:1.23}
@@ -228,6 +233,9 @@ body.yarg-display-mode .yarg-stage-banner{display:none!important}
     <details><summary>Comment gagner ou perdre des points?</summary><p class="points-note">Le plus petit score passe en premier. Le demandeur reçoit +1 point par seconde de sa chanson (4 min = +240). Rejoindre un autre groupe donne −60 points, pris en compte à partir du passage de ce groupe. Les Initiés partent à −1. Une chanson passée sans être jouée ne donne ni coût ni récompense. La prochaine prestation annoncée reste protégée.</p></details></section>
   <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
+  <div class="yarg-global-presence" id="yargGlobalPresence" hidden>
+    <button type="button" id="yargPauseAll" class="yarg-pause-all">⏸️ Pas prêt — Mettre toutes mes prestations à venir en pause</button>
+  </div>
 
   <section id="mineSection" hidden>
     <div class="section-head">
@@ -526,8 +534,8 @@ function cardHtml(r, eta, mine=false){
   const statusLabel=isPlaying?'En cours':r.yarg_not_ready?'Pas prêt':available.length>0?'En attente':
     (!r.allow_band_fill?'Groupe fermé':'Groupe complet');
   const skittles=mine&&isPlaying?`<div class="skittle-banner">🎶EN COURS — C'EST À TOI!🎶</div>`:'';
-  const canToggleReady=!!myAuthId && myAccountRequester(r) && !isPlaying;
-  const readyControl=canToggleReady?`<div class="yarg-ready-controls"><span class="ready-state">${r.yarg_not_ready?'⏸ Cette chanson est en attente : aucune heure de passage prévue.':'✅ Tu es prêt pour cette chanson.'}</span><button type="button" data-ready-request="${esc(r.id)}" data-ready-value="${r.yarg_not_ready?'true':'false'}">${r.yarg_not_ready?'✅ Je suis prêt':'⏸ Pas prêt'}</button></div>`:'';
+  // Readiness is controlled once per Rockstar above "Mes prestations".
+  const readyControl='';
   return `<article class="${classes}" data-request-id="${esc(r.id)}" id="demande-${esc(r.id)}">
     ${skittles}
     <div class="songline"><div>
@@ -586,6 +594,7 @@ function renderPublicDisplay(){
 function render(){
   if(IS_PUBLIC_DISPLAY){renderPublicDisplay();return;}
   const active=!!settings?.performance_requests_enabled;
+  $('#yargGlobalPresence').hidden=!active||!myAuthId;
   for(const id of ['mineSection','joinSection','fullSection','historySection'])$('#'+id).hidden=!active;
   $('#closedSection').hidden=active;
   if(!active){const banner=$('#yarg-my-next-banner');banner.hidden=true;banner.textContent='';return;}
@@ -734,6 +743,18 @@ function syncBandEditGuitar(form){
  field.hidden=!applicable;field.querySelector('select').disabled=!applicable;
  if(!applicable)field.querySelector('select').value='';
 }
+// Rockstar-wide presence: one action applies to every future participation.
+document.getElementById('yargPauseAll').addEventListener('click',async function(){
+ if(!myAuthId){alert('Connecte-toi à ton compte Rockstar.');return;}
+ this.disabled=true;
+ try{
+  const {error}=await sb.rpc('yarg_set_my_party_presence',{p_action:'pause'});
+  if(error)throw error;
+  document.dispatchEvent(new CustomEvent('yarg-party-presence-updated',{detail:{action:'pause'}}));
+  await loadQueue();
+ }catch(error){alert('Impossible de mettre tes performances en pause : '+(error.message||String(error)));}
+ finally{this.disabled=false;}
+});
 // Only Supabase can authorize readiness changes; the UI never writes directly.
 document.addEventListener('click',async event=>{
   const button=event.target.closest('button[data-ready-request]');
