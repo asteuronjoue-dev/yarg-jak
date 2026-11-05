@@ -22,6 +22,11 @@
  banner.append(heading,details,actions,pauseActions,status);document.body.prepend(banner);
  const stageStyle=document.createElement('style');
  stageStyle.textContent=`
+ @font-face{
+  font-family:'Eight Track';
+  src:url('assets/EIGHT___.TTF') format('truetype');
+  font-style:normal;font-weight:400 1000;font-display:swap;
+ }
  @keyframes yargStageRainbow{to{background-position:300% center}}
  /* The whole fixed banner animates like the party title, not just the heading. */
  #yarg-stage-banner{
