@@ -568,7 +568,7 @@ function cardHtml(r, eta, mine=false, rank=null){
 
 function formatDuration(sec){const n=Math.max(0,Number(sec)||0);return `${Math.floor(n/60)} min ${String(n%60).padStart(2,'0')} s`;}
 function historicalCard(r){
-  const names=[...new Set(performerEntries(r).map(m=>m.rockstar_name).filter(Boolean))];
+  const names=Array.isArray(r.member_names)?r.member_names:[...new Set(performerEntries(r).map(m=>m.rockstar_name).filter(Boolean))];
   return `<article class="card history-card"><div class="song">${esc(r.song_title||'Chanson')}</div>
     <div class="artist">${esc(r.song_artist||'')} · ${esc(names.join(', ')||r.rockstar_name||'')} · ${formatDuration(r.song_duration_seconds)}</div></article>`;
 }
@@ -725,17 +725,14 @@ async function loadQueue(){
     }else request.queue_position=fairRanks.get(String(request.id));
   }
 
-  // Historique facultatif : son indisponibilité ne doit pas bloquer la file active.
+  // Completed performances are public via a limited current-session RPC. This avoids
+  // depending on MC-only SELECT policies for archived performance_requests rows.
   try{
-    const {data:history,error}=await sb.from('performance_requests')
-      .select('id,is_group_request,rockstar_name,song_title,song_artist,song_duration_seconds,status,finished_at')
-      .eq('party_session_id',settings.current_session_id)
-      .in('status',['completed','played'])
-      .order('finished_at',{ascending:false}).limit(1000);
+    const {data:history,error}=await sb.rpc('yarg_public_current_session_history');
     if(error)throw error;
-    completedRequests=history||[];historyLoadError='';
+    completedRequests=Array.isArray(history)?history:[];historyLoadError='';
   }catch(error){
-    console.warn('Historique non disponible :',error);
+    console.warn('Historique indisponible (migration SQL requise) :',error);
     completedRequests=[];historyLoadError=error.message||'unavailable';
   }
 
