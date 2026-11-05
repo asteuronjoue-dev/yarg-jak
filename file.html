@@ -79,6 +79,8 @@
     .songline{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
     .song{font-size:19px;font-weight:900}
     .artist{color:var(--muted);font-weight:650;margin-top:2px}
+    .eta-with-rank{display:flex;align-items:center;gap:12px;flex-shrink:0}
+    .queue-rank{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:5px 8px;border-radius:10px;background:rgba(31,200,189,.12);border:1px solid rgba(31,200,189,.4);color:var(--teal2);font-size:18px;font-weight:950;font-variant-numeric:tabular-nums}
     .eta{text-align:right;white-space:nowrap}
     .eta strong{display:block;color:var(--orange2);font-size:16px}
     .eta span{color:var(--muted);font-size:12px}
@@ -517,13 +519,14 @@ function joinFormHtml(r){
  <button class="join-submit" type="submit">Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
  <div class="join-message" role="status"></div></form>`;
 }
-function cardHtml(r, eta, mine=false){
+function cardHtml(r, eta, mine=false, rank=null){
   const performers=performerEntries(r);
   const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id || (r.is_group_request && m.rockstar_name===r.rockstar_name?r.requester_profile_id:null))).join("");
   const available=openInstruments(r);
   const slots=(myActiveBand(r)?[]:available.filter((i,index,all)=>all.findIndex(j=>instrumentFamily(j)===instrumentFamily(i))===index)).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instrumentFamily(i)==="drums"?"Batterie":instrumentFamily(i)==="keys"?"Clavier":instruments[i])}</button>`).join("");
   const isPlaying=r.status==="playing";
   const classes=["card",mine?"mine":"",isPlaying?"playing":"",mine&&isPlaying?"skittles":""].filter(Boolean).join(" ");
+  const rankHtml=Number.isInteger(rank)&&rank>0?`<span class="queue-rank">#${rank}</span>`:'';
   const etaHtml=r.yarg_not_ready
     ? `<div class="eta"><strong>⏸ Pas prêt</strong><span>Heure suspendue</span></div>`
     : isPlaying
@@ -542,7 +545,7 @@ function cardHtml(r, eta, mine=false){
       <div class="song">${esc(r.song_title||"Chanson")}</div>
       <div class="artist">${esc(r.song_artist||"")}</div>
       <span class="status ${isPlaying?'playing':''}">${statusLabel}</span>
-    </div>${etaHtml}</div>
+    </div><div class="eta-with-rank">${rankHtml}${etaHtml}</div></div>
     <div class="band">
       ${r.band_name?`<div class="band-name">🤘 ${esc(r.band_name)}</div>`:''}
       ${displayed}
@@ -602,6 +605,9 @@ function render(){
   const queue=sortedActive();
   const playable=queue.filter(r=>r.status==='playing'||(r._fairEligible!==false&&!r.yarg_not_ready));
   const etas=calculateEtas(playable);
+  // Identical positions across personal, joinable and full sections.
+  // "Pas prêt" songs have no playable rank until resumed.
+  const ranks=new Map(playable.map((r,i)=>[String(r.id),i+1]));
   // Personal-only sorting: hold "Pas prêt" songs at the top without changing queue fairness.
   const mine=queue.filter(isMyPerformance).sort((a,b)=>Number(!!b.yarg_not_ready)-Number(!!a.yarg_not_ready));
   const joinable=playable.filter(r=>r.status!=='playing'&&!isMyPerformance(r)&&openInstruments(r).length>0);
@@ -610,13 +616,13 @@ function render(){
   $('#yarg-my-next-banner').hidden=true;
 
   $('#myRequests').innerHTML=mine.length
-    ?mine.map(r=>cardHtml(r,etas.get(r.id),true)).join('')
+    ?mine.map(r=>cardHtml(r,etas.get(r.id),true,ranks.get(String(r.id)))).join('')
     :`<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment.</div>`;
   $('#publicQueue').innerHTML=joinable.length
-    ?joinable.map(r=>cardHtml(r,etas.get(r.id))).join('')
+    ?joinable.map(r=>cardHtml(r,etas.get(r.id),false,ranks.get(String(r.id)))).join('')
     :`<div class="empty">Aucun groupe à rejoindre en ce moment.</div>`;
   $('#fullQueue').innerHTML=full.length
-    ?full.map(r=>cardHtml(r,etas.get(r.id))).join('')
+    ?full.map(r=>cardHtml(r,etas.get(r.id),false,ranks.get(String(r.id)))).join('')
     :`<div class="empty">Aucune chanson complète pour le moment.</div>`;
   $('#currentHistory').innerHTML=historyLoadError
     ?`<div class="empty">Historique indisponible pour le moment.</div>`
