@@ -32,6 +32,12 @@
   border-bottom:4px solid #171a22;
  }
  /* White lettering with a dark outline stays legible over every rainbow color. */
+ #yarg-stage-banner:not(.yarg-stage-is-pause) .yarg-stage-heading,
+ #yarg-stage-banner:not(.yarg-stage-is-pause) .yarg-stage-details{
+  font-family:'Eight Track',Impact,'Arial Black',sans-serif;
+  letter-spacing:.025em;
+ }
+ #yarg-stage-banner:not(.yarg-stage-is-pause) .yarg-stage-actions button{font-family:'Eight Track',Impact,'Arial Black',sans-serif}
  #yarg-stage-banner .yarg-stage-heading .yarg-rainbow{
   background:none;animation:none;color:#fff;
   -webkit-text-stroke:.55px #10141c;
@@ -66,7 +72,7 @@
   const a=document.createElement('div');a.className='yarg-rainbow';a.textContent=message;heading.append(a);
   if(track){const b=document.createElement('div');b.className='yarg-track';b.textContent=track;heading.append(b);}
  }
- function showStageMode(mode){actions.hidden=mode!=='next';actions.style.display=mode==='next'?'':'none';pauseActions.hidden=mode!=='pause';pauseActions.style.display=mode==='pause'?'':'none';banner.hidden=false;syncHeight();}
+ function showStageMode(mode){banner.classList.toggle('yarg-stage-is-pause',mode==='pause');actions.hidden=mode!=='next';actions.style.display=mode==='next'?'':'none';pauseActions.hidden=mode!=='pause';pauseActions.style.display=mode==='pause'?'':'none';banner.hidden=false;syncHeight();}
  function instrumentForRequest(target,all,uid,owned){
   const active=all.filter(m=>String(m.performance_request_id)===String(target.id)&&!m.withdrawn_at);
   let mine=active.find(m=>String(m.rockstar_profile_id||'')===uid||owned.has(String(m.id)));
@@ -140,8 +146,8 @@
      const mine=instrumentForRequest(target,members||[],id,owned);
      const info=stageInstrumentDetail(target,mine,members||[]);
      if(target.status==='playing'){
-       renderStageHeading("🔥C'est ta toune en ce moment!🔥",`🎶${esc(target.song_title)} • ${esc(target.song_artist)}🎶`);
-       details.textContent=`🤘${info.emoji} ROCK ON! ${info.emoji}🤘`;
+       renderStageHeading(`${info.emoji} C'est ta toune en ce moment! ${info.emoji}`,`🎶${esc(target.song_title)} • ${esc(target.song_artist)}🎶`);
+       details.textContent='🤘 ROCK ON! 🤘';
        status.textContent='';showStageMode('live');
      }else{
        renderStageHeading("C'EST TA TOUNE! READY TO ROCK?",`🎶${esc(target.song_title)} • ${esc(target.song_artist)}🎶`);
@@ -182,5 +188,11 @@
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
  document.addEventListener('yarg-stage-replied',()=>setTimeout(refresh,700));
  window.addEventListener('pageshow',refresh);
- refresh();setInterval(()=>{if(!document.hidden)refresh()},30000);
+ // React immediately when the MC changes a performance, even if this tab stays open.
+ // Periodic polling is a fallback when the realtime transport is unavailable.
+ client.channel('yarg-stage-transitions')
+  .on('postgres_changes',{event:'*',schema:'public',table:'performance_requests'},()=>{refresh();})
+  .on('postgres_changes',{event:'*',schema:'public',table:'performance_members'},()=>{refresh();})
+  .subscribe();
+ refresh();setInterval(()=>{if(!document.hidden)refresh()},5000);
 })();
