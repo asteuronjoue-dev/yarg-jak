@@ -17,17 +17,35 @@
   const b=document.createElement('button');b.type='button';b.dataset.partyAction=value;b.textContent=label;pauseActions.append(b);
  }
  const status=document.createElement('div');status.className='yarg-stage-message';status.setAttribute('role','status');
- const labels=[['ready','🤘HELL YEAH!🤘'],['later','Non! Remettre à plus tard!'],['decline','Non! Je ne veux plus participer à cette chanson!']];
+ const labels=[['ready','🤘HELL YEAH!🤘'],['later','Non! Je prends une pause!'],['decline','Non! Je ne veux plus participer à cette chanson!']];
  for(const [value,label] of labels){const b=document.createElement('button');b.type='button';b.dataset.stageAnswer=value;b.textContent=label;actions.append(b);}
  banner.append(heading,details,actions,pauseActions,status);document.body.prepend(banner);
  const stageStyle=document.createElement('style');
  stageStyle.textContent=`
  @keyframes yargStageRainbow{to{background-position:300% center}}
- #yarg-stage-banner{background:#141a22;color:#fff;border-bottom:4px solid #ffbd48}
- #yarg-stage-banner .yarg-stage-heading .yarg-rainbow{background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);background-size:300% auto;color:transparent;background-clip:text;-webkit-background-clip:text;animation:yargStageRainbow 5s linear infinite}
- #yarg-stage-banner .yarg-stage-heading .yarg-track{color:#fff;font-size:.8em;margin-top:4px}
- #yarg-stage-banner .yarg-stage-details{color:#cbf8e8;font-weight:850;margin-top:8px;font-size:clamp(14px,2vw,18px)}
- #yarg-stage-banner .yarg-stage-message{color:#fff}
+ /* The whole fixed banner animates like the party title, not just the heading. */
+ #yarg-stage-banner{
+  background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);
+  background-size:300% 100%;
+  animation:yargStageRainbow 5s linear infinite;
+  color:#fff;
+  border-bottom:4px solid #171a22;
+ }
+ /* White lettering with a dark outline stays legible over every rainbow color. */
+ #yarg-stage-banner .yarg-stage-heading .yarg-rainbow{
+  background:none;animation:none;color:#fff;
+  -webkit-text-stroke:.55px #10141c;
+  text-shadow:0 2px 3px #10141c,0 0 8px #10141c,0 0 2px #10141c;
+ }
+ #yarg-stage-banner .yarg-stage-heading .yarg-track{
+  color:#fff;font-size:.8em;margin-top:4px;
+  text-shadow:0 2px 3px #10141c,0 0 7px #10141c;
+ }
+ #yarg-stage-banner .yarg-stage-details{
+  color:#fff;font-weight:850;margin-top:8px;font-size:clamp(14px,2vw,18px);
+  text-shadow:0 2px 3px #10141c,0 0 7px #10141c;
+ }
+ #yarg-stage-banner .yarg-stage-message{color:#fff;text-shadow:0 1px 3px #10141c}
  #yarg-stage-banner [data-party-action=ready]{background:#85eab2;color:#141a22}
  #yarg-stage-banner [data-party-action=leave]{background:#ff7883;color:#141a22}
  #yarg-stage-banner .yarg-stage-actions button{white-space:normal}
@@ -67,7 +85,7 @@
     guitar=options.length?options.join(' / '):'Peu importe';
    }
   }
-  return {emoji:inst[0],label:`${inst[0]} ${inst[1]} • ${difficulty}${guitar?' • '+guitar:''} ${inst[0]}`};
+  return {emoji:inst[0],label:`${inst[0]} ${inst[1]}${type==='vocals'?'':' • '+difficulty}${guitar?' • '+guitar:''} ${inst[0]}`};
  }
  async function setPartyPresence(action){
   if(!presenceSupported)throw Error('Migration Supabase des disponibilités non installée');
