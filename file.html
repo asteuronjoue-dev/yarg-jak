@@ -185,6 +185,7 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .yarg-ready-controls button[data-ready-value="false"]{background:#79462a;border-color:#b9824a}
 .yarg-ready-controls button:disabled{opacity:.5;cursor:wait}
 .yarg-held-note{color:#ffcc91;font-size:13px;font-weight:800;margin-top:8px}
+.yarg-member-paused{display:inline-block;margin-left:7px;padding:2px 7px;border-radius:20px;background:rgba(255,185,64,.16);border:1px solid rgba(255,185,64,.5);color:#ffdb85;font-size:12px;font-weight:900;vertical-align:middle}
 body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-equipped-title{font-weight:850;color:#ffb46b;border:1px solid #745435;border-radius:999px;padding:2px 7px;font-size:.78em;white-space:nowrap}.join-form input[readonly]{opacity:.85;background:#222b30;cursor:default}
 /* Global Rockstar availability control */
@@ -312,6 +313,12 @@ let members = [];
 let completedRequests = [];
 let historyLoadError = "";
 let previousStates = new Map();
+let pauseReasonNames=new Map();
+// Song-wide yarg_not_ready blocks a slot; only the actual paused Rockstar is labeled.
+function pausedMember(requestId,name){
+ const matching=pauseReasonNames.get(String(requestId));
+ return !!matching&&matching.has(String(name||'').trim().toLocaleLowerCase());
+}
 let joining = null; // {requestId, instrument} — garder le formulaire ouvert pendant les rafraîchissements
 const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
 const BAND_TOKEN_KEY='yarg_band_secret_v1';
@@ -434,14 +441,15 @@ function performerEntries(r){
   });
 }
 
-function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuitar,profileId){
+function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuitar,profileId,paused=false){
  const inst=instruments[instrument]||instrument||"Auditeur";
  const singing=instrument==="vocals"||microphone;
  const vocal=singing?` · Harmonie ${harmony||1} (voix : Moyen)`:"";
  const diff=instrument==="vocals"||!instrument?"":` · ${difficulties[difficulty]||difficulty||"—"}`;
  const guitarLabel=({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[preferredGuitar];
  const title=equippedTitles.get(String(profileId||""));
- return `<div class="member">👤 <b>${esc(name)}</b>${title?` <span class="yarg-equipped-title">✦ ${esc(title)}</span>`:""} — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 ${esc(guitarLabel)}`:''}</div>`;
+ const pauseBadge=paused?'<span class="yarg-member-paused">⏸ Pas prêt</span>':'';
+ return `<div class="member">👤 <b>${esc(name)}</b>${title?` <span class="yarg-equipped-title">✦ ${esc(title)}</span>`:""}${pauseBadge} — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 ${esc(guitarLabel)}`:''}</div>`;
 }
 function instrumentFamily(i){return ['drums','drums_4lane','pro_drums'].includes(i)?'drums':['keys','pro_keys'].includes(i)?'keys':i;}
 function isGuitarChart(i){return ['guitar','bass','rhythm_guitar'].includes(i)}
@@ -521,7 +529,7 @@ function joinFormHtml(r){
 }
 function cardHtml(r, eta, mine=false, rank=null){
   const performers=performerEntries(r);
-  const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id || (r.is_group_request && m.rockstar_name===r.rockstar_name?r.requester_profile_id:null))).join("");
+  const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id || (r.is_group_request && m.rockstar_name===r.rockstar_name?r.requester_profile_id:null),pausedMember(r.id,m.rockstar_name))).join("");
   const available=openInstruments(r);
   const slots=(myActiveBand(r)?[]:available.filter((i,index,all)=>all.findIndex(j=>instrumentFamily(j)===instrumentFamily(i))===index)).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instrumentFamily(i)==="drums"?"Batterie":instrumentFamily(i)==="keys"?"Clavier":instruments[i])}</button>`).join("");
   const isPlaying=r.status==="playing";
@@ -550,7 +558,7 @@ function cardHtml(r, eta, mine=false, rank=null){
       ${r.band_name?`<div class="band-name">🤘 ${esc(r.band_name)}</div>`:''}
       ${displayed}
       ${readyControl}
-      ${r.yarg_not_ready?'<div class="yarg-held-note">Cette chanson ne sera pas appelée tant que tu ne seras pas prêt.</div>':''}
+      ${r.yarg_not_ready?'<div class="yarg-held-note">Cette chanson est temporairement en pause et ne sera pas appelée pour le moment.</div>':''}
       ${slots?`<div class="open-slots">${slots}</div>`:''}
       ${!isPlaying && (accountEditKind(r)|| (myBandMember(r)&&myMemberToken(r))) ? `<div class="member-editor"><strong>🎸 Ta participation</strong><p>Tu peux modifier ton instrument ou quitter ce groupe.</p><button type="button" data-band-edit="${esc(r.id)}">✏️ Modifier</button><button type="button" data-band-leave="${esc(r.id)}">🚪 Quitter le groupe</button>${managing===String(r.id)?bandEditFormHtml(r):''}</div>` : (!isPlaying && myBandMember(r) ? `<div class="member-editor">Cette participation n'est pas reliée à ton compte : demande au MC de la rattacher.</div>` : '')}
       ${joinFormHtml(r)}
@@ -679,7 +687,7 @@ async function loadQueue(){
   // The MC admin snapshot is scoped to current_session_id. Match that scope:
   // otherwise stale waiting requests from earlier parties appear on the public queue.
   if(!settings?.current_session_id){
-    requests=[];members=[];completedRequests=[];historyLoadError="";render();return;
+    requests=[];members=[];completedRequests=[];historyLoadError="";pauseReasonNames=new Map();render();return;
   }
   const {data:r,error:e1}=await sb.from("performance_requests")
     .select("id,guest_user_id,requester_profile_id,requester_withdrawn_at,is_group_request,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,status,yarg_not_ready,queue_position,started_at,created_at")
@@ -688,6 +696,16 @@ async function loadQueue(){
     .order("queue_position",{ascending:true,nullsFirst:false});
   if(e1) throw e1;
   requests=r||[];
+  try{
+   const {data:overview,error:pauseError}=await sb.rpc('yarg_public_pause_overview');
+   if(pauseError)throw pauseError;
+   pauseReasonNames=new Map();
+   for(const reason of overview?.reasons||[]){
+    const id=String(reason.request_id||'');
+    if(!pauseReasonNames.has(id))pauseReasonNames.set(id,new Set());
+    pauseReasonNames.get(id).add(String(reason.rockstar_name||'').trim().toLocaleLowerCase());
+   }
+  }catch(error){console.warn('Disponibilité par Rockstar indisponible (migration SQL v2) :',error.message||error);pauseReasonNames=new Map();}
   // Use the same authoritative fair ranking as the MC, not the potentially stale
   // performance_requests.queue_position column. The DB function accounts for
   // played durations, band participation and the protected next song.
