@@ -204,7 +204,7 @@ function renderTitles(){
  }
  specials.append(specialGrid);parent.append(specials);
  const groups=new Map();
- for(const t of state.catalog.filter(t=>t.category!=='secret')){
+ for(const t of state.catalog.filter(t=>t.category!=='secret'&&t.metric!=='past_parties')){
   const key=String(t.category||'other')+'|'+String(t.metric||'');
   if(!groups.has(key))groups.set(key,[]);
   groups.get(key).push(t);
