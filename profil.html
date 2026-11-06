@@ -86,6 +86,10 @@ async function fetchProfile(){
  if(error)throw error;state.profile=data;
 }
 async function fetchStats(){
+ // Role-only titles must be synchronized before loading the filtered secret catalog.
+ // If the SQL migration has not been installed yet, ordinary achievements still work.
+ const roleSync=await sb.rpc('yarg_sync_my_role_titles');
+ if(roleSync.error)console.warn('Titres Admin/MC indisponibles :',roleSync.error.message);
  const [progress,catalog,unlock,initie]=await Promise.all([
   sb.rpc('yarg_profile_progress'),sb.from('yarg_title_catalog').select('code,label,category,metric,threshold,sort_order').order('sort_order'),
   sb.rpc('yarg_sync_my_titles'),sb.rpc('yarg_my_initie_status')]);
@@ -99,6 +103,14 @@ function renderTitles(){
  const categories=new Map();
  for(const t of state.catalog){const key=String(t.category||'other')+'|'+String(t.metric||'');if(!categories.has(key))categories.set(key,[]);categories.get(key).push(t)}
  for(const [key,tiers] of categories){
+   if(tiers[0].category==='secret'){
+     const earned=tiers.filter(t=>state.unlocked.has(t.code));
+     for(const title of earned){
+       const heading=document.createElement('div');heading.className='sectionlabel';heading.textContent='Titres spéciaux';parent.append(heading);
+       parent.append(achievementCard(title,true,'Titre exclusif'));
+     }
+     continue;
+   }
    tiers.sort((a,b)=>Number(a.threshold||0)-Number(b.threshold||0)||Number(a.sort_order||0)-Number(b.sort_order||0));
    const unlocked=tiers.filter(t=>state.unlocked.has(t.code));
    const last=unlocked.length?unlocked[unlocked.length-1]:null;
