@@ -251,6 +251,10 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
  <section class="card" id="owner-session-management">
   <div class="flex"><h2>🗑️ Archives et séances de test</h2><button type="button" class="quiet small" id="owner-session-refresh">↻ Actualiser</button></div>
   <p class="help">Réservé au propriétaire. Supprimer une séance archivée efface ses demandes, prestations, participations et crédits de progression calculés à partir de ces données. Les autres soirées et les crédits historiques attribués manuellement sont conservés. Action irréversible.</p>
+  <div class="actions" style="margin:12px 0;align-items:center">
+   <button type="button" class="quiet small" id="owner-select-tests">Sélectionner les séances de test</button>
+   <button type="button" class="danger small" id="owner-delete-selected">Supprimer la sélection</button>
+  </div>
   <div id="owner-archived-sessions" class="owner-list"><div class="muted">Chargement des archives…</div></div>
  </section>
  <section class="card"><h2>Demandes de chansons pour la bibliothèque</h2><p class="help">« Téléchargée » veut dire que la chanson a bien été ajoutée à la bibliothèque. Les notifications par courriel seront ajoutées séparément.</p><div id="owner-library" class="owner-list"></div></section>
@@ -468,9 +472,37 @@ async function loadArchivedSessions(){
    }catch(e){notice('Suppression impossible : '+(e.message||String(e)),true)}
    finally{ownerSessionsBusy=false;await loadArchivedSessions();}
   };
-  row.append(info,button);host.append(row);
+  const select=document.createElement('input');select.type='checkbox';select.className='owner-session-check';select.value=s.id;select.dataset.partyName=s.name;select.setAttribute('aria-label','Sélectionner '+s.name);
+  row.append(select,info,button);host.append(row);
  }
 }
+$('owner-select-tests').onclick=()=>{
+ const checkboxes=[...document.querySelectorAll('.owner-session-check')];
+ for(const box of checkboxes){
+  const name=box.dataset.partyName||'';
+  box.checked=/^Tests en cours(?:\s*#\d+|\s*\d{2}-\d{2})?$/i.test(name)||/maintenance en cours/i.test(name)||/ceci est une soirée test/i.test(name);
+ }
+ notice(checkboxes.filter(x=>x.checked).length+' séance(s) de test sélectionnée(s). Vérifie la liste avant de supprimer.');
+};
+$('owner-delete-selected').onclick=async()=>{
+ if(ownerSessionsBusy)return;
+ const boxes=[...document.querySelectorAll('.owner-session-check:checked')];
+ if(!boxes.length){notice('Sélectionne au moins une soirée.',true);return}
+ const names=boxes.map(x=>x.dataset.partyName);
+ const entered=prompt('SUPPRESSION IRRÉVERSIBLE de '+boxes.length+' soirée(s), leurs demandes et leurs exploits calculés.\n\n'+names.join('\n')+'\n\nTape SUPPRIMER '+boxes.length+' pour confirmer :');
+ if(entered!=='SUPPRIMER '+boxes.length)return;
+ if(!confirm('Dernière confirmation : supprimer les '+boxes.length+' soirées sélectionnées ?'))return;
+ ownerSessionsBusy=true;
+ let count=0;let failure=null;
+ try{
+  for(const box of boxes){
+   const {error}=await sb.rpc('yarg_owner_delete_archived_session',{p_session_id:box.value,p_expected_name:box.dataset.partyName});
+   if(error){failure=box.dataset.partyName+' : '+error.message;break}
+   count++;
+  }
+ }finally{ownerSessionsBusy=false;await loadArchivedSessions();await load()}
+ notice(count+' soirée(s) supprimée(s).'+(failure?' Arrêt après une erreur : '+failure:''),!!failure);
+};
 $('owner-session-refresh').onclick=loadArchivedSessions;
 async function loadOwner(){
  const [{data,error},{data:legacy,error:legacyError}]=await Promise.all([sb.rpc('yarg_owner_snapshot'),sb.rpc('yarg_owner_legacy_snapshot')]);if(error||legacyError){notice('Accès propriétaire : '+(error||legacyError).message,true);return;}
