@@ -106,7 +106,7 @@ function message(s,bad=false){$('notice').textContent=s;$('notice').className='n
 function safeName(s){return (s||'').trim();}
 function isRegistered(user){return !!user && user.is_anonymous !== true && user.app_metadata?.provider !== 'anonymous';}
 const metrics={played:'Prestations terminées',parties:'Soirées jouées',stage_minutes:'Minutes sur scène',library_requests:'Demandes bibliothèque',guitar:'Guitare',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix'};
-const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Bibliothèque'};
+const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Demandes spéciales'};
 const titleIcons={guitar:'🎸',bass:'🎸',drums:'🥁',keys:'🎹',vocals:'🎤',attendance:'🌟',stage:'⏱️',library:'🎵'};
 const instrumentIconSources={};
 // Reuse the original index.html filter artwork rather than approximate instrument emoji.
@@ -123,7 +123,7 @@ async function loadInstrumentTitleIcons(){
  }catch(error){console.warn('Icônes instrument du catalogue indisponibles :',error)}
 }
 const roleTitles=[{code:'role_admin',label:'Admin✨',category:'secret',metric:'owner_only',threshold:1,sort_order:1},{code:'role_mc',label:'MC🎶',category:'secret',metric:'owner_only',threshold:1,sort_order:2}];
-const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Titre secret accordé par le propriétaire.',initie:'Obtenu après avoir participé à une soirée précédente (ou accordé par le propriétaire). Donne le privilège de départ à −1 point et influence la priorité de passage.'};
+const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Vous étiez là au tout début.',initie:'Obtenu après avoir participé à une soirée précédente. Débute toutes les soirées à −1 pt, ce qui permet à ta première chanson de passer avant les non-initiés ! Effet permanent.'};
 let pendingUnlocks=[],unlockActive=null,hasPresentedUnlocks=false;
 async function fetchProfile(){
  const {data,error}=await sb.from('rockstar_profiles').select('user_id,rockstar_name,preferred_band_name,equipped_title').eq('user_id',state.user.id).maybeSingle();
