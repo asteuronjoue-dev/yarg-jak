@@ -74,7 +74,7 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <main>
 <header><span>🎸 <strong>ROCKSTAR CLUB</strong></span><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html" aria-current="page">Mon profil</a><a href="admin.html" hidden>Régie MC</a></nav></header>
 <h1 id="profile-heading">Mon Profil de ROCKSTAR</h1>
-<p>**Créer un compte est entièrement facultatif !** Tu peux demander des chansons sans compte. En t'inscrivant plus tard sur ce même appareil, tu conserves tes prestations personnelles.</p>
+<p><strong>Créer un compte est entièrement facultatif !</strong> Tu peux demander des chansons sans compte. En t'inscrivant plus tard sur ce même appareil, tu conserves tes prestations personnelles.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
 <section id="auth" class="card auth" hidden><h2>Se connecter ou créer un compte</h2><p>Connecte-toi pour retrouver ton profil Rockstar.</p>
 <form id="login"><label for="email">Adresse courriel</label><input id="email" type="email" autocomplete="email" required placeholder="rockstar@exemple.com"><label for="password">Mot de passe (au moins 8 caractères)</label><input id="password" type="password" autocomplete="current-password" minlength="8" required placeholder="Ton mot de passe"><div class="auth-actions"><button class="primary" type="submit">Se connecter</button><button type="button" id="register">Créer un compte</button></div></form><p class="hint">Après inscription, confirme ton courriel. Déjà inscrit sans mot de passe ? Utilise « Mot de passe oublié ».</p><button class="ghost small" type="button" id="recover">Mot de passe oublié ?</button>
@@ -381,7 +381,7 @@ async function initialize(){
   const {error:claimError}=await sb.rpc('yarg_claim_my_guest_solo_requests');
   if(claimError)console.warn('Rattachement des demandes invité indisponible (SQL requis) :',claimError.message);
   await fetchStats();renderProfile();
-  if(localStorage.getItem(GUEST_UPGRADE_KEY)===user.id){
+  if(localStorage.getItem(GUEST_UPGRADE_KEY)===user.id && user.email_confirmed_at){
    $('finish-guest-signup').hidden=false;
    message('Courriel confirmé ! Choisis maintenant ton mot de passe.');
   }
