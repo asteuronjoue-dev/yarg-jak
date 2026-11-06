@@ -277,6 +277,11 @@ $('request-form').addEventListener('submit',async e=>{
    members.forEach(saveMemberPreferences);
   const key='yarg_owned_performance_requests';let owned=[];try{owned=JSON.parse(localStorage.getItem(key)||'[]')}catch{}if(!Array.isArray(owned))owned=[];if(!owned.includes(data))owned.push(data);localStorage.setItem(key,JSON.stringify(owned));
   const invites=members.filter(m=>m.profileId).map(m=>({name:m.name.trim(),mode:m.mode,profile_id:m.profileId}));for(const entry of invites){const {error:linkErr}=await sb.rpc('yarg_offer_member_profile_link',{p_request_id:data,p_rockstar_name:entry.name,p_instrument_mode:entry.mode,p_profile_id:entry.profile_id});if(linkErr)console.warn('Invitation non enregistrée',linkErr)}
+  // Une demande solo d'un Rockstar déjà inscrit peut se rattacher aussitôt au profil.
+  if(session?.user && !session.user.is_anonymous && members.length===1){
+    const {error:claimError}=await sb.rpc('yarg_claim_my_guest_solo_requests');
+    if(claimError)console.warn('Rattachement automatique indisponible (SQL requis) :',claimError.message);
+  }
   status.className='status ok';status.textContent='Votre groupe est dans la file! 🤘';
   location.href='file.html';
  }catch(err){console.error(err);status.className='status error';status.textContent=err.message||'Impossible d’inscrire le groupe.';btn.disabled=false}
