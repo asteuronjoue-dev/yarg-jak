@@ -998,6 +998,13 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
 .yarg-stage-actions button:disabled{opacity:.5}
 .yarg-stage-message{font:800 13px system-ui,sans-serif;margin-top:4px}
 @media(max-width:650px){.yarg-stage-actions{display:grid;grid-template-columns:1fr}.yarg-stage-actions button{width:100%}}
+
+/* Legacy Chrome fallback: scrolling cannot depend on :has(), dvh or flex layout. */
+html { overflow-y: auto !important; overflow-x: hidden !important; }
+body { display: block !important; height: auto !important; min-height: 100vh !important; overflow-y: visible !important; overflow-x: hidden !important; }
+header { max-height: none !important; overflow: visible !important; }
+#scroll { display: block !important; flex: none !important; width: 100% !important; height: 65vh !important; min-height: 380px !important; max-height: 900px !important; overflow-y: scroll !important; -webkit-overflow-scrolling: touch; }
+@media (max-width: 680px) { #scroll { height: 65vh !important; max-height: 730px !important; } }
 </style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong>🎸 Bienvenue! Trouve ta première chanson!</strong><p>Tu peux filtrer par instrument et difficultés, découvrir 10 chansons au hasard, filtrer par playlists ou par jeu. Optionnellement, crée un compte Rockstar pour sauvegarder tes favoris et tes stats! Amuses-toi!</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
@@ -1245,7 +1252,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
         // masques dépassent Number.MAX_SAFE_INTEGER. Les valeurs deviennent des
         // chaînes AVANT le parse, puis sont décodées avec BigInt.
         const CATALOGUE_URL = 'songs.json';
-        const catalogueResponse = await fetch(CATALOGUE_URL + '?v=' + Date.now(), { cache:'no-store' });
+        const catalogueResponse = await fetch(CATALOGUE_URL, { cache:'default' });
         if (!catalogueResponse.ok) throw new Error('Impossible de charger songs.json (HTTP ' + catalogueResponse.status + ')');
         const rawCatalogueText = await catalogueResponse.text();
         const exactMaskText = rawCatalogueText.replace(/("chartsAvailable"\s*:\s*)(-?\d+)(?=\s*[,}])/g, '$1"$2"');
