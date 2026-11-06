@@ -197,6 +197,10 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .mc-score-explanation .mc-scoring-rules{margin-top:0}
 .mc-score-explanation h3:first-child{margin-top:0}
 .mc-withdrawal{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)}.mc-withdrawal:first-child{border-top:0}.mc-withdrawal .muted{margin-left:auto;font-size:.82rem}
+.mc-playlist-edit{display:grid;gap:10px;margin:0 0 15px;padding:13px;background:#172228;border:1px solid #3d4c53;border-radius:12px}
+.mc-playlist-edit label{display:block;font-weight:800;font-size:.86rem}
+.mc-playlist-edit input,.mc-playlist-edit textarea{display:block;margin-top:5px;width:100%;max-width:100%;box-sizing:border-box;background:#101719;color:#f5f7f8;border:1px solid #53666e;border-radius:8px;padding:10px;font:inherit}
+.mc-playlist-edit button{justify-self:start}
 </style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. Les outils du propriétaire sont réservés au compte autorisé.</p>
@@ -622,10 +626,33 @@ async function loadMcPlaylists(){
    const count=document.createElement('span');count.className='mc-playlist-count';count.textContent=items.length+' chanson(s)';
    summary.append(title,count);
    const body=document.createElement('div');body.className='mc-playlist-body';
-   const description=document.createElement('div');description.className='muted';description.textContent=p.description||'';
-   const del=document.createElement('button');del.className='danger';del.textContent='Supprimer cette playlist';
+   // Modifier les playlists sans perdre leurs chansons ni leur identifiant.
+   const editForm=document.createElement('form');editForm.className='mc-playlist-edit';
+   const nameLabel=document.createElement('label');nameLabel.textContent='Nom de la playlist';
+   const nameInput=document.createElement('input');nameInput.required=true;nameInput.maxLength=100;nameInput.value=p.name||'';nameLabel.append(nameInput);
+   const descLabel=document.createElement('label');descLabel.textContent='Description (facultative)';
+   const descInput=document.createElement('textarea');descInput.maxLength=500;descInput.rows=2;descInput.value=p.description||'';descLabel.append(descInput);
+   const save=document.createElement('button');save.className='primary';save.type='submit';save.textContent='💾 Enregistrer';
+   editForm.append(nameLabel,descLabel,save);
+   editForm.addEventListener('submit',async event=>{
+     event.preventDefault();
+     const name=nameInput.value.trim(),description=descInput.value.trim();
+     if(!name){notice('Le nom ne peut pas être vide.',true);nameInput.focus();return}
+     if(name===p.name&&description===(p.description||'')){notice('Aucune modification à enregistrer.');return}
+     save.disabled=true;
+     try{
+       const {data:updated,error}=await sb.from('yarg_public_playlists').update({name,description}).eq('id',p.id).select('id');
+       if(error)throw error;
+       if(!updated?.length)throw Error('Aucune modification enregistrée (droits Supabase insuffisants).');
+       expandedMcPlaylists.add(String(p.id));
+       notice('Playlist « '+name+' » mise à jour.');
+       await loadMcPlaylists();
+     }catch(error){notice('Modification impossible : '+(error.message||String(error)),true)}
+     finally{save.disabled=false}
+   });
+   const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='Supprimer cette playlist';
    del.onclick=async()=>{if(!confirm('Supprimer la playlist « '+p.name+' » ?'))return;const {error}=await sb.from('yarg_public_playlists').delete().eq('id',p.id);if(error)notice(error.message,true);else {expandedMcPlaylists.delete(String(p.id));await loadMcPlaylists();}};
-   body.append(description,del);
+   body.append(editForm,del);
    for(const s of items){const line=document.createElement('div');line.className='row';
      const name=document.createElement('span');name.className='grow';name.textContent=s.song_title+' — '+s.song_artist;
      const remove=document.createElement('button');remove.className='quiet';remove.textContent='Retirer';
