@@ -24,6 +24,10 @@
     h1{font-size:clamp(28px,5vw,48px);line-height:1;margin:0 0 10px}
     .mc{color:var(--muted);font-weight:700}
     .mc strong{color:var(--teal2)}
+    .queue-brand{display:flex;align-items:center;gap:14px;min-width:0}
+    #queueSiteLogo{width:68px;height:68px;object-fit:contain;flex:none}
+    @media(max-width:600px){.queue-brand{gap:9px}#queueSiteLogo{width:48px;height:48px}}
+    #queueMcLine[hidden],#queueSiteLogo[hidden]{display:none!important}
     .yarg-navigation{display:flex;align-items:center;justify-content:flex-end;gap:.4rem;flex-wrap:wrap}
     .yarg-navigation a{color:#eaf1f3;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #3b4b53;border-radius:10px;padding:.48rem .7rem;background:#1b2429;font-size:.85rem;font-weight:800;white-space:nowrap}
     .yarg-navigation a:hover,.yarg-navigation a:focus-visible{border-color:#1fc8bd;background:#263338;color:#fff}
@@ -50,7 +54,7 @@
       animation:partyRainbowBg 5s linear infinite;
       box-shadow:0 0 18px rgba(255,255,255,.12);
     }
-    #partyTitle.party-rainbow, .mc strong{
+    #partyTitle.party-rainbow, .mc.party-active strong{
       background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);
       background-size:300% auto;
       color:transparent;
@@ -213,8 +217,13 @@ body.yarg-display-mode .yarg-stage-banner{display:none!important}
   <div class="wrap">
     <div class="topline">
       <div>
-        <h1 id="partyTitle">File de la soirée</h1>
-        <div class="mc">🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
+        <div class="queue-brand">
+          <img id="queueSiteLogo" src="assets/favicon.png" alt="" width="68" height="68">
+          <div>
+            <h1 id="partyTitle">La bibliothèque musicale à Jak</h1>
+            <div class="mc" id="queueMcLine" hidden>🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
+          </div>
+        </div>
       </div>
       <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html" aria-current="page">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a><a id="display-launch" href="file.html?affichage=1" target="_blank" rel="noopener" hidden>📺 Écran public</a></nav>
     </div>
@@ -677,9 +686,13 @@ async function loadSettings(){
     .eq("id",1).single();
   if(error) throw error;
   settings=data;
-  $("#partyTitle").textContent = data.party_name || "Party YARG";
-  $("#mcName").textContent = data.mc_name || "Mystère";
-  $("#partyTitle").classList.toggle("party-rainbow", !!data.performance_requests_enabled);
+  const partyActive=!!data.performance_requests_enabled;
+  $("#partyTitle").textContent=partyActive?(data.party_name||"Party YARG"):"La bibliothèque musicale à Jak";
+  $("#partyTitle").classList.toggle("party-rainbow",partyActive);
+  $("#queueSiteLogo").hidden=partyActive;
+  $("#queueMcLine").hidden=!partyActive;
+  $("#queueMcLine").classList.toggle("party-active",partyActive);
+  $("#mcName").textContent=partyActive?(data.mc_name||"Mystère"):"";
 }
 
 async function loadQueue(){
