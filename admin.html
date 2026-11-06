@@ -118,6 +118,19 @@ header{align-items:flex-start;margin-bottom:27px;padding-bottom:19px}
 #admin-playlists .mc-playlist-body .row .grow{overflow-wrap:anywhere;min-width:0}
 @media(max-width:650px){#admin-playlists .mc-playlist-summary{padding:14px 12px;gap:9px}#admin-playlists .mc-playlist-body{padding:13px 12px}#admin-playlists .mc-playlist-count{font-size:.78rem}}
 
+/* Panneaux repliables de l'onglet propriétaire. */
+.owner-fold{padding:0;overflow:hidden}
+.owner-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:17px 20px;font-size:1.12rem;font-weight:850;color:var(--ink)}
+.owner-fold>summary::-webkit-details-marker{display:none}
+.owner-fold>summary::before{content:'▸';color:var(--teal);font-size:1.25rem;line-height:1}
+.owner-fold[open]>summary::before{content:'▾'}
+.owner-fold>summary:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
+.owner-fold>summary .owner-fold-count{margin-left:auto;font-size:.8rem;font-weight:800;background:#39444b;color:#dceaf0;border:1px solid #51636c;border-radius:99px;padding:3px 9px}
+.owner-fold>summary .owner-fold-count[hidden]{display:none!important}
+.owner-fold>.owner-fold-body{border-top:1px solid var(--line);padding:18px 20px 22px}
+.owner-zombie{border-color:#7962a1;background:#292337}
+.owner-zombie-flag{font-weight:900;color:#dbb8ff;display:block;margin-bottom:7px}
+@media(max-width:650px){.owner-fold>summary{padding:15px}.owner-fold>.owner-fold-body{padding:15px}}
 /* Crédit historique : panneau de gestion extensible, sans encombrer la régie. */
 .legacy-details{margin-top:17px;border-top:1px solid #354047;padding-top:13px}
 .legacy-details summary{cursor:pointer;color:#f5f7f8;font-weight:850;padding:6px 0}
@@ -246,18 +259,26 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 </section>
 <section id="owner-tab" hidden>
  <div class="stats"><div class="stat"><b id="total-library">0</b><small>Demandes bibliothèque</small></div></div>
- <section class="card"><h2>Associations Guitar Hero / Rock Band</h2><p class="help">Outils de correspondance avec les chansons du catalogue. Publie le fichier game-song-matches.json après validation.</p><div class="actions"><a class="admin-tool-link" href="manquantes-guitar-hero.html">🎸 Associer Guitar Hero au catalogue</a><a class="admin-tool-link" href="manquantes-rock-band.html">🥁 Associer Rock Band au catalogue</a></div></section>
- <section class="card"><h2>Comptes MC autorisés</h2><p class="help">Le propriétaire désigne les MC qui peuvent gérer la scène. Un MC n'a pas accès aux outils Propriétaire.</p><form class="mc-add" id="mc-add-form"><label>Courriel du compte MC confirmé<input type="email" id="mc-admin-email" placeholder="mc@exemple.com" required></label><button class="primary" type="submit">Autoriser ce MC</button></form><div id="mc-accounts" class="mc-list"></div></section>
- <section class="card" id="owner-session-management">
-  <div class="flex"><h2>🗑️ Archives et séances de test</h2><button type="button" class="quiet small" id="owner-session-refresh">↻ Actualiser</button></div>
-  <p class="help">Réservé au propriétaire. Supprimer une séance archivée efface ses demandes, prestations, participations et crédits de progression calculés à partir de ces données. Les autres soirées et les crédits historiques attribués manuellement sont conservés. Action irréversible.</p>
-  <div class="actions" style="margin:12px 0;align-items:center">
-   <button type="button" class="quiet small" id="owner-select-tests">Sélectionner les séances de test</button>
-   <button type="button" class="danger small" id="owner-delete-selected">Supprimer la sélection</button>
-  </div>
-  <div id="owner-archived-sessions" class="owner-list"><div class="muted">Chargement des archives…</div></div>
- </section>
- <section class="card"><h2>Demandes de chansons pour la bibliothèque</h2><p class="help">« Téléchargée » veut dire que la chanson a bien été ajoutée à la bibliothèque. Les notifications par courriel seront ajoutées séparément.</p><div id="owner-library" class="owner-list"></div></section>
+ <details class="card owner-fold"><summary>Associations Guitar Hero / Rock Band</summary><div class="owner-fold-body">
+  <p class="help">Outils de correspondance avec les chansons du catalogue. Publie le fichier game-song-matches.json après validation.</p>
+  <div class="actions"><a class="admin-tool-link" href="manquantes-guitar-hero.html">🎸 Associer Guitar Hero au catalogue</a><a class="admin-tool-link" href="manquantes-rock-band.html">🥁 Associer Rock Band au catalogue</a></div>
+ </div></details>
+ <details class="card owner-fold"><summary>Comptes MC autorisés</summary><div class="owner-fold-body">
+  <p class="help">Le propriétaire désigne les MC qui peuvent gérer la scène. Un MC n'a pas accès aux outils Propriétaire.</p>
+  <form class="mc-add" id="mc-add-form"><label>Courriel du compte MC confirmé<input type="email" id="mc-admin-email" placeholder="mc@exemple.com" required></label><button class="primary" type="submit">Autoriser ce MC</button></form><div id="mc-accounts" class="mc-list"></div>
+ </div></details>
+ <details class="card owner-fold" id="owner-session-management"><summary>📃 Soirées archivées</summary><div class="owner-fold-body">
+   <div class="flex"><p class="help">Réservé au propriétaire. Supprimer une soirée archivée efface ses demandes, prestations, participations et crédits de progression calculés à partir de ces données. Les autres soirées et les crédits historiques attribués manuellement sont conservés. Action irréversible.</p><button type="button" class="quiet small" id="owner-session-refresh">↻ Actualiser</button></div>
+   <div class="actions" style="margin:12px 0;align-items:center">
+    <button type="button" class="quiet small" id="owner-select-tests">Sélectionner les séances de test</button>
+    <button type="button" class="danger small" id="owner-delete-selected">Supprimer la sélection</button>
+   </div>
+   <div id="owner-archived-sessions" class="owner-list"><div class="muted">Chargement des archives…</div></div>
+ </div></details>
+ <details class="card owner-fold" id="owner-library-section"><summary>Demandes de chansons pour la bibliothèque <span id="owner-library-pending" class="owner-fold-count" hidden></span></summary><div class="owner-fold-body">
+  <p class="help">Les demandes « Introuvable » sont mises de côté pendant 30 jours. Elles reviennent ensuite comme 🧟 Demandes zombies ! « Téléchargée » signifie que la chanson a été ajoutée à la bibliothèque.</p>
+  <div id="owner-library" class="owner-list"></div>
+ </div></details>
 </section>
 </section></main>
 <script>
@@ -439,6 +460,23 @@ $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {er
 
 
 const ownerData={players:[],library:[],titles:[],credits:[],oldGuard:[]};
+let zombieMetadata=new Map();
+let zombieFeatureReady=false;
+const ZOMBIE_WAIT_MS=30*24*60*60*1000;
+async function loadZombieMetadata(){
+ const {data,error}=await sb.rpc('yarg_owner_unfindable_dates');
+ if(error){zombieMetadata.clear();zombieFeatureReady=false;console.warn('Demandes zombies : exécute le SQL de migration :',error.message);return}
+ zombieFeatureReady=true;
+ zombieMetadata=new Map((data||[]).map(x=>[String(x.id),x.unfindable_at]));
+}
+function libraryRequestVisible(item){
+ if(item.status!=='unfindable')return true;
+ if(!zombieFeatureReady)return true; // Garder les demandes visibles si le suivi n'est pas installé.
+ const date=zombieMetadata.get(String(item.id));
+ if(!date)return true; // Éviter de cacher une demande inconnue par erreur.
+ const time=Date.parse(date);
+ return !Number.isFinite(time)||Date.now()-time>=ZOMBIE_WAIT_MS;
+}
 const creditMetrics=[["parties","Soirées antérieures"],["played","Chansons terminées"],["guitar","Guitare / Rythmique"],["bass","Basse"],["drums","Batterie"],["keys","Clavier"],["vocals","Voix"],["stage_minutes","Minutes sur scène"],["confirmed_additions","Ajouts à la bibliothèque"],["library_requests","Demandes de bibliothèque"]];
 // Destruction des archives : RPC propriétaire, transaction atomique et confirmation du nom.
 let ownerSessionsBusy=false;
@@ -507,6 +545,7 @@ $('owner-session-refresh').onclick=loadArchivedSessions;
 async function loadOwner(){
  const [{data,error},{data:legacy,error:legacyError}]=await Promise.all([sb.rpc('yarg_owner_snapshot'),sb.rpc('yarg_owner_legacy_snapshot')]);if(error||legacyError){notice('Accès propriétaire : '+(error||legacyError).message,true);return;}
  ownerData.players=data.rockstars||[];ownerData.library=data.library||[];ownerData.titles=data.titles||[];ownerData.credits=legacy.credits||[];ownerData.oldGuard=legacy.old_guard||[];
+ await loadZombieMetadata();
  drawOwner();
 }
 function ownerSelect(options,selected){return options.map(([v,l])=>`<option value="${esc(v)}" ${v===selected?'selected':''}>${esc(l)}</option>`).join('')}
@@ -519,7 +558,16 @@ function drawOwner(){
   const titleChoices=ownerData.titles.filter(t=>t.code!=='vieille_garde'||oldGuard);
   return `<div class="owner-item"><strong>${esc(p.rockstar_name)}</strong><div class="owner-item-fields"><label>Privilège Initié<select data-initie-for="${esc(p.user_id)}">${ownerSelect([['auto','Automatique'],['yes','Accorder'],['no','Retirer']],p.manual_initie===true?'yes':p.manual_initie===false?'no':'auto')}</select></label><label>Titre affiché<select data-title-for="${esc(p.user_id)}">${ownerSelect([['','Aucun'],...titleChoices.map(t=>[t.code,t.label])],p.equipped_title||'')}</select></label></div><label class="old-guard-choice"><input type="checkbox" data-old-guard-for="${esc(p.user_id)}" ${oldGuard?'checked':''}> 🏅 La Vieille Garde — titre secret (ancien du setup)</label><details class="legacy-details"><summary>Crédits historiques d’exploits</summary><p class="help">Ajoute les participations de soirées antérieures non comptées automatiquement (y compris la dernière soirée si aucune performance n’a été enregistrée). Ne crédite pas deux fois une même présence. Chaque valeur est un supplément aux statistiques réelles, pas leur total. Les titres se débloquent à la prochaine visite du profil.</p><div class="legacy-grid">${metrics}</div></details></div>`;
  }).join(''):'<p class="muted">Aucun profil Rockstar inscrit.</p>';
- $('owner-library').innerHTML=ownerData.library.length?ownerData.library.map(l=>`<div class="owner-item"><strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label></div>`).join(''):'<p class="muted">Aucune demande de bibliothèque.</p>';
+ const pending=ownerData.library.filter(l=>l.status==='pending').length;
+ const badge=$('owner-library-pending');
+ badge.textContent=pending+' demande'+(pending>1?'s':'')+' à examiner';
+ badge.hidden=false;
+ const visible=ownerData.library.filter(libraryRequestVisible);
+ $('owner-library').innerHTML=visible.length?visible.map(l=>{
+  const zombie=l.status==='unfindable'&&zombieFeatureReady&&zombieMetadata.has(String(l.id));
+  const flag=zombie?'<span class="owner-zombie-flag">🧟 DEMANDE ZOMBIE — BACK FROM THE DEAD !</span>':'';
+  return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label></div>`;
+ }).join(''):'<p class="muted">Aucune demande à examiner pour le moment. Les chansons introuvables reviendront après 30 jours ! 🧟</p>';
 }
 document.addEventListener('submit',async e=>{
  const form=e.target.closest('.legacy-form');if(!form)return;
@@ -596,6 +644,6 @@ $('playlist-create').onsubmit=async e=>{
  if(error){notice('Création impossible : '+error.message,true);return;}
  $('playlist-name').value='';$('playlist-description').value='';notice('Playlist créée. Ajoute des chansons depuis le catalogue.');await loadMcPlaylists();
 };
-async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;await loadOwner();await syncMcControls();await loadArchivedSessions()}$('app').hidden=false;await load();await loadMcRockstars();await loadMcPlaylists();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
+async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;await loadOwner();await syncMcControls();await loadArchivedSessions()}$('app').hidden=false;await load();await loadMcRockstars();await loadMcPlaylists();setInterval(()=>{if(!document.hidden)load()},15000);setInterval(()=>{if(!document.hidden && !$('owner-tab').hidden && ownerData.library.length)void loadOwner()},60000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
 init();
 </script></body></html>
