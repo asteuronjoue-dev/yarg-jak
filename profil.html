@@ -356,10 +356,9 @@ async function initialize(){
   if(!isRegistered(user)){
    $('auth').hidden=false;
    if(user?.is_anonymous){
-    $('password').required=false;$('password').hidden=true;
-    document.querySelector('label[for="password"]').hidden=true;
-    $('login').querySelector('button[type="submit"]').hidden=true;
-    $('auth').querySelector('p').textContent='Entre ton courriel pour conserver les prestations demandées sur cet appareil.';
+    // Un visiteur invité peut se connecter à un compte existant OU créer son compte.
+    // Ne jamais masquer le mot de passe ni le bouton « Se connecter » ici.
+    $('auth').querySelector('p').textContent='Déjà un compte ROCKSTAR ? Connecte-toi avec ton courriel et ton mot de passe. Pour créer un nouveau compte à partir de tes prestations invitées, entre ton courriel et clique sur « Créer un compte » : tu choisiras ton mot de passe après la confirmation.';
    }
    return;
   }
