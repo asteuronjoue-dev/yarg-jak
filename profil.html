@@ -74,14 +74,14 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <main>
 <header><span>🎸 <strong>ROCKSTAR CLUB</strong></span><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html" aria-current="page">Mon profil</a><a href="admin.html" hidden>Régie MC</a></nav></header>
 <h1 id="profile-heading">Mon Profil de ROCKSTAR</h1>
-<p>Personnalise ton profil et retrouve tes exploits.</p>
+<p>**Créer un compte est entièrement facultatif !** Tu peux demander des chansons sans compte. En t'inscrivant plus tard sur ce même appareil, tu conserves tes prestations personnelles.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
 <section id="auth" class="card auth" hidden><h2>Se connecter ou créer un compte</h2><p>Connecte-toi pour retrouver ton profil Rockstar.</p>
 <form id="login"><label for="email">Adresse courriel</label><input id="email" type="email" autocomplete="email" required placeholder="rockstar@exemple.com"><label for="password">Mot de passe (au moins 8 caractères)</label><input id="password" type="password" autocomplete="current-password" minlength="8" required placeholder="Ton mot de passe"><div class="auth-actions"><button class="primary" type="submit">Se connecter</button><button type="button" id="register">Créer un compte</button></div></form><p class="hint">Après inscription, confirme ton courriel. Déjà inscrit sans mot de passe ? Utilise « Mot de passe oublié ».</p><button class="ghost small" type="button" id="recover">Mot de passe oublié ?</button>
-<p class="hint">Les prestations effectuées en invité ne sont pas rattachées automatiquement à ton compte.</p><a href="index.html">Continuer sans compte</a></section>
+<p class="hint">En créant ton compte sur le même appareil, tes prestations individuelles pourront être conservées.</p><a href="index.html">Continuer sans compte</a></section>
 <section id="profile" hidden>
 <div class="card"><div class="topline"><div><h2 id="shown-name">Rockstar</h2><div class="meta"><span class="tag" id="initie-tag">Statut : à déterminer</span><span class="featured" id="equipped-preview"></span></div></div><button id="logout" class="small ghost">Se déconnecter</button></div><p id="privilege-note" class="hint"></p>
-<form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><button type="submit" class="primary" style="margin-top:14px">Enregistrer mon profil</button></form></div>
+<form id="finish-guest-signup" hidden class="card"><h3>🎸 Termine ton inscription</h3><p class="hint">Ton courriel est confirmé. Crée ton mot de passe pour retrouver ton compte Rockstar.</p><label for="guest-new-password">Mot de passe (8 caractères minimum)</label><input id="guest-new-password" type="password" autocomplete="new-password" minlength="8" required><button type="submit" class="primary">Enregistrer mon mot de passe</button></form><form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><button type="submit" class="primary" style="margin-top:14px">Enregistrer mon profil</button></form></div>
 
 <div class="profile-tabs" role="tablist" aria-label="Sections du profil">
 <button type="button" class="profile-tab" data-profile-tab="statistics" aria-selected="true">📊 Statistiques</button>
@@ -309,7 +309,40 @@ $('login').addEventListener('submit',async e=>{
  try{const {error}=await sb.auth.signInWithPassword({email,password:$('password').value});if(error)throw error;location.reload();}
  catch(err){message('Connexion impossible : '+err.message,true)}finally{button.disabled=false}
 });
-$('register').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value; if(!email||password.length<8){message('Entre un courriel valide et un mot de passe de 8 caractères minimum.',true);return;} $('register').disabled=true;try{const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;message(data.session?'Compte créé, tu es connecté !':'Compte créé ! Ouvre ton courriel pour confirmer ton adresse, puis connecte-toi.');if(data.session)location.reload();}catch(err){message('Inscription impossible : '+err.message,true)}finally{$('register').disabled=false}};
+const GUEST_UPGRADE_KEY='yarg_pending_guest_upgrade';
+$('register').onclick=async()=>{
+ const email=$('email').value.trim(),password=$('password').value;
+ if(!email){message('Entre ton adresse courriel.',true);return}
+ $('register').disabled=true;
+ try{
+  const {data:{user},error:identityError}=await sb.auth.getUser();
+  if(identityError&&identityError.name!=='AuthSessionMissingError')throw identityError;
+  if(user?.is_anonymous){
+   const {error}=await sb.auth.updateUser({email},{emailRedirectTo:location.origin+location.pathname});
+   if(error)throw error;
+   localStorage.setItem(GUEST_UPGRADE_KEY,user.id);
+   message('Confirme ton courriel depuis ce même appareil. Tu choisiras ensuite ton mot de passe dans Mon profil.');
+  }else{
+   if(password.length<8){message('Choisis un mot de passe de 8 caractères minimum.',true);return}
+   const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
+   if(error)throw error;
+   message(data.session?'Compte créé !':'Compte créé ! Confirme ton courriel, puis connecte-toi.');
+   if(data.session)location.reload();
+  }
+ }catch(err){message('Inscription impossible : '+(err.message||String(err)),true)}
+ finally{$('register').disabled=false}
+};
+$('finish-guest-signup').addEventListener('submit',async event=>{
+ event.preventDefault();const password=$('guest-new-password').value;
+ if(password.length<8){message('Mot de passe trop court.',true);return}
+ const button=event.currentTarget.querySelector('button');button.disabled=true;
+ try{
+  const {error}=await sb.auth.updateUser({password});if(error)throw error;
+  localStorage.removeItem(GUEST_UPGRADE_KEY);$('finish-guest-signup').hidden=true;$('guest-new-password').value='';
+  message('Ton compte Rockstar est prêt !');
+ }catch(err){message('Impossible de définir le mot de passe : '+(err.message||String(err)),true)}
+ finally{button.disabled=false}
+});
 $('recover').onclick=async()=>{const email=$('email').value.trim();if(!email){message('Entre ton courriel pour recevoir un lien de réinitialisation.',true);return;}try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;message('Si ce compte existe, un courriel de réinitialisation a été demandé.')}catch(err){message('Réinitialisation impossible : '+err.message,true)}};
 sb.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){setTimeout(async()=>{const password=prompt('Nouveau mot de passe (8 caractères minimum) :');if(password===null)return;if(password.length<8){message('Mot de passe trop court.',true);return;}const {error}=await sb.auth.updateUser({password});if(error)message(error.message,true);else{message('Mot de passe mis à jour.');location.reload()}},0)}});
 $('logout').addEventListener('click',async()=>{const {error}=await sb.auth.signOut();if(error){message(error.message,true);return}location.reload()});
@@ -320,7 +353,16 @@ async function initialize(){
   if(!sessionData.session){$('auth').hidden=false;return}
   const {data:{user},error}=await sb.auth.getUser();if(error)throw error;
   state.user=user;
-  if(!isRegistered(user)){$('auth').hidden=false;return}
+  if(!isRegistered(user)){
+   $('auth').hidden=false;
+   if(user?.is_anonymous){
+    $('password').required=false;$('password').hidden=true;
+    document.querySelector('label[for="password"]').hidden=true;
+    $('login').querySelector('button[type="submit"]').hidden=true;
+    $('auth').querySelector('p').textContent='Entre ton courriel pour conserver les prestations demandées sur cet appareil.';
+   }
+   return;
+  }
   // Afficher la Régie MC seulement pour un Rockstar autorisé.
   // Utilise le client authentifié déjà présent sur la page.
   try{
@@ -336,7 +378,13 @@ async function initialize(){
    const {error:saveError}=await sb.from('rockstar_profiles').insert({user_id:user.id,rockstar_name:suggested});if(saveError)throw saveError;
    await fetchProfile();
   }
+  const {error:claimError}=await sb.rpc('yarg_claim_my_guest_solo_requests');
+  if(claimError)console.warn('Rattachement des demandes invité indisponible (SQL requis) :',claimError.message);
   await fetchStats();renderProfile();
+  if(localStorage.getItem(GUEST_UPGRADE_KEY)===user.id){
+   $('finish-guest-signup').hidden=false;
+   message('Courriel confirmé ! Choisis maintenant ton mot de passe.');
+  }
  }catch(err){$('auth').hidden=false;message('Erreur de profil : '+err.message,true)}
 }
 // Navigation des onglets, sans perdre les données du profil.
