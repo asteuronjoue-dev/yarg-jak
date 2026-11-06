@@ -38,6 +38,27 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 .profile-tab[aria-selected="true"]{background:#ff8a24;color:#17120e;border-color:#ff8a24}
 .profile-panel>.card:first-child{margin-top:0}
 .title-item{margin:9px 0}.achievement-tier-label{color:#a8bac1;font-size:.75rem;font-weight:850;margin:10px 0 5px;text-transform:uppercase;letter-spacing:.045em}
+
+/* Compact title dashboard */
+.yarg-title-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;margin-top:13px}
+.yarg-tier-card{display:flex;align-items:center;gap:14px;padding:15px;border:1px solid #34454d;border-radius:14px;background:#20272c;min-height:124px}
+.yarg-tier-card .tier-copy{min-width:0;flex:1}
+.yarg-tier-card h3{margin:2px 0 5px;font-size:.96rem;line-height:1.3}
+.yarg-tier-card p{margin:4px 0;color:#afc0c5;font-size:.79rem}
+.yarg-tier-card .small{margin-top:7px;padding:6px 10px}
+.yarg-tier-ring{--value:0;--ring:#24c5b6;width:79px;height:79px;flex-shrink:0;border-radius:50%;background:conic-gradient(var(--ring) calc(var(--value)*1%),#39474f 0);padding:7px;display:grid;place-items:center}
+.yarg-tier-inner{width:100%;height:100%;border-radius:50%;background:#151c21;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.yarg-tier-icon{font-size:25px;line-height:1.1}.yarg-tier-count{font-size:.65rem;color:#c7d6dc;font-weight:850;margin-top:2px}
+.yarg-special-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0 23px}
+.yarg-special{background:#222a30;border:1px solid #3e535d;border-radius:13px;padding:13px;display:flex;flex-direction:column;gap:7px}
+.yarg-special strong{font-size:1rem}.yarg-special p{margin:0;font-size:.8rem}
+.yarg-special .small{align-self:flex-start;margin-top:auto}.yarg-special.yarg-active{border-color:#ffac53}
+.yarg-title-intro{font-size:.85rem;color:#afc0c5;margin:4px 0 10px}
+.yarg-unlock-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.76);display:grid;place-items:center;z-index:99999;padding:18px}
+.yarg-unlock-modal{width:min(100%,480px);padding:25px;text-align:center;background:#1b242a;border:1px solid #e9ad5a;border-radius:20px;box-shadow:0 20px 90px #000b}
+.yarg-unlock-modal .unlock-sparkle{font-size:42px}.yarg-unlock-modal h2{font-size:1.5rem;margin:8px 0;color:#ffcb78}
+.yarg-unlock-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+@media(max-width:520px){.yarg-title-grid{grid-template-columns:1fr}.yarg-tier-ring{width:68px;height:68px}.yarg-unlock-actions button{flex:1 1 100%}}
 .fav-profile-list{display:grid;gap:9px;margin-top:12px}.fav-profile-song{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#222a2f;border:1px solid #37474f;border-radius:10px;padding:11px 13px}.fav-profile-song strong{display:block}.fav-profile-song small{color:var(--muted)}.fav-profile-song .remove-favorite{flex-shrink:0;background:#3d2930;border-color:#80515b;color:#ffe2e6;font-size:.83rem;padding:9px 12px}.fav-profile-song .remove-favorite:hover:not(:disabled){background:#63333c;border-color:#ff9aa8}@media(max-width:510px){.fav-profile-song{align-items:flex-start;flex-direction:column}.fav-profile-song .remove-favorite{align-self:flex-end}}
 @media(max-width:670px){.profile-tabs{gap:4px}.profile-tab{padding:10px 5px;flex-basis:100px;font-size:.85rem}}
 </style>
@@ -63,6 +84,10 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 </div>
 <div class="profile-panel" id="statistics-panel"><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div></div>
 <div class="profile-panel" id="achievements-panel" hidden><div class="card"><div class="topline"><h2>Collection de titres</h2><span class="hint">Dernier palier débloqué et prochain objectif dans chaque catégorie.</span></div><p class="hint">Un titre débloqué peut être équipé pour s'afficher avec ton nom dans la file. Le privilège Initié reste indépendant des titres cosmétiques.</p><div id="titles"></div></div></div>
+<div id="yarg-unlock-backdrop" class="yarg-unlock-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="yarg-unlock-heading">
+ <div class="yarg-unlock-modal"><div class="unlock-sparkle">🏆✨</div><p class="hint">NOUVEAU TITRE DÉBLOQUÉ</p><h2 id="yarg-unlock-heading"></h2><p id="yarg-unlock-reason"></p>
+ <div class="yarg-unlock-actions"><button type="button" class="primary" id="yarg-unlock-equip">Équiper</button><button type="button" id="yarg-unlock-view">Voir tous mes titres</button><button type="button" class="ghost" id="yarg-unlock-dismiss">Fermer</button></div></div>
+</div>
 <div class="profile-panel" id="favorites-panel" hidden><div class="card"><div class="topline"><h2>♥ Mes favoris</h2><a href="index.html" class="primary" style="padding:10px 13px;border-radius:10px;font-weight:800">Ouvrir le catalogue</a></div><p id="favorites-status" class="hint">Chargement de tes favoris…</p><div id="profile-favorites" class="fav-profile-list"></div></div></div>
 <div class="profile-panel" id="costars-panel" hidden><div class="card"><h2>Co-stars et invitations</h2><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="band-opt-in"> Apparaître dans la liste des co-stars (nom de Rockstar seulement)</label><p class="hint">Après ta première demande dans la soirée, ton nom devient automatiquement disponible pour les invitations jusqu'à la fin de la fenêtre de 36 heures. Tu peux refuser une invitation.</p><button id="reload-invites" type="button">Vérifier mes invitations</button><div id="band-invites"></div></div></div>
 </section>
@@ -81,56 +106,143 @@ function safeName(s){return (s||'').trim();}
 function isRegistered(user){return !!user && user.is_anonymous !== true && user.app_metadata?.provider !== 'anonymous';}
 const metrics={played:'Prestations terminées',parties:'Soirées jouées',stage_minutes:'Minutes sur scène',library_requests:'Demandes bibliothèque',guitar:'Guitare',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix'};
 const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Bibliothèque'};
+const titleIcons={guitar:'🎸',bass:'🎸',drums:'🥁',keys:'🎹',vocals:'🎤',attendance:'🌟',stage:'⏱️',library:'🎵'};
+const roleTitles=[{code:'role_admin',label:'Admin✨',category:'secret',metric:'owner_only',threshold:1,sort_order:1},{code:'role_mc',label:'MC🎶',category:'secret',metric:'owner_only',threshold:1,sort_order:2}];
+const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Titre secret accordé par le propriétaire.',initie:'Obtenu après avoir participé à une soirée précédente (ou accordé par le propriétaire). Donne le privilège de départ à −1 point et influence la priorité de passage.'};
+let pendingUnlocks=[],unlockActive=null,hasPresentedUnlocks=false;
 async function fetchProfile(){
  const {data,error}=await sb.from('rockstar_profiles').select('user_id,rockstar_name,preferred_band_name,equipped_title').eq('user_id',state.user.id).maybeSingle();
  if(error)throw error;state.profile=data;
 }
 async function fetchStats(){
- // Role-only titles must be synchronized before loading the filtered secret catalog.
- // If the SQL migration has not been installed yet, ordinary achievements still work.
+ const [roles,progress,unlock,initie]=await Promise.all([
+  Promise.all([sb.rpc('yarg_owner_whoami'),sb.rpc('yarg_admin_whoami')]),
+  sb.rpc('yarg_profile_progress'),
+  sb.rpc('yarg_sync_my_titles'),
+  sb.rpc('yarg_my_initie_status')
+ ]);
+ for(const response of [progress,unlock,initie])if(response.error)throw response.error;
+ // Synchronize role grants first, then read the RLS-filtered catalog.
+ const isOwner=!roles[0].error&&roles[0].data===true;
+ const isMc=isOwner||(!roles[1].error&&roles[1].data===true);
  const roleSync=await sb.rpc('yarg_sync_my_role_titles');
- if(roleSync.error)console.warn('Titres Admin/MC indisponibles :',roleSync.error.message);
- const [progress,catalog,unlock,initie]=await Promise.all([
-  sb.rpc('yarg_profile_progress'),sb.from('yarg_title_catalog').select('code,label,category,metric,threshold,sort_order').order('sort_order'),
-  sb.rpc('yarg_sync_my_titles'),sb.rpc('yarg_my_initie_status')]);
- for(const response of [progress,catalog,unlock,initie])if(response.error)throw response.error;
+ if(roleSync.error)console.warn('Synchronisation des titres spéciaux :',roleSync.error.message);
+ const [catalog,owned]=await Promise.all([
+  sb.from('yarg_title_catalog').select('code,label,category,metric,threshold,sort_order').order('sort_order'),
+  sb.from('yarg_profile_titles').select('title_code').eq('user_id',state.user.id)
+ ]);
+ if(catalog.error)throw catalog.error;
+ if(owned.error)throw owned.error;
  state.progress=Object.fromEntries((progress.data||[]).map(x=>[x.metric,Number(x.amount)||0]));
- state.catalog=catalog.data||[];state.unlocked=new Set((unlock.data||[]).map(x=>x.title_code));state.initie=!!initie.data;
+ state.catalog=catalog.data||[];
+ state.unlocked=new Set((owned.data||[]).map(x=>x.title_code));
+ // Permission checks are authoritative: no secret title is offered on name alone.
+ for(const t of roleTitles){
+  const permitted=t.code==='role_admin'?isOwner:isMc;
+  state.catalog=state.catalog.filter(x=>x.code!==t.code);
+  if(permitted&&state.unlocked.has(t.code))state.catalog.push(t);
+  else state.unlocked.delete(t.code);
+ }
+ state.initie=!!initie.data;
+ const newly=(unlock.data||[]).filter(x=>x.newly_unlocked).map(x=>x.title_code);
+ // Role titles get one first-time announcement when they appear.
+ const seenKey='yarg_seen_special_titles_'+state.user.id;
+ let seen=[];try{seen=JSON.parse(localStorage.getItem(seenKey)||'[]')}catch(e){}
+ for(const code of ['role_admin','role_mc','vieille_garde']){
+  if(state.unlocked.has(code)&&!seen.includes(code))newly.push(code);
+ }
+ localStorage.setItem(seenKey,JSON.stringify([...new Set([...seen,...['role_admin','role_mc','vieille_garde'].filter(x=>state.unlocked.has(x))])]));
+ const names=new Set(state.catalog.map(x=>x.code));
+ pendingUnlocks.push(...[...new Set(newly)].filter(code=>names.has(code)&&!pendingUnlocks.includes(code)));
 }
+
 function renderStats(){const list=['played','parties','stage_minutes','guitar','bass','drums','keys','vocals','library_requests'];$('stats').replaceChildren();for(const metric of list){const box=document.createElement('div');box.className='stat';const strong=document.createElement('strong');strong.textContent=String(state.progress[metric]||0);const label=document.createElement('span');label.textContent=metrics[metric];box.append(strong,label);$('stats').append(box)}}
+function titleNode(tag,className,text){
+ const el=document.createElement(tag);if(className)el.className=className;if(text!==undefined)el.textContent=text;return el;
+}
+function titleEquipButton(t){
+ const equipped=state.profile?.equipped_title===t.code;
+ const button=titleNode('button','small',equipped?'Équipé':'Équiper');
+ button.disabled=equipped;button.onclick=()=>equip(t.code);
+ return button;
+}
+function titleProgress(t){
+ const value=t.metric==='past_parties'?(state.initie?1:0):Number(state.progress[t.metric]||0);
+ const goal=Math.max(1,Number(t.threshold||1));
+ return {value,goal,pct:Math.max(0,Math.min(100,100*value/goal))};
+}
 function renderTitles(){
  const parent=$('titles');parent.replaceChildren();
- const categories=new Map();
- for(const t of state.catalog){const key=String(t.category||'other')+'|'+String(t.metric||'');if(!categories.has(key))categories.set(key,[]);categories.get(key).push(t)}
- for(const [key,tiers] of categories){
-   if(tiers[0].category==='secret'){
-     const earned=tiers.filter(t=>state.unlocked.has(t.code));
-     for(const title of earned){
-       const heading=document.createElement('div');heading.className='sectionlabel';heading.textContent='Titres spéciaux';parent.append(heading);
-       parent.append(achievementCard(title,true,'Titre exclusif'));
-     }
-     continue;
-   }
-   tiers.sort((a,b)=>Number(a.threshold||0)-Number(b.threshold||0)||Number(a.sort_order||0)-Number(b.sort_order||0));
-   const unlocked=tiers.filter(t=>state.unlocked.has(t.code));
-   const last=unlocked.length?unlocked[unlocked.length-1]:null;
-   const next=tiers.find(t=>!state.unlocked.has(t.code))||null;
-   const heading=document.createElement('div');heading.className='sectionlabel';heading.textContent=groupNames[tiers[0].category]||tiers[0].category;parent.append(heading);
-   if(last)parent.append(achievementCard(last,true,'Dernier palier débloqué'));
-   if(next)parent.append(achievementCard(next,false,'Prochain palier'));
-   if(!last&&!next){const e=document.createElement('p');e.className='hint';e.textContent='Aucun palier disponible.';parent.append(e)}
+ const specials=titleNode('section');
+ specials.append(titleNode('h3','sectionlabel','Titres spéciaux'));
+ specials.append(titleNode('p','yarg-title-intro','Titres de privilège et distinctions exclusives. Aucun objectif chiffré.'));
+ const specialGrid=titleNode('div','yarg-special-grid');
+ const init=titleNode('div','yarg-special');
+ init.append(titleNode('strong','','👑 Initié'+(state.initie?' ✓':' 🔒')));
+ init.append(titleNode('p','',state.initie?specialDescriptions.initie:'Joue une prestation lors d’une soirée et reviens à une autre soirée pour devenir Initié.'));
+ specialGrid.append(init);
+ for(const t of state.catalog.filter(x=>x.category==='secret'&&state.unlocked.has(x.code)).sort((a,b)=>Number(a.sort_order||0)-Number(b.sort_order||0))){
+  const box=titleNode('div','yarg-special'+(state.profile?.equipped_title===t.code?' yarg-active':''));
+  box.append(titleNode('strong','',t.label));
+  box.append(titleNode('p','',specialDescriptions[t.code]||'Titre spécial décerné à ton compte.'));
+  box.append(titleEquipButton(t));specialGrid.append(box);
  }
+ specials.append(specialGrid);parent.append(specials);
+ const groups=new Map();
+ for(const t of state.catalog.filter(t=>t.category!=='secret')){
+  const key=String(t.category||'other')+'|'+String(t.metric||'');
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(t);
+ }
+ const grid=titleNode('div','yarg-title-grid');
+ for(const tiers of groups.values()){
+  tiers.sort((a,b)=>Number(a.threshold||0)-Number(b.threshold||0)||Number(a.sort_order||0)-Number(b.sort_order||0));
+  const earned=tiers.filter(t=>state.unlocked.has(t.code));
+  const current=earned[earned.length-1],next=tiers.find(t=>!state.unlocked.has(t.code));
+  const category=tiers[0].category;
+  const card=titleNode('div','yarg-tier-card'+(current?' equipped':''));
+  const progress=titleProgress(next||current||tiers[0]);
+  const ring=titleNode('div','yarg-tier-ring');ring.style.setProperty('--value',String(progress.pct));
+  const inside=titleNode('div','yarg-tier-inner');
+  inside.append(titleNode('span','yarg-tier-icon',titleIcons[category]||'🏆'));
+  inside.append(titleNode('span','yarg-tier-count',Math.min(progress.value,progress.goal)+'/'+progress.goal));
+  ring.append(inside);card.append(ring);
+  const copy=titleNode('div','tier-copy');
+  copy.append(titleNode('div','hint',groupNames[category]||category));
+  copy.append(titleNode('h3','',current?.label||'Premier titre à débloquer'));
+  if(current)copy.append(titleEquipButton(current));
+  copy.append(titleNode('p','',next?'Prochain : '+next.label:current?'Tous les paliers débloqués !':'Ton prochain titre : '+tiers[0].label));
+  card.append(copy);grid.append(card);
+ }
+ parent.append(grid);
 }
-function achievementCard(t,owned,label){
- const wrap=document.createElement('div'),caption=document.createElement('div');caption.className='achievement-tier-label';caption.textContent=label;wrap.append(caption);
- const equipped=state.profile?.equipped_title===t.code,box=document.createElement('div');box.className='title-item'+(owned?'':' locked')+(equipped?' equipped':'');
- const head=document.createElement('div');head.className='title-heading';const name=document.createElement('strong');name.textContent=(owned?'🏆 ':'🔒 ')+t.label;
- const btn=document.createElement('button');btn.type='button';btn.className='small';btn.textContent=equipped?'Équipé':(owned?'Équiper':'Verrouillé');btn.disabled=!owned||equipped;
- btn.onclick=()=>equip(t.code);head.append(name,btn);box.append(head);
- const n=t.metric==='past_parties'?(state.initie?1:0):(state.progress[t.metric]||0),threshold=Number(t.threshold)||1;
- const detail=document.createElement('div');detail.className='hint';detail.textContent=`${Math.min(n,threshold)} / ${threshold}${t.metric==='stage_minutes'?' minutes':''}`;
- const bar=document.createElement('div');bar.className='progress';const fill=document.createElement('span');fill.style.width=`${Math.min(100,100*n/threshold)}%`;bar.append(fill);box.append(bar,detail);wrap.append(box);return wrap;
+function showUnlockIfNeeded(){
+ if(unlockActive||!pendingUnlocks.length||!state.profile)return;
+ const code=pendingUnlocks.shift();
+ const title=state.catalog.find(t=>t.code===code);
+ if(!title){showUnlockIfNeeded();return;}
+ unlockActive=code;
+ $('yarg-unlock-heading').textContent=title.label;
+ const {goal}=titleProgress(title);
+ $('yarg-unlock-reason').textContent=specialDescriptions[code]||
+  ('Obtenu en atteignant '+goal+' '+(metrics[title.metric]||groupNames[title.category]||'exploits').toLowerCase()+'.');
+ $('yarg-unlock-equip').disabled=state.profile.equipped_title===code;
+ $('yarg-unlock-backdrop').hidden=false;
 }
+function closeUnlock(){
+ $('yarg-unlock-backdrop').hidden=true;unlockActive=null;showUnlockIfNeeded();
+}
+$('yarg-unlock-dismiss').addEventListener('click',closeUnlock);
+$('yarg-unlock-view').addEventListener('click',()=>{
+ document.querySelector('[data-profile-tab="achievements"]')?.click();
+ closeUnlock();
+});
+$('yarg-unlock-equip').addEventListener('click',async()=>{
+ if(!unlockActive)return;
+ const code=unlockActive;
+ await equip(code);
+ if(state.profile.equipped_title===code)closeUnlock();
+});
 
 function renderProfile(){
  const p=state.profile;$('profile').hidden=false;$('auth').hidden=true;
@@ -138,7 +250,7 @@ function renderProfile(){
  $('initie-tag').textContent=state.initie?'👑 Initié · priorité première chanson':'Pas encore Initié';$('initie-tag').className='tag '+(state.initie?'yes':'no');
  $('privilege-note').textContent=state.initie?'Tu as le privilège de priorité pour ta première prestation de chaque nouvelle soirée.':'Après une prestation terminée à une soirée précédente, tu peux devenir Initié.';
  $('equipped-preview').textContent=p.equipped_title?(state.catalog.find(x=>x.code===p.equipped_title)?.label||''):'Aucun titre équipé';
- renderStats();renderTitles();
+ renderStats();renderTitles();showUnlockIfNeeded();
 }
 async function equip(code){
  if(!state.unlocked.has(code))return;
