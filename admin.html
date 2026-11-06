@@ -90,8 +90,8 @@ header{align-items:flex-start;margin-bottom:27px;padding-bottom:19px}
 .stat small{font-size:.72rem;line-height:1.35}
 .card{padding:19px 17px;margin-bottom:19px}
 .card>.flex:first-child{align-items:flex-start;gap:12px}
-.tabs{padding:4px;gap:3px;margin-bottom:19px}
-.tabs .tab{flex:1 1 0;min-width:0;padding:11px 5px;font-size:.81rem}
+.tabs{padding:5px;gap:5px;margin-bottom:19px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
+.tabs .tab{flex:none;min-width:0;width:100%;padding:12px 5px;font-size:.78rem;line-height:1.25;overflow-wrap:anywhere;white-space:normal}
 .row{padding:17px 0;gap:12px}
 .row .actions{width:100%}
 .row .actions button{flex:1 1 auto}
@@ -201,14 +201,24 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .mc-playlist-edit label{display:block;font-weight:800;font-size:.86rem}
 .mc-playlist-edit input,.mc-playlist-edit textarea{display:block;margin-top:5px;width:100%;max-width:100%;box-sizing:border-box;background:#101719;color:#f5f7f8;border:1px solid #53666e;border-radius:8px;padding:10px;font:inherit}
 .mc-playlist-edit button{justify-self:start}
+
+/* Régie : statut compact et profils Rockstar repliables. */
+.yarg-party-mode-line{font-weight:800;color:#dce6e8;margin:0 0 16px;padding:5px 0}
+.owner-rockstar-details{padding:0;overflow:hidden}
+.owner-rockstar-details>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;padding:17px 19px;overflow-wrap:anywhere}
+.owner-rockstar-details>summary::-webkit-details-marker{display:none}
+.owner-rockstar-details>summary::before{content:'▸';color:var(--teal);font-size:1.2rem;flex-shrink:0}
+.owner-rockstar-details[open]>summary::before{content:'▾'}
+.owner-rockstar-details>summary:focus-visible{outline:2px solid var(--teal);outline-offset:-3px}
+.owner-rockstar-details .owner-rockstar-body{padding:0 19px 19px;border-top:1px solid #37444a}
 </style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
-<h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. Les outils du propriétaire sont réservés au compte autorisé.</p>
+<h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
 <section id="auth" class="card" hidden><h2>Connexion du MC</h2><p>Connecte-toi avec le courriel et le mot de passe de ton compte MC autorisé.</p><form id="sign-in"><label>Adresse courriel<input name="email" type="email" autocomplete="email" placeholder="mc@exemple.com" required></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary">Se connecter</button></form><p class="help">Le compte doit être ajouté à la liste des MC via le script SQL. Cette page n'accepte pas le simple fait de connaître son URL.</p></section>
 <section id="forbidden" class="card" hidden><h2>Accès réservé</h2><p>Ce compte n'est pas autorisé à gérer la soirée. Connecte-toi avec l'adresse du MC.</p><button id="sign-out-forbidden">Changer de compte</button></section>
 <section id="app" hidden>
-<div class="flex"><div id="session-line" class="muted">Soirée</div><button id="sign-out" class="quiet">Déconnexion</button></div>
+<div id="session-line" class="yarg-party-mode-line" role="status">Mode soirée inactif : demandes fermées</div>
 <div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">🎉 Soirée</button><button class="tab" data-tab="playlists" aria-selected="false">🎶 Playlists</button><button class="tab" id="rockstars-tab-button" data-tab="rockstars" aria-selected="false" hidden>⭐ Gestion des ROCKSTARS</button><button class="tab" id="owner-tab-button" data-tab="owner" aria-selected="false" hidden>🔒 Propriétaire</button></div>
 <div id="scene-tab"><div class="stats"><div class="stat"><b id="total-done">0</b><small>Chansons terminées</small></div><div class="stat"><b id="total-waiting">0</b><small>Demandes en attente</small></div><div class="stat"><b id="mc-active-players">—/—</b><small>Joueurs actifs</small></div></div>
 <details id="mc-score-details" class="history-score-details"><summary>🏆 Classement des Rockstars · points de la soirée</summary>
@@ -376,7 +386,7 @@ function render(){
  applyAdminPartyMode(s);
  const preregistration = partyStillOn(s) && !s.party_mode_until;
  const running = partyStillOn(s) && !!s.party_mode_until;
- $('session-line').textContent=`${session.name||s.party_name||'Soirée YARG'} · ${preregistration?'🟢 Préinscriptions ouvertes':running?'🟠 Soirée en cours':'🔴 Demandes fermées'}`;
+ $('session-line').textContent=partyStillOn(s)?'🟢 Mode soirée actif : demandes ouvertes':'🔴 Mode soirée inactif : demandes fermées';
  $('preopen-status').textContent=preregistration?'Préinscriptions ouvertes. Le décompte de 36 heures n’a pas commencé.':running?`La fenêtre de 36 heures se termine le ${new Date(s.party_mode_until).toLocaleString('fr-CA')}.`:partyStillOn(s)?'Demandes ouvertes.':'Pour préparer une soirée, active le Mode soirée et enregistre les réglages. (Nécessite la migration SQL de préinscription.)';
  $('begin-live-party').hidden=!preregistration;
  const rows=snapshot.requests||[];
@@ -463,6 +473,7 @@ $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {er
 
 
 const ownerData={players:[],library:[],titles:[],credits:[],oldGuard:[]};
+const expandedOwnerRockstars=new Set();
 let zombieMetadata=new Map();
 let zombieFeatureReady=false;
 const ZOMBIE_WAIT_MS=30*24*60*60*1000;
@@ -551,6 +562,7 @@ async function loadOwner(){
  await loadZombieMetadata();
  drawOwner();
 }
+document.addEventListener('toggle',event=>{const details=event.target;if(!(details instanceof HTMLDetailsElement)||!details.matches('.owner-rockstar-details'))return;const key=details.dataset.rockstarId;if(details.open)expandedOwnerRockstars.add(key);else expandedOwnerRockstars.delete(key);},true);
 function ownerSelect(options,selected){return options.map(([v,l])=>`<option value="${esc(v)}" ${v===selected?'selected':''}>${esc(l)}</option>`).join('')}
 function drawOwner(){
  $('owner-players').innerHTML=ownerData.players.length?ownerData.players.map(p=>{
@@ -559,7 +571,7 @@ function drawOwner(){
   const metrics=creditMetrics.map(([metric,label])=>`<form class="legacy-form" data-credit-user="${esc(p.user_id)}" data-credit-metric="${esc(metric)}"><label>${esc(label)}<input type="number" name="amount" min="0" max="1000000" step="1" value="${current(metric)}" required></label><button type="submit">Enregistrer</button></form>`).join('');
   const oldGuard=ownerData.oldGuard.includes(p.user_id);
   const titleChoices=ownerData.titles.filter(t=>t.code!=='vieille_garde'||oldGuard);
-  return `<div class="owner-item"><strong>${esc(p.rockstar_name)}</strong><div class="owner-item-fields"><label>Privilège Initié<select data-initie-for="${esc(p.user_id)}">${ownerSelect([['auto','Automatique'],['yes','Accorder'],['no','Retirer']],p.manual_initie===true?'yes':p.manual_initie===false?'no':'auto')}</select></label><label>Titre affiché<select data-title-for="${esc(p.user_id)}">${ownerSelect([['','Aucun'],...titleChoices.map(t=>[t.code,t.label])],p.equipped_title||'')}</select></label></div><label class="old-guard-choice"><input type="checkbox" data-old-guard-for="${esc(p.user_id)}" ${oldGuard?'checked':''}> 🏅 La Vieille Garde — titre secret (ancien du setup)</label><details class="legacy-details"><summary>Crédits historiques d’exploits</summary><p class="help">Ajoute les participations de soirées antérieures non comptées automatiquement (y compris la dernière soirée si aucune performance n’a été enregistrée). Ne crédite pas deux fois une même présence. Chaque valeur est un supplément aux statistiques réelles, pas leur total. Les titres se débloquent à la prochaine visite du profil.</p><div class="legacy-grid">${metrics}</div></details></div>`;
+  return `<details class="owner-item owner-rockstar-details" data-rockstar-id="${esc(p.user_id)}" ${expandedOwnerRockstars.has(String(p.user_id))?'open':''}><summary><strong>${esc(p.rockstar_name)}</strong></summary><div class="owner-rockstar-body"><div class="owner-item-fields"><label>Privilège Initié<select data-initie-for="${esc(p.user_id)}">${ownerSelect([['auto','Automatique'],['yes','Accorder'],['no','Retirer']],p.manual_initie===true?'yes':p.manual_initie===false?'no':'auto')}</select></label><label>Titre affiché<select data-title-for="${esc(p.user_id)}">${ownerSelect([['','Aucun'],...titleChoices.map(t=>[t.code,t.label])],p.equipped_title||'')}</select></label></div><label class="old-guard-choice"><input type="checkbox" data-old-guard-for="${esc(p.user_id)}" ${oldGuard?'checked':''}> 🏅 La Vieille Garde — titre secret (ancien du setup)</label><details class="legacy-details"><summary>Crédits historiques d’exploits</summary><p class="help">Ajoute les participations de soirées antérieures non comptées automatiquement (y compris la dernière soirée si aucune performance n’a été enregistrée). Ne crédite pas deux fois une même présence. Chaque valeur est un supplément aux statistiques réelles, pas leur total. Les titres se débloquent à la prochaine visite du profil.</p><div class="legacy-grid">${metrics}</div></details></div></details>`;
  }).join(''):'<p class="muted">Aucun profil Rockstar inscrit.</p>';
  const pending=ownerData.library.filter(l=>l.status==='pending').length;
  const badge=$('owner-library-pending');
@@ -603,7 +615,7 @@ document.addEventListener('change',async e=>{
 
 $('sign-in').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget;const button=form.querySelector('button');button.disabled=true;try{const {error}=await sb.auth.signInWithPassword({email:form.elements.email.value.trim(),password:form.elements.password.value});if(error)throw error;location.reload()}catch(e){notice(e.message,true)}finally{button.disabled=false}};
 async function logout(){await sb.auth.signOut();location.reload()}
-$('sign-out').onclick=logout;$('sign-out-forbidden').onclick=logout;
+$('sign-out-forbidden').onclick=logout;
 // Public playlist editor: authorization is enforced by Supabase RLS on all mutations.
 // Preserve expanded playlists when refreshing their contents after an edit.
 const expandedMcPlaylists=new Set();
