@@ -113,7 +113,7 @@ function safeName(s){return (s||'').trim();}
 function isRegistered(user){return !!user && user.is_anonymous !== true && user.app_metadata?.provider !== 'anonymous';}
 const metrics={played:'Prestations terminées',parties:'Soirées jouées',stage_minutes:'Minutes sur scène',library_requests:'Demandes bibliothèque',guitar:'Guitare',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix'};
 const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Demandes spéciales'};
-const titleIcons={guitar:'🎸',bass:'🎸',drums:'🥁',keys:'🎹',vocals:'🎤',attendance:'🤘',stage:'⏱️',library:'🎵'};
+const titleIcons={guitar:'🎸',bass:'🎸',drums:'🥁',keys:'🎹',vocals:'🎤',attendance:'🎉',stage:'⏱️',library:'🎵'};
 const medalRanks=['bronze','argent','or','platine','diamant','maitre','grand-maitre','champion'];
 const medalCategories=new Set(['guitar','bass','drums','keys','vocals','attendance','stage','library']);
 function medalIconUrl(category,level){
@@ -231,16 +231,17 @@ function renderTitles(){
   const card=titleNode('div','yarg-tier-card'+(current?' equipped':''));
   const progress=titleProgress(next||current||tiers[0]);
   const medalLevel=current?tiers.indexOf(current)+1:1;
-  const medalSrc=medalIconUrl(category,medalLevel);
+  const isStagePillar=/pilier de la scène/i.test(current?.label||'');
+  const medalSrc=isStagePillar?'':medalIconUrl(category,medalLevel);
   const ring=titleNode('div','yarg-tier-ring'+(medalSrc?' has-medal':'')+(!current?' is-unearned':''));ring.style.setProperty('--value',String(progress.pct));
   const inside=titleNode('div','yarg-tier-inner');
   const icon=titleNode('span','yarg-tier-icon');
   if(medalSrc){
    const img=document.createElement('img');img.alt='';img.className='yarg-rank-medal';img.src=medalSrc;
-   img.onerror=()=>{ring.classList.remove('has-medal','is-unearned');img.remove();if(instrumentIconSources[category]){const fallback=document.createElement('img');fallback.alt='';fallback.src=instrumentIconSources[category];icon.append(fallback)}else icon.textContent=titleIcons[category]||'🏆'};
+   img.onerror=()=>{ring.classList.remove('has-medal','is-unearned');img.remove();if(instrumentIconSources[category]){const fallback=document.createElement('img');fallback.alt='';fallback.src=instrumentIconSources[category];icon.append(fallback)}else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆')};
    icon.append(img);
   }else if(instrumentIconSources[category]){const img=document.createElement('img');img.alt='';img.src=instrumentIconSources[category];icon.append(img)}
-  else icon.textContent=titleIcons[category]||'🏆';
+  else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆');
   inside.append(icon);
   inside.append(titleNode('span','yarg-tier-count',Math.min(progress.value,progress.goal)+'/'+progress.goal));
   ring.append(inside);card.append(ring);
