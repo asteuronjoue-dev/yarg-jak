@@ -48,7 +48,8 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 .yarg-tier-card .small{margin-top:7px;padding:6px 10px}
 .yarg-tier-ring{--value:0;--ring:#24c5b6;width:79px;height:79px;flex-shrink:0;border-radius:50%;background:conic-gradient(var(--ring) calc(var(--value)*1%),#39474f 0);padding:7px;display:grid;place-items:center}
 .yarg-tier-inner{width:100%;height:100%;border-radius:50%;background:#151c21;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.yarg-tier-icon{font-size:25px;line-height:1.1}.yarg-tier-count{font-size:.65rem;color:#c7d6dc;font-weight:850;margin-top:2px}
+.yarg-tier-icon{font-size:25px;line-height:1.1;display:flex;align-items:center;justify-content:center}
+.yarg-tier-icon img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 1px 3px #000a)}.yarg-tier-count{font-size:.65rem;color:#c7d6dc;font-weight:850;margin-top:2px}
 .yarg-special-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0 23px}
 .yarg-special{background:#222a30;border:1px solid #3e535d;border-radius:13px;padding:13px;display:flex;flex-direction:column;gap:7px}
 .yarg-special strong{font-size:1rem}.yarg-special p{margin:0;font-size:.8rem}
@@ -107,6 +108,20 @@ function isRegistered(user){return !!user && user.is_anonymous !== true && user.
 const metrics={played:'Prestations terminées',parties:'Soirées jouées',stage_minutes:'Minutes sur scène',library_requests:'Demandes bibliothèque',guitar:'Guitare',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix'};
 const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Bibliothèque'};
 const titleIcons={guitar:'🎸',bass:'🎸',drums:'🥁',keys:'🎹',vocals:'🎤',attendance:'🌟',stage:'⏱️',library:'🎵'};
+const instrumentIconSources={};
+// Reuse the original index.html filter artwork rather than approximate instrument emoji.
+async function loadInstrumentTitleIcons(){
+ try{
+  const response=await fetch('index.html',{cache:'force-cache'});if(!response.ok)throw new Error(response.status);
+  const page=new DOMParser().parseFromString(await response.text(),'text/html');
+  for(const [category,code] of Object.entries({guitar:'G',bass:'B',drums:'D',keys:'K',vocals:'V'})){
+   const img=page.querySelector('button[data-part="'+code+'"] img.chip-icon');
+   const src=img?.getAttribute('src');
+   if(src&&(/^(data:image\/|assets\/)/).test(src))instrumentIconSources[category]=src;
+  }
+  if(state.profile)renderTitles();
+ }catch(error){console.warn('Icônes instrument du catalogue indisponibles :',error)}
+}
 const roleTitles=[{code:'role_admin',label:'Admin✨',category:'secret',metric:'owner_only',threshold:1,sort_order:1},{code:'role_mc',label:'MC🎶',category:'secret',metric:'owner_only',threshold:1,sort_order:2}];
 const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Titre secret accordé par le propriétaire.',initie:'Obtenu après avoir participé à une soirée précédente (ou accordé par le propriétaire). Donne le privilège de départ à −1 point et influence la priorité de passage.'};
 let pendingUnlocks=[],unlockActive=null,hasPresentedUnlocks=false;
@@ -204,7 +219,10 @@ function renderTitles(){
   const progress=titleProgress(next||current||tiers[0]);
   const ring=titleNode('div','yarg-tier-ring');ring.style.setProperty('--value',String(progress.pct));
   const inside=titleNode('div','yarg-tier-inner');
-  inside.append(titleNode('span','yarg-tier-icon',titleIcons[category]||'🏆'));
+  const icon=titleNode('span','yarg-tier-icon');
+  if(instrumentIconSources[category]){const img=document.createElement('img');img.alt='';img.src=instrumentIconSources[category];icon.append(img)}
+  else icon.textContent=titleIcons[category]||'🏆';
+  inside.append(icon);
   inside.append(titleNode('span','yarg-tier-count',Math.min(progress.value,progress.goal)+'/'+progress.goal));
   ring.append(inside);card.append(ring);
   const copy=titleNode('div','tier-copy');
@@ -296,7 +314,7 @@ async function initialize(){
    const {error:saveError}=await sb.from('rockstar_profiles').insert({user_id:user.id,rockstar_name:suggested});if(saveError)throw saveError;
    await fetchProfile();
   }
-  await fetchStats();renderProfile();
+  await fetchStats();renderProfile();void loadInstrumentTitleIcons();
  }catch(err){$('auth').hidden=false;message('Erreur de profil : '+err.message,true)}
 }
 // Navigation des onglets, sans perdre les données du profil.
