@@ -876,7 +876,9 @@ body:has(#public-playlists-discovery[open]) #scroll {
   height: clamp(380px, 68dvh, 900px) !important;
   min-height: 380px !important;
   overflow-y: auto !important;
-  overscroll-behavior-y: contain;
+  /* Allow wheel/touch scrolling to continue to the page at list boundaries. */
+  overscroll-behavior-y: auto;
+  touch-action: pan-y;
   scroll-margin-top: 14px;
   -webkit-overflow-scrolling: touch;
 }
