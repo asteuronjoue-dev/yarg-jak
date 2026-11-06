@@ -122,20 +122,14 @@ function medalIconUrl(category,level){
  const rank=Math.max(1,Math.min(8,Number(level)||1));
  return 'assets/médailles/'+category+'-'+String(rank).padStart(2,'0')+'-'+medalRanks[rank-1]+'.png';
 }
-const instrumentIconSources={};
-// Reuse the original index.html filter artwork rather than approximate instrument emoji.
-async function loadInstrumentTitleIcons(){
- try{
-  const response=await fetch('index.html',{cache:'force-cache'});if(!response.ok)throw new Error(response.status);
-  const page=new DOMParser().parseFromString(await response.text(),'text/html');
-  for(const [category,code] of Object.entries({guitar:'G',bass:'B',drums:'D',keys:'K',vocals:'V'})){
-   const img=page.querySelector('button[data-part="'+code+'"] img.chip-icon');
-   const src=img?.getAttribute('src');
-   if(src&&(/^(data:image\/|assets\/)/).test(src))instrumentIconSources[category]=src;
-  }
-  if(state.profile)renderTitles();
- }catch(error){console.warn('Icônes instrument du catalogue indisponibles :',error)}
-}
+// Icônes de secours locales, fournies par Jak. Ne jamais les lire depuis index.html.
+const instrumentIconSources={
+ guitar:'assets/médailles/guitar-fallback.png',
+ bass:'assets/médailles/bass-fallback.png',
+ drums:'assets/médailles/drums-fallback.png',
+ keys:'assets/médailles/keys-fallback.png',
+ vocals:'assets/médailles/vocals-fallback.png'
+};
 const roleTitles=[{code:'role_admin',label:'Admin✨',category:'secret',metric:'owner_only',threshold:1,sort_order:1},{code:'role_mc',label:'MC🎶',category:'secret',metric:'owner_only',threshold:1,sort_order:2}];
 const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Vous étiez là au tout début.',initie:'Obtenu après avoir participé à une soirée précédente. Débute toutes les soirées à −1 pt, ce qui permet à ta première chanson de passer avant les non-initiés ! Effet permanent.'};
 let pendingUnlocks=[],unlockActive=null,hasPresentedUnlocks=false;
@@ -246,9 +240,9 @@ function renderTitles(){
   const icon=titleNode('span','yarg-tier-icon');
   if(medalSrc){
    const img=document.createElement('img');img.alt='';img.className='yarg-rank-medal';img.src=medalSrc;
-   img.onerror=()=>{ring.classList.remove('has-medal','is-unearned');img.remove();if(instrumentIconSources[category]){const fallback=document.createElement('img');fallback.alt='';fallback.src=instrumentIconSources[category];icon.append(fallback)}else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆')};
+   img.onerror=()=>{ring.classList.remove('has-medal','is-unearned');img.remove();if(instrumentIconSources[category]){const fallback=document.createElement('img');fallback.alt='';fallback.src=instrumentIconSources[category];fallback.onerror=()=>{fallback.remove();icon.textContent=titleIcons[category]||'🏆'};icon.append(fallback)}else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆')};
    icon.append(img);
-  }else if(instrumentIconSources[category]){const img=document.createElement('img');img.alt='';img.src=instrumentIconSources[category];icon.append(img)}
+  }else if(instrumentIconSources[category]){const img=document.createElement('img');img.alt='';img.src=instrumentIconSources[category];img.onerror=()=>{img.remove();icon.textContent=titleIcons[category]||'🏆'};icon.append(img)}
   else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆');
   inside.append(icon);
   inside.append(titleNode('span','yarg-tier-count',Math.min(progress.value,progress.goal)+'/'+progress.goal));
@@ -342,7 +336,7 @@ async function initialize(){
    const {error:saveError}=await sb.from('rockstar_profiles').insert({user_id:user.id,rockstar_name:suggested});if(saveError)throw saveError;
    await fetchProfile();
   }
-  await fetchStats();renderProfile();void loadInstrumentTitleIcons();
+  await fetchStats();renderProfile();
  }catch(err){$('auth').hidden=false;message('Erreur de profil : '+err.message,true)}
 }
 // Navigation des onglets, sans perdre les données du profil.
