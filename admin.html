@@ -248,6 +248,11 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
  <div class="stats"><div class="stat"><b id="total-library">0</b><small>Demandes bibliothèque</small></div></div>
  <section class="card"><h2>Associations Guitar Hero / Rock Band</h2><p class="help">Outils de correspondance avec les chansons du catalogue. Publie le fichier game-song-matches.json après validation.</p><div class="actions"><a class="admin-tool-link" href="manquantes-guitar-hero.html">🎸 Associer Guitar Hero au catalogue</a><a class="admin-tool-link" href="manquantes-rock-band.html">🥁 Associer Rock Band au catalogue</a></div></section>
  <section class="card"><h2>Comptes MC autorisés</h2><p class="help">Le propriétaire désigne les MC qui peuvent gérer la scène. Un MC n'a pas accès aux outils Propriétaire.</p><form class="mc-add" id="mc-add-form"><label>Courriel du compte MC confirmé<input type="email" id="mc-admin-email" placeholder="mc@exemple.com" required></label><button class="primary" type="submit">Autoriser ce MC</button></form><div id="mc-accounts" class="mc-list"></div></section>
+ <section class="card" id="owner-session-management">
+  <div class="flex"><h2>🗑️ Archives et séances de test</h2><button type="button" class="quiet small" id="owner-session-refresh">↻ Actualiser</button></div>
+  <p class="help">Réservé au propriétaire. Supprimer une séance archivée efface ses demandes, prestations, participations et crédits de progression calculés à partir de ces données. Les autres soirées et les crédits historiques attribués manuellement sont conservés. Action irréversible.</p>
+  <div id="owner-archived-sessions" class="owner-list"><div class="muted">Chargement des archives…</div></div>
+ </section>
  <section class="card"><h2>Demandes de chansons pour la bibliothèque</h2><p class="help">« Téléchargée » veut dire que la chanson a bien été ajoutée à la bibliothèque. Les notifications par courriel seront ajoutées séparément.</p><div id="owner-library" class="owner-list"></div></section>
 </section>
 </section></main>
@@ -431,6 +436,42 @@ $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {er
 
 const ownerData={players:[],library:[],titles:[],credits:[],oldGuard:[]};
 const creditMetrics=[["parties","Soirées antérieures"],["played","Chansons terminées"],["guitar","Guitare / Rythmique"],["bass","Basse"],["drums","Batterie"],["keys","Clavier"],["vocals","Voix"],["stage_minutes","Minutes sur scène"],["confirmed_additions","Ajouts à la bibliothèque"],["library_requests","Demandes de bibliothèque"]];
+// Destruction des archives : RPC propriétaire, transaction atomique et confirmation du nom.
+let ownerSessionsBusy=false;
+async function loadArchivedSessions(){
+ const host=$('owner-archived-sessions');if(!host||ownerSessionsBusy)return;
+ host.textContent='Chargement des archives…';
+ const {data,error}=await sb.rpc('yarg_owner_archived_sessions');
+ if(error){host.textContent='Gestion des archives indisponible : '+error.message+' (installer la migration SQL de suppression des sessions).';return}
+ host.replaceChildren();
+ if(!data?.length){host.textContent='Aucune soirée archivée.';return}
+ for(const s of data){
+  const row=document.createElement('div');row.className='mc-row';
+  const info=document.createElement('div');info.className='grow';
+  const heading=document.createElement('strong');heading.textContent=s.name||'Soirée YARG';
+  const meta=document.createElement('div');meta.className='muted';
+  const day=s.started_at?new Date(s.started_at).toLocaleDateString('fr-CA'):'Date inconnue';
+  meta.textContent=day+' · '+(Number(s.request_count)||0)+' demande(s) · '+(Number(s.played_count)||0)+' prestation(s) terminée(s)';
+  info.append(heading,meta);
+  const button=document.createElement('button');button.type='button';button.className='danger small';button.textContent='Supprimer définitivement';
+  button.onclick=async()=>{
+   if(ownerSessionsBusy)return;
+   const typed=prompt('Cette action est IRRÉVERSIBLE et retire aussi les exploits calculés pour cette soirée.\n\nPour confirmer, recopie exactement le nom de la soirée :\n'+s.name);
+   if(typed!==s.name){if(typed!==null)notice('Suppression annulée : le nom ne correspond pas.',true);return}
+   if(!confirm('Dernière confirmation : supprimer définitivement « '+s.name+' » et ses prestations ?'))return;
+   ownerSessionsBusy=true;button.disabled=true;
+   try{
+    const {data:result,error:deleteError}=await sb.rpc('yarg_owner_delete_archived_session',{p_session_id:s.id,p_expected_name:s.name});
+    if(deleteError)throw deleteError;
+    notice('Soirée supprimée : '+s.name+'. '+(result?.deleted_requests??0)+' demande(s) effacée(s).');
+    await load();
+   }catch(e){notice('Suppression impossible : '+(e.message||String(e)),true)}
+   finally{ownerSessionsBusy=false;await loadArchivedSessions();}
+  };
+  row.append(info,button);host.append(row);
+ }
+}
+$('owner-session-refresh').onclick=loadArchivedSessions;
 async function loadOwner(){
  const [{data,error},{data:legacy,error:legacyError}]=await Promise.all([sb.rpc('yarg_owner_snapshot'),sb.rpc('yarg_owner_legacy_snapshot')]);if(error||legacyError){notice('Accès propriétaire : '+(error||legacyError).message,true);return;}
  ownerData.players=data.rockstars||[];ownerData.library=data.library||[];ownerData.titles=data.titles||[];ownerData.credits=legacy.credits||[];ownerData.oldGuard=legacy.old_guard||[];
@@ -523,6 +564,6 @@ $('playlist-create').onsubmit=async e=>{
  if(error){notice('Création impossible : '+error.message,true);return;}
  $('playlist-name').value='';$('playlist-description').value='';notice('Playlist créée. Ajoute des chansons depuis le catalogue.');await loadMcPlaylists();
 };
-async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;await loadOwner();await syncMcControls()}$('app').hidden=false;await load();await loadMcRockstars();await loadMcPlaylists();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
+async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;await loadOwner();await syncMcControls();await loadArchivedSessions()}$('app').hidden=false;await load();await loadMcRockstars();await loadMcPlaylists();setInterval(()=>{if(!document.hidden)load()},15000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
 init();
 </script></body></html>
