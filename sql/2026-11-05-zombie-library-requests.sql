@@ -36,12 +36,12 @@ UPDATE public.library_requests
  WHERE status='unfindable' AND unfindable_at IS NULL;
 
 CREATE OR REPLACE FUNCTION public.yarg_owner_unfindable_dates()
-RETURNS TABLE(id uuid,unfindable_at timestamptz)
+RETURNS TABLE(id text,unfindable_at timestamptz)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $read$
 BEGIN
  PERFORM public.yarg_owner_guard();
  RETURN QUERY
- SELECT r.id,r.unfindable_at
+ SELECT r.id::text,r.unfindable_at
  FROM public.library_requests r
  WHERE r.status='unfindable' AND r.unfindable_at IS NOT NULL;
 END;
