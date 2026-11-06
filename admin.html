@@ -262,14 +262,9 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
  <section class="card"><h2>🔒 Gestion des ROCKSTARS</h2><p class="help">Réservé au propriétaire : privilège Initié, titres et crédits historiques. Les crédits ne modifient jamais la file de cette soirée.</p><div id="owner-players" class="owner-list"></div></section>
 </section>
 <section id="owner-tab" hidden>
- <div class="stats"><div class="stat"><b id="total-library">0</b><small>Demandes bibliothèque</small></div></div>
- <details class="card owner-fold"><summary>Associations Guitar Hero / Rock Band</summary><div class="owner-fold-body">
-  <p class="help">Outils de correspondance avec les chansons du catalogue. Publie le fichier game-song-matches.json après validation.</p>
-  <div class="actions"><a class="admin-tool-link" href="manquantes-guitar-hero.html">🎸 Associer Guitar Hero au catalogue</a><a class="admin-tool-link" href="manquantes-rock-band.html">🥁 Associer Rock Band au catalogue</a></div>
- </div></details>
- <details class="card owner-fold"><summary>Comptes MC autorisés</summary><div class="owner-fold-body">
-  <p class="help">Le propriétaire désigne les MC qui peuvent gérer la scène. Un MC n'a pas accès aux outils Propriétaire.</p>
-  <form class="mc-add" id="mc-add-form"><label>Courriel du compte MC confirmé<input type="email" id="mc-admin-email" placeholder="mc@exemple.com" required></label><button class="primary" type="submit">Autoriser ce MC</button></form><div id="mc-accounts" class="mc-list"></div>
+ <details class="card owner-fold" id="owner-library-section"><summary>Demandes de chansons pour la bibliothèque <span id="owner-library-pending" class="owner-fold-count" hidden></span></summary><div class="owner-fold-body">
+  <p class="help">Les demandes « Introuvable » sont mises de côté pendant 30 jours. Elles reviennent ensuite comme 🧟 Demandes zombies ! « Téléchargée » signifie que la chanson a été ajoutée à la bibliothèque.</p>
+  <div id="owner-library" class="owner-list"></div>
  </div></details>
  <details class="card owner-fold" id="owner-session-management"><summary>📃 Soirées archivées</summary><div class="owner-fold-body">
    <div class="flex"><p class="help">Réservé au propriétaire. Supprimer une soirée archivée efface ses demandes, prestations, participations et crédits de progression calculés à partir de ces données. Les autres soirées et les crédits historiques attribués manuellement sont conservés. Action irréversible.</p><button type="button" class="quiet small" id="owner-session-refresh">↻ Actualiser</button></div>
@@ -279,9 +274,13 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
    </div>
    <div id="owner-archived-sessions" class="owner-list"><div class="muted">Chargement des archives…</div></div>
  </div></details>
- <details class="card owner-fold" id="owner-library-section"><summary>Demandes de chansons pour la bibliothèque <span id="owner-library-pending" class="owner-fold-count" hidden></span></summary><div class="owner-fold-body">
-  <p class="help">Les demandes « Introuvable » sont mises de côté pendant 30 jours. Elles reviennent ensuite comme 🧟 Demandes zombies ! « Téléchargée » signifie que la chanson a été ajoutée à la bibliothèque.</p>
-  <div id="owner-library" class="owner-list"></div>
+ <details class="card owner-fold"><summary>Comptes MC autorisés</summary><div class="owner-fold-body">
+  <p class="help">Le propriétaire désigne les MC qui peuvent gérer la scène. Un MC n'a pas accès aux outils Propriétaire.</p>
+  <form class="mc-add" id="mc-add-form"><label>Courriel du compte MC confirmé<input type="email" id="mc-admin-email" placeholder="mc@exemple.com" required></label><button class="primary" type="submit">Autoriser ce MC</button></form><div id="mc-accounts" class="mc-list"></div>
+ </div></details>
+ <details class="card owner-fold"><summary>Associations Guitar Hero / Rock Band</summary><div class="owner-fold-body">
+  <p class="help">Outils de correspondance avec les chansons du catalogue. Publie le fichier game-song-matches.json après validation.</p>
+  <div class="actions"><a class="admin-tool-link" href="manquantes-guitar-hero.html">🎸 Associer Guitar Hero au catalogue</a><a class="admin-tool-link" href="manquantes-rock-band.html">🥁 Associer Rock Band au catalogue</a></div>
  </div></details>
 </section>
 </section></main>
@@ -392,7 +391,7 @@ function render(){
   $('history-skipped').innerHTML=skipped.length?skipped.map(historyRow).join(''):'<div class="empty">Aucune chanson sautée.</div>';
   $('history-completed').innerHTML=completed.length?completed.map(historyRow).join(''):'<div class="empty">Aucune chanson terminée.</div>';
  $('total-done').textContent=String(rows.filter(r=>['completed','played'].includes(r.status)).length);
- $('total-waiting').textContent=String(upcoming.length);$('total-library').textContent=String(snapshot.library_pending||0);
+ $('total-waiting').textContent=String(upcoming.length);
  if(!hasLoadedSettings){$('party-name').value=s.party_name||'';$('mc-name').value=s.mc_name||'';$('party-mode').checked=partyStillOn(s);hasLoadedSettings=true;}
 }
 // Récupère les scores acquis depuis un RPC réservé au MC; ne les expose pas dans file.html.
