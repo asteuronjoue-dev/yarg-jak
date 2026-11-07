@@ -67,7 +67,7 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 .yarg-unlock-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px}
 @media(max-width:520px){.yarg-title-grid{grid-template-columns:1fr}.yarg-tier-ring{width:68px;height:68px}.yarg-unlock-actions button{flex:1 1 100%}}
 .fav-profile-list{display:grid;gap:9px;margin-top:12px}.fav-profile-song{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#222a2f;border:1px solid #37474f;border-radius:10px;padding:11px 13px}.fav-profile-song strong{display:block}.fav-profile-song small{color:var(--muted)}.fav-profile-song .remove-favorite{flex-shrink:0;background:#3d2930;border-color:#80515b;color:#ffe2e6;font-size:.83rem;padding:9px 12px}.fav-profile-song .remove-favorite:hover:not(:disabled){background:#63333c;border-color:#ff9aa8}@media(max-width:510px){.fav-profile-song{align-items:flex-start;flex-direction:column}.fav-profile-song .remove-favorite{align-self:flex-end}}
-@media(max-width:670px){.profile-tabs{gap:4px}.profile-tab{padding:10px 5px;flex-basis:100px;font-size:.85rem}}
+@media(max-width:670px){.profile-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.profile-tab{min-width:0;width:100%;padding:11px 6px;font-size:.85rem;flex:none}}
 </style>
 </head>
 <body><aside id="newbie-note-yarg_tips_profile_v1" class="yarg-newbie-note"><button type="button" onclick="localStorage.setItem('yarg_tips_profile_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🌟 Bienvenue sur la page de profil!</strong><p>Ici tu peux créer un compte ROCKSTAR! C'est complètement optionnel. Si tu décides d'en faire un, tes statistiques de performances seront conservés et tu pourras gagner des titres! Tu obtiendra également une récompense de points si tu rejoins les chansons des autres au courant de la soirée! Right on!</p></aside><script>if(localStorage.getItem('yarg_tips_profile_v1'))document.getElementById('newbie-note-yarg_tips_profile_v1').hidden=true</script>
@@ -85,8 +85,8 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 
 <div class="profile-tabs" role="tablist" aria-label="Sections du profil">
 <button type="button" class="profile-tab" data-profile-tab="statistics" aria-selected="true">📊 Statistiques</button>
-<button type="button" class="profile-tab" data-profile-tab="achievements" aria-selected="false">🏆 Exploits</button>
-<button type="button" class="profile-tab" data-profile-tab="favorites" aria-selected="false">♥ Mes favoris</button>
+<button type="button" class="profile-tab" data-profile-tab="achievements" aria-selected="false">🏷️ Titres</button>
+<button type="button" class="profile-tab" data-profile-tab="favorites" aria-selected="false">💙 Mes favoris</button>
 <button type="button" class="profile-tab" data-profile-tab="costars" aria-selected="false">🎸 Co-stars</button>
 </div>
 <div class="profile-panel" id="statistics-panel"><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div></div>
@@ -95,7 +95,7 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
  <div class="yarg-unlock-modal"><div class="unlock-sparkle">🏆✨</div><p class="hint">NOUVEAU TITRE DÉBLOQUÉ</p><h2 id="yarg-unlock-heading"></h2><p id="yarg-unlock-reason"></p>
  <div class="yarg-unlock-actions"><button type="button" class="primary" id="yarg-unlock-equip">Équiper</button><button type="button" id="yarg-unlock-view">Voir tous mes titres</button><button type="button" class="ghost" id="yarg-unlock-dismiss">Fermer</button></div></div>
 </div>
-<div class="profile-panel" id="favorites-panel" hidden><div class="card"><div class="topline"><h2>♥ Mes favoris</h2><a href="index.html" class="primary" style="padding:10px 13px;border-radius:10px;font-weight:800">Ouvrir le catalogue</a></div><p id="favorites-status" class="hint">Chargement de tes favoris…</p><div id="profile-favorites" class="fav-profile-list"></div></div></div>
+<div class="profile-panel" id="favorites-panel" hidden><div class="card"><div class="topline"><h2>💙 Mes favoris</h2><a href="index.html" class="primary" style="padding:10px 13px;border-radius:10px;font-weight:800">Ouvrir le catalogue</a></div><p id="favorites-status" class="hint">Chargement de tes favoris…</p><div id="profile-favorites" class="fav-profile-list"></div></div></div>
 <div class="profile-panel" id="costars-panel" hidden><div class="card"><h2>Co-stars et invitations</h2><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="band-opt-in"> Me rendre visible pour les invitations</label><p class="hint">Après ta première demande, tu peux recevoir des invitations pendant la soirée.</p><button id="reload-invites" type="button">Vérifier mes invitations</button><div id="band-invites"></div></div></div>
 </section>
 
