@@ -1066,7 +1066,7 @@ header {max-height:none!important;overflow:visible!important}
         </div>
         <div class="search-row">
             <div class="search-input-wrap">
-                <input type="search" id="search" placeholder="Rechercher une chanson...">
+                <input type="search" id="search" enterkeyhint="search" placeholder="Rechercher une chanson...">
             </div>
             <div class="search-divider"></div>
             <div class="search-gear" id="search-gear">
@@ -2005,6 +2005,29 @@ header {max-height:none!important;overflow:visible!important}
                 state.q = query ? query.toLowerCase().split(/\s+/) : [];
                 filter();
             }, 150);
+        });
+
+        // Enter/Search confirms the current query, closes the mobile keyboard,
+        // and moves the single document scrollbar to the song results.
+        searchInput.addEventListener('keydown', (event) => {
+            if(event.key !== 'Enter' || event.isComposing) return;
+            event.preventDefault();
+            clearTimeout(searchTimeout);
+            const query=searchInput.value.trim();
+            state.q=query ? query.toLowerCase().split(/\s+/) : [];
+            filter();
+            searchInput.blur();
+            const goToResults=()=>{
+                const bannerHeight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--yarg-next-banner-height'))||0;
+                const y=window.pageYOffset+scrollEl.getBoundingClientRect().top-bannerHeight-12;
+                const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                window.scrollTo({top:Math.max(0,y),behavior:reducedMotion?'auto':'smooth'});
+            };
+            // Let the viewport settle as the mobile software keyboard disappears.
+            requestAnimationFrame(()=>requestAnimationFrame(goToResults));
+            if(window.visualViewport && window.visualViewport.height < window.innerHeight*0.8){
+                setTimeout(goToResults,220);
+            }
         });
 
         // Part filter chips
