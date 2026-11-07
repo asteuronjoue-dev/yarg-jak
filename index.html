@@ -1021,19 +1021,21 @@ header {max-height:none!important;overflow:visible!important}
  #scroll .row,.col-header{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) 62px 118px!important}
  #scroll .cell-album,#scroll .cell-year,#scroll .cell-instruments,.col-header>:nth-child(4),.col-header>:nth-child(5),.col-header>:nth-child(6){display:none!important}
 }
-.col-header::after{content:'💙';text-align:center;font-size:14px;align-self:center}
+.col-header::after{content:'🧡';text-align:center;font-size:14px;align-self:center}
 #scroll .row .song-row-actions{display:flex;min-width:0;align-items:center;justify-content:flex-end;gap:5px}
-#scroll .row .song-playlist-emoji{font-size:14px;letter-spacing:-1px;white-space:nowrap;overflow:hidden;line-height:1.15}
+#scroll .row .song-playlist-stack{display:flex;flex:none;flex-direction:column;flex-wrap:wrap;align-content:center;justify-content:center;gap:0 1px;width:23px;max-height:36px;height:36px;overflow:hidden;line-height:12px;font-size:11px;text-align:center}
+#scroll .row .song-playlist-stack>span{height:12px;line-height:12px;display:block}
 #scroll .row .song-row-fav{flex:0 0 auto;width:31px;height:31px;display:inline-grid;place-items:center;padding:0;border:1px solid #42555c;border-radius:9px;background:#1d2b31;color:#b7c6cf;font-size:22px;line-height:1;cursor:pointer}
 #scroll .row .song-row-fav:hover,#scroll .row .song-row-fav:focus-visible{border-color:#36b6c5;background:#263b44}
-#scroll .row .song-row-fav.is-favorite{border-color:#3b7d9b;background:#173444}
+#scroll .row .song-row-fav.is-favorite{border-color:#e58b32;background:#3e2818}
 #scroll .row .song-row-fav:disabled{opacity:.5;cursor:wait}
 @media(max-width:680px){
- #scroll .row{grid-template-columns:minmax(0,1fr) 105px 36px!important;column-gap:4px!important}
+ #scroll .row{grid-template-columns:minmax(0,1fr) 129px 36px!important;column-gap:4px!important}
  #scroll .row>.cell.cell-instruments{grid-column:2!important;grid-row:1 / span 2!important}
  #scroll .row>.song-row-actions{grid-column:3!important;grid-row:1 / span 2!important;justify-content:center!important;position:relative;align-self:stretch}
  #scroll .row .song-row-fav{width:33px;height:35px;font-size:22px}
- #scroll .row .song-playlist-emoji{position:absolute;right:0;bottom:0;transform:translateY(2px);font-size:11px;letter-spacing:-2px;max-width:145px;overflow:visible;white-space:nowrap;background:#101214bd;border-radius:3px;pointer-events:none}
+ #scroll .row .song-playlist-stack{width:24px;height:48px;max-height:48px;font-size:11px;line-height:11px;gap:0;justify-content:center;align-content:flex-start}
+ #scroll .row .song-playlist-stack>span{height:11px;line-height:11px}
 }
 </style>
 </head>
@@ -1555,7 +1557,7 @@ header {max-height:none!important;overflow:visible!important}
             }
           }
           if(version!==playlistEmojiLoadVersion)return;
-          directoryPlaylistEmojis=new Map([...next].map(([id,icons])=>[id,[...icons].join('')]));
+          directoryPlaylistEmojis=new Map([...next].map(([id,icons])=>[id,[...icons]]));
           render(true);
         }
         const favFilterButton=document.getElementById('favorites-only');
@@ -2235,11 +2237,11 @@ header {max-height:none!important;overflow:visible!important}
                 html += `<div class="cell cell-length">${fmtLen(r.l)}</div>`;
                 html += `<div class="cell cell-year">${esc(r.y || '')}</div>`;
                 html += `<div class="cell cell-album">${esc(r.al || '')}</div>`;
-                html += `<div class="cell cell-instruments">${partsBadges(r)}</div>`;
-                const emojis=directoryPlaylistEmojis.get(String(r.id))||'';
+                const playlistIcons=directoryPlaylistEmojis.get(String(r.id))||[];
+                html += `<div class="cell cell-instruments">${playlistIcons.length?`<span class="song-playlist-stack" title="Playlists : ${esc(playlistIcons.join(' '))}" aria-label="Playlists : ${esc(playlistIcons.join(' '))}">${playlistIcons.map(emoji=>`<span>${emoji}</span>`).join('')}</span>`:''}${partsBadges(r)}</div>`;
                 const isFav=resolvedFavoriteSongIds.has(String(r.id));
                 const isPending=favoriteWritesInFlight.has(String(r.id));
-                html += `<div class="song-row-actions"><span class="song-playlist-emoji" title="${esc(emojis?'Playlists : '+emojis:'')}" aria-label="${esc(emojis?'Playlists : '+emojis:'')}">${emojis}</span><button class="song-row-fav${isFav?' is-favorite':''}" type="button" data-fav-song="${esc(r.id)}" aria-label="${isFav?'Retirer des favoris':'Ajouter aux favoris'} : ${esc(r.t)}" title="${isFav?'Retirer des favoris':'Ajouter aux favoris'}" aria-pressed="${isFav}" ${isPending?'disabled':''}>${isFav?'💙':'♡'}</button></div>`;
+                html += `<div class="song-row-actions"><button class="song-row-fav${isFav?' is-favorite':''}" type="button" data-fav-song="${esc(r.id)}" aria-label="${isFav?'Retirer des favoris':'Ajouter aux favoris'} : ${esc(r.t)}" title="${isFav?'Retirer des favoris':'Ajouter aux favoris'}" aria-pressed="${isFav}" ${isPending?'disabled':''}>${isFav?'🧡':'🖤'}</button></div>`;
                 html += `</div>`;
             }
             spacerEl.innerHTML=html;
