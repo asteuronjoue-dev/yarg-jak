@@ -966,6 +966,47 @@ header {max-height:none!important;overflow:visible!important}
   footer{padding:12px!important}
 }
 </style>
+
+<style>
+/* One-scrollbar catalogue: floating shortcut to the page header. */
+#back-to-top {
+    position: fixed;
+    right: 18px;
+    bottom: 20px;
+    right: calc(18px + env(safe-area-inset-right, 0px));
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 190;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 11px 16px;
+    border: 1px solid #ffb45f;
+    border-radius: 999px;
+    background: #ff8a24;
+    color: #101214;
+    font: 850 14px/1.1 system-ui, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0,0,0,.5);
+}
+#back-to-top[hidden] { display: none !important; }
+#back-to-top:hover { background: #ffad59; }
+#back-to-top:focus-visible { outline: 3px solid #1fc8bd; outline-offset: 3px; }
+#back-to-top .up-arrow { font-size: 22px; line-height: 1; }
+@media (max-width: 680px) {
+    #back-to-top {
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        right: 12px;
+        bottom: 16px;
+        right: calc(12px + env(safe-area-inset-right, 0px));
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+    #back-to-top .up-label { display: none; }
+}
+</style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong>🎸 Bienvenue! Trouve ta première chanson!</strong><p>Tu peux filtrer par instrument et difficultés, découvrir 10 chansons au hasard, filtrer par playlists ou par jeu. Optionnellement, crée un compte Rockstar pour sauvegarder tes favoris et tes stats! Amuses-toi!</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
     <header>
@@ -1088,6 +1129,7 @@ header {max-height:none!important;overflow:visible!important}
     </div>
 
     <footer id="footer-meta"></footer>
+    <button id="back-to-top" type="button" title="Retour en haut de la page" aria-label="Retour en haut de la page" hidden><span class="up-arrow" aria-hidden="true">↑</span><span class="up-label">Retour en haut</span></button>
 
     <div id="sheet-backdrop">
         <div id="sheet">
@@ -2400,5 +2442,42 @@ header {max-height:none!important;overflow:visible!important}
 })();
 </script>
 <script src="yarg-stage-response.js" defer></script>
+
+<script>
+/* Show the shortcut while browsing below the first few catalogue rows.
+   It tracks the document's existing scrollbar, not a second list scrollbar. */
+(function () {
+    const button = document.getElementById('back-to-top');
+    const list = document.getElementById('scroll');
+    const sheet = document.getElementById('sheet');
+    if (!button || !list) return;
+    let pending = false;
+    function refresh() {
+        pending = false;
+        const position = window.pageYOffset || document.documentElement.scrollTop || 0;
+        const bounds = list.getBoundingClientRect();
+        const listStart = bounds.top + position;
+        const withinSongs = bounds.bottom > 0 && bounds.top < window.innerHeight;
+        const wellIntoSongs = position > listStart + 150;
+        button.hidden = !(withinSongs && wellIntoSongs) || !!(sheet && sheet.classList.contains('open'));
+    }
+    function scheduleRefresh() {
+        if (pending) return;
+        pending = true;
+        window.requestAnimationFrame(refresh);
+    }
+    window.addEventListener('scroll', scheduleRefresh, {passive: true});
+    window.addEventListener('resize', scheduleRefresh, {passive: true});
+    if (sheet && typeof MutationObserver !== 'undefined') {
+        new MutationObserver(scheduleRefresh).observe(sheet, {attributes: true, attributeFilter: ['class']});
+    }
+    button.addEventListener('click', function () {
+        const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        try { window.scrollTo({top: 0, behavior: reduceMotion ? 'auto' : 'smooth'}); }
+        catch (e) { window.scrollTo(0, 0); }
+    });
+    refresh();
+})();
+</script>
 </body>
 </html>
