@@ -1007,6 +1007,35 @@ header {max-height:none!important;overflow:visible!important}
     #back-to-top .up-label { display: none; }
 }
 </style>
+
+<style>
+/* Playlist emoji indicators and favorites in the same virtualized list. */
+@media(min-width:1101px){
+ #scroll .row,.col-header{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) 62px 44px minmax(0,1fr) 180px 118px!important}
+}
+@media(min-width:901px) and (max-width:1100px){
+ #scroll .row,.col-header{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) 62px 44px 180px 118px!important}
+ #scroll .cell-album,.col-header>:nth-child(5){display:none!important}
+}
+@media(min-width:681px) and (max-width:900px){
+ #scroll .row,.col-header{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) 62px 118px!important}
+ #scroll .cell-album,#scroll .cell-year,#scroll .cell-instruments,.col-header>:nth-child(4),.col-header>:nth-child(5),.col-header>:nth-child(6){display:none!important}
+}
+.col-header::after{content:'💙';text-align:center;font-size:14px;align-self:center}
+#scroll .row .song-row-actions{display:flex;min-width:0;align-items:center;justify-content:flex-end;gap:5px}
+#scroll .row .song-playlist-emoji{font-size:14px;letter-spacing:-1px;white-space:nowrap;overflow:hidden;line-height:1.15}
+#scroll .row .song-row-fav{flex:0 0 auto;width:31px;height:31px;display:inline-grid;place-items:center;padding:0;border:1px solid #42555c;border-radius:9px;background:#1d2b31;color:#b7c6cf;font-size:22px;line-height:1;cursor:pointer}
+#scroll .row .song-row-fav:hover,#scroll .row .song-row-fav:focus-visible{border-color:#36b6c5;background:#263b44}
+#scroll .row .song-row-fav.is-favorite{border-color:#3b7d9b;background:#173444}
+#scroll .row .song-row-fav:disabled{opacity:.5;cursor:wait}
+@media(max-width:680px){
+ #scroll .row{grid-template-columns:minmax(0,1fr) 105px 36px!important;column-gap:4px!important}
+ #scroll .row>.cell.cell-instruments{grid-column:2!important;grid-row:1 / span 2!important}
+ #scroll .row>.song-row-actions{grid-column:3!important;grid-row:1 / span 2!important;justify-content:center!important;position:relative;align-self:stretch}
+ #scroll .row .song-row-fav{width:33px;height:35px;font-size:22px}
+ #scroll .row .song-playlist-emoji{position:absolute;right:0;bottom:0;transform:translateY(2px);font-size:11px;letter-spacing:-2px;max-width:145px;overflow:visible;white-space:nowrap;background:#101214bd;border-radius:3px;pointer-events:none}
+}
+</style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong>🎸 Bienvenue! Trouve ta première chanson!</strong><p>Tu peux filtrer par instrument et difficultés, découvrir 10 chansons au hasard, filtrer par playlists ou par jeu. Optionnellement, crée un compte Rockstar pour sauvegarder tes favoris et tes stats! Amuses-toi!</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
     <header>
@@ -1495,6 +1524,40 @@ header {max-height:none!important;overflow:visible!important}
           if(favMessage){favMessage.classList.add('error');favMessage.textContent='⚠ Connexion Supabase indisponible. Les favoris n’ont pas été effacés : vérifie ta connexion et recharge la page.';}
         }
         let signedInRockstar=null, mcCanEdit=false, publicPlaylists=[],myFavoriteSongIds=new Set(),publicPlaylistSongIds=new Set();
+        let directoryPlaylistEmojis=new Map(),playlistEmojiLoadVersion=0;
+        const favoriteWritesInFlight=new Set();
+        const emojiForPlaylist=name=>{
+          const n=normOfficial(name||'');
+          if(n.includes('rockers')&&n.includes('rise up'))return '🤘';
+          if(n.includes('francophone'))return '⚜️';
+          if(n.includes('videoclip')||n.includes('video clip'))return '📺';
+          if(n.includes('rockers')&&n.includes('sleep soon'))return '💤';
+          if(n.includes('disney'))return '💫';
+          return '';
+        };
+        async function loadDirectoryPlaylistEmojis(){
+          if(!collectionsSb)return;
+          const version=++playlistEmojiLoadVersion;
+          const relevant=publicPlaylists.map(p=>({id:p.id,name:p.name,emoji:emojiForPlaylist(p.name)})).filter(p=>p.emoji);
+          const next=new Map();
+          for(const playlist of relevant){
+            for(let offset=0;offset<50000;offset+=500){
+              const {data,error}=await collectionsSb.from('yarg_public_playlist_songs').select('song_id').eq('playlist_id',playlist.id).range(offset,offset+499);
+              if(version!==playlistEmojiLoadVersion)return;
+              if(error){console.warn('Icônes de playlist indisponibles',playlist.name,error);break;}
+              for(const entry of data||[]){
+                const songId=currentSongId(entry.song_id);
+                let icons=next.get(songId);
+                if(!icons){icons=new Set();next.set(songId,icons);}
+                icons.add(playlist.emoji);
+              }
+              if(!data||data.length<500)break;
+            }
+          }
+          if(version!==playlistEmojiLoadVersion)return;
+          directoryPlaylistEmojis=new Map([...next].map(([id,icons])=>[id,[...icons].join('')]));
+          render(true);
+        }
         const favFilterButton=document.getElementById('favorites-only');
         const curatedPicker=document.getElementById('mc-playlist-picker');
         const favouriteButton=document.getElementById('sheet-favourite');
@@ -1716,6 +1779,7 @@ header {max-height:none!important;overflow:visible!important}
           if(publicPlaylists.some(p=>p.id===chosen))curatedPicker.value=chosen;
           mcSheetPicker.replaceChildren(new Option('Choisir une playlist…',''),...publicPlaylists.map(p=>new Option(p.name,p.id)));
           drawPlaylistCards();
+          loadDirectoryPlaylistEmojis().catch(e=>console.warn('Icônes de playlist indisponibles',e));
         }
         async function loadFavouriteIds(){
           const status=document.getElementById('catalog-account-hint');
@@ -1733,7 +1797,7 @@ header {max-height:none!important;overflow:visible!important}
               refreshResolvedFavorites();
             }
           }
-          updateFavoriteButton();drawPlaylistCards();if(state.favoritesOnly)filter();
+          updateFavoriteButton();drawPlaylistCards();if(state.favoritesOnly)filter();else render(true);
         }
         async function initCollections(){
           if(!collectionsSb)return;
@@ -1769,31 +1833,38 @@ header {max-height:none!important;overflow:visible!important}
           state.favoritesOnly=false;state.publicPlaylistId='';publicPlaylistSongIds.clear();
           favFilterButton.setAttribute('aria-pressed','false');curatedPicker.value='';drawPlaylistCards();filter();
         };
-        favouriteButton.onclick=async()=>{
-          if(!signedInRockstar||!CURRENT_SHEET_SONG)return;
-          const songId=String(CURRENT_SHEET_SONG.id),on=resolvedFavoriteSongIds.has(songId);
+        async function toggleSongFavorite(songId){
+          if(!signedInRockstar){location.href='profil.html';return;}
+          if(!collectionsSb||favoriteWritesInFlight.has(songId))return;
+          const on=resolvedFavoriteSongIds.has(songId);
           const recordedIds=[...myFavoriteSongIds].filter(id=>currentSongId(id)===songId);
-          favouriteButton.disabled=true;
+          favoriteWritesInFlight.add(songId);
+          if(CURRENT_SHEET_SONG&&String(CURRENT_SHEET_SONG.id)===songId)favouriteButton.disabled=true;
+          render(true);
           let result={error:null};
-          if(on){
-            for(const savedId of recordedIds){
-              result=await collectionsSb.from('yarg_song_favorites').delete().eq('user_id',signedInRockstar.id).eq('song_id',savedId);
-              if(result.error)break;
-              myFavoriteSongIds.delete(savedId);
+          try {
+            if(on){
+              for(const savedId of recordedIds){
+                result=await collectionsSb.from('yarg_song_favorites').delete().eq('user_id',signedInRockstar.id).eq('song_id',savedId);
+                if(result.error)break;
+                myFavoriteSongIds.delete(savedId);
+              }
+            }else{
+              result=await collectionsSb.from('yarg_song_favorites').insert({user_id:signedInRockstar.id,song_id:songId});
+              if(result.error&&(result.error.code==='23505'||/duplicate key value violates unique constraint/i.test(result.error.message||'')))result={error:null};
+              if(!result.error)myFavoriteSongIds.add(songId);
             }
-          }else{
-            result=await collectionsSb.from('yarg_song_favorites').insert({user_id:signedInRockstar.id,song_id:songId});
-            if(result.error && (result.error.code==='23505' || /duplicate key value violates unique constraint/i.test(result.error.message||''))){
-              // Already saved in this account: don't treat a repeated insert as a failure.
-              result={error:null};
-            }
-            if(!result.error)myFavoriteSongIds.add(songId);
+            refreshResolvedFavorites();
+            if(result.error)alert('Favori non enregistré : '+result.error.message);
+          }catch(e){console.warn('Favori non enregistré',e);alert('Favori non enregistré : '+e.message);}
+          finally{
+            favoriteWritesInFlight.delete(songId);
+            if(CURRENT_SHEET_SONG&&String(CURRENT_SHEET_SONG.id)===songId)favouriteButton.disabled=false;
+            updateFavoriteButton();
+            if(state.favoritesOnly)filter();else render(true);
           }
-          favouriteButton.disabled=false;
-          refreshResolvedFavorites();
-          if(result.error){alert('Favori non enregistré : '+result.error.message);return;}
-          updateFavoriteButton();if(state.favoritesOnly)filter();
-        };
+        }
+        favouriteButton.onclick=()=>{if(CURRENT_SHEET_SONG)toggleSongFavorite(String(CURRENT_SHEET_SONG.id));};
         document.getElementById('sheet-add-playlist').onclick=async()=>{
           if(!mcCanEdit||!CURRENT_SHEET_SONG||!mcSheetPicker.value)return;
           const button=document.getElementById('sheet-add-playlist'),label=document.getElementById('sheet-playlist-message');
@@ -1801,7 +1872,7 @@ header {max-height:none!important;overflow:visible!important}
           const {error}=await collectionsSb.from('yarg_public_playlist_songs').upsert({playlist_id:mcSheetPicker.value,song_id:String(CURRENT_SHEET_SONG.id),song_title:CURRENT_SHEET_SONG.t,song_artist:CURRENT_SHEET_SONG.a},{onConflict:'playlist_id,song_id',ignoreDuplicates:true});
           button.disabled=false;
           label.textContent=error?'Erreur : '+error.message:'Chanson ajoutée à la playlist !';
-          if(!error&&state.publicPlaylistId===mcSheetPicker.value){publicPlaylistSongIds.add(String(CURRENT_SHEET_SONG.id));refreshResolvedPublicPlaylist();filter();}
+          if(!error){if(state.publicPlaylistId===mcSheetPicker.value){publicPlaylistSongIds.add(String(CURRENT_SHEET_SONG.id));refreshResolvedPublicPlaylist();filter();}loadDirectoryPlaylistEmojis().catch(console.warn);}
         };
         if(collectionsSb){collectionsSb.auth.onAuthStateChange(()=>{setTimeout(initCollections,0)});setTimeout(initCollections,0)}
         let filtered = [...DATA];
@@ -2165,6 +2236,10 @@ header {max-height:none!important;overflow:visible!important}
                 html += `<div class="cell cell-year">${esc(r.y || '')}</div>`;
                 html += `<div class="cell cell-album">${esc(r.al || '')}</div>`;
                 html += `<div class="cell cell-instruments">${partsBadges(r)}</div>`;
+                const emojis=directoryPlaylistEmojis.get(String(r.id))||'';
+                const isFav=resolvedFavoriteSongIds.has(String(r.id));
+                const isPending=favoriteWritesInFlight.has(String(r.id));
+                html += `<div class="song-row-actions"><span class="song-playlist-emoji" title="${esc(emojis?'Playlists : '+emojis:'')}" aria-label="${esc(emojis?'Playlists : '+emojis:'')}">${emojis}</span><button class="song-row-fav${isFav?' is-favorite':''}" type="button" data-fav-song="${esc(r.id)}" aria-label="${isFav?'Retirer des favoris':'Ajouter aux favoris'} : ${esc(r.t)}" title="${isFav?'Retirer des favoris':'Ajouter aux favoris'}" aria-pressed="${isFav}" ${isPending?'disabled':''}>${isFav?'💙':'♡'}</button></div>`;
                 html += `</div>`;
             }
             spacerEl.innerHTML=html;
@@ -2180,9 +2255,14 @@ header {max-height:none!important;overflow:visible!important}
             const song=filtered[Number(row.dataset.index)];
             if(song) openSheet(song);
         };
-        spacerEl.addEventListener('click',e=>openRenderedRow(e.target));
+        spacerEl.addEventListener('click',e=>{
+          const fav=e.target.closest('.song-row-fav');
+          if(fav){e.stopPropagation();toggleSongFavorite(String(fav.dataset.favSong));return;}
+          openRenderedRow(e.target);
+        });
         spacerEl.addEventListener('keydown',e=>{
             if(e.key==='Enter'||e.key===' '){
+                if(e.target.closest('.song-row-fav'))return;
                 if(e.target.closest('.row')){e.preventDefault();openRenderedRow(e.target);}
             }
         });
