@@ -1045,7 +1045,7 @@ header {max-height:none!important;overflow:visible!important}
 .catalog-directory-heading{
   position:relative;
   margin:22px 0 0;
-  padding:16px clamp(12px,2.5vw,24px) 0;
+  padding:12px clamp(12px,2.5vw,24px) 0;
   background:linear-gradient(180deg,rgba(31,200,189,.065),rgba(255,138,36,.018) 75%,transparent);
   border-top:1px solid rgba(31,200,189,.36);
 }
@@ -1053,21 +1053,15 @@ header {max-height:none!important;overflow:visible!important}
   content:"";position:absolute;top:-1px;left:0;width:min(32%,240px);height:2px;
   background:linear-gradient(90deg,#1fc8bd,#ff8a24,transparent);
 }
-.catalog-directory-topline{display:flex;gap:14px 24px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.catalog-directory-name{display:flex;gap:11px;align-items:center;min-width:0}
-.catalog-directory-mark{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;font-size:24px;color:#ffb15f;background:#28251f;border:1px solid #6c4d2b;border-radius:12px}
-.catalog-directory-copy{min-width:0}
-.catalog-directory-eyebrow{display:block;font-size:.65rem;font-weight:900;letter-spacing:.16em;color:#71cfc8;margin-bottom:2px}
-.catalog-directory-copy h2{font-size:clamp(1.17rem,3vw,1.48rem);font-weight:900;letter-spacing:-.02em;line-height:1.2;margin:0;color:#f4f7f7}
+.catalog-directory-topline{display:flex;gap:14px 24px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
 .catalog-directory-counts{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
 .catalog-directory-count{display:inline-flex;align-items:center;gap:6px;border:1px solid #36434a;background:#1b2429;color:#bacbd0;padding:7px 11px;border-radius:999px;font-size:.78rem;font-weight:800;white-space:nowrap}
 .catalog-directory-count-dot{width:6px;height:6px;border-radius:50%;background:#1fc8bd}
 .catalog-directory-count-shown{color:#ffca8d;background:#2c251f;border-color:#695036}
 .catalog-directory-accent{height:3px;margin-top:16px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,#1fc8bd 0%,#2ab9c1 38%,#ff8a24 82%,transparent 100%);opacity:.95}
 @media(max-width:680px){
- .catalog-directory-heading{margin-top:16px;padding:13px 11px 0}
+ .catalog-directory-heading{margin-top:16px;padding:11px 11px 0}
  .catalog-directory-topline{align-items:flex-start;gap:12px}
- .catalog-directory-mark{width:37px;height:37px;flex-basis:37px;font-size:21px}
  .catalog-directory-counts{width:100%;gap:6px}
  .catalog-directory-count{padding:6px 9px;font-size:.75rem}
  .catalog-directory-accent{margin-top:13px}
@@ -1179,15 +1173,8 @@ header {max-height:none!important;overflow:visible!important}
         </div>
     </header>
 
-    <section class="catalog-directory-heading" aria-label="Répertoire musical">
+    <section class="catalog-directory-heading" aria-label="Nombre de chansons du catalogue">
         <div class="catalog-directory-topline">
-            <div class="catalog-directory-name">
-                <span class="catalog-directory-mark" aria-hidden="true">♫</span>
-                <div class="catalog-directory-copy">
-                    <span class="catalog-directory-eyebrow">PLACE AU ROCK</span>
-                    <h2>Répertoire musical</h2>
-                </div>
-            </div>
             <div class="catalog-directory-counts" aria-live="polite" aria-atomic="true">
                 <span class="catalog-directory-count"><span class="catalog-directory-count-dot" aria-hidden="true"></span><span id="total-count">Total : 0</span></span>
                 <span class="catalog-directory-count catalog-directory-count-shown"><span id="count">Affichées : 0</span></span>
