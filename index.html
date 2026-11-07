@@ -1038,6 +1038,41 @@ header {max-height:none!important;overflow:visible!important}
  #scroll .row .song-playlist-stack>span{height:11px;line-height:11px}
 }
 </style>
+
+<style>
+/* Clear, lightweight transition from discovery filters to the song directory. */
+.counts-request-only{justify-content:flex-end}
+.catalog-directory-heading{
+  position:relative;
+  margin:22px 0 0;
+  padding:16px clamp(12px,2.5vw,24px) 0;
+  background:linear-gradient(180deg,rgba(31,200,189,.065),rgba(255,138,36,.018) 75%,transparent);
+  border-top:1px solid rgba(31,200,189,.36);
+}
+.catalog-directory-heading::before{
+  content:"";position:absolute;top:-1px;left:0;width:min(32%,240px);height:2px;
+  background:linear-gradient(90deg,#1fc8bd,#ff8a24,transparent);
+}
+.catalog-directory-topline{display:flex;gap:14px 24px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.catalog-directory-name{display:flex;gap:11px;align-items:center;min-width:0}
+.catalog-directory-mark{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;font-size:24px;color:#ffb15f;background:#28251f;border:1px solid #6c4d2b;border-radius:12px}
+.catalog-directory-copy{min-width:0}
+.catalog-directory-eyebrow{display:block;font-size:.65rem;font-weight:900;letter-spacing:.16em;color:#71cfc8;margin-bottom:2px}
+.catalog-directory-copy h2{font-size:clamp(1.17rem,3vw,1.48rem);font-weight:900;letter-spacing:-.02em;line-height:1.2;margin:0;color:#f4f7f7}
+.catalog-directory-counts{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.catalog-directory-count{display:inline-flex;align-items:center;gap:6px;border:1px solid #36434a;background:#1b2429;color:#bacbd0;padding:7px 11px;border-radius:999px;font-size:.78rem;font-weight:800;white-space:nowrap}
+.catalog-directory-count-dot{width:6px;height:6px;border-radius:50%;background:#1fc8bd}
+.catalog-directory-count-shown{color:#ffca8d;background:#2c251f;border-color:#695036}
+.catalog-directory-accent{height:3px;margin-top:16px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,#1fc8bd 0%,#2ab9c1 38%,#ff8a24 82%,transparent 100%);opacity:.95}
+@media(max-width:680px){
+ .catalog-directory-heading{margin-top:16px;padding:13px 11px 0}
+ .catalog-directory-topline{align-items:flex-start;gap:12px}
+ .catalog-directory-mark{width:37px;height:37px;flex-basis:37px;font-size:21px}
+ .catalog-directory-counts{width:100%;gap:6px}
+ .catalog-directory-count{padding:6px 9px;font-size:.75rem}
+ .catalog-directory-accent{margin-top:13px}
+}
+</style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong>🎸 Bienvenue! Trouve ta première chanson!</strong><p>Tu peux filtrer par instrument et difficultés, découvrir 10 chansons au hasard, filtrer par playlists ou par jeu. Optionnellement, crée un compte Rockstar pour sauvegarder tes favoris et tes stats! Amuses-toi!</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
     <header>
@@ -1059,9 +1094,7 @@ header {max-height:none!important;overflow:visible!important}
             <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
         <div id="yarg-up-next-shared" class="yarg-up-next-shared" role="status" aria-live="polite" hidden></div>
-        <div class="counts">
-            <span id="total-count">Total : 0</span>
-            <span id="count">Affichées : 0</span>
+        <div class="counts counts-request-only">
             <a class="library-request-link" href="demande.html">➕ Demander l'ajout d'une chanson</a>
         </div>
         <div class="search-row">
@@ -1146,6 +1179,22 @@ header {max-height:none!important;overflow:visible!important}
         </div>
     </header>
 
+    <section class="catalog-directory-heading" aria-label="Répertoire musical">
+        <div class="catalog-directory-topline">
+            <div class="catalog-directory-name">
+                <span class="catalog-directory-mark" aria-hidden="true">♫</span>
+                <div class="catalog-directory-copy">
+                    <span class="catalog-directory-eyebrow">PLACE AU ROCK</span>
+                    <h2>Répertoire musical</h2>
+                </div>
+            </div>
+            <div class="catalog-directory-counts" aria-live="polite" aria-atomic="true">
+                <span class="catalog-directory-count"><span class="catalog-directory-count-dot" aria-hidden="true"></span><span id="total-count">Total : 0</span></span>
+                <span class="catalog-directory-count catalog-directory-count-shown"><span id="count">Affichées : 0</span></span>
+            </div>
+        </div>
+        <div class="catalog-directory-accent" aria-hidden="true"></div>
+    </section>
     <div class="col-header">
         <div class="col-header-cell" data-sort="a">Artiste <span class="sort-indicator"></span></div>
         <div class="col-header-cell" data-sort="t">Titre <span class="sort-indicator"></span></div>
