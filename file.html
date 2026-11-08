@@ -209,6 +209,17 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-stage-message{font-size:13px;font-weight:800;margin-top:4px}
 @media(max-width:650px){.yarg-stage-actions{display:grid;grid-template-columns:1fr}.yarg-stage-actions button{width:100%}}
 body.yarg-display-mode .yarg-stage-banner{display:none!important}
+ .next-three{margin:12px 0 24px;padding:15px;background:#101d24;border:1px solid #25575b;border-radius:16px}
+.next-three .section-head{margin:0 0 12px}
+.next-three-list{display:grid;gap:9px}
+.next-three-card{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #3a5157;background:#1d292f;border-radius:12px;min-width:0}
+.next-three-rank{color:#1fc8bd;font-weight:950;font-size:1.05rem}
+.next-three-info{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.next-three-info strong{font-size:1rem;overflow-wrap:anywhere}
+.next-three-info span{font-size:.8rem;color:#aabec4}
+.next-three-eta{font-size:.85rem;font-weight:900;color:#ffb46b;text-align:right;white-space:nowrap}
+.display-band{font-size:clamp(12px,1.15vw,17px);font-weight:850;color:#ffc17f;margin-top:5px}
+@media(max-width:480px){.next-three{padding:11px}.next-three-card{gap:7px;padding:10px}.next-three-rank{font-size:.85rem}.next-three-eta{font-size:.78rem}}
 </style></head>
 </head>
 <body>
@@ -241,6 +252,7 @@ body.yarg-display-mode .yarg-stage-banner{display:none!important}
     <div class="display-footer"><span>Les heures sont approximatives · 2 min prévues entre les chansons</span><span id="displayUpdated">Actualisation automatique toutes les 30 secondes</span></div>
   </section>
   <div class="error" id="errorBox"></div>
+  <section id="nextThreeSection" class="next-three" hidden aria-label="Trois prochaines chansons"><div class="section-head"><h2>🎵 Les 3 prochaines chansons</h2></div><div id="nextThreeList" class="next-three-list"></div></section>
   <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
     <details><summary>Comment gagner ou perdre des points?</summary><p class="points-note">Le plus petit score passe en premier. Le demandeur reçoit +1 point par seconde de sa chanson (4 min = +240). Rejoindre un autre groupe donne −60 points, pris en compte à partir du passage de ce groupe. Les Initiés partent à −1. Une chanson passée sans être jouée ne donne ni coût ni récompense. La prochaine prestation annoncée reste protégée.</p></details></section>
   <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
@@ -548,6 +560,8 @@ function cardHtml(r, eta, mine=false, rank=null){
     ? `<div class="eta"><strong>⏸ Pas prêt</strong><span>Heure suspendue</span></div>`
     : isPlaying
     ? `<div class="eta"><strong>🔥 EN COURS</strong><span>Sur scène maintenant</span></div>`
+    : (rank===1 || (rank===2 && requests.some(x=>x.status==='playing')))
+      ? `<div class="eta"><strong>🔜 Bientôt</strong><span>Prochaine chanson</span></div>`
     : eta?.at
       ? `<div class="eta"><strong>⏱ ${formatClock(eta.at)}</strong><span>${relativeMinutes(eta.at)}</span></div>`
       : `<div class="eta"><strong>⏱ —</strong><span>Estimation à venir</span></div>`;
@@ -598,13 +612,14 @@ function renderPublicDisplay(){
     const playing=r.status==='playing';
     const slots=!playing?openInstruments(r):[];
     const joinable=slots.length>0;
-    const when=playing?'EN COURS':eta?.at?formatClock(eta.at):'—';
+    const nextUp=!playing && i===(hasPlaying?1:0);
+    const when=playing?'EN COURS':nextUp?'BIENTÔT':eta?.at?formatClock(eta.at):'—';
     const until=playing?'Sur scène maintenant':eta?.at?relativeMinutes(eta.at):'Horaire inconnu';
     const names=performerEntries(r).map(m=>m.rockstar_name).filter(Boolean);
     const performers=names.length?`<span>${esc([...new Set(names)].join(', '))}</span>`:'';
     return `<article class="display-performance ${playing?'is-playing':i===(hasPlaying?1:0)?'is-next':''}">
       <div class="display-rank">${playing?'♫':hasPlaying?i:i+1}</div>
-      <div class="display-info"><div class="display-song">${esc(r.song_title||'Chanson')}</div><div class="display-artist">${esc(r.song_artist||'Artiste inconnu')}</div>
+      <div class="display-info"><div class="display-song">${esc(r.song_title||'Chanson')}</div><div class="display-artist">${esc(r.song_artist||'Artiste inconnu')}</div>${r.band_name?`<div class="display-band">🤘 ${esc(r.band_name)}</div>`:''}
       <div class="display-detail"><span class="${joinable?'display-joinable':'display-closed'}">${joinable?'● Places libres':playing?'● En cours':'● Complet'}</span><span>${esc(formatDuration(r.song_duration_seconds))}</span>${performers}</div></div>
       <div class="display-time"><strong>${esc(when)}</strong><span>${esc(until)}</span></div>
     </article>`;
@@ -617,11 +632,18 @@ function render(){
   $('#yargGlobalPresence').hidden=!active||!myAuthId;
   for(const id of ['mineSection','joinSection','fullSection','historySection'])$('#'+id).hidden=!active;
   $('#closedSection').hidden=active;
+  $('#nextThreeSection').hidden=!active;
   if(!active){const banner=$('#yarg-my-next-banner');banner.hidden=true;banner.textContent='';return;}
 
   const queue=sortedActive();
   const playable=queue.filter(r=>r.status==='playing'||(r._fairEligible!==false&&!r.yarg_not_ready));
   const etas=calculateEtas(playable);
+  const predicted=playable.filter(r=>r.status!=='playing').slice(0,3);
+  $('#nextThreeList').innerHTML=predicted.length?predicted.map((r,i)=>{
+    const eta=etas.get(r.id);
+    const when=i===0?'🔜 Bientôt':eta?.at?'⏱ '+formatClock(eta.at):'Estimation à venir';
+    return `<article class="next-three-card"><span class="next-three-rank">#${i+1}</span><div class="next-three-info"><strong>${esc(r.song_title||'Chanson')}</strong><span>${esc(r.song_artist||'')}${r.band_name?' · 🤘 '+esc(r.band_name):''}</span></div><span class="next-three-eta">${esc(when)}</span></article>`;
+  }).join(''):'<div class="empty">Aucune chanson à venir.</div>';
   // Identical positions across personal, joinable and full sections.
   // "Pas prêt" songs have no playable rank until resumed.
   const ranks=new Map(playable.map((r,i)=>[String(r.id),i+1]));
