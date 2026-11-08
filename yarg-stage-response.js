@@ -23,6 +23,17 @@
  const stageStyle=document.createElement('style');
  stageStyle.textContent=`
  @keyframes yargStageRainbow{to{background-position:300% center}}
+ #yarg-stage-banner{position:fixed;top:0;left:0;right:0;z-index:15000;padding:12px clamp(10px,3vw,32px);text-align:center;box-shadow:0 6px 21px #0008;font:900 15px/1.4 system-ui,sans-serif}
+ #yarg-stage-banner[hidden]{display:none!important}
+ #yarg-stage-banner .yarg-stage-heading{font-size:clamp(19px,3vw,30px);line-height:1.23}
+ #yarg-stage-banner .yarg-stage-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+ #yarg-stage-banner .yarg-stage-actions button{font:900 15px system-ui,sans-serif;min-height:43px;border:2px solid #131a1c;border-radius:10px;padding:9px 14px;cursor:pointer;color:#101214}
+ #yarg-stage-banner [data-stage-answer=ready]{background:#85eab2}
+ #yarg-stage-banner [data-stage-answer=later]{background:#ffdb61}
+ #yarg-stage-banner [data-stage-answer=decline]{background:#ff7883}
+ #yarg-stage-banner button:disabled{opacity:.5}
+ #yarg-stage-banner .yarg-stage-message{font-size:13px;font-weight:800;margin-top:4px}
+ @media(max-width:650px){#yarg-stage-banner .yarg-stage-actions{display:grid;grid-template-columns:1fr}#yarg-stage-banner .yarg-stage-actions button{width:100%}}
  /* The whole fixed banner animates like the party title, not just the heading. */
  #yarg-stage-banner{
   background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);
@@ -56,9 +67,8 @@
  // the banner returns in read-only LIVE mode.
  const acknowledgedWaiting=new Set();
  let scheduled=null;
- const displayMode=new URLSearchParams(location.search).get('affichage')==='1';
  const esc=s=>String(s||'');
- const instInfo={guitar:['🎸','Guitare'],rhythm_guitar:['🎸','Guitare rythmique'],bass:['🎸','Basse'],drums:['🥁','Batterie'],drums_4lane:['🥁','Batterie 4-Lane'],pro_drums:['🥁','Pro Drums'],keys:['🎹','Clavier 5-Lane'],pro_keys:['🎹','Pro Keys'],vocals:['🎤','Voix']};
+ const instInfo={flex:['🎲','Flex'],guitar:['🎸','Guitare'],rhythm_guitar:['🎸','Guitare rythmique'],bass:['🎸','Basse'],drums:['🥁','Batterie'],drums_4lane:['🥁','Batterie 4-Lane'],pro_drums:['🥁','Pro Drums'],keys:['🎹','Clavier 5-Lane'],pro_keys:['🎹','Pro Keys'],vocals:['🎤','Voix']};
  const difficultyName={beginner:'Débutant',easy:'Facile',medium:'Moyen',hard:'Difficile',expert:'Expert',any:'Peu importe'};
  const guitarName={'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'};
  function renderStageHeading(message,track){
@@ -105,8 +115,7 @@
  function hide(){banner.hidden=true;lastRequestId='';lastAnswer='';syncHeight();}
  const getUuid=a=>String(a||'');
  async function refresh(){
-   if(displayMode){hide();return;}
-   if(working)return;
+     if(working)return;
    try{
      const {data:auth}=await client.auth.getUser();const id=auth?.user?.id;
      if(!id){hide();return;}
@@ -189,4 +198,45 @@
   .on('postgres_changes',{event:'*',schema:'public',table:'performance_members'},()=>{refresh();})
   .subscribe();
  refresh();setInterval(()=>{if(!document.hidden)refresh()},5000);
+ 
+ // Invitations are available on every page, not only the queue.
+ if(!document.getElementById('yarg-invite-tray')){
+  const tray=document.createElement('div');tray.id='yarg-global-invites';tray.hidden=true;
+  tray.setAttribute('role','region');tray.setAttribute('aria-label','Invitations Rockstar');
+  document.body.append(tray);
+  const css=document.createElement('style');
+  css.textContent=`#yarg-global-invites{position:fixed;bottom:14px;right:14px;z-index:15100;max-width:min(440px,calc(100vw - 28px));max-height:65vh;overflow:auto;padding:14px;background:#1b272d;border:2px solid #2ec4b6;border-radius:15px;color:#f6fafb;box-shadow:0 9px 40px #000a;font:14px/1.5 system-ui,sans-serif}
+  #yarg-global-invites[hidden]{display:none!important}
+  #yarg-global-invites article+article{border-top:1px solid #43545c;padding-top:12px;margin-top:12px}
+  #yarg-global-invites strong{color:#ffcf8b}
+  #yarg-global-invites button{border:1px solid #677b7f;color:#131a22;background:#94e8d1;border-radius:8px;padding:9px;margin:4px;font-weight:850;cursor:pointer}
+  #yarg-global-invites [data-global-invite=no]{background:#ffb29f}`;
+  document.head.append(css);
+  let invitationBusy=false;
+  const safe=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  async function refreshInvitationTray(){
+   if(invitationBusy)return;
+   try{
+    const {data:{user}}=await client.auth.getUser();if(!user||user.is_anonymous){tray.hidden=true;return;}
+    const {data,error}=await client.rpc('yarg_my_band_invitations');if(error)throw error;
+    if(!Array.isArray(data)||!data.length){tray.hidden=true;tray.replaceChildren();return;}
+    tray.innerHTML=data.map(i=>`<article data-global-invite-id="${safe(i.id)}"><strong>🎸 Invitation ROCKSTAR!</strong>
+    <p>${safe(i.rockstar_name||'Rockstar')} — ${safe(i.song_title)} (${safe(i.song_artist||'')})</p>
+    <button type="button" data-global-invite="yes">🤘 Accepter</button>
+    <button type="button" data-global-invite="no">Refuser</button><small class="global-invite-error"></small></article>`).join('');
+    tray.hidden=false;
+   }catch(e){console.warn('Bannière invitations:',e)}
+  }
+  tray.addEventListener('click',async event=>{
+   const btn=event.target.closest('[data-global-invite]');if(!btn||invitationBusy)return;
+   const article=btn.closest('[data-global-invite-id]');if(!article)return;
+   invitationBusy=true;tray.querySelectorAll('button').forEach(b=>b.disabled=true);
+   try{const {error}=await client.rpc('yarg_respond_band_invitation',{p_invitation_id:article.dataset.globalInviteId,p_accept:btn.dataset.globalInvite==='yes'});if(error)throw error;}
+   catch(e){const target=article.querySelector('.global-invite-error');if(target)target.textContent='Erreur: '+e.message}
+   finally{invitationBusy=false;tray.querySelectorAll('button').forEach(b=>b.disabled=false);refreshInvitationTray();}
+  });
+  refreshInvitationTray();setInterval(()=>{if(!document.hidden)refreshInvitationTray()},15000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshInvitationTray()});
+ }
+
 })();
