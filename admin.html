@@ -211,6 +211,16 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .owner-rockstar-details[open]>summary::before{content:'▾'}
 .owner-rockstar-details>summary:focus-visible{outline:2px solid var(--teal);outline-offset:-3px}
 .owner-rockstar-details .owner-rockstar-body{padding:0 19px 19px;border-top:1px solid #37444a}
+ .mc-request-context{display:flex;align-items:stretch;flex-wrap:wrap;gap:9px;margin:12px 0}
+.mc-request-time,.mc-request-person{padding:8px 11px;border:1px solid #354d55;border-radius:10px;background:#18242a}
+.mc-request-time{display:flex;flex-direction:column;color:#8de1d6;min-width:98px;justify-content:center}
+.mc-request-time strong{color:#fff;font-size:1.12rem;line-height:1.25}
+.mc-request-time small{font-size:.67rem}
+.mc-request-person{display:flex;flex:1;gap:5px 13px;flex-wrap:wrap;align-items:center;color:#bdced3}
+.mc-request-person strong{color:#fff;flex-basis:100%;font-size:1rem}
+.owner-library-completed{margin-top:18px;border:1px solid #355057;border-radius:12px;background:#17252b}
+.owner-library-completed>summary{cursor:pointer;padding:12px 15px;color:#9be7c8;font-weight:850}
+.owner-library-completed .owner-fold-body{padding:10px}
 </style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée.</p>
@@ -275,6 +285,10 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
  <details class="card owner-fold" id="owner-library-section"><summary>Demandes de chansons pour la bibliothèque <span id="owner-library-pending" class="owner-fold-count" hidden></span></summary><div class="owner-fold-body">
   <p class="help">Les demandes « Introuvable » sont mises de côté pendant 30 jours. Elles reviennent ensuite comme 🧟 Demandes zombies ! « Téléchargée » signifie que la chanson a été ajoutée à la bibliothèque.</p>
   <div id="owner-library" class="owner-list"></div>
+   <details class="owner-fold owner-library-completed" id="owner-library-completed">
+     <summary>✅ Chansons téléchargées / trouvées (<span id="owner-library-downloaded-count">0</span>)</summary>
+     <div class="owner-fold-body"><div id="owner-library-downloaded" class="owner-list"></div></div>
+   </details>
  </div></details>
  <details class="card owner-fold" id="owner-session-management"><summary>📃 Soirées archivées</summary><div class="owner-fold-body">
    <div class="flex"><p class="help">Réservé au propriétaire. Supprimer une soirée archivée efface ses demandes, prestations, participations et crédits de progression calculés à partir de ces données. Les autres soirées et les crédits historiques attribués manuellement sont conservés. Action irréversible.</p><button type="button" class="quiet small" id="owner-session-refresh">↻ Actualiser</button></div>
@@ -362,9 +376,13 @@ function mcRequestMeta(r){
   const date=r.created_at?new Date(r.created_at):null;
   const requested=date&&!Number.isNaN(date.getTime())?date.toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'}):'—';
   const stats=mcRequestMetrics.get(String(r.id));
-  const score=stats&&Number.isFinite(Number(stats.earned_points))?Number(stats.earned_points):null;
-  const count=stats&&Number.isFinite(Number(stats.own_songs_played))?Number(stats.own_songs_played):null;
-  return `<div class="mc-request-metrics"><span>🕒 Demandée à ${esc(requested)}</span><span>⚖️ ${score===null?'—':score>0?'+'+score:score} pts</span><span>🎤 ${count===null?'—':count} demande(s) jouée(s) cette soirée</span><span>Par : ${esc(r.rockstar_name||'Rockstar')}</span></div>`;
+  const points=stats&&Number.isFinite(Number(stats.earned_points))?Number(stats.earned_points):null;
+  const played=stats&&Number.isFinite(Number(stats.own_songs_played))?Number(stats.own_songs_played):null;
+  return `<div class="mc-request-context">
+   <div class="mc-request-time">🕒 <strong>${esc(requested)}</strong><small>Heure de la demande</small></div>
+   <div class="mc-request-person"><strong>👤 ${esc(r.rockstar_name||'Rockstar')}</strong>
+     <span>⚖️ ${points===null?'—':points>0?'+'+points:points} pts</span>
+     <span>🎤 ${played===null?'—':played} chanson(s) demandée(s) déjà jouée(s)</span></div></div>`;
 }
 function row(r,idx){return `<div class="row"><div class="rank">${idx+1}</div><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'Artiste inconnu')} · ${fmt(r.song_duration_seconds)}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}</div><div class="actions"><button class="primary" data-action="start" data-id="${esc(r.id)}">▶ Lancer</button><button data-action="skip" data-id="${esc(r.id)}">Passer</button></div></div>`;}
 function historyRow(r){return `<div class="row"><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}</div>${people(r)}</div>${r.status==='skipped'?`<div class="actions"><button data-action="reactivate" data-id="${esc(r.id)}">↩ Réactiver</button></div>`:''}</div>`;}
@@ -591,12 +609,16 @@ function drawOwner(){
  const badge=$('owner-library-pending');
  badge.textContent=pending+' demande'+(pending>1?'s':'')+' à examiner';
  badge.hidden=false;
- const visible=ownerData.library.filter(libraryRequestVisible);
- $('owner-library').innerHTML=visible.length?visible.map(l=>{
+ const visible=ownerData.library.filter(l=>l.status!=='downloaded'&&libraryRequestVisible(l));
+ const downloaded=ownerData.library.filter(l=>l.status==='downloaded');
+ $('owner-library-downloaded-count').textContent=String(downloaded.length);
+ function libraryRow(l){
   const zombie=l.status==='unfindable'&&zombieFeatureReady&&zombieMetadata.has(String(l.id));
   const flag=zombie?'<span class="owner-zombie-flag">🧟 DEMANDE ZOMBIE — BACK FROM THE DEAD !</span>':'';
   return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label></div>`;
- }).join(''):'<p class="muted">Aucune demande à examiner pour le moment. Les chansons introuvables reviendront après 30 jours ! 🧟</p>';
+ }
+ $('owner-library-downloaded').innerHTML=downloaded.length?downloaded.map(libraryRow).join(''):'<p class="muted">Aucune chanson téléchargée pour le moment.</p>';
+ $('owner-library').innerHTML=visible.length?visible.map(libraryRow).join(''):'<p class="muted">Aucune demande à examiner pour le moment. Les chansons introuvables reviendront après 30 jours ! 🧟</p>';
 }
 document.addEventListener('submit',async e=>{
  const form=e.target.closest('.legacy-form');if(!form)return;
@@ -696,6 +718,6 @@ $('playlist-create').onsubmit=async e=>{
  if(error){notice('Création impossible : '+error.message,true);return;}
  $('playlist-name').value='';$('playlist-description').value='';notice('Playlist créée. Ajoute des chansons depuis le catalogue.');await loadMcPlaylists();
 };
-async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;await loadOwner();await syncMcControls();await loadArchivedSessions()}$('app').hidden=false;await load();await loadMcRockstars();await loadMcPlaylists();setInterval(()=>{if(!document.hidden)load()},15000);setInterval(()=>{if(!document.hidden && !$('owner-tab').hidden && ownerData.library.length)void loadOwner()},60000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
+async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;await loadOwner();await syncMcControls();await loadArchivedSessions()}$('app').hidden=false;await load();await loadMcRockstars();await loadMcPlaylists();setInterval(()=>{if(!document.hidden && $('scene-tab').hidden && $('history-tab').hidden)load()},15000);setInterval(()=>{if(!document.hidden && !$('owner-tab').hidden && ownerData.library.length)void loadOwner()},60000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
 init();
 </script></body></html>
