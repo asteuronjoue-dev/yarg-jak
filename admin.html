@@ -343,7 +343,7 @@ function applyAdminPartyMode(s){document.body.classList.toggle('party-mode',part
 function notice(text,error=false){$('notice').textContent=text;$('notice').className='notice '+(error?'error':'ok');}
 function fmt(seconds){const s=Math.max(0,Number(seconds)||0);return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
 function membersFor(r){const m=(snapshot.members||[]).filter(x=>x.performance_request_id===r.id&&!x.withdrawn_at);if(r.is_group_request)return m;return [...(!r.requester_withdrawn_at?[{rockstar_name:r.rockstar_name,instrument_mode:r.requester_instrument_mode||r.requester_instrument,microphone:r.requester_microphone}]:[]),...m]}
-function part(mode){return ({guitar:'Guitare',rhythm_guitar:'Guitare rythmique',bass:'Basse',vocals:'Voix',drums:'Batterie',drums_4lane:'Batterie 4-Lane',pro_drums:'Pro Drums',keys:'Clavier',pro_keys:'Pro Keys'})[mode]||mode||'—';}
+function part(mode){return ({guitar:'Guitare',rhythm_guitar:'Guitare rythmique',bass:'Basse',vocals:'Voix',drums:'Batterie',drums_4lane:'Batterie 4-Lane',pro_drums:'Pro Drums',keys:'Clavier',pro_keys:'Pro Keys',flex:'Flex'})[mode]||mode||'—';}
 function yargReplyFor(r,name,userId){
  const who=String(name||'').trim().toLocaleLowerCase();
  if(pausedRockstarFor(r,name))return '<span class="yarg-reply later">⏸ Pas prêt</span>';
@@ -355,7 +355,8 @@ function yargReplyFor(r,name,userId){
  const labels={ready:'✅ Prêt',decline:'❌ Ne participe plus'};
  return `<span class="yarg-reply ${esc(reply.reply)}">${esc(labels[reply.reply]||reply.reply)}</span>`;
 }
-function people(r){return `<div class="members">${membersFor(r).map(m=>`<span class="member">${esc(m.rockstar_name)} · ${esc(part(m.instrument_mode||m.instrument))}${yargReplyFor(r,m.rockstar_name,m.rockstar_profile_id)}${m.microphone?' + 🎤':''}${m.preferred_guitar?' · 🎸 '+esc(({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[m.preferred_guitar]||m.preferred_guitar):''}</span>`).join('')||'<span class="muted">Aucun participant actif</span>'}</div>`;}
+function mcDifficulty(level){return ({beginner:'Débutant',easy:'Facile',medium:'Moyen',hard:'Difficile',expert:'Expert',any:'Au choix'})[level]||level||'Non précisée'}
+function people(r){return `<div class="members">${membersFor(r).map(m=>`<span class="member">${esc(m.rockstar_name)} · ${esc(part(m.instrument_mode||m.instrument))} · <strong>Difficulté : ${esc((m.instrument_mode||m.instrument)==='flex'?'Flex — à convenir':mcDifficulty(m.difficulty||((!r.is_group_request&&m.rockstar_name===r.rockstar_name)?r.requester_difficulty:'')))}</strong>${yargReplyFor(r,m.rockstar_name,m.rockstar_profile_id)}${m.microphone?' + 🎤':''}${m.preferred_guitar?' · 🎸 '+esc(({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[m.preferred_guitar]||m.preferred_guitar):''}</span>`).join('')||'<span class="muted">Aucun participant actif</span>'}</div>`;}
 let mcRequestMetrics=new Map();
 function mcRequestMeta(r){
   const date=r.created_at?new Date(r.created_at):null;
