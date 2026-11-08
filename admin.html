@@ -211,9 +211,26 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .owner-rockstar-details[open]>summary::before{content:'▾'}
 .owner-rockstar-details>summary:focus-visible{outline:2px solid var(--teal);outline-offset:-3px}
 .owner-rockstar-details .owner-rockstar-body{padding:0 19px 19px;border-top:1px solid #37444a}
+ .mc-request-context{display:flex;align-items:stretch;flex-wrap:wrap;gap:9px;margin:12px 0}
+.mc-request-time,.mc-request-person{padding:8px 11px;border:1px solid #354d55;border-radius:10px;background:#18242a}
+.mc-request-time{display:flex;flex-direction:column;color:#8de1d6;min-width:98px;justify-content:center}
+.mc-request-time strong{color:#fff;font-size:1.12rem;line-height:1.25}
+.mc-request-time small{font-size:.67rem}
+.mc-request-person{display:flex;flex:1;gap:5px 13px;flex-wrap:wrap;align-items:center;color:#bdced3}
+.mc-request-person strong{color:#fff;flex-basis:100%;font-size:1rem}
+.owner-library-completed{margin-top:18px;border:1px solid #355057;border-radius:12px;background:#17252b}
+.owner-library-completed>summary{cursor:pointer;padding:12px 15px;color:#9be7c8;font-weight:850}
+.owner-library-completed .owner-fold-body{padding:10px}
+ .mc-history-tools,.mc-song-tools{margin-top:12px;border:1px solid #405b62;border-radius:10px;background:#16252b;padding:10px}
+.mc-history-tools summary,.mc-song-tools summary{cursor:pointer;color:#9beddc;font-weight:850}
+.mc-history-guest,.mc-song-edit{display:grid;gap:9px;padding:11px 3px}
+.mc-song-choices{display:grid;gap:4px;max-height:240px;overflow:auto}
+.mc-song-choices button{display:block;text-align:left;background:#23313a;color:#fff;border:1px solid #4c666d;padding:8px;border-radius:7px;cursor:pointer}
+.mc-song-selected{font-size:.84rem;color:#c9d5d6}
+.mc-song-edit input{width:100%}
 </style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
-<h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée.</p>
+<h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. La Scène et l’Historique ne s’actualisent plus automatiquement pendant que tu manipules les prestations. Utilise « Actualiser » au besoin.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
 <section id="auth" class="card" hidden><h2>Connexion du MC</h2><p>Connecte-toi avec le courriel et le mot de passe de ton compte MC autorisé.</p><form id="sign-in"><label>Adresse courriel<input name="email" type="email" autocomplete="email" placeholder="mc@exemple.com" required></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary">Se connecter</button></form><p class="help">Le compte doit être ajouté à la liste des MC via le script SQL. Cette page n'accepte pas le simple fait de connaître son URL.</p></section>
 <section id="forbidden" class="card" hidden><h2>Accès réservé</h2><p>Ce compte n'est pas autorisé à gérer la soirée. Connecte-toi avec l'adresse du MC.</p><button id="sign-out-forbidden">Changer de compte</button></section>
@@ -231,9 +248,13 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <ul>
 <li><strong>La Rockstar qui a le moins de points</strong> est prioritaire pour faire jouer l’une des chansons qu’elle a demandées.</li>
 <li><strong>Les deux premières chansons sont protégées :</strong> la chanson en cours et la prochaine chanson annoncée ne peuvent pas être déplacées par les changements de points.</li>
-<li><strong>Une même Rockstar ne peut pas être l’initiatrice de plus de deux chansons consécutives</strong>, dans la mesure du possible.</li>
-<li><strong>Un même artiste ne peut pas être entendu pour deux performances consécutives</strong>, dans la mesure du possible.</li>
-<li><strong>En cas d’égalité de points</strong>, la chanson demandée en premier est prioritaire.</li>
+<li><strong>Une même Rockstar ne joue pas deux chansons consécutives comme initiatrice</strong>, dans la mesure du possible.</li>
+<li><strong>On évite deux chansons consécutives du même artiste</strong>, dans la mesure du possible.</li>
+<li><strong>Groupe confirmé :</strong> chaque autre participante distincte ajoute <strong>−30 points</strong> de priorité à cette demande, jusqu’à <strong>−90</strong>. Ce bonus n’est pas soustrait aux points personnels.</li>
+<li><strong>Ancienneté :</strong> après 30 minutes d’attente, une demande gagne 6 points de priorité par minute, jusqu’à 900. Les chansons en pause ne peuvent pas être appelées.</li>
+<li><strong>Doublons :</strong> impossible de redemander une chanson déjà demandée ou jouée durant la même soirée.</li>
+<li><strong>Égalité de points :</strong> la chanson demandée en premier est prioritaire.</li>
+
 <li><strong>Une chanson marquée « Pas prêt »</strong> est temporairement retirée de l’ordre de passage. La Rockstar qui l’a demandée peut la reporter et se déclarer prête à nouveau directement depuis la file de la soirée, sans intervention du MC.</li>
 </ul>
 <h3>Comment les points sont-ils attribués?</h3>
@@ -243,6 +264,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <li><strong>Participer à une autre chanson :</strong> chaque Rockstar qui joue dans la chanson d’une autre personne reçoit une récompense de <strong>−60 points</strong>.</li>
 <li><strong>Moment de l’attribution :</strong> Les points de la chanson et les récompenses des participantes sont comptabilisés dès que le MC marque la chanson <strong>« En cours »</strong>.</li>
 <li><strong>Plancher du bonus :</strong> une récompense de participation ne peut pas faire descendre le score sous 0, mais elle préserve le −1 point de départ d’une Rockstar Initiée si ce privilège n’a pas encore été utilisé. Les points inutilisés ne sont pas conservés.</li>
+<li><strong>Rectifications du MC :</strong> remettre une chanson terminée en file annule sa distribution de points; modifier la chanson jouée recalcule son coût selon la nouvelle durée.</li>
 <li><strong>Chansons sautées :</strong> une chanson passée sans être lancée ne coûte aucun point à son initiatrice et ne donne aucune récompense aux participantes.</li>
 <li><strong>Points anticipés :</strong> le système tient compte des points qui seront gagnés au fil des chansons pour prévoir leur ordre de passage. Ces points n’apparaissent dans le classement réel qu’une fois les chansons lancées.</li>
 </ul>
@@ -275,6 +297,10 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
  <details class="card owner-fold" id="owner-library-section"><summary>Demandes de chansons pour la bibliothèque <span id="owner-library-pending" class="owner-fold-count" hidden></span></summary><div class="owner-fold-body">
   <p class="help">Les demandes « Introuvable » sont mises de côté pendant 30 jours. Elles reviennent ensuite comme 🧟 Demandes zombies ! « Téléchargée » signifie que la chanson a été ajoutée à la bibliothèque.</p>
   <div id="owner-library" class="owner-list"></div>
+   <details class="owner-fold owner-library-completed" id="owner-library-completed">
+     <summary>✅ Chansons téléchargées / trouvées (<span id="owner-library-downloaded-count">0</span>)</summary>
+     <div class="owner-fold-body"><div id="owner-library-downloaded" class="owner-list"></div></div>
+   </details>
  </div></details>
  <details class="card owner-fold" id="owner-session-management"><summary>📃 Soirées archivées</summary><div class="owner-fold-body">
    <div class="flex"><p class="help">Réservé au propriétaire. Supprimer une soirée archivée efface ses demandes, prestations, participations et crédits de progression calculés à partir de ces données. Les autres soirées et les crédits historiques attribués manuellement sont conservés. Action irréversible.</p><button type="button" class="quiet small" id="owner-session-refresh">↻ Actualiser</button></div>
@@ -310,7 +336,7 @@ function pausedRockstarFor(r,name){
 }
 const activeStatuses=new Set(['waiting','full']);
 let mcRockstars=[];let mcEditingRequest=null;
-const mcInstruments=['guitar','rhythm_guitar','bass','drums','drums_4lane','pro_drums','keys','pro_keys','vocals'];
+const mcInstruments=['flex','guitar','rhythm_guitar','bass','drums','drums_4lane','pro_drums','keys','pro_keys','vocals'];
 function mcMemberTools(r){
  const existing=membersFor(r).map(m=>`<div class="mc-member-line"><span class="grow">${esc(m.rockstar_name)} · ${esc(part(m.instrument_mode||m.instrument))}</span><button class="danger" type="button" data-mc-remove="${esc(r.id)}" data-member="${esc(m.id||'')}" data-profile="${esc(m.rockstar_profile_id||'')}" data-requester="${!m.id?'true':'false'}">Retirer</button></div>`).join('');
  const choices=mcRockstars.map(p=>`<option value="${esc(p.user_id)}">${esc(p.rockstar_name)}</option>`).join('');
@@ -342,7 +368,7 @@ function applyAdminPartyMode(s){document.body.classList.toggle('party-mode',part
 
 function notice(text,error=false){$('notice').textContent=text;$('notice').className='notice '+(error?'error':'ok');}
 function fmt(seconds){const s=Math.max(0,Number(seconds)||0);return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
-function membersFor(r){const m=(snapshot.members||[]).filter(x=>x.performance_request_id===r.id&&!x.withdrawn_at);if(r.is_group_request)return m;return [...(!r.requester_withdrawn_at?[{rockstar_name:r.rockstar_name,instrument_mode:r.requester_instrument_mode||r.requester_instrument,microphone:r.requester_microphone}]:[]),...m]}
+function membersFor(r){const m=(snapshot.members||[]).filter(x=>x.performance_request_id===r.id&&!x.withdrawn_at);if(r.is_group_request)return m;return [...(!r.requester_withdrawn_at?[{rockstar_name:r.rockstar_name,instrument_mode:r.requester_instrument_mode||r.requester_instrument,microphone:r.requester_microphone,difficulty:r.requester_difficulty,rockstar_profile_id:r.requester_profile_id}]:[]),...m]}
 function part(mode){return ({guitar:'Guitare',rhythm_guitar:'Guitare rythmique',bass:'Basse',vocals:'Voix',drums:'Batterie',drums_4lane:'Batterie 4-Lane',pro_drums:'Pro Drums',keys:'Clavier',pro_keys:'Pro Keys',flex:'Flex'})[mode]||mode||'—';}
 function yargReplyFor(r,name,userId){
  const who=String(name||'').trim().toLocaleLowerCase();
@@ -362,12 +388,33 @@ function mcRequestMeta(r){
   const date=r.created_at?new Date(r.created_at):null;
   const requested=date&&!Number.isNaN(date.getTime())?date.toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'}):'—';
   const stats=mcRequestMetrics.get(String(r.id));
-  const score=stats&&Number.isFinite(Number(stats.earned_points))?Number(stats.earned_points):null;
-  const count=stats&&Number.isFinite(Number(stats.own_songs_played))?Number(stats.own_songs_played):null;
-  return `<div class="mc-request-metrics"><span>🕒 Demandée à ${esc(requested)}</span><span>⚖️ ${score===null?'—':score>0?'+'+score:score} pts</span><span>🎤 ${count===null?'—':count} demande(s) jouée(s) cette soirée</span><span>Par : ${esc(r.rockstar_name||'Rockstar')}</span></div>`;
+  const points=stats&&Number.isFinite(Number(stats.earned_points))?Number(stats.earned_points):null;
+  const played=stats&&Number.isFinite(Number(stats.own_songs_played))?Number(stats.own_songs_played):null;
+  return `<div class="mc-request-context">
+   <div class="mc-request-time">🕒 <strong>${esc(requested)}</strong><small>Heure de la demande</small></div>
+   <div class="mc-request-person"><strong>👤 ${esc(r.rockstar_name||'Rockstar')}</strong>
+     <span>⚖️ ${points===null?'—':points>0?'+'+points:points} pts</span>
+     <span>🎤 ${played===null?'—':played} chanson(s) demandée(s) déjà jouée(s)</span></div></div>`;
 }
-function row(r,idx){return `<div class="row"><div class="rank">${idx+1}</div><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'Artiste inconnu')} · ${fmt(r.song_duration_seconds)}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}</div><div class="actions"><button class="primary" data-action="start" data-id="${esc(r.id)}">▶ Lancer</button><button data-action="skip" data-id="${esc(r.id)}">Passer</button></div></div>`;}
-function historyRow(r){return `<div class="row"><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}</div>${people(r)}</div>${r.status==='skipped'?`<div class="actions"><button data-action="reactivate" data-id="${esc(r.id)}">↩ Réactiver</button></div>`:''}</div>`;}
+function row(r,idx){return `<div class="row"><div class="rank">${idx+1}</div><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'Artiste inconnu')} · ${fmt(r.song_duration_seconds)}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}${mcSongTools(r)}</div><div class="actions"><button class="primary" data-action="start" data-id="${esc(r.id)}">▶ Lancer</button><button data-action="skip" data-id="${esc(r.id)}">Passer</button></div></div>`;}
+function mcSongTools(r){
+  return `<details class="mc-song-tools"><summary>🎵 Changer pour la chanson réellement jouée</summary>
+    <form data-mc-song-edit="${esc(r.id)}" class="mc-song-edit"><label>Rechercher une chanson du catalogue<input type="search" data-mc-song-search placeholder="Titre ou artiste…" autocomplete="off"></label>
+    <div class="mc-song-choices" role="listbox"></div><div class="mc-song-selected" aria-live="polite">Sélectionne une chanson dans la liste.</div>
+    <input name="song_id" type="hidden"><input name="song_title" type="hidden"><input name="song_artist" type="hidden"><input name="duration" type="hidden">
+    <button class="primary" type="submit" disabled>💾 Enregistrer la chanson jouée</button></form>
+  </details>`;
+}
+function mcGuestHistoryForm(r){
+ return `<form class="mc-history-guest" data-mc-history-guest="${esc(r.id)}">
+  <label>Invité sans compte<input type="text" name="name" maxlength="60" placeholder="Nom affiché" required></label>
+  <label>Instrument joué<select name="instrument">${mcInstruments.map(i=>`<option value="${esc(i)}">${esc(part(i))}</option>`).join('')}</select></label>
+  <button type="submit" class="primary">+ Ajouter ce participant</button></form>`;
+}
+function historyRow(r){return `<div class="row"><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div>
+ <div class="muted">${esc(r.song_artist||'')}${r.band_name?' · 🤘 '+esc(r.band_name):''}</div>${people(r)}
+ <details class="mc-history-tools"><summary>🛠️ Corriger les participants ou la chanson</summary>${mcMemberTools(r)}${mcGuestHistoryForm(r)}${mcSongTools(r)}</details>
+ </div><div class="actions"><button data-action="reactivate" data-id="${esc(r.id)}">${r.status==='skipped'?'↩ Réactiver':'↩ Remettre en file (annule les points)'}</button></div></div>`;}
 function renderMcWithdrawals(){
  const panel=$('mc-withdrawals'),host=$('mc-withdrawals-list');
  if(!panel||!host)return;
@@ -401,7 +448,7 @@ function render(){
  $('begin-live-party').hidden=!preregistration;
  const rows=snapshot.requests||[];
  const playing=rows.filter(r=>r.status==='playing');
- $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${people(r)}${mcMemberTools(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
+ $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${people(r)}${mcMemberTools(r)}${mcSongTools(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
  const ranks=new Map((snapshot.fair_order||[]).map(x=>[x.request_id,Number(x.fair_position)]));
  const upcoming=rows.filter(r=>activeStatuses.has(r.status)).sort((a,b)=>(ranks.get(a.id)||999999)-(ranks.get(b.id)||999999) || String(a.created_at).localeCompare(String(b.created_at)));
  $('upcoming').innerHTML=upcoming.length?upcoming.map(row).join(''):'<div class="empty">La file est vide. On attend les rockstars ! 🤘</div>';
@@ -472,7 +519,7 @@ $('archive-party-button').onclick=async()=>{
  finally{busy=false;await load()}
 };
 async function action(id,name){
- const messages={start:'Lancer cette chanson ?',complete:'Marquer cette chanson comme terminée ?',skip:'Passer cette chanson sans créditer les rockstars ?',reactivate:'Remettre cette chanson en attente ?'};
+ const messages={start:'Lancer cette chanson ?',complete:'Marquer cette chanson comme terminée ?',skip:'Passer cette chanson sans créditer les rockstars ?',reactivate:'Remettre cette chanson en attente ? Si elle était terminée, ses points et statistiques seront annulés automatiquement.'};
  if(!confirm(messages[name]||'Confirmer ?'))return;
  busy=true;try{const {error}=await sb.rpc('yarg_admin_performance_action',{p_request_id:id,p_action:name});if(error)throw error;notice('Action enregistrée.');busy=false;await load();}catch(e){busy=false;notice(e.message,true)}
 }
@@ -591,12 +638,16 @@ function drawOwner(){
  const badge=$('owner-library-pending');
  badge.textContent=pending+' demande'+(pending>1?'s':'')+' à examiner';
  badge.hidden=false;
- const visible=ownerData.library.filter(libraryRequestVisible);
- $('owner-library').innerHTML=visible.length?visible.map(l=>{
+ const visible=ownerData.library.filter(l=>l.status!=='downloaded'&&libraryRequestVisible(l));
+ const downloaded=ownerData.library.filter(l=>l.status==='downloaded');
+ $('owner-library-downloaded-count').textContent=String(downloaded.length);
+ function libraryRow(l){
   const zombie=l.status==='unfindable'&&zombieFeatureReady&&zombieMetadata.has(String(l.id));
   const flag=zombie?'<span class="owner-zombie-flag">🧟 DEMANDE ZOMBIE — BACK FROM THE DEAD !</span>':'';
   return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label></div>`;
- }).join(''):'<p class="muted">Aucune demande à examiner pour le moment. Les chansons introuvables reviendront après 30 jours ! 🧟</p>';
+ }
+ $('owner-library-downloaded').innerHTML=downloaded.length?downloaded.map(libraryRow).join(''):'<p class="muted">Aucune chanson téléchargée pour le moment.</p>';
+ $('owner-library').innerHTML=visible.length?visible.map(libraryRow).join(''):'<p class="muted">Aucune demande à examiner pour le moment. Les chansons introuvables reviendront après 30 jours ! 🧟</p>';
 }
 document.addEventListener('submit',async e=>{
  const form=e.target.closest('.legacy-form');if(!form)return;
@@ -696,6 +747,67 @@ $('playlist-create').onsubmit=async e=>{
  if(error){notice('Création impossible : '+error.message,true);return;}
  $('playlist-name').value='';$('playlist-description').value='';notice('Playlist créée. Ajoute des chansons depuis le catalogue.');await loadMcPlaylists();
 };
-async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;await loadOwner();await syncMcControls();await loadArchivedSessions()}$('app').hidden=false;await load();await loadMcRockstars();await loadMcPlaylists();setInterval(()=>{if(!document.hidden)load()},15000);setInterval(()=>{if(!document.hidden && !$('owner-tab').hidden && ownerData.library.length)void loadOwner()},60000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
+// Optional catalogue search: loaded only when the MC wants to correct a song.
+let mcCataloguePromise=null;
+function loadMcCatalogue(){
+ if(mcCataloguePromise)return mcCataloguePromise;
+ mcCataloguePromise=fetch('songs.json').then(async response=>{
+  if(!response.ok)throw Error('Catalogue indisponible');
+  const raw=(await response.text()).replace(/("chartsAvailable"\s*:\s*)(-?\d+)(?=\s*[,}])/g,'$1"$2"');
+  const songs=JSON.parse(raw).map(item=>{
+    const year=/^\d{4}$/.test(String(item.Year||''))?Number(item.Year):'';
+    const sec=Math.floor((Number(item.songlength)||0)/1000);
+    const x={a:String(item.Artist||''),t:String(item.Name||''),al:String(item.Album||''),y:year,l:sec,ch:String(item.Charter||''),pl:String(item.Playlist||''),mask:String(item.chartsAvailable||0)};
+    x.base=[x.a,x.t,x.al,x.y||'',x.l||''].join('|').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,150)||'song';
+    return x;
+  });
+  songs.sort((a,b)=>{if(a.base!==b.base)return a.base<b.base?-1:1;const ma=a.ch+'|'+a.pl+'|'+a.mask,mb=b.ch+'|'+b.pl+'|'+b.mask;return ma<mb?-1:ma>mb?1:0});
+  const ids=new Map();songs.forEach(song=>{const count=(ids.get(song.base)||0)+1;ids.set(song.base,count);song.id='yarg-'+song.base+(count>1?'-'+count:'')});
+  return songs;
+ }).catch(e=>{mcCataloguePromise=null;throw e});
+ return mcCataloguePromise;
+}
+async function mcRenderSongSearch(input){
+ const form=input.closest('[data-mc-song-edit]');if(!form)return;
+ const q=input.value.trim().toLocaleLowerCase();
+ const host=form.querySelector('.mc-song-choices');
+ form.elements.song_id.value='';form.querySelector('button[type=submit]').disabled=true;
+ form.querySelector('.mc-song-selected').textContent='Sélectionne une chanson dans la liste.';
+ if(q.length<2){host.textContent='Écris au moins 2 caractères.';return}
+ host.textContent='Recherche dans le catalogue…';
+ try{
+  const catalogue=await loadMcCatalogue();
+  if(!document.contains(input)||input.value.trim().toLocaleLowerCase()!==q)return;
+  const text=q.normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+  const matches=catalogue.map((song,i)=>({song,i})).filter(({song})=>(song.t+' '+song.a).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase().includes(text)).slice(0,12);
+  host.innerHTML=matches.length?matches.map(({song,i})=>`<button type="button" data-mc-song-choice="${i}">${esc(song.t)} <small>— ${esc(song.a)} · ${song.l}s</small></button>`).join(''):'Aucune chanson trouvée.';
+ }catch(e){host.textContent='Impossible de charger le catalogue : '+e.message}
+}
+document.addEventListener('focusin',e=>{if(e.target.matches('[data-mc-song-search]'))void loadMcCatalogue()});
+document.addEventListener('input',e=>{if(e.target.matches('[data-mc-song-search]'))void mcRenderSongSearch(e.target)});
+document.addEventListener('click',async e=>{
+ const button=e.target.closest('[data-mc-song-choice]');if(!button)return;
+ const form=button.closest('[data-mc-song-edit]'),songs=await loadMcCatalogue();
+ const song=songs[Number(button.dataset.mcSongChoice)];if(!song)return;
+ form.elements.song_id.value=song.id;form.elements.song_title.value=song.t;
+ form.elements.song_artist.value=song.a;form.elements.duration.value=String(song.l);
+ form.querySelector('.mc-song-selected').textContent='✅ '+song.t+' — '+song.a+' ('+song.l+' s)';
+ form.querySelector('button[type=submit]').disabled=false;
+ form.querySelector('.mc-song-choices').replaceChildren();
+});
+document.addEventListener('submit',async e=>{
+ const form=e.target.closest('[data-mc-song-edit]');if(!form)return;
+ e.preventDefault();
+ const songId=form.elements.song_id.value;if(!songId)return;
+ if(!confirm('Remplacer le titre enregistré par « '+form.elements.song_title.value+' » ? Les points seront recalculés avec la durée réelle.'))return;
+ await mcChange('yarg_mc_change_song',{p_request_id:form.dataset.mcSongEdit,p_song_id:songId,p_title:form.elements.song_title.value,p_artist:form.elements.song_artist.value,p_duration_seconds:Number(form.elements.duration.value)});
+});
+document.addEventListener('submit',async e=>{
+ const form=e.target.closest('[data-mc-history-guest]');if(!form)return;
+ e.preventDefault();
+ if(!confirm('Ajouter '+form.elements.name.value+' à cette prestation terminée ?'))return;
+ await mcChange('yarg_mc_add_history_guest',{p_request_id:form.dataset.mcHistoryGuest,p_name:form.elements.name.value.trim(),p_instrument:form.elements.instrument.value,p_difficulty:'any'});
+});
+async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;await loadOwner();await syncMcControls();await loadArchivedSessions()}$('app').hidden=false;await load();await loadMcRockstars();await loadMcPlaylists();setInterval(()=>{if(!document.hidden && $('scene-tab').hidden && $('history-tab').hidden)load()},15000);setInterval(()=>{if(!document.hidden && !$('owner-tab').hidden && ownerData.library.length)void loadOwner()},60000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
 init();
-</script></body></html>
+</script><script src="yarg-stage-response.js" defer></script></body></html>
