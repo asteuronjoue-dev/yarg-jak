@@ -1006,10 +1006,15 @@ header {max-height:none!important;overflow:visible!important}
     }
     #back-to-top .up-label { display: none; }
 }
+.performance-rainbow-button:disabled{cursor:not-allowed!important;filter:grayscale(1);background:#444a50!important;color:#d4d9dd!important;box-shadow:none!important;animation:none!important;opacity:.75}
 </style>
 
 <style>
-/* Playlist emoji indicators and favorites in the same virtualized list. */
+/* Playlist emoji indicators and favorites in the same virtualized list.
+   Reserve an identical emoji slot on every row so instruments never jump sideways. */
+#scroll .row .song-instruments-icons{display:flex;align-items:center;justify-content:flex-end;flex:1 1 auto;min-width:0;gap:2px}
+#scroll .row .song-playlist-stack{flex:0 0 24px!important;margin-right:2px}
+#scroll .row .cell-instruments{justify-content:flex-end!important}
 @media(min-width:1101px){
  #scroll .row,.col-header{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) 62px 44px minmax(0,1fr) 180px 118px!important}
 }
@@ -1276,6 +1281,17 @@ body>header{border-bottom:0!important}
         let PARTY_REQUESTS_ENABLED = false;
         let PARTY_CLIENT = null;
         let CURRENT_SHEET_SONG = null;
+        const partySongRequests=new Map();
+        const partySongNames=new Map();
+        function partySongKey(title,artist){return (String(title||'').trim()+'|'+String(artist||'').trim()).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr-CA');}
+        function updateSheetRequestAvailability(){
+          const song=CURRENT_SHEET_SONG,button=document.getElementById('performance-request-button');
+          if(!song||!button)return;
+          const state=partySongRequests.get(String(song.id))||partySongNames.get(partySongKey(song.t,song.a));
+          button.disabled=!PARTY_REQUESTS_ENABLED||!!state;
+          const label=button.querySelector('span');
+          if(label)label.textContent=state?(['completed','played'].includes(state)?'✅ Cette chanson a déjà été jouée ce soir':'⏳ Cette chanson est déjà demandée ce soir'):'✨Demander cette chanson pour ce soir!✨';
+        }
 
         function getPartyClient() {
             if (PARTY_CLIENT) return PARTY_CLIENT;
@@ -1299,12 +1315,23 @@ body>header{border-bottom:0!important}
                 const client = getPartyClient();
                 const { data, error } = await client
                     .from('party_settings')
-                    .select('party_name, mc_name, performance_requests_enabled,party_mode_until')
+                    .select('party_name, mc_name, performance_requests_enabled,party_mode_until,current_session_id')
                     .eq('id', 1)
                     .single();
                 if (error) throw error;
 
                 PARTY_REQUESTS_ENABLED = !!(data && data.performance_requests_enabled && (!data.party_mode_until || new Date(data.party_mode_until).getTime()>Date.now()));
+                partySongRequests.clear();partySongNames.clear();
+                if(PARTY_REQUESTS_ENABLED&&data.current_session_id){
+                  const {data:used,error:usedError}=await client.from('performance_requests')
+                    .select('song_id,song_title,song_artist,status').eq('party_session_id',data.current_session_id)
+                    .in('status',['waiting','full','playing','completed','played']).limit(3000);
+                  if(usedError)console.warn('Vérification demandes déjà jouées:',usedError.message);
+                  else for(const entry of used||[]){
+                    partySongRequests.set(String(entry.song_id),entry.status);
+                    partySongNames.set(partySongKey(entry.song_title,entry.song_artist),entry.status);
+                  }
+                }
                 if (PARTY_REQUESTS_ENABLED) {
                     document.body.classList.add('party-mode');
                     catalogTitle.style.display = 'none';
@@ -1320,6 +1347,7 @@ body>header{border-bottom:0!important}
                     partyInfo.classList.remove('active');
                     document.title = normalTitle;
                 }
+                updateSheetRequestAvailability();
             } catch (err) {
                 console.warn('Impossible de charger le mode Party :', err);
                 catalogTitle.textContent = normalTitle;
@@ -2308,7 +2336,7 @@ body>header{border-bottom:0!important}
                 html += `<div class="cell cell-year">${esc(r.y || '')}</div>`;
                 html += `<div class="cell cell-album">${esc(r.al || '')}</div>`;
                 const playlistIcons=directoryPlaylistEmojis.get(String(r.id))||[];
-                html += `<div class="cell cell-instruments">${playlistIcons.length?`<span class="song-playlist-stack" title="Playlists : ${esc(playlistIcons.join(' '))}" aria-label="Playlists : ${esc(playlistIcons.join(' '))}">${playlistIcons.map(emoji=>`<span>${emoji}</span>`).join('')}</span>`:''}${partsBadges(r)}</div>`;
+                html += `<div class="cell cell-instruments"><span class="song-playlist-stack" title="Playlists : ${esc(playlistIcons.join(' '))}" aria-label="Playlists : ${esc(playlistIcons.join(' '))}">${playlistIcons.map(emoji=>`<span>${emoji}</span>`).join('')}</span><span class="song-instruments-icons">${partsBadges(r)}</span></div>`;
                 const isFav=resolvedFavoriteSongIds.has(String(r.id));
                 const isPending=favoriteWritesInFlight.has(String(r.id));
                 html += `<div class="song-row-actions"><button class="song-row-fav${isFav?' is-favorite':''}" type="button" data-fav-song="${esc(r.id)}" aria-label="${isFav?'Retirer des favoris':'Ajouter aux favoris'} : ${esc(r.t)}" title="${isFav?'Retirer des favoris':'Ajouter aux favoris'}" aria-pressed="${isFav}" ${isPending?'disabled':''}>${isFav?'🧡':'🖤'}</button></div>`;
@@ -2389,6 +2417,7 @@ body>header{border-bottom:0!important}
             updateFavoriteButton();
             const requestZone = document.getElementById('performance-request-zone');
             if (requestZone) requestZone.hidden = !PARTY_REQUESTS_ENABLED;
+            updateSheetRequestAvailability();
             document.getElementById('sheet-title').textContent = r.t;
             document.getElementById('sheet-artist').textContent = r.a;
             document.getElementById('sheet-album').textContent = r.al || '—';
@@ -2448,7 +2477,7 @@ body>header{border-bottom:0!important}
 
 
         document.getElementById('performance-request-button').addEventListener('click', () => {
-            if (!PARTY_REQUESTS_ENABLED || !CURRENT_SHEET_SONG) return;
+            if(!PARTY_REQUESTS_ENABLED||!CURRENT_SHEET_SONG||document.getElementById('performance-request-button').disabled)return;
             const params = new URLSearchParams({
                 song_id: CURRENT_SHEET_SONG.id,
                 duration_seconds: CURRENT_SHEET_SONG.l || '',
