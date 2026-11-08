@@ -200,7 +200,7 @@
  refresh();setInterval(()=>{if(!document.hidden)refresh()},5000);
  
  // Invitations are available on every page, not only the queue.
- if(!document.getElementById('yarg-invite-tray')){
+ if(!document.getElementById('yarg-invite-tray') || new URLSearchParams(location.search).get('affichage')==='1'){
   const tray=document.createElement('div');tray.id='yarg-global-invites';tray.hidden=true;
   tray.setAttribute('role','region');tray.setAttribute('aria-label','Invitations Rockstar');
   document.body.append(tray);
