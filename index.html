@@ -1012,8 +1012,8 @@ header {max-height:none!important;overflow:visible!important}
 <style>
 /* Playlist emoji indicators and favorites in the same virtualized list.
    Reserve an identical emoji slot on every row so instruments never jump sideways. */
-#scroll .row .song-instruments-icons{display:flex;align-items:center;justify-content:flex-end;flex:1 1 auto;min-width:0;gap:2px}
-#scroll .row .song-playlist-stack{flex:0 0 24px!important;margin-right:2px}
+#scroll .row .song-instruments-icons{display:flex;align-items:center;justify-content:flex-end;flex:1 1 auto;min-width:0;gap:0}
+#scroll .row .song-playlist-stack{flex:0 0 22px!important;margin-right:1px}
 #scroll .row .cell-instruments{justify-content:flex-end!important}
 @media(min-width:1101px){
  #scroll .row,.col-header{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) 62px 44px minmax(0,1fr) 180px 118px!important}
@@ -1355,6 +1355,7 @@ body>header{border-bottom:0!important}
         }
 
         loadPartyMode();
+        setInterval(()=>{if(!document.hidden)void loadPartyMode()},30000);
         // Catalogue dynamique : songs.json est la source unique des chansons.
         // Ne jamais utiliser JSON.parse directement sur chartsAvailable : certains
         // masques dépassent Number.MAX_SAFE_INTEGER. Les valeurs deviennent des
