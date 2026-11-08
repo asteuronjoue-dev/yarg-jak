@@ -221,6 +221,13 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .owner-library-completed{margin-top:18px;border:1px solid #355057;border-radius:12px;background:#17252b}
 .owner-library-completed>summary{cursor:pointer;padding:12px 15px;color:#9be7c8;font-weight:850}
 .owner-library-completed .owner-fold-body{padding:10px}
+ .mc-history-tools,.mc-song-tools{margin-top:12px;border:1px solid #405b62;border-radius:10px;background:#16252b;padding:10px}
+.mc-history-tools summary,.mc-song-tools summary{cursor:pointer;color:#9beddc;font-weight:850}
+.mc-history-guest,.mc-song-edit{display:grid;gap:9px;padding:11px 3px}
+.mc-song-choices{display:grid;gap:4px;max-height:240px;overflow:auto}
+.mc-song-choices button{display:block;text-align:left;background:#23313a;color:#fff;border:1px solid #4c666d;padding:8px;border-radius:7px;cursor:pointer}
+.mc-song-selected{font-size:.84rem;color:#c9d5d6}
+.mc-song-edit input{width:100%}
 </style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée.</p>
@@ -324,7 +331,7 @@ function pausedRockstarFor(r,name){
 }
 const activeStatuses=new Set(['waiting','full']);
 let mcRockstars=[];let mcEditingRequest=null;
-const mcInstruments=['guitar','rhythm_guitar','bass','drums','drums_4lane','pro_drums','keys','pro_keys','vocals'];
+const mcInstruments=['flex','guitar','rhythm_guitar','bass','drums','drums_4lane','pro_drums','keys','pro_keys','vocals'];
 function mcMemberTools(r){
  const existing=membersFor(r).map(m=>`<div class="mc-member-line"><span class="grow">${esc(m.rockstar_name)} · ${esc(part(m.instrument_mode||m.instrument))}</span><button class="danger" type="button" data-mc-remove="${esc(r.id)}" data-member="${esc(m.id||'')}" data-profile="${esc(m.rockstar_profile_id||'')}" data-requester="${!m.id?'true':'false'}">Retirer</button></div>`).join('');
  const choices=mcRockstars.map(p=>`<option value="${esc(p.user_id)}">${esc(p.rockstar_name)}</option>`).join('');
@@ -357,7 +364,7 @@ function applyAdminPartyMode(s){document.body.classList.toggle('party-mode',part
 function notice(text,error=false){$('notice').textContent=text;$('notice').className='notice '+(error?'error':'ok');}
 function fmt(seconds){const s=Math.max(0,Number(seconds)||0);return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
 function membersFor(r){const m=(snapshot.members||[]).filter(x=>x.performance_request_id===r.id&&!x.withdrawn_at);if(r.is_group_request)return m;return [...(!r.requester_withdrawn_at?[{rockstar_name:r.rockstar_name,instrument_mode:r.requester_instrument_mode||r.requester_instrument,microphone:r.requester_microphone}]:[]),...m]}
-function part(mode){return ({guitar:'Guitare',rhythm_guitar:'Guitare rythmique',bass:'Basse',vocals:'Voix',drums:'Batterie',drums_4lane:'Batterie 4-Lane',pro_drums:'Pro Drums',keys:'Clavier',pro_keys:'Pro Keys',flex:'Flex'})[mode]||mode||'—';}
+function part(mode){return ({guitar:'Guitare',rhythm_guitar:'Guitare rythmique',bass:'Basse',vocals:'Voix',drums:'Batterie',drums_4lane:'Batterie 4-Lane',pro_drums:'Pro Drums',keys:'Clavier',pro_keys:'Pro Keys',flex:'Flex',flex:'Flex'})[mode]||mode||'—';}
 function yargReplyFor(r,name,userId){
  const who=String(name||'').trim().toLocaleLowerCase();
  if(pausedRockstarFor(r,name))return '<span class="yarg-reply later">⏸ Pas prêt</span>';
@@ -384,8 +391,25 @@ function mcRequestMeta(r){
      <span>⚖️ ${points===null?'—':points>0?'+'+points:points} pts</span>
      <span>🎤 ${played===null?'—':played} chanson(s) demandée(s) déjà jouée(s)</span></div></div>`;
 }
-function row(r,idx){return `<div class="row"><div class="rank">${idx+1}</div><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'Artiste inconnu')} · ${fmt(r.song_duration_seconds)}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}</div><div class="actions"><button class="primary" data-action="start" data-id="${esc(r.id)}">▶ Lancer</button><button data-action="skip" data-id="${esc(r.id)}">Passer</button></div></div>`;}
-function historyRow(r){return `<div class="row"><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}</div>${people(r)}</div>${r.status==='skipped'?`<div class="actions"><button data-action="reactivate" data-id="${esc(r.id)}">↩ Réactiver</button></div>`:''}</div>`;}
+function row(r,idx){return `<div class="row"><div class="rank">${idx+1}</div><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'Artiste inconnu')} · ${fmt(r.song_duration_seconds)}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}${mcSongTools(r)}</div><div class="actions"><button class="primary" data-action="start" data-id="${esc(r.id)}">▶ Lancer</button><button data-action="skip" data-id="${esc(r.id)}">Passer</button></div></div>`;}
+function mcSongTools(r){
+  return `<details class="mc-song-tools"><summary>🎵 Changer pour la chanson réellement jouée</summary>
+    <form data-mc-song-edit="${esc(r.id)}" class="mc-song-edit"><label>Rechercher une chanson du catalogue<input type="search" data-mc-song-search placeholder="Titre ou artiste…" autocomplete="off"></label>
+    <div class="mc-song-choices" role="listbox"></div><div class="mc-song-selected" aria-live="polite">Sélectionne une chanson dans la liste.</div>
+    <input name="song_id" type="hidden"><input name="song_title" type="hidden"><input name="song_artist" type="hidden"><input name="duration" type="hidden">
+    <button class="primary" type="submit" disabled>💾 Enregistrer la chanson jouée</button></form>
+  </details>`;
+}
+function mcGuestHistoryForm(r){
+ return `<form class="mc-history-guest" data-mc-history-guest="${esc(r.id)}">
+  <label>Invité sans compte<input type="text" name="name" maxlength="60" placeholder="Nom affiché" required></label>
+  <label>Instrument joué<select name="instrument">${mcInstruments.map(i=>`<option value="${esc(i)}">${esc(part(i))}</option>`).join('')}</select></label>
+  <button type="submit" class="primary">+ Ajouter ce participant</button></form>`;
+}
+function historyRow(r){return `<div class="row"><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div>
+ <div class="muted">${esc(r.song_artist||'')}${r.band_name?' · 🤘 '+esc(r.band_name):''}</div>${people(r)}
+ <details class="mc-history-tools"><summary>🛠️ Corriger les participants ou la chanson</summary>${mcMemberTools(r)}${mcGuestHistoryForm(r)}${mcSongTools(r)}</details>
+ </div><div class="actions"><button data-action="reactivate" data-id="${esc(r.id)}">${r.status==='skipped'?'↩ Réactiver':'↩ Remettre en file (annule les points)'}</button></div></div>`;}
 function renderMcWithdrawals(){
  const panel=$('mc-withdrawals'),host=$('mc-withdrawals-list');
  if(!panel||!host)return;
@@ -419,7 +443,7 @@ function render(){
  $('begin-live-party').hidden=!preregistration;
  const rows=snapshot.requests||[];
  const playing=rows.filter(r=>r.status==='playing');
- $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${people(r)}${mcMemberTools(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
+ $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${people(r)}${mcMemberTools(r)}${mcSongTools(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
  const ranks=new Map((snapshot.fair_order||[]).map(x=>[x.request_id,Number(x.fair_position)]));
  const upcoming=rows.filter(r=>activeStatuses.has(r.status)).sort((a,b)=>(ranks.get(a.id)||999999)-(ranks.get(b.id)||999999) || String(a.created_at).localeCompare(String(b.created_at)));
  $('upcoming').innerHTML=upcoming.length?upcoming.map(row).join(''):'<div class="empty">La file est vide. On attend les rockstars ! 🤘</div>';
@@ -490,7 +514,7 @@ $('archive-party-button').onclick=async()=>{
  finally{busy=false;await load()}
 };
 async function action(id,name){
- const messages={start:'Lancer cette chanson ?',complete:'Marquer cette chanson comme terminée ?',skip:'Passer cette chanson sans créditer les rockstars ?',reactivate:'Remettre cette chanson en attente ?'};
+ const messages={start:'Lancer cette chanson ?',complete:'Marquer cette chanson comme terminée ?',skip:'Passer cette chanson sans créditer les rockstars ?',reactivate:'Remettre cette chanson en attente ? Si elle était terminée, ses points et statistiques seront annulés automatiquement.'};
  if(!confirm(messages[name]||'Confirmer ?'))return;
  busy=true;try{const {error}=await sb.rpc('yarg_admin_performance_action',{p_request_id:id,p_action:name});if(error)throw error;notice('Action enregistrée.');busy=false;await load();}catch(e){busy=false;notice(e.message,true)}
 }
@@ -718,6 +742,67 @@ $('playlist-create').onsubmit=async e=>{
  if(error){notice('Création impossible : '+error.message,true);return;}
  $('playlist-name').value='';$('playlist-description').value='';notice('Playlist créée. Ajoute des chansons depuis le catalogue.');await loadMcPlaylists();
 };
+// Optional catalogue search: loaded only when the MC wants to correct a song.
+let mcCataloguePromise=null;
+function loadMcCatalogue(){
+ if(mcCataloguePromise)return mcCataloguePromise;
+ mcCataloguePromise=fetch('songs.json').then(async response=>{
+  if(!response.ok)throw Error('Catalogue indisponible');
+  const raw=(await response.text()).replace(/("chartsAvailable"\s*:\s*)(-?\d+)(?=\s*[,}])/g,'$1"$2"');
+  const songs=JSON.parse(raw).map(item=>{
+    const year=/^\d{4}$/.test(String(item.Year||''))?Number(item.Year):'';
+    const sec=Math.floor((Number(item.songlength)||0)/1000);
+    const x={a:String(item.Artist||''),t:String(item.Name||''),al:String(item.Album||''),y:year,l:sec,ch:String(item.Charter||''),pl:String(item.Playlist||''),mask:String(item.chartsAvailable||0)};
+    x.base=[x.a,x.t,x.al,x.y||'',x.l||''].join('|').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,150)||'song';
+    return x;
+  });
+  songs.sort((a,b)=>a.base.localeCompare(b.base)||((a.ch+'|'+a.pl+'|'+a.mask)<(b.ch+'|'+b.pl+'|'+b.mask)?-1:(a.ch+'|'+a.pl+'|'+a.mask)>(b.ch+'|'+b.pl+'|'+b.mask)?1:0));
+  const ids=new Map();songs.forEach(song=>{const count=(ids.get(song.base)||0)+1;ids.set(song.base,count);song.id='yarg-'+song.base+(count>1?'-'+count:'')});
+  return songs;
+ }).catch(e=>{mcCataloguePromise=null;throw e});
+ return mcCataloguePromise;
+}
+async function mcRenderSongSearch(input){
+ const form=input.closest('[data-mc-song-edit]');if(!form)return;
+ const q=input.value.trim().toLocaleLowerCase();
+ const host=form.querySelector('.mc-song-choices');
+ form.elements.song_id.value='';form.querySelector('button[type=submit]').disabled=true;
+ form.querySelector('.mc-song-selected').textContent='Sélectionne une chanson dans la liste.';
+ if(q.length<2){host.textContent='Écris au moins 2 caractères.';return}
+ host.textContent='Recherche dans le catalogue…';
+ try{
+  const catalogue=await loadMcCatalogue();
+  if(!document.contains(input))return;
+  const text=q.normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+  const matches=catalogue.map((song,i)=>({song,i})).filter(({song})=>(song.t+' '+song.a).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase().includes(text)).slice(0,12);
+  host.innerHTML=matches.length?matches.map(({song,i})=>`<button type="button" data-mc-song-choice="${i}">${esc(song.t)} <small>— ${esc(song.a)} · ${song.l}s</small></button>`).join(''):'Aucune chanson trouvée.';
+ }catch(e){host.textContent='Impossible de charger le catalogue : '+e.message}
+}
+document.addEventListener('focusin',e=>{if(e.target.matches('[data-mc-song-search]'))void loadMcCatalogue()});
+document.addEventListener('input',e=>{if(e.target.matches('[data-mc-song-search]'))void mcRenderSongSearch(e.target)});
+document.addEventListener('click',async e=>{
+ const button=e.target.closest('[data-mc-song-choice]');if(!button)return;
+ const form=button.closest('[data-mc-song-edit]'),songs=await loadMcCatalogue();
+ const song=songs[Number(button.dataset.mcSongChoice)];if(!song)return;
+ form.elements.song_id.value=song.id;form.elements.song_title.value=song.t;
+ form.elements.song_artist.value=song.a;form.elements.duration.value=String(song.l);
+ form.querySelector('.mc-song-selected').textContent='✅ '+song.t+' — '+song.a+' ('+song.l+' s)';
+ form.querySelector('button[type=submit]').disabled=false;
+ form.querySelector('.mc-song-choices').replaceChildren();
+});
+document.addEventListener('submit',async e=>{
+ const form=e.target.closest('[data-mc-song-edit]');if(!form)return;
+ e.preventDefault();
+ const songId=form.elements.song_id.value;if(!songId)return;
+ if(!confirm('Remplacer le titre enregistré par « '+form.elements.song_title.value+' » ? Les points seront recalculés avec la durée réelle.'))return;
+ await mcChange('yarg_mc_change_song',{p_request_id:form.dataset.mcSongEdit,p_song_id:songId,p_title:form.elements.song_title.value,p_artist:form.elements.song_artist.value,p_duration_seconds:Number(form.elements.duration.value)});
+});
+document.addEventListener('submit',async e=>{
+ const form=e.target.closest('[data-mc-history-guest]');if(!form)return;
+ e.preventDefault();
+ if(!confirm('Ajouter '+form.elements.name.value+' à cette prestation terminée ?'))return;
+ await mcChange('yarg_mc_add_history_guest',{p_request_id:form.dataset.mcHistoryGuest,p_name:form.elements.name.value.trim(),p_instrument:form.elements.instrument.value,p_difficulty:'any'});
+});
 async function init(){try{const {data,error}=await sb.auth.getUser();if(error||!data?.user){$('auth').hidden=false;return;}const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');if(checkError)throw checkError;if(!allowed){$('forbidden').hidden=false;return;}document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);const {data:isOwner,error:ownerError}=await sb.rpc('yarg_owner_whoami');if(!ownerError&&isOwner){$('owner-tab-button').hidden=false;$('rockstars-tab-button').hidden=false;await loadOwner();await syncMcControls();await loadArchivedSessions()}$('app').hidden=false;await load();await loadMcRockstars();await loadMcPlaylists();setInterval(()=>{if(!document.hidden && $('scene-tab').hidden && $('history-tab').hidden)load()},15000);setInterval(()=>{if(!document.hidden && !$('owner-tab').hidden && ownerData.library.length)void loadOwner()},60000);}catch(e){notice('Erreur de connexion : '+e.message,true);$('auth').hidden=false}}
 init();
 </script></body></html>
