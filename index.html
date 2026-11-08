@@ -1024,6 +1024,9 @@ header {max-height:none!important;overflow:visible!important}
 .col-header::after{content:'🧡';text-align:center;font-size:14px;align-self:center}
 #scroll .row .song-row-actions{display:flex;min-width:0;align-items:center;justify-content:flex-end;gap:5px}
 #scroll .row .song-playlist-stack{display:flex;flex:none;flex-direction:column;flex-wrap:wrap;align-content:center;justify-content:center;gap:0 1px;width:23px;max-height:36px;height:36px;overflow:hidden;line-height:12px;font-size:11px;text-align:center}
+/* Playlist emojis float in a fixed overlay: songs without emojis keep the same instrument alignment. */
+#scroll .row>.cell.cell-instruments{position:relative!important;justify-content:flex-end!important}
+#scroll .row .song-playlist-stack{position:absolute!important;left:0;top:50%;transform:translateY(-50%);pointer-events:none;z-index:1}
 #scroll .row .song-playlist-stack>span{height:12px;line-height:12px;display:block}
 #scroll .row .song-row-fav{flex:0 0 auto;width:31px;height:31px;display:inline-grid;place-items:center;padding:0;border:1px solid #42555c;border-radius:9px;background:#1d2b31;color:#b7c6cf;font-size:22px;line-height:1;cursor:pointer}
 #scroll .row .song-row-fav:hover,#scroll .row .song-row-fav:focus-visible{border-color:#36b6c5;background:#263b44}
