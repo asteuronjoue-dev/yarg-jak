@@ -211,7 +211,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .owner-rockstar-details[open]>summary::before{content:'▾'}
 .owner-rockstar-details>summary:focus-visible{outline:2px solid var(--teal);outline-offset:-3px}
 .owner-rockstar-details .owner-rockstar-body{padding:0 19px 19px;border-top:1px solid #37444a}
-</style></head><body><main>
+</style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
@@ -356,7 +356,16 @@ function yargReplyFor(r,name,userId){
  return `<span class="yarg-reply ${esc(reply.reply)}">${esc(labels[reply.reply]||reply.reply)}</span>`;
 }
 function people(r){return `<div class="members">${membersFor(r).map(m=>`<span class="member">${esc(m.rockstar_name)} · ${esc(part(m.instrument_mode||m.instrument))}${yargReplyFor(r,m.rockstar_name,m.rockstar_profile_id)}${m.microphone?' + 🎤':''}${m.preferred_guitar?' · 🎸 '+esc(({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[m.preferred_guitar]||m.preferred_guitar):''}</span>`).join('')||'<span class="muted">Aucun participant actif</span>'}</div>`;}
-function row(r,idx){return `<div class="row"><div class="rank">${idx+1}</div><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'Artiste inconnu')} · ${fmt(r.song_duration_seconds)}${r.band_name?' · '+esc(r.band_name):''}</div>${people(r)}${mcMemberTools(r)}</div><div class="actions"><button class="primary" data-action="start" data-id="${esc(r.id)}">▶ Lancer</button><button data-action="skip" data-id="${esc(r.id)}">Passer</button></div></div>`;}
+let mcRequestMetrics=new Map();
+function mcRequestMeta(r){
+  const date=r.created_at?new Date(r.created_at):null;
+  const requested=date&&!Number.isNaN(date.getTime())?date.toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'}):'—';
+  const stats=mcRequestMetrics.get(String(r.id));
+  const score=stats&&Number.isFinite(Number(stats.earned_points))?Number(stats.earned_points):null;
+  const count=stats&&Number.isFinite(Number(stats.own_songs_played))?Number(stats.own_songs_played):null;
+  return `<div class="mc-request-metrics"><span>🕒 Demandée à ${esc(requested)}</span><span>⚖️ ${score===null?'—':score>0?'+'+score:score} pts</span><span>🎤 ${count===null?'—':count} demande(s) jouée(s) cette soirée</span><span>Par : ${esc(r.rockstar_name||'Rockstar')}</span></div>`;
+}
+function row(r,idx){return `<div class="row"><div class="rank">${idx+1}</div><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'Artiste inconnu')} · ${fmt(r.song_duration_seconds)}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}</div><div class="actions"><button class="primary" data-action="start" data-id="${esc(r.id)}">▶ Lancer</button><button data-action="skip" data-id="${esc(r.id)}">Passer</button></div></div>`;}
 function historyRow(r){return `<div class="row"><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}</div>${people(r)}</div>${r.status==='skipped'?`<div class="actions"><button data-action="reactivate" data-id="${esc(r.id)}">↩ Réactiver</button></div>`:''}</div>`;}
 function renderMcWithdrawals(){
  const panel=$('mc-withdrawals'),host=$('mc-withdrawals-list');
@@ -439,7 +448,11 @@ async function load(){if(busy)return;const {data,error}=await sb.rpc('yarg_admin
   const {data:pauseData,error:pauseError}=await sb.rpc('yarg_public_pause_overview');
   if(pauseError){console.warn('Pauses Rockstar indisponibles (migration SQL v2) :',pauseError.message);yargPauseOverview={paused:[],reasons:[]};}
   else yargPauseOverview=pauseData||{paused:[],reasons:[]};
-  render();void loadActiveRequesters();if($('mc-score-details').open&&!$('scene-tab').hidden)void loadMcScores();}
+  render();
+   const {data:metrics,error:metricsError}=await sb.rpc('yarg_mc_request_metrics');
+   if(metricsError)console.warn('Métriques MC indisponibles',metricsError);
+   else {mcRequestMetrics=new Map((metrics||[]).map(x=>[String(x.request_id),x]));render();}
+   void loadActiveRequesters();if($('mc-score-details').open&&!$('scene-tab').hidden)void loadMcScores();}
 async function loadMcRockstars(){const {data,error}=await sb.rpc('yarg_mc_rockstars');if(error){notice('Comptes Rockstar : '+error.message,true);return}mcRockstars=data||[];render();}
 async function mcChange(name,args){try{const {error}=await sb.rpc(name,args);if(error)throw error;notice('Modification enregistrée.');await load()}catch(e){notice(e.message||String(e),true)}}
 document.addEventListener('submit',async e=>{const form=e.target.closest('form[data-mc-assignment]');if(!form)return;e.preventDefault();const id=form.dataset.mcAssignment,profile=form.elements.profile.value,instrument=form.elements.instrument.value;if(!profile)return;if(!confirm('Attribuer '+instrument+' au compte sélectionné pour cette chanson ?'))return;await mcChange('yarg_mc_assign_player',{p_request_id:id,p_user_id:profile,p_instrument:instrument})});
