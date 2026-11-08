@@ -1605,10 +1605,12 @@ body>header{border-bottom:0!important}
         const favoriteWritesInFlight=new Set();
         const emojiForPlaylist=name=>{
           const n=normOfficial(name||'');
-          if(n.includes('rockers')&&n.includes('rise up'))return '🤘';
+          if(n.includes('party starters')&&n.includes('rock'))return '🤘';
+          if(n.includes('party starters')&&n.includes('pop'))return '🪩';
+          if(n.includes('guitar')&&n.includes('battl'))return '⚡';
           if(n.includes('francophone'))return '⚜️';
           if(n.includes('videoclip')||n.includes('video clip'))return '📺';
-          if(n.includes('rockers')&&n.includes('sleep soon'))return '💤';
+          if(n.includes('fin de soiree'))return '💤';
           if(n.includes('disney'))return '💫';
           return '';
         };
@@ -1745,11 +1747,13 @@ body>header{border-bottom:0!important}
           const normalizeName=s=>normOfficial(s);
           const getArt=name=>{
             const n=normalizeName(name);
-            if(n.includes('disney')&&n.includes('pixar'))return 'disney-pixar.png';
-            if(n.includes('guitar')&&n.includes('battl'))return 'guitar-battles.png';
-            if(n.includes('francophone'))return 'francophone.png';
-            if(n.includes('rockers')&&n.includes('rise up'))return 'rockers-rise-up.png';
-            if(n.includes('rockers')&&n.includes('sleep soon'))return 'rockers-go-to-sleep-soon.png';
+            if(n.includes('party starters')&&n.includes('rock'))return 'party-starters-rock.svg';
+            if(n.includes('party starters')&&n.includes('pop'))return 'party-starters-pop.svg';
+            if(n.includes('fin de soiree'))return 'fin-de-soiree.svg';
+            if(n.includes('disney')&&n.includes('pixar'))return 'disney-pixar-rework.svg';
+            if(n.includes('guitar')&&n.includes('battl'))return 'guitar-battles-rework.svg';
+            if(n.includes('francophone'))return 'francophone-rework.svg';
+            if(n.includes('videoclip'))return 'videoclips.svg';
             return null;
           };
           function addCard(title,subtitle,art,selected,onClick,isFav=false){
@@ -1769,8 +1773,8 @@ body>header{border-bottom:0!important}
             }
             btn.addEventListener('click',onClick);playlistCardsGrid.appendChild(btn);
           }
-          addCard('Mes Favoris',signedInRockstar?'Mes chansons préférées':'Connexion Rockstar requise','mes-favoris.png',state.favoritesOnly,()=>{if(!signedInRockstar){location.href='profil.html';return}favFilterButton.click()},true);
-          const playlistSort=p=>{const n=normalizeName(p.name);return n.includes('rockers')&&n.includes('rise up')?0:n.includes('rockers')&&n.includes('sleep soon')?2:1};
+          addCard('Mes Favoris',signedInRockstar?'Mes chansons préférées':'Connexion Rockstar requise','mes-favoris-rework.svg',state.favoritesOnly,()=>{if(!signedInRockstar){location.href='profil.html';return}favFilterButton.click()},true);
+          const playlistSort=p=>{const n=normalizeName(p.name);if(n.includes('party starters')&&n.includes('rock'))return 0;if(n.includes('party starters')&&n.includes('pop'))return 1;if(n.includes('francophone'))return 2;if(n.includes('guitar'))return 3;if(n.includes('disney'))return 4;if(n.includes('videoclip'))return 5;if(n.includes('fin de soiree'))return 6;return 7;};
           for(const p of [...publicPlaylists].sort((a,b)=>playlistSort(a)-playlistSort(b)||a.name.localeCompare(b.name,'fr'))){
             addCard(p.name,p.description||'Playlist publique',getArt(p.name),state.publicPlaylistId===p.id,()=>{
               curatedPicker.value=state.publicPlaylistId===p.id?'':p.id;
