@@ -122,6 +122,16 @@
      const {data:settings,error:settingError}=await client.from('party_settings').select('current_session_id,performance_requests_enabled,party_mode_until').eq('id',1).maybeSingle();
      if(settingError||!settings?.current_session_id||!settings.performance_requests_enabled || (settings.party_mode_until && new Date(settings.party_mode_until)<new Date())){hide();return;}
      const presence=await client.rpc('yarg_my_party_presence');presenceSupported=!presence.error;partyPaused=presenceSupported&&presence.data===true;
+     // Keep the pause warning visible on *every* page, even when none of
+     // this account's requests is among the next two songs.
+     if(partyPaused){
+       renderStageHeading('⏸️ Tu es en pause! ⏸️','Tes prestations à venir restent suspendues.');
+       details.textContent='Appuie sur « Je suis prêt » pour reprendre ta place dans la file.';
+       status.textContent='';
+       lastRequestId='';
+       showStageMode('pause');
+       return;
+     }
      const {data:reqs,error:re}=await client.from('performance_requests').select('id,status,requester_profile_id,guest_user_id,rockstar_name,is_group_request,requester_instrument,requester_difficulty,song_title,song_artist,requester_withdrawn_at,created_at,yarg_not_ready').eq('party_session_id',settings.current_session_id).in('status',['waiting','full','playing']);
      if(re)throw re;
      const {data:fair,error:fe}=await client.rpc('yarg_get_fair_queue');if(fe)throw fe;
