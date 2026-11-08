@@ -230,7 +230,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .mc-song-edit input{width:100%}
 </style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
-<h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée.</p>
+<h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. La Scène et l’Historique ne s’actualisent plus automatiquement pendant que tu manipules les prestations. Utilise « Actualiser » au besoin.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
 <section id="auth" class="card" hidden><h2>Connexion du MC</h2><p>Connecte-toi avec le courriel et le mot de passe de ton compte MC autorisé.</p><form id="sign-in"><label>Adresse courriel<input name="email" type="email" autocomplete="email" placeholder="mc@exemple.com" required></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary">Se connecter</button></form><p class="help">Le compte doit être ajouté à la liste des MC via le script SQL. Cette page n'accepte pas le simple fait de connaître son URL.</p></section>
 <section id="forbidden" class="card" hidden><h2>Accès réservé</h2><p>Ce compte n'est pas autorisé à gérer la soirée. Connecte-toi avec l'adresse du MC.</p><button id="sign-out-forbidden">Changer de compte</button></section>
@@ -248,9 +248,13 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <ul>
 <li><strong>La Rockstar qui a le moins de points</strong> est prioritaire pour faire jouer l’une des chansons qu’elle a demandées.</li>
 <li><strong>Les deux premières chansons sont protégées :</strong> la chanson en cours et la prochaine chanson annoncée ne peuvent pas être déplacées par les changements de points.</li>
-<li><strong>Une même Rockstar ne peut pas être l’initiatrice de plus de deux chansons consécutives</strong>, dans la mesure du possible.</li>
-<li><strong>Un même artiste ne peut pas être entendu pour deux performances consécutives</strong>, dans la mesure du possible.</li>
-<li><strong>En cas d’égalité de points</strong>, la chanson demandée en premier est prioritaire.</li>
+<li><strong>Une même Rockstar ne joue pas deux chansons consécutives comme initiatrice</strong>, dans la mesure du possible.</li>
+<li><strong>On évite deux chansons consécutives du même artiste</strong>, dans la mesure du possible.</li>
+<li><strong>Groupe confirmé :</strong> chaque autre participante distincte ajoute <strong>−30 points</strong> de priorité à cette demande, jusqu’à <strong>−90</strong>. Ce bonus n’est pas soustrait aux points personnels.</li>
+<li><strong>Ancienneté :</strong> après 30 minutes d’attente, une demande gagne 6 points de priorité par minute, jusqu’à 900. Les chansons en pause ne peuvent pas être appelées.</li>
+<li><strong>Doublons :</strong> impossible de redemander une chanson déjà demandée ou jouée durant la même soirée.</li>
+<li><strong>Égalité de points :</strong> la chanson demandée en premier est prioritaire.</li>
+
 <li><strong>Une chanson marquée « Pas prêt »</strong> est temporairement retirée de l’ordre de passage. La Rockstar qui l’a demandée peut la reporter et se déclarer prête à nouveau directement depuis la file de la soirée, sans intervention du MC.</li>
 </ul>
 <h3>Comment les points sont-ils attribués?</h3>
@@ -260,6 +264,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <li><strong>Participer à une autre chanson :</strong> chaque Rockstar qui joue dans la chanson d’une autre personne reçoit une récompense de <strong>−60 points</strong>.</li>
 <li><strong>Moment de l’attribution :</strong> Les points de la chanson et les récompenses des participantes sont comptabilisés dès que le MC marque la chanson <strong>« En cours »</strong>.</li>
 <li><strong>Plancher du bonus :</strong> une récompense de participation ne peut pas faire descendre le score sous 0, mais elle préserve le −1 point de départ d’une Rockstar Initiée si ce privilège n’a pas encore été utilisé. Les points inutilisés ne sont pas conservés.</li>
+<li><strong>Rectifications du MC :</strong> remettre une chanson terminée en file annule sa distribution de points; modifier la chanson jouée recalcule son coût selon la nouvelle durée.</li>
 <li><strong>Chansons sautées :</strong> une chanson passée sans être lancée ne coûte aucun point à son initiatrice et ne donne aucune récompense aux participantes.</li>
 <li><strong>Points anticipés :</strong> le système tient compte des points qui seront gagnés au fil des chansons pour prévoir leur ordre de passage. Ces points n’apparaissent dans le classement réel qu’une fois les chansons lancées.</li>
 </ul>
