@@ -35,7 +35,7 @@ self.addEventListener('push', event => {
    return;
   }
   const kind=String(data.kind||'');
-  if(!['band_invite','soon','next'].includes(kind)){
+  if(!['band_invite','soon','next','test'].includes(kind)){
    await recordPushDiagnostics({receivedAt:recordedAt,outcome:'ignored_type',kind:kind.slice(0,50)});
    return;
   }
