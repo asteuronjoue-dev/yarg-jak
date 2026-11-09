@@ -95,7 +95,7 @@ function showGuitarPhoto(m,card){
  img.src=path;
  if(img.complete&&img.naturalWidth>0)img.hidden=false;
 }
-async function loadBandDirectory(){try{const c=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);const {data,error}=await c.rpc('yarg_band_directory');if(error)throw error;bandDirectory=(data||[]).sort((a,b)=>Number(b.active_this_party)-Number(a.active_this_party)||a.rockstar_name.localeCompare(b.rockstar_name,'fr'));render()}catch(e){console.warn('Annuaire Rockstar indisponible, les invités peuvent entrer leurs noms.',e)}}
+async function loadBandDirectory(){try{const c=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);const {data,error}=await c.rpc('yarg_band_directory');if(error)throw error;bandDirectory=(data||[]).sort((a,b)=>a.rockstar_name.localeCompare(b.rockstar_name,'fr',{sensitivity:'base'}));render()}catch(e){console.warn('Annuaire Rockstar indisponible, les invités peuvent entrer leurs noms.',e)}}
 
 
 async function prefillSignedInRockstar(){
