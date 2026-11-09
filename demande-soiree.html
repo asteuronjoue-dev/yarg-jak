@@ -7,6 +7,8 @@
 #artist-warning{border-color:#ff8a24;background:#29221b;line-height:1.6}
 #artist-warning a{color:#77eee3;font-weight:900}
 .guitar-photo{width:min(100%,240px);height:110px;object-fit:contain;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:8px;margin:10px auto 4px;display:block}.guitar-photo[hidden]{display:none}.newbie-tips{background:#193139;border:1px solid #2a7e83;border-radius:14px;padding:14px;margin:16px 0}.newbie-tips button{float:right;padding:5px 9px;font-size:.8rem}.member-head{flex-wrap:wrap}.own-profile{font-size:.79rem;color:#a3edeb;font-weight:650;margin-left:auto}.guitar-chooser,.vocal-row{grid-column:1/-1}.guitar-label{display:block;font-weight:850;font-size:.87rem;margin-bottom:8px}.guitar-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.guitar-tile{min-width:0;min-height:112px;padding:9px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-size:.76rem;font-weight:700;line-height:1.25}.guitar-tile img{height:70px;width:100%;object-fit:contain}.guitar-tile[aria-pressed="true"]{border:2px solid var(--teal);background:#143038}.guitar-any{font-size:.85rem}.vocal-row{display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:end}.vocal-row .field{min-width:0}.mic-wrap{min-height:50px}@media(max-width:600px){.guitar-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.vocal-row{grid-template-columns:1fr 1fr}.mic-info{font-size:.75rem}}
+
+button.submit.duplicate-blocked,button.submit.duplicate-blocked:disabled{background:#596168!important;color:#f1f2f3!important;border-color:#747b80!important;box-shadow:none!important;opacity:1;cursor:not-allowed}
 </style></head><body><main><a href="index.html">← Retour aux chansons</a><h1>Monte ton groupe 🤘</h1><p>Un téléphone, plusieurs rockstars! Choisis une partie précise ou « Peu importe » pour rester Flex sans réserver d’instrument. On tient compte des trois guitares, trois micros, une batterie et un clavier disponibles.</p><section class="song"><strong id="song-title"></strong><small id="song-meta"></small></section>
 <aside class="newbie-tips" id="newbie-tips"><button type="button" id="dismiss-tips">Ne plus afficher</button><strong>🎸 Première demande?</strong><p>Choisis ton nom de band, puis choisis les instruments et les difficultés de chacun. Si toi ou les membres de ton groupe ont un compte ROCKSTAR, des statistiques seront conservés et vous gagnerez des titres à la longue. Aussi, les joueurs "supports" verront leur priorité pour demander des chansons augmentée.</p></aside><aside id="artist-warning" class="song" hidden role="status" aria-live="polite"></aside><form id="request-form"><label class="field"><span>Nom du band (facultatif)</span><input id="band-name" maxlength="80" placeholder="Les Cornichons Électriques"></label><div id="members"></div><div class="row-actions"><button type="button" class="add" id="add-member">+ Ajouter une rockstar</button></div><p class="note" id="capacity"></p><fieldset><legend>Compléter le groupe</legend><label class="check"><input type="checkbox" id="allow-fill" checked><span>Permettre aux autres invités de joindre notre band.</span></label><p class="note"></p></fieldset><p class="status" id="status" role="status" aria-live="polite"></p><button type="submit" class="submit" id="submit">Ajouter le groupe à la file 🎸</button></form></main>
 <script>
@@ -251,23 +253,34 @@ async function checkArtistRequests(){
   const byArtist=new Map();
   for(const r of data){const key=clean(r.song_artist);if(!key)continue;byArtist.set(key,(byArtist.get(key)||0)+1)}
   const same=data.filter(r=>clean(r.song_artist)===artist&&['waiting','full','playing'].includes(r.status));
-  const identical=same.filter(r=>r.song_id===song.id||clean(r.song_title)===title);
+  const identical=data.filter(r=>r.song_id===song.id||(clean(r.song_title)===title&&clean(r.song_artist)===artist));
+  const alreadyPlayed=identical.some(r=>['played','completed'].includes(r.status));
+  const alreadyRequested=identical.some(r=>['waiting','full','playing'].includes(r.status));
+  if(alreadyPlayed||alreadyRequested){
+    const btn=$('submit'),message=$('status');
+    btn.disabled=true;
+    btn.classList.add('duplicate-blocked');
+    btn.textContent=alreadyPlayed?'🔒 Chanson déjà jouée ce soir — demande impossible':'🔒 Chanson déjà demandée ce soir — demande impossible';
+    message.className='status error';
+    message.textContent=alreadyPlayed?'Cette chanson a déjà été jouée pendant cette soirée. Choisis-en une autre.':'Une demande pour cette chanson existe déjà. Rejoins le groupe dans la file si une place est libre.';
+  }
   const count=byArtist.get(artist)||0;
   const second=[...byArtist.entries()].filter(([name])=>name!==artist).reduce((max,[,n])=>Math.max(max,n),0);
   if(!same.length&&!count)return;
   const escape=t=>String(t||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const lines=[];
-  if(identical.length)lines.push(`⚠️ <strong>Cette même chanson est déjà demandée (${identical.length} fois)!</strong>`);
+  if(identical.length)lines.push(alreadyPlayed?`🔒 <strong>Cette chanson a déjà été jouée ce soir. Impossible de la redemander.</strong>`:`🔒 <strong>Cette chanson est déjà dans la file. Impossible de la redemander.</strong>`);
   else if(same.length)lines.push(`🎸 <strong>${same.length} autre(s) chanson(s) de ${escape(song.artist)} attendent dans la file.</strong>`);
   if(same.length)lines.push(`Tu peux rejoindre un groupe qui a encore une place : <a href="file.html#demande-${encodeURIComponent((identical[0]||same[0]).id)}">Voir les demandes et rejoindre</a>.`);
   if(count>=2&&count>=second)lines.push(`🎤 ${escape(song.artist)} a déjà été demandé <strong>${count} fois</strong> ce soir, contre <strong>${second}</strong> pour le deuxième artiste le plus demandé. Pense à varier les artistes!`);
-  if(lines.length){box.innerHTML=lines.join('<p style="margin:8px 0"></p>')+'<p style="font-size:13px">Tu es entièrement libre de demander n’importe quelle chanson; ces informations sont seulement là pour te guider.</p>';box.hidden=false;}
+  if(lines.length){box.innerHTML=lines.join('<p style="margin:8px 0"></p>')+(identical.length?'':'<p style="font-size:13px">Tu peux choisir les autres chansons de ton choix.</p>');box.hidden=false;}
  }catch(e){console.warn('Comparaison des artistes indisponible',e)}
 }
 checkArtistRequests();
 $('request-form').addEventListener('submit',async e=>{
  e.preventDefault();const status=$('status');status.className='status';
- const err=validate();if(err){status.className='status error';status.textContent=err;return}
+   if($('submit').classList.contains('duplicate-blocked')){status.className='status error';status.textContent='Cette chanson est déjà demandée ou jouée ce soir.';return}
+const err=validate();if(err){status.className='status error';status.textContent=err;return}
  if(!song.id||!song.artist||!Number.isFinite(song.duration)||song.duration<=0){status.className='status error';status.textContent='Données de chanson manquantes : retourne au catalogue puis réessaie.';return}
  const btn=$('submit');btn.disabled=true;status.textContent='Connexion et inscription du groupe…';
  try{
