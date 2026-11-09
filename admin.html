@@ -294,7 +294,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section class="card history-section"><h2>Chansons terminées</h2><p class="help">Les prestations terminées sont conservées dans l’historique de cette soirée.</p><div id="history-completed"></div></section>
 </div>
 <div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><p class="help">Désactiver le Mode soirée ferme les demandes, mais n’archive pas la soirée. Pour la faire apparaître au Hall of Fame, utilise « Terminer et archiver la soirée » ci-dessous.</p></section>
-<section class="card" id="band-visibility-section"><h2>Comptes Rockstar visibles dans les invitations</h2><p class="help">Décoche les Rockstars absentes de cette soirée. Leurs comptes, invitations déjà envoyées et performances restent intacts. Les choix se réinitialisent à la prochaine soirée.</p><div id="band-visibility-list" class="band-visibility-list"><p class="muted">Chargement des comptes…</p></div><div id="band-visibility-status" class="help" role="status" aria-live="polite"></div></section>
+<section class="card" id="band-visibility-section"><h2>Comptes Rockstar visibles dans les invitations</h2><p class="help">Décoche les Rockstars absentes de cette soirée. Leurs comptes, invitations déjà envoyées et performances restent intacts. Les choix se réinitialisent à la prochaine soirée.</p><div class="actions" id="band-visibility-bulk" style="margin:0 0 16px"><button type="button" id="band-show-all" class="success">Tout afficher</button><button type="button" id="band-hide-all" class="danger">Tout masquer</button></div><div id="band-visibility-list" class="band-visibility-list"><p class="muted">Chargement des comptes…</p></div><div id="band-visibility-status" class="help" role="status" aria-live="polite"></div></section>
 <section class="card"><h2>Terminer et archiver la soirée</h2><p>Clôture la soirée en cours, conserve son historique et prépare une nouvelle session fermée. Termine ou passe d’abord toute chanson encore sur scène.</p><button type="button" id="archive-party-button" class="danger">⏹ Terminer et archiver la soirée</button><p class="help">Le nom de la soirée se modifie dans « Configuration de la soirée », juste au-dessus.</p></section></div>
 <section id="playlists-tab" hidden>
   <section class="card">
@@ -512,6 +512,30 @@ async function load(){if(busy)return;const {data,error}=await sb.rpc('yarg_admin
    if(metricsError)console.warn('Métriques MC indisponibles',metricsError);
    else {mcRequestMetrics=new Map((metrics||[]).map(x=>[String(x.request_id),x]));render();}
    void loadActiveRequesters();if($('mc-score-details').open&&!$('scene-tab').hidden)void loadMcScores();}
+let bandVisibilityBusy=false;
+async function setAllBandVisibility(hidden){
+ if(bandVisibilityBusy)return;
+ bandVisibilityBusy=true;
+ const buttons=[$('band-show-all'),$('band-hide-all')];
+ buttons.forEach(b=>b.disabled=true);
+ $('band-visibility-list').querySelectorAll('input[type="checkbox"]').forEach(c=>c.disabled=true);
+ $('band-visibility-status').textContent='Enregistrement de tous les comptes…';
+ try{
+  const {error}=await sb.rpc('yarg_mc_set_all_band_visibility',{p_hidden:hidden});
+  if(error)throw error;
+  await loadBandVisibility();
+  $('band-visibility-status').textContent=hidden?'Tous les comptes sont masqués pour cette soirée.':'Tous les comptes sont visibles pour cette soirée.';
+ }catch(e){
+  $('band-visibility-status').textContent='Erreur : '+(e.message||String(e));
+  await loadBandVisibility();
+ }finally{
+  bandVisibilityBusy=false;
+  buttons.forEach(b=>b.disabled=false);
+  $('band-visibility-list').querySelectorAll('input[type="checkbox"]').forEach(c=>c.disabled=false);
+ }
+}
+$('band-show-all').addEventListener('click',()=>setAllBandVisibility(false));
+$('band-hide-all').addEventListener('click',()=>setAllBandVisibility(true));
 async function loadBandVisibility(){
  const host=$('band-visibility-list');if(!host)return;
  const {data,error}=await sb.rpc('yarg_mc_band_visibility');
@@ -523,6 +547,7 @@ async function loadBandVisibility(){
   check.setAttribute('aria-label','Afficher '+account.rockstar_name+' dans les invitations');
   const name=document.createElement('span');name.textContent=account.rockstar_name;
   check.addEventListener('change',async()=>{
+   if(bandVisibilityBusy){check.checked=!check.checked;return;}
    const visible=check.checked;check.disabled=true;
    $('band-visibility-status').textContent='Enregistrement…';
    try{
