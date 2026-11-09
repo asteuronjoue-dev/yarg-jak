@@ -357,7 +357,7 @@ $('finish-guest-signup').addEventListener('submit',async event=>{
 });
 $('recover').onclick=async()=>{const email=$('email').value.trim();if(!email){message('Entre ton courriel pour recevoir un lien de réinitialisation.',true);return;}try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;message('Si ce compte existe, un courriel de réinitialisation a été demandé.')}catch(err){message('Réinitialisation impossible : '+err.message,true)}};
 sb.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){setTimeout(async()=>{const password=prompt('Nouveau mot de passe (8 caractères minimum) :');if(password===null)return;if(password.length<8){message('Mot de passe trop court.',true);return;}const {error}=await sb.auth.updateUser({password});if(error)message(error.message,true);else{message('Mot de passe mis à jour.');location.reload()}},0)}});
-$('logout').addEventListener('click',async()=>{const {error}=await sb.auth.signOut();if(error){message(error.message,true);return}location.reload()});
+$('logout').addEventListener('click',async()=>{try{if(window.YargPush)await window.YargPush.disable();}catch(e){console.warn('Désactivation Web Push à la déconnexion :',e);}const {error}=await sb.auth.signOut();if(error){message(error.message,true);return}location.reload()});
 async function initialize(){
  try{
   const {data:sessionData,error:sessionError}=await sb.auth.getSession();
