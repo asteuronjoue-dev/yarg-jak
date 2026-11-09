@@ -297,6 +297,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section class="card history-section"><h2>Chansons terminées</h2><p class="help">Les prestations terminées sont conservées dans l’historique de cette soirée.</p><div id="history-completed"></div></section>
 </div>
 <div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><p class="help">Désactiver le Mode soirée ferme les demandes, mais n’archive pas la soirée. Pour la faire apparaître au Hall of Fame, utilise « Terminer et archiver la soirée » ci-dessous.</p></section>
+<section class="card" id="push-health-section"><div class="flex"><h2>Notifications Web Push des Rockstars</h2><button type="button" id="push-health-refresh">Actualiser</button></div><p class="help">Appareils abonnés aux alertes d'invitation, de passage imminent et de prochain passage. Un compte peut avoir plusieurs appareils. Il faut activer les notifications dans Mon profil.</p><div id="push-health-summary" class="muted">Chargement…</div><div id="push-health-list" class="owner-list"></div></section>
 <section class="card" id="band-visibility-section"><h2>Comptes Rockstar visibles dans les invitations</h2><p class="help">Décoche les Rockstars absentes de cette soirée. Leurs comptes, invitations déjà envoyées et performances restent intacts. Les choix se réinitialisent à la prochaine soirée.</p><div class="actions" id="band-visibility-bulk" style="margin:0 0 16px"><button type="button" id="band-show-all" class="success">Tout afficher</button><button type="button" id="band-hide-all" class="danger">Tout masquer</button></div><div id="band-visibility-list" class="band-visibility-list"><p class="muted">Chargement des comptes…</p></div><div id="band-visibility-status" class="help" role="status" aria-live="polite"></div></section>
 <section class="card"><h2>Terminer et archiver la soirée</h2><p>Clôture la soirée en cours, conserve son historique et prépare une nouvelle session fermée. Termine ou passe d’abord toute chanson encore sur scène.</p><button type="button" id="archive-party-button" class="danger">⏹ Terminer et archiver la soirée</button><p class="help">Le nom de la soirée se modifie dans « Configuration de la soirée », juste au-dessus.</p></section></div>
 <section id="playlists-tab" hidden>
@@ -539,6 +540,24 @@ async function setAllBandVisibility(hidden){
 }
 $('band-show-all').addEventListener('click',()=>setAllBandVisibility(false));
 $('band-hide-all').addEventListener('click',()=>setAllBandVisibility(true));
+async function loadPushHealth(){
+ const host=$('push-health-list'),summary=$('push-health-summary');
+ if(!host)return;
+ const {data,error}=await sb.rpc('yarg_mc_push_health');
+ if(error){summary.textContent='Abonnements indisponibles : '+error.message;return;}
+ host.replaceChildren();
+ const entries=Array.isArray(data)?data:[];
+ const subscribers=entries.filter(e=>Number(e.subscribed_devices)>0).length;
+ summary.textContent=subscribers+' / '+entries.length+' comptes Rockstar avec notifications activées';
+ for(const e of entries){
+  const row=document.createElement('div');row.className='row';
+  const name=document.createElement('strong');name.className='grow';name.textContent=e.rockstar_name;
+  const status=document.createElement('span');status.className='pill';
+  const n=Number(e.subscribed_devices)||0;status.textContent=n? n+' appareil'+(n>1?'s':'')+' abonné'+(n>1?'s':''):'Non abonné';
+  row.append(name,status);host.append(row);
+ }
+}
+$('push-health-refresh').addEventListener('click',loadPushHealth);
 async function loadBandVisibility(){
  const host=$('band-visibility-list');if(!host)return;
  const {data,error}=await sb.rpc('yarg_mc_band_visibility');
@@ -588,7 +607,7 @@ async function action(id,name){
  busy=true;try{const {error}=await sb.rpc('yarg_admin_performance_action',{p_request_id:id,p_action:name});if(error)throw error;notice('Action enregistrée.');busy=false;await load();}catch(e){busy=false;notice(e.message,true)}
 }
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(b&&!busy)action(b.dataset.id,b.dataset.action)});
-document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings','playlists','rockstars','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;if(b.dataset.tab==='settings')void loadBandVisibility();});
+document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings','playlists','rockstars','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;if(b.dataset.tab==='settings'){void loadBandVisibility();void loadPushHealth();}});
 
 $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {error}=await sb.rpc('yarg_admin_save_settings',{p_name:$('party-name').value.trim(),p_mc:$('mc-name').value.trim(),p_party_mode:$('party-mode').checked});if(error)throw error;notice('Réglages enregistrés.');hasLoadedSettings=false;busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
 
