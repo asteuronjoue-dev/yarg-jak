@@ -247,13 +247,18 @@ async function checkArtistRequests(){
   const {data,error}=await client.from('performance_requests')
    .select('id,song_id,song_title,song_artist,status').eq('party_session_id',setting.current_session_id)
    .in('status',['waiting','full','playing','completed','played']).limit(2000);
-  if(error||!data?.length)return;
+  if(error)throw error;
+  // Completed performances are public through this RPC, not regular SELECT policies.
+  const {data:history,error:historyError}=await client.rpc('yarg_public_current_session_history');
+  if(historyError)console.warn('Historique public indisponible :',historyError);
+  const allRequests=[...(data||[]),...(Array.isArray(history)?history:[])];
+  if(!allRequests.length)return;
   const clean=t=>String(t||'').trim().toLocaleLowerCase('fr-CA');
   const artist=clean(song.artist),title=clean(song.title);
   const byArtist=new Map();
-  for(const r of data){const key=clean(r.song_artist);if(!key)continue;byArtist.set(key,(byArtist.get(key)||0)+1)}
-  const same=data.filter(r=>clean(r.song_artist)===artist&&['waiting','full','playing'].includes(r.status));
-  const identical=data.filter(r=>r.song_id===song.id||(clean(r.song_title)===title&&clean(r.song_artist)===artist));
+  for(const r of allRequests){const key=clean(r.song_artist);if(!key)continue;byArtist.set(key,(byArtist.get(key)||0)+1)}
+  const same=allRequests.filter(r=>clean(r.song_artist)===artist&&['waiting','full','playing'].includes(r.status));
+  const identical=allRequests.filter(r=>r.song_id===song.id||(clean(r.song_title)===title&&clean(r.song_artist)===artist));
   const alreadyPlayed=identical.some(r=>['played','completed'].includes(r.status));
   const alreadyRequested=identical.some(r=>['waiting','full','playing'].includes(r.status));
   if(alreadyPlayed||alreadyRequested){
