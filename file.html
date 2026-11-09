@@ -482,7 +482,7 @@ function membersFor(id){return members.filter(m=>String(m.performance_request_id
 // Toujours afficher chaque inscription une seule fois, sans rien effacer dans Supabase.
 function performerEntries(r){
   const entries=membersFor(r.id);
-  const useLegacyLeader=!r.requester_withdrawn_at && (!r.is_group_request || entries.length===0);
+  const useLegacyLeader=!r.requester_withdrawn_at && (!r.is_group_request || entries.length===0) && !entries.some(m=>String(m.rockstar_name||'').trim().toLocaleLowerCase()===String(r.rockstar_name||'').trim().toLocaleLowerCase());
   const all=useLegacyLeader?[{
     rockstar_name:r.rockstar_name,rockstar_profile_id:r.requester_profile_id,instrument:r.requester_instrument,
     difficulty:r.requester_difficulty,microphone:r.requester_microphone,
