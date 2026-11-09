@@ -87,7 +87,7 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <button type="button" class="profile-tab" data-profile-tab="statistics" aria-selected="true">📊 Statistiques</button>
 <button type="button" class="profile-tab" data-profile-tab="achievements" aria-selected="false">🏷️ Titres</button>
 <button type="button" class="profile-tab" data-profile-tab="favorites" aria-selected="false">💙 Mes favoris</button>
-<button type="button" class="profile-tab" data-profile-tab="costars" aria-selected="false">🎸 Co-stars</button>
+
 </div>
 <div class="profile-panel" id="statistics-panel"><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div></div>
 <div class="profile-panel" id="achievements-panel" hidden><div class="card"><div class="topline"><h2>Collection de titres</h2></div><p class="hint">Équipe un titre pour l'afficher dans la file. Le privilège Initié reste actif, quel que soit ton titre.</p><div id="titles"></div></div></div>
@@ -96,7 +96,6 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
  <div class="yarg-unlock-actions"><button type="button" class="primary" id="yarg-unlock-equip">Équiper</button><button type="button" id="yarg-unlock-view">Voir tous mes titres</button><button type="button" class="ghost" id="yarg-unlock-dismiss">Fermer</button></div></div>
 </div>
 <div class="profile-panel" id="favorites-panel" hidden><div class="card"><div class="topline"><h2>💙 Mes favoris</h2><a href="index.html" class="primary" style="padding:10px 13px;border-radius:10px;font-weight:800">Ouvrir le catalogue</a></div><p id="favorites-status" class="hint">Chargement de tes favoris…</p><div id="profile-favorites" class="fav-profile-list"></div></div></div>
-<div class="profile-panel" id="costars-panel" hidden><div class="card"><h2>Co-stars et invitations</h2><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="band-opt-in"> Me rendre visible pour les invitations</label><p class="hint">Après ta première demande, tu peux recevoir des invitations pendant la soirée.</p><button id="reload-invites" type="button">Vérifier mes invitations</button><div id="band-invites"></div></div></div>
 </section>
 
 </main>
@@ -435,13 +434,5 @@ async function loadProfileFavorites(){
 
 initialize();
 
-async function yargProfileBandInit(){
- const box=document.getElementById('band-invites'), opt=document.getElementById('band-opt-in');if(!box||!opt||!state?.user||!state.profile)return;
- const {data:setting}=await sb.from('rockstar_profiles').select('listed_for_bands').eq('user_id',state.user.id).maybeSingle();opt.checked=!!setting?.listed_for_bands;
- opt.onchange=async()=>{const {error}=await sb.from('rockstar_profiles').update({listed_for_bands:opt.checked}).eq('user_id',state.user.id);if(error)message(error.message,true)};
- async function refresh(){const {data,error}=await sb.rpc('yarg_my_band_invitations');if(error){box.textContent=error.message;return}box.replaceChildren();if(!data?.length){box.textContent='Aucune invitation en attente.';return}for(const inv of data){const p=document.createElement('p');p.textContent=inv.song_title+' — '+inv.song_artist+' · '+inv.rockstar_name+' ('+inv.instrument_mode+') ';for(const [label,accept] of [['Accepter',true],['Refuser',false]]){const b=document.createElement('button');b.textContent=label;b.onclick=async()=>{const {error:e}=await sb.rpc('yarg_respond_band_invitation',{p_invitation_id:inv.id,p_accept:accept});if(e){message(e.message,true)}else{await refresh();await fetchStats();renderStats()}};p.append(b)}box.append(p)}}
- document.getElementById('reload-invites').onclick=refresh;await refresh();
-}
-const yargOriginalFetchProfile=fetchProfile;fetchProfile=async function(){await yargOriginalFetchProfile();if(state.profile)await yargProfileBandInit()};
 </script>
-<script src="yarg-stage-response.js" defer></script></body></html>
+<script src="yarg-stage-response.js" defer></script><script src="yarg-band-invitations.js" defer></script></body></html>
