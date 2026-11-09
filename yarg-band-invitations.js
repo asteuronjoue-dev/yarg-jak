@@ -2,7 +2,7 @@
    All invitation decisions are checked by the existing Supabase RPCs. */
 (() => {
   'use strict';
-  if (!window.supabase || !document.body || document.getElementById('yarg-invite-banner')) return;
+  if (!window.supabase || !document.body || document.getElementById('yarg-invite-banner') || new URLSearchParams(location.search).get('affichage') === '1') return;
   const URL = 'https://xbhfjzurytdknbqvksjq.supabase.co';
   const KEY = 'sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM';
   const client = window.supabase.createClient(URL, KEY);
