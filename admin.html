@@ -228,6 +228,13 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .mc-song-choices button{display:block;text-align:left;background:#23313a;color:#fff;border:1px solid #4c666d;padding:8px;border-radius:7px;cursor:pointer}
 .mc-song-selected{font-size:.84rem;color:#c9d5d6}
 .mc-song-edit input{width:100%}
+
+.mc-request-context{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,auto);gap:10px;align-items:stretch}
+.mc-request-person{display:flex;align-items:center;gap:7px 14px;flex-wrap:wrap}
+.mc-request-person strong{flex-basis:100%;font-size:1.04rem}
+.mc-request-time{min-width:120px;align-items:flex-start;justify-content:center}
+.mc-request-time small{color:#a8cbd0;margin-bottom:3px}
+@media(max-width:560px){.mc-request-context{grid-template-columns:minmax(0,1fr)}.mc-request-time{min-width:0}}
 </style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. La Scène et l’Historique ne s’actualisent plus automatiquement pendant que tu manipules les prestations. Utilise « Actualiser » au besoin.</p>
@@ -248,11 +255,11 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <ul>
 <li><strong>La Rockstar qui a le moins de points</strong> est prioritaire pour faire jouer l’une des chansons qu’elle a demandées.</li>
 <li><strong>Les deux premières chansons sont protégées :</strong> la chanson en cours et la prochaine chanson annoncée ne peuvent pas être déplacées par les changements de points.</li>
-<li><strong>Une même Rockstar ne joue pas deux chansons consécutives comme initiatrice</strong>, dans la mesure du possible.</li>
-<li><strong>On évite deux chansons consécutives du même artiste</strong>, dans la mesure du possible.</li>
+<li><strong>Une seule chanson consécutive par Rockstar initiatrice</strong> : si une autre demande admissible existe, elle passe entre deux chansons de la même personne.</li>
+<li><strong>Une seule chanson consécutive par artiste</strong> : on choisit un autre artiste dès que possible.</li>
 <li><strong>Groupe confirmé :</strong> chaque autre participante distincte ajoute <strong>−30 points</strong> de priorité à cette demande, jusqu’à <strong>−90</strong>. Ce bonus n’est pas soustrait aux points personnels.</li>
 <li><strong>Ancienneté :</strong> après 30 minutes d’attente, une demande gagne 6 points de priorité par minute, jusqu’à 900. Les chansons en pause ne peuvent pas être appelées.</li>
-<li><strong>Doublons :</strong> impossible de redemander une chanson déjà demandée ou jouée durant la même soirée.</li>
+<li><strong>Doublons interdits :</strong> une chanson déjà demandée, sur scène ou jouée ne peut pas être redemandée pendant la même soirée.</li>
 <li><strong>Égalité de points :</strong> la chanson demandée en premier est prioritaire.</li>
 
 <li><strong>Une chanson marquée « Pas prêt »</strong> est temporairement retirée de l’ordre de passage. La Rockstar qui l’a demandée peut la reporter et se déclarer prête à nouveau directement depuis la file de la soirée, sans intervention du MC.</li>
@@ -390,11 +397,11 @@ function mcRequestMeta(r){
   const stats=mcRequestMetrics.get(String(r.id));
   const points=stats&&Number.isFinite(Number(stats.earned_points))?Number(stats.earned_points):null;
   const played=stats&&Number.isFinite(Number(stats.own_songs_played))?Number(stats.own_songs_played):null;
-  return `<div class="mc-request-context">
-   <div class="mc-request-time">🕒 <strong>${esc(requested)}</strong><small>Heure de la demande</small></div>
-   <div class="mc-request-person"><strong>👤 ${esc(r.rockstar_name||'Rockstar')}</strong>
-     <span>⚖️ ${points===null?'—':points>0?'+'+points:points} pts</span>
-     <span>🎤 ${played===null?'—':played} chanson(s) demandée(s) déjà jouée(s)</span></div></div>`;
+  return `<div class='mc-request-context'>
+    <div class='mc-request-person'><strong>👤 ${esc(r.rockstar_name||'Rockstar')}</strong>
+      <span>🎤 ${played===null?'—':played} chanson(s) demandée(s) déjà jouée(s)</span>
+      <span>⚖️ ${points===null?'—':points>0?'+'+points:points} pts</span></div>
+    <div class='mc-request-time'><small>🕒 Heure de la demande</small><strong>${esc(requested)}</strong></div></div>`;
 }
 function row(r,idx){return `<div class="row"><div class="rank">${idx+1}</div><div class="grow"><div class="song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'Artiste inconnu')} · ${fmt(r.song_duration_seconds)}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}${mcSongTools(r)}</div><div class="actions"><button class="primary" data-action="start" data-id="${esc(r.id)}">▶ Lancer</button><button data-action="skip" data-id="${esc(r.id)}">Passer</button></div></div>`;}
 function mcSongTools(r){
@@ -448,7 +455,7 @@ function render(){
  $('begin-live-party').hidden=!preregistration;
  const rows=snapshot.requests||[];
  const playing=rows.filter(r=>r.status==='playing');
- $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${people(r)}${mcMemberTools(r)}${mcSongTools(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
+ $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}${mcSongTools(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
  const ranks=new Map((snapshot.fair_order||[]).map(x=>[x.request_id,Number(x.fair_position)]));
  const upcoming=rows.filter(r=>activeStatuses.has(r.status)).sort((a,b)=>(ranks.get(a.id)||999999)-(ranks.get(b.id)||999999) || String(a.created_at).localeCompare(String(b.created_at)));
  $('upcoming').innerHTML=upcoming.length?upcoming.map(row).join(''):'<div class="empty">La file est vide. On attend les rockstars ! 🤘</div>';

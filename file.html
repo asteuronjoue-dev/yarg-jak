@@ -220,6 +220,46 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .next-three-eta{font-size:.85rem;font-weight:900;color:#ffb46b;text-align:right;white-space:nowrap}
 .display-band{font-size:clamp(12px,1.15vw,17px);font-weight:850;color:#ffc17f;margin-top:5px}
 @media(max-width:480px){.next-three{padding:11px}.next-three-card{gap:7px;padding:10px}.next-three-rank{font-size:.85rem}.next-three-eta{font-size:.78rem}}
+
+/* A single fair-ordered queue with visible relationship / availability colors. */
+.queue-rules{margin:0 0 19px;border:1px solid #46575d;background:#192329;border-radius:15px;overflow:hidden}
+.queue-rules summary{cursor:pointer;padding:14px 17px;font-weight:900;color:#b5f4e8;list-style-position:inside}
+.queue-rules[open] summary{border-bottom:1px solid #46575d}
+.queue-rules-body{padding:4px 20px 16px;color:#d1dcdf;line-height:1.55;font-size:14px}
+.queue-rules-body ul{padding-left:20px;margin:8px 0}
+.queue-rules-body li{margin:6px 0}
+.queue-legend{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 15px}
+.queue-legend span{border-radius:999px;padding:6px 10px;font-size:12px;font-weight:850;border:1px solid var(--line);background:#1d262a}
+.queue-legend .legend-mine{border-color:#9c79e6;color:#e4cffd}
+.queue-legend .legend-open{border-color:#3ab97f;color:#a3f5c4}
+.queue-legend .legend-closed{border-color:#bf565d;color:#ffc5c5}
+.queue-card{border-left:0}
+.queue-card::before{width:6px}
+.queue-card--mine::before,.queue-card--joined::before{background:linear-gradient(180deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);background-size:100% 220%;animation:partyRainbowBg 6s linear infinite}
+.queue-card--mine,.queue-card--joined{border-color:rgba(180,131,240,.5)}
+.queue-card--open{border-color:rgba(68,196,123,.5)}
+.queue-card--open::before{background:#48dc89}
+.queue-card--closed{border-color:rgba(233,89,98,.5)}
+.queue-card--closed::before{background:#ff6b75}
+.queue-card-top{display:flex;gap:9px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin:0 0 12px 3px}
+.queue-state{border-radius:999px;padding:5px 11px;font-size:12px;font-weight:950;letter-spacing:.01em}
+.queue-state--mine,.queue-state--joined{color:#fff;background:linear-gradient(90deg,#e2437b,#a55eeb,#3688e8);border:1px solid #d6a5ec}
+.queue-state--open{color:#bdffda;background:#163a2a;border:1px solid #3bb37c}
+.queue-state--closed{color:#ffd2d2;background:#452128;border:1px solid #bf5d68}
+.queue-band-highlight{color:#ffc084;font-weight:950;font-size:15px;overflow-wrap:anywhere}
+.queue-card .band-name{color:#ffc084}
+.history-card{padding:22px}
+.history-card::before{background:#71858d;width:6px}
+.history-card .song{font-size:clamp(20px,2.8vw,27px)}
+.history-head{display:flex;align-items:flex-start;gap:15px;flex-wrap:wrap}
+.history-head>div:nth-child(2){flex:1 1 230px}
+.history-number{border-radius:12px;border:1px solid #546b73;background:#25323a;color:#d5eef7;font-weight:950;padding:9px 11px;font-size:18px}
+.history-times{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:13px;color:#b2c6cd}
+.history-times strong{color:#f0cb93;font-size:15px}
+.history-band{font-weight:950;color:#ffc084;margin:13px 0 8px;font-size:16px}
+.history-people{margin-top:13px;border-top:1px solid var(--line);padding-top:11px}
+.history-extra{font-size:13px;color:#b2c5cb;margin-top:9px}
+@media(max-width:650px){.history-times{align-items:flex-start;width:100%}.queue-card-top{align-items:flex-start}.queue-legend span{font-size:11px}}
 </style></head>
 </head>
 <body>
@@ -252,7 +292,18 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
     <div class="display-footer"><span>Les heures sont approximatives · 2 min prévues entre les chansons</span><span id="displayUpdated">Actualisation automatique toutes les 30 secondes</span></div>
   </section>
   <div class="error" id="errorBox"></div>
-  <section id="nextThreeSection" class="next-three" hidden aria-label="Trois prochaines chansons"><div class="section-head"><h2>🎵 Les 3 prochaines chansons</h2></div><div id="nextThreeList" class="next-three-list"></div></section>
+  <details class="queue-rules">
+    <summary>⚖️ Comment fonctionne l'ordre des chansons ?</summary>
+    <div class="queue-rules-body">
+      <p>La file suit le classement équitable : ceux qui ont moins joué passent plus tôt, tandis que rejoindre un autre groupe apporte un bonus de points.</p>
+      <ul>
+        <li>Une seule chanson de suite par Rockstar initiatrice et par artiste : si une autre chanson admissible existe, elle passe entre les deux.</li>
+        <li>La chanson sur scène et la prochaine déjà annoncée sont protégées contre les changements de priorité.</li>
+        <li>Une chanson déjà demandée ou jouée durant cette soirée ne peut pas être redemandée. Tu peux cependant rejoindre son groupe si des places sont libres.</li>
+        <li>Les prestations « Pas prêt » restent en pause, sans heure de passage, jusqu'à ce que les musiciens soient disponibles.</li>
+      </ul>
+    </div>
+  </details>
   <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
     <details><summary>Comment gagner ou perdre des points?</summary><p class="points-note">Le plus petit score passe en premier. Le demandeur reçoit +1 point par seconde de sa chanson (4 min = +240). Rejoindre un autre groupe donne −60 points, pris en compte à partir du passage de ce groupe. Les Initiés partent à −1. Une chanson passée sans être jouée ne donne ni coût ni récompense. La prochaine prestation annoncée reste protégée.</p></details></section>
   <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
@@ -261,32 +312,17 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
     <button type="button" id="yargPauseAll" class="yarg-pause-all">⏸️ Pas prêt — Mettre toutes mes prestations à venir en pause</button>
   </div>
 
-  <section id="mineSection" hidden>
+  <section id="queueSection" hidden>
     <div class="section-head">
-      <div>
-        <h2>🎸 Mes prestations</h2>
-        <div class="hint">Tes prestations, selon leur rang dans la file.</div>
-      </div>
+      <div><h2>🎵 File complète de la soirée</h2><div class="hint" id="queueCounter">Prestations dans l'ordre prévu</div></div>
       <button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button>
     </div>
-    <div class="cards" id="myRequests"></div>
-  </section>
-
-  <section id="joinSection" hidden>
-    <div class="section-head"><div>
-      <h2>🎤 Chansons que je peux rejoindre</h2>
-      <div class="hint">Groupes ayant au moins une place disponible, selon leur rang dans la file.</div>
-    </div></div>
-    <p class="fair-note">⚖️ Les demandes sont affichées selon leur position dans la file, sans changer leur priorité.</p>
-    <div class="cards" id="publicQueue"></div>
-  </section>
-
-  <section id="fullSection" hidden>
-    <div class="section-head"><div>
-      <h2>🔒 Chansons complètes</h2>
-      <div class="hint">Groupes complets, fermés ou actuellement sur scène.</div>
-    </div></div>
-    <div class="cards" id="fullQueue"></div>
+    <div class="queue-legend" aria-label="Signification des couleurs">
+      <span class="legend-mine">🌈 Ma chanson / chanson rejointe</span>
+      <span class="legend-open">🟢 Places disponibles</span>
+      <span class="legend-closed">🔴 Groupe complet ou fermé</span>
+    </div>
+    <div class="cards" id="queueList"></div>
   </section>
 
   <section id="historySection" hidden>
@@ -446,7 +482,7 @@ function membersFor(id){return members.filter(m=>String(m.performance_request_id
 // Toujours afficher chaque inscription une seule fois, sans rien effacer dans Supabase.
 function performerEntries(r){
   const entries=membersFor(r.id);
-  const useLegacyLeader=!r.requester_withdrawn_at && (!r.is_group_request || entries.length===0);
+  const useLegacyLeader=!r.requester_withdrawn_at && (!r.is_group_request || entries.length===0) && !entries.some(m=>String(m.rockstar_name||'').trim().toLocaleLowerCase()===String(r.rockstar_name||'').trim().toLocaleLowerCase());
   const all=useLegacyLeader?[{
     rockstar_name:r.rockstar_name,rockstar_profile_id:r.requester_profile_id,instrument:r.requester_instrument,
     difficulty:r.requester_difficulty,microphone:r.requester_microphone,
@@ -565,7 +601,12 @@ function cardHtml(r, eta, mine=false, rank=null){
   const available=openInstruments(r);
   const slots=(myActiveBand(r)?[]:available.filter((i,index,all)=>all.findIndex(j=>instrumentFamily(j)===instrumentFamily(i))===index)).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instrumentFamily(i)==="drums"?"Batterie":instrumentFamily(i)==="keys"?"Clavier":instruments[i])}</button>`).join("");
   const isPlaying=r.status==="playing";
-  const classes=["card",mine?"mine":"",isPlaying?"playing":"",mine&&isPlaying?"skittles":""].filter(Boolean).join(" ");
+  const isMine=myAccountRequester(r)||isMyRequest(r);
+  const isJoined=!isMine && (!!myBandMember(r)||(joinedRequestIds().has(String(r.id))&&!!myMemberToken(r)));
+  const kind=isMine?'mine':isJoined?'joined':(!isPlaying&&available.length>0?'open':'closed');
+  const kindLabel=isMine?'🌈 Ma chanson':isJoined?'🌈 Je participe':kind==='open'?'🟢 Places disponibles':'🔴 Groupe complet / fermé';
+  const bandEmphasis=r.band_name?'<span class="queue-band-highlight">🤘 '+esc(r.band_name)+'</span>':'';
+  const classes=['card','queue-card','queue-card--'+kind,isPlaying?'playing':''].filter(Boolean).join(' ');
   const rankHtml=Number.isInteger(rank)&&rank>0?`<span class="queue-rank">#${rank}</span>`:'';
   const etaHtml=r.yarg_not_ready
     ? `<div class="eta"><strong>⏸ Pas prêt</strong><span>Heure suspendue</span></div>`
@@ -583,6 +624,7 @@ function cardHtml(r, eta, mine=false, rank=null){
   const readyControl='';
   return `<article class="${classes}" data-request-id="${esc(r.id)}" id="demande-${esc(r.id)}">
     ${skittles}
+    <div class="queue-card-top"><span class="queue-state queue-state--${kind}">${kindLabel}</span>${bandEmphasis}</div>
     <div class="songline"><div>
       <div class="song">${esc(r.song_title||"Chanson")}</div>
       <div class="artist">${esc(r.song_artist||"")}</div>
@@ -602,9 +644,21 @@ function cardHtml(r, eta, mine=false, rank=null){
 
 function formatDuration(sec){const n=Math.max(0,Number(sec)||0);return `${Math.floor(n/60)} min ${String(n%60).padStart(2,'0')} s`;}
 function historicalCard(r){
-  const names=Array.isArray(r.member_names)?r.member_names:[...new Set(performerEntries(r).map(m=>m.rockstar_name).filter(Boolean))];
-  return `<article class="card history-card"><div class="song">${esc(r.song_title||'Chanson')}</div>
-    <div class="artist">${esc(r.song_artist||'')} · ${esc(names.join(', ')||r.rockstar_name||'')} · ${formatDuration(r.song_duration_seconds)}</div></article>`;
+  const performers=performerEntries(r);
+  const names=Array.isArray(r.member_names)?r.member_names:[...new Set(performers.map(m=>m.rockstar_name).filter(Boolean))];
+  const playedAt=r.started_at?new Date(r.started_at):r.finished_at?new Date(r.finished_at):null;
+  const finishedAt=r.finished_at?new Date(r.finished_at):null;
+  const requestedAt=r.created_at?new Date(r.created_at):null;
+  const playedTime=playedAt&&!Number.isNaN(playedAt.getTime())?formatClock(playedAt):'Heure inconnue';
+  const finishedTime=finishedAt&&!Number.isNaN(finishedAt.getTime())?formatClock(finishedAt):'—';
+  const requestedTime=requestedAt&&!Number.isNaN(requestedAt.getTime())?formatClock(requestedAt):'—';
+  const people=performers.length?performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id||(r.is_group_request&&m.rockstar_name===r.rockstar_name?r.requester_profile_id:null))).join(''):`<div class='member'>👥 ${esc(names.join(', ')||r.rockstar_name||'Participants inconnus')}</div>`;
+  return `<article class='card history-card'>
+    <div class='history-head'><span class='history-number'>#${r._playNumber||'—'}</span><div><div class='song'>${esc(r.song_title||'Chanson')}</div><div class='artist'>${esc(r.song_artist||'Artiste inconnu')}</div></div><div class='history-times'><strong>▶ Jouée à ${esc(playedTime)}</strong><span>Terminée à ${esc(finishedTime)}</span></div></div>
+    ${r.band_name?`<div class='history-band'>🤘 ${esc(r.band_name)}</div>`:''}
+    <div class='history-extra'>Demandée par <strong>${esc(r.rockstar_name||'Rockstar')}</strong> à ${esc(requestedTime)} · Durée : ${esc(formatDuration(r.song_duration_seconds))}</div>
+    <div class='history-people'><strong>Sur scène :</strong>${people}</div>
+  </article>`;
 }
 function renderPublicDisplay(){
   if(!IS_PUBLIC_DISPLAY)return;
@@ -641,42 +695,29 @@ function render(){
   if(IS_PUBLIC_DISPLAY){renderPublicDisplay();return;}
   const active=!!settings?.performance_requests_enabled;
   $('#yargGlobalPresence').hidden=!active||!myAuthId;
-  for(const id of ['mineSection','joinSection','fullSection','historySection'])$('#'+id).hidden=!active;
+  $('#queueSection').hidden=!active;
+  $('#historySection').hidden=!active;
   $('#closedSection').hidden=active;
-  $('#nextThreeSection').hidden=!active;
   if(!active){const banner=$('#yarg-my-next-banner');banner.hidden=true;banner.textContent='';return;}
 
   const queue=sortedActive();
   const playable=queue.filter(r=>r.status==='playing'||(r._fairEligible!==false&&!r.yarg_not_ready));
   const etas=calculateEtas(playable);
-  const predicted=playable.filter(r=>r.status!=='playing').slice(0,3);
-  $('#nextThreeList').innerHTML=predicted.length?predicted.map((r,i)=>{
-    const eta=etas.get(r.id);
-    const when=i===0?'🔜 Bientôt':eta?.at?'⏱ '+formatClock(eta.at):'Estimation à venir';
-    return `<article class="next-three-card"><span class="next-three-rank">#${i+1}</span><div class="next-three-info"><strong>${esc(r.song_title||'Chanson')}</strong><span>${esc(r.song_artist||'')}${r.band_name?' · 🤘 '+esc(r.band_name):''}</span></div><span class="next-three-eta">${esc(when)}</span></article>`;
-  }).join(''):'<div class="empty">Aucune chanson à venir.</div>';
-  // Identical positions across personal, joinable and full sections.
-  // "Pas prêt" songs have no playable rank until resumed.
   const ranks=new Map(playable.map((r,i)=>[String(r.id),i+1]));
-  // Personal-only sorting: hold "Pas prêt" songs at the top without changing queue fairness.
-  const mine=queue.filter(isMyPerformance).sort((a,b)=>Number(!!b.yarg_not_ready)-Number(!!a.yarg_not_ready));
-  const joinable=playable.filter(r=>r.status!=='playing'&&!isMyPerformance(r)&&openInstruments(r).length>0);
-  const full=playable.filter(r=>r.status==='playing'||(openInstruments(r).length===0&&!myActiveBand(r)));
-  // "C'EST TA TOUNE" banner is rendered by yarg-stage-response.js.
+  const ordered=[...playable,...queue.filter(r=>!playable.includes(r))];
+  // One ranked list, with held songs last and without a misleading ETA.
+  $('#queueCounter').textContent=playable.length+' chanson(s) prévues'+(ordered.length>playable.length?' · '+(ordered.length-playable.length)+' en pause':'');
   $('#yarg-my-next-banner').hidden=true;
-
-  $('#myRequests').innerHTML=mine.length
-    ?mine.map(r=>cardHtml(r,etas.get(r.id),true,ranks.get(String(r.id)))).join('')
-    :`<div class="empty">Tu n'as aucune demande active avec ce navigateur pour le moment.</div>`;
-  $('#publicQueue').innerHTML=joinable.length
-    ?joinable.map(r=>cardHtml(r,etas.get(r.id),false,ranks.get(String(r.id)))).join('')
-    :`<div class="empty">Aucun groupe à rejoindre en ce moment.</div>`;
-  $('#fullQueue').innerHTML=full.length
-    ?full.map(r=>cardHtml(r,etas.get(r.id),false,ranks.get(String(r.id)))).join('')
-    :`<div class="empty">Aucune chanson complète pour le moment.</div>`;
+  $('#queueList').innerHTML=ordered.length
+    ?ordered.map(r=>cardHtml(r,etas.get(r.id),isMyPerformance(r),ranks.get(String(r.id)))).join('')
+    :`<div class='empty'>Aucune chanson dans la file pour le moment. 🤘</div>`;
+  // Played song numbers follow their actual chronology, not current priorities.
+  const past=[...completedRequests].sort((a,b)=>new Date(a.started_at||a.finished_at||a.created_at)-new Date(b.started_at||b.finished_at||b.created_at)||String(a.id).localeCompare(String(b.id)));
+  past.forEach((r,i)=>{r._playNumber=i+1});
+  const latestFirst=[...past].reverse();
   $('#currentHistory').innerHTML=historyLoadError
     ?`<div class="empty">Historique indisponible pour le moment.</div>`
-    :completedRequests.length?completedRequests.map(historicalCard).join('')
+    :latestFirst.length?latestFirst.map(historicalCard).join('')
     :`<div class="empty">Aucune chanson terminée pour l’instant.</div>`;
   maybeNotify(queue,etas);
 }
