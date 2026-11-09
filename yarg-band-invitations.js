@@ -18,18 +18,28 @@
   close.className = 'yarg-invite-close';
   close.textContent = 'Masquer';
   close.title = 'Masquer temporairement les invitations sur cette page';
+  const expand = document.createElement('button');
+  expand.type='button';expand.className='yarg-invite-expand';expand.textContent='Voir les invitations';expand.hidden=true;
   const list = document.createElement('div');
   list.className = 'yarg-invite-list';
   const status = document.createElement('div');
   status.className = 'yarg-invite-status';
   status.setAttribute('role', 'status');
-  header.append(title, close);
+  header.append(title, expand, close);
   banner.append(header, list, status);
   document.body.prepend(banner);
   const style = document.createElement('style');
   style.textContent = `
     #yarg-invite-banner{position:sticky;top:var(--yarg-invite-offset,0px);z-index:14900;margin:0;padding:12px clamp(12px,3vw,30px);background:#192c31;border-bottom:3px solid #1fc8bd;color:#f5f7f8;font:500 14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 5px 22px #0007;box-sizing:border-box}
     #yarg-invite-banner[hidden]{display:none!important}
+    #yarg-invite-banner.is-compact{padding:7px 14px;background:#192c31;border-bottom-width:2px}
+    #yarg-invite-banner.is-compact .yarg-invite-header{margin:0}
+    #yarg-invite-banner.is-compact:not(.is-expanded) .yarg-invite-list,#yarg-invite-banner.is-compact:not(.is-expanded) .yarg-invite-status{display:none!important}
+    #yarg-invite-banner.is-compact.is-expanded .yarg-invite-list{max-height:45vh;overflow:auto;margin-top:9px}
+    #yarg-invite-banner .yarg-invite-expand{background:#284b4a;border-color:#6fd2c5;color:#fff}
+    #yarg-invite-banner.is-compact .yarg-invite-close{margin-left:auto}
+    body.yarg-stage-visible #yarg-invite-banner{box-shadow:0 3px 10px #0004}
+    
     #yarg-invite-banner *{box-sizing:border-box}
     #yarg-invite-banner .yarg-invite-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}
     #yarg-invite-banner .yarg-invite-header strong{font-size:16px}
@@ -56,19 +66,26 @@
   let muted = false; // Only hides the banner until navigation or a new invitation arrives.
   let lastSignature = '';
   let lastStageHeight = -1;
+  let manuallyExpanded = false;
   function stageOffset(){
     const stage = document.getElementById('yarg-stage-banner');
-    const height = stage && !stage.hidden ? Math.ceil(stage.getBoundingClientRect().height) : 0;
+    const active = !!(stage && !stage.hidden);
+    const height = active ? Math.ceil(stage.getBoundingClientRect().height) : 0;
     if(height !== lastStageHeight){
       lastStageHeight = height;
       banner.style.setProperty('--yarg-invite-offset', height + 'px');
     }
+    banner.classList.toggle('is-compact',active);
+    banner.classList.toggle('is-expanded',active && manuallyExpanded);
+    expand.hidden=!active;
+    expand.textContent=manuallyExpanded?'Réduire':'Voir les invitations';
   }
   function render(){
     stageOffset();
     banner.hidden = !currentUser || !pending.length || muted;
     if(banner.hidden) return;
-    title.textContent = pending.length === 1 ? 'Invitation à rejoindre un groupe' : pending.length + ' invitations à rejoindre un groupe';
+    const compact=banner.classList.contains('is-compact');
+    title.textContent = compact ? (pending.length===1?'1 invitation en attente':pending.length+' invitations en attente') : (pending.length===1?'Invitation à rejoindre un groupe':pending.length+' invitations à rejoindre un groupe');
     list.replaceChildren();
     for(const invitation of pending){
       const item = document.createElement('div');item.className='yarg-invite-item';
@@ -104,6 +121,7 @@
     }
   }
   close.addEventListener('click',()=>{muted=true;render();});
+  expand.addEventListener('click',()=>{manuallyExpanded=!manuallyExpanded;render();});
   async function refresh(force=false){
     if(busy || (document.hidden && !force))return;
     try{
@@ -117,7 +135,7 @@
       if(error)throw error;
       pending=Array.isArray(data)?data:[];
       const signature=pending.map(x=>String(x.id)).sort().join('|');
-      if(switched || (signature!==lastSignature && signature))muted=false;
+      if(switched || (signature!==lastSignature && signature)){muted=false;manuallyExpanded=false;}
       lastSignature=signature;
       status.textContent='';
       render();
@@ -129,7 +147,15 @@
   void refresh(true);
   setInterval(()=>{stageOffset();void refresh();},15000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh(true);});
-  window.addEventListener('resize',stageOffset,{passive:true});
+  window.addEventListener('resize',()=>{stageOffset();if(!banner.hidden)title.textContent=banner.classList.contains('is-compact')?(pending.length===1?'1 invitation en attente':pending.length+' invitations en attente'):(pending.length===1?'Invitation à rejoindre un groupe':pending.length+' invitations à rejoindre un groupe');},{passive:true});
+  const stageObserver=new MutationObserver(()=>{
+    const wasCompact=banner.classList.contains('is-compact');
+    stageOffset();
+    if(wasCompact!==banner.classList.contains('is-compact')){manuallyExpanded=false;render();}
+  });
+  const stageElement=document.getElementById('yarg-stage-banner');
+  if(stageElement)stageObserver.observe(stageElement,{attributes:true,attributeFilter:['hidden','class','style']});
+  document.addEventListener('yarg-stage-replied',()=>{manuallyExpanded=false;render();});
   if(client.auth?.onAuthStateChange){
     client.auth.onAuthStateChange(()=>{setTimeout(()=>void refresh(true),0);});
   }
