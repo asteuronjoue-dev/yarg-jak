@@ -757,7 +757,7 @@ function renderHall(sessions){
     `<li><b>${esc(v.name)}</b> : ${v.requests} demande(s), ${v.played} jouée(s)</li>`).join('');
   const setlist=songs.map((song,i)=>{
     const players=[...new Set((Array.isArray(song.members)?song.members:[]).filter(Boolean))];
-    return `<li><strong>${i+1}. ${esc(song.title)}</strong> — ${esc(song.artist||'')} · demande de ${esc(song.requester||'')} (${formatDuration(song.seconds)})${players.length?`<div class="hall-sub">Sur scène : ${esc(players.join(', '))}</div>`:''}</li>`;
+    return `<li><strong>${i+1}. ${esc(song.title)}</strong> — ${esc(song.artist||'')} · demande de ${esc(song.account_name||song.requester||'Rockstar')} (${formatDuration(song.seconds)})${players.length?`<div class="hall-sub">Sur scène : ${esc(players.join(', '))}</div>`:''}</li>`;
   }).join('');
   const date=session.started_at?new Date(session.started_at).toLocaleDateString('fr-CA'):'';
   return `<details class="hall-party"><summary>${esc(session.name||'Soirée YARG')}<span class="hall-sub">${esc(date)} · ${songs.length} chansons · ${formatDuration(seconds)}</span></summary>
