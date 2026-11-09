@@ -1314,6 +1314,11 @@ body>header{border-bottom:0!important}
                         entries=(byArtist||[]).filter(x=>normalize(x.song_title)===normalize(song.t)&&normalize(x.song_artist)===normalize(song.a));
                     }
                 }
+                // Completed songs require the public-history RPC (guest SELECT may hide them).
+                const {data:history,error:historyError}=await client.rpc('yarg_public_current_session_history');
+                if(historyError)throw historyError;
+                const normalize=s=>String(s||'').trim().toLocaleLowerCase('fr-CA');
+                entries.push(...(Array.isArray(history)?history:[]).filter(x=>x.song_id===song.id||(normalize(x.song_title)===normalize(song.t)&&normalize(x.song_artist)===normalize(song.a))));
                 if(CURRENT_SHEET_SONG!==song)return;
                 const played=entries.some(x=>x.status==='completed'||x.status==='played');
                 const requested=entries.length>0;
