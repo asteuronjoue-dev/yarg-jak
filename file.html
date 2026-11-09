@@ -275,7 +275,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 </style></head>
 </head>
 <body>
-<div id="yarg-invite-tray" class="yarg-invite-tray" hidden aria-live="polite"></div>
+
 <header>
   <div class="wrap">
     <div class="topline">
@@ -1131,36 +1131,7 @@ setInterval(()=>render(),30000);
   }catch(err){console.warn('Vérification accès Régie MC :',err);}
 })();
 </script>
-<script>
-/* Invitations entrantes pour le compte Rockstar connecté. */
-(function(){
- const box=document.getElementById('yarg-invite-tray');if(!box||!window.supabase||new URLSearchParams(location.search).get('affichage')==='1')return;
- const inviteSb=window.supabase.createClient('https://xbhfjzurytdknbqvksjq.supabase.co','sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM',{auth:{storageKey:'sb-xbhfjzurytdknbqvksjq-auth-token'}});
- let busy=false;
- const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- async function refreshInvites(){
-  if(busy)return;
-  try{
-   const {data:{user}}=await inviteSb.auth.getUser();
-   if(!user){box.hidden=true;return;}
-   const {data,error}=await inviteSb.rpc('yarg_my_band_invitations');
-   if(error)throw error;
-   if(!Array.isArray(data)||!data.length){box.hidden=true;box.replaceChildren();return;}
-   box.innerHTML=data.map(i=>`<section class="yarg-invite-card" data-invite-id="${safe(i.id)}"><strong>🌈🎸 ON TE VEUT DANS LE BAND ! 🎸🌈</strong><p>Tu es invité·e pour <b>${safe(i.song_title)}</b> — ${safe(i.song_artist)} · ${safe(i.instrument_mode||'Instrument à confirmer')} · ${safe(i.rockstar_name||'Un Rockstar')}</p><div class="yarg-invite-actions"><button type="button" class="yarg-invite-yes" data-yarg-invite-answer="yes">🤘 Accepter</button><button type="button" class="yarg-invite-no" data-yarg-invite-answer="no">Refuser</button></div><span class="yarg-invite-error" role="status"></span></section>`).join('');
-   box.hidden=false;
-  }catch(e){console.warn('Invitations YARG:',e);}
- }
- box.addEventListener('click',async e=>{
-  const btn=e.target.closest('[data-yarg-invite-answer]');if(!btn||busy)return;
-  const card=btn.closest('[data-invite-id]');if(!card)return;busy=true;
-  card.querySelectorAll('button').forEach(b=>b.disabled=true);
-  try{const {error}=await inviteSb.rpc('yarg_respond_band_invitation',{p_invitation_id:card.dataset.inviteId,p_accept:btn.dataset.yargInviteAnswer==='yes'});if(error)throw error;await refreshInvitesAfter();}
-  catch(err){card.querySelector('.yarg-invite-error').textContent='Erreur : '+(err.message||'Impossible de répondre');card.querySelectorAll('button').forEach(b=>b.disabled=false);}finally{busy=false;}
- });
- async function refreshInvitesAfter(){busy=false;await refreshInvites();document.dispatchEvent(new Event('yarg-invitations-changed'));}
- refreshInvites();setInterval(refreshInvites,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshInvites()});
-})();
-</script>
+
 <script src="yarg-stage-response.js" defer></script>
 <script src="yarg-band-invitations.js" defer></script></body>
 </html>
