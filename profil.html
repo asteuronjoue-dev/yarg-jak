@@ -83,6 +83,16 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <div class="card"><div class="topline"><div><h2 id="shown-name">Rockstar</h2><div class="meta"><span class="tag" id="initie-tag">Statut : à déterminer</span><span class="featured" id="equipped-preview"></span></div></div><button id="logout" class="small ghost">Se déconnecter</button></div><p id="privilege-note" class="hint"></p>
 <form id="finish-guest-signup" hidden class="card"><h3>🎸 Termine ton inscription</h3><p class="hint">Ton courriel est confirmé. Crée ton mot de passe pour retrouver ton compte Rockstar.</p><label for="guest-new-password">Mot de passe (8 caractères minimum)</label><input id="guest-new-password" type="password" autocomplete="new-password" minlength="8" required><button type="submit" class="primary">Enregistrer mon mot de passe</button></form><form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><button type="submit" class="primary" style="margin-top:14px">Enregistrer mon profil</button></form></div>
 
+<section class="card" id="push-settings">
+<h2>Notifications sur mon téléphone</h2>
+<p class="hint">Reçois les invitations de groupe et un rappel quand ton tour approche, même si le site est fermé. Aucune notification n'est envoyée quand le MC commence une chanson.</p>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button type="button" id="push-enable" class="primary">Activer les notifications</button>
+<button type="button" id="push-disable" class="ghost" hidden>Désactiver sur cet appareil</button>
+</div>
+<p class="hint" id="push-status" role="status" aria-live="polite"></p>
+<p class="hint">iPhone : ajoute d'abord le site à ton écran d'accueil via Safari, puis ouvre-le depuis son icône pour activer les notifications.</p>
+</section>
 <div class="profile-tabs" role="tablist" aria-label="Sections du profil">
 <button type="button" class="profile-tab" data-profile-tab="statistics" aria-selected="true">📊 Statistiques</button>
 <button type="button" class="profile-tab" data-profile-tab="achievements" aria-selected="false">🏷️ Titres</button>
@@ -442,5 +452,34 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
  }catch(error){console.warn('Statistiques Rockstar après invitation :',error);}
 });
 
+</script>
+<script src="yarg-push.js" defer></script>
+<script>
+(function(){
+ const activate=document.getElementById('push-enable'),deactivate=document.getElementById('push-disable'),status=document.getElementById('push-status');
+ async function sync(){
+  if(!window.YargPush)return;
+  try{
+   const result=await window.YargPush.status();
+   activate.hidden=result.subscribed;
+   deactivate.hidden=!result.subscribed;
+   status.textContent=!result.supported?'Web Push non disponible. Sur iPhone, installe le site à l’écran d’accueil et ouvre-le depuis là.':result.subscribed?'Notifications activées sur cet appareil.':'Notifications non activées sur cet appareil.';
+  }catch(e){status.textContent='État des notifications indisponible : '+(e.message||e);}
+ }
+ activate.addEventListener('click',async()=>{
+  activate.disabled=true;status.textContent='Activation des notifications…';
+  try{await window.YargPush.enable();await sync();}
+  catch(e){status.textContent='Activation impossible : '+(e.message||e);}
+  finally{activate.disabled=false;}
+ });
+ deactivate.addEventListener('click',async()=>{
+  deactivate.disabled=true;status.textContent='Désactivation…';
+  try{await window.YargPush.disable();await sync();}
+  catch(e){status.textContent='Désactivation impossible : '+(e.message||e);}
+  finally{deactivate.disabled=false;}
+ });
+ window.addEventListener('load',sync);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});
+})();
 </script>
 <script src="yarg-stage-response.js" defer></script><script src="yarg-band-invitations.js" defer></script></body></html>
