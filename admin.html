@@ -235,6 +235,12 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .mc-request-time{min-width:120px;align-items:flex-start;justify-content:center}
 .mc-request-time small{color:#a8cbd0;margin-bottom:3px}
 @media(max-width:560px){.mc-request-context{grid-template-columns:minmax(0,1fr)}.mc-request-time{min-width:0}}
+#band-visibility-section .band-visibility-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:9px}
+#band-visibility-section .band-visibility-item{display:flex;align-items:center;gap:11px;margin:0;padding:12px;background:#242c30;border:1px solid #40525b;border-radius:10px;cursor:pointer;min-width:0}
+#band-visibility-section .band-visibility-item.is-hidden{opacity:.7;border-style:dashed}
+#band-visibility-section .band-visibility-item input{flex:0 0 20px;width:20px;height:20px;margin:0}
+#band-visibility-section .band-visibility-item span{min-width:0;overflow-wrap:anywhere}
+#band-visibility-status{min-height:22px;margin-top:12px}
 </style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. La Scène et l’Historique ne s’actualisent plus automatiquement pendant que tu manipules les prestations. Utilise « Actualiser » au besoin.</p>
@@ -288,6 +294,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section class="card history-section"><h2>Chansons terminées</h2><p class="help">Les prestations terminées sont conservées dans l’historique de cette soirée.</p><div id="history-completed"></div></section>
 </div>
 <div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><p class="help">Désactiver le Mode soirée ferme les demandes, mais n’archive pas la soirée. Pour la faire apparaître au Hall of Fame, utilise « Terminer et archiver la soirée » ci-dessous.</p></section>
+<section class="card" id="band-visibility-section"><h2>Comptes Rockstar visibles dans les invitations</h2><p class="help">Décoche les Rockstars absentes de cette soirée. Leurs comptes, invitations déjà envoyées et performances restent intacts. Les choix se réinitialisent à la prochaine soirée.</p><div id="band-visibility-list" class="band-visibility-list"><p class="muted">Chargement des comptes…</p></div><div id="band-visibility-status" class="help" role="status" aria-live="polite"></div></section>
 <section class="card"><h2>Terminer et archiver la soirée</h2><p>Clôture la soirée en cours, conserve son historique et prépare une nouvelle session fermée. Termine ou passe d’abord toute chanson encore sur scène.</p><button type="button" id="archive-party-button" class="danger">⏹ Terminer et archiver la soirée</button><p class="help">Le nom de la soirée se modifie dans « Configuration de la soirée », juste au-dessus.</p></section></div>
 <section id="playlists-tab" hidden>
   <section class="card">
@@ -505,6 +512,31 @@ async function load(){if(busy)return;const {data,error}=await sb.rpc('yarg_admin
    if(metricsError)console.warn('Métriques MC indisponibles',metricsError);
    else {mcRequestMetrics=new Map((metrics||[]).map(x=>[String(x.request_id),x]));render();}
    void loadActiveRequesters();if($('mc-score-details').open&&!$('scene-tab').hidden)void loadMcScores();}
+async function loadBandVisibility(){
+ const host=$('band-visibility-list');if(!host)return;
+ const {data,error}=await sb.rpc('yarg_mc_band_visibility');
+ if(error){host.textContent='Impossible de charger les comptes : '+error.message;return;}
+ host.replaceChildren();
+ for(const account of data||[]){
+  const label=document.createElement('label');label.className='band-visibility-item'+(account.hidden?' is-hidden':'');
+  const check=document.createElement('input');check.type='checkbox';check.checked=!account.hidden;
+  check.setAttribute('aria-label','Afficher '+account.rockstar_name+' dans les invitations');
+  const name=document.createElement('span');name.textContent=account.rockstar_name;
+  check.addEventListener('change',async()=>{
+   const visible=check.checked;check.disabled=true;
+   $('band-visibility-status').textContent='Enregistrement…';
+   try{
+    const {error}=await sb.rpc('yarg_mc_set_band_visibility',{p_user_id:account.user_id,p_hidden:!visible});
+    if(error)throw error;
+    label.classList.toggle('is-hidden',!visible);
+    $('band-visibility-status').textContent=visible?account.rockstar_name+' est visible dans les invitations.':account.rockstar_name+' est masqué pour cette soirée.';
+   }catch(e){check.checked=!visible;$('band-visibility-status').textContent='Erreur : '+(e.message||String(e));}
+   finally{check.disabled=false;}
+  });
+  label.append(check,name);host.append(label);
+ }
+ if(!data?.length)host.textContent='Aucun compte Rockstar enregistré.';
+}
 async function loadMcRockstars(){const {data,error}=await sb.rpc('yarg_mc_rockstars');if(error){notice('Comptes Rockstar : '+error.message,true);return}mcRockstars=data||[];render();}
 async function mcChange(name,args){try{const {error}=await sb.rpc(name,args);if(error)throw error;notice('Modification enregistrée.');await load()}catch(e){notice(e.message||String(e),true)}}
 document.addEventListener('submit',async e=>{const form=e.target.closest('form[data-mc-assignment]');if(!form)return;e.preventDefault();const id=form.dataset.mcAssignment,profile=form.elements.profile.value,instrument=form.elements.instrument.value;if(!profile)return;if(!confirm('Attribuer '+instrument+' au compte sélectionné pour cette chanson ?'))return;await mcChange('yarg_mc_assign_player',{p_request_id:id,p_user_id:profile,p_instrument:instrument})});
@@ -528,7 +560,7 @@ async function action(id,name){
  busy=true;try{const {error}=await sb.rpc('yarg_admin_performance_action',{p_request_id:id,p_action:name});if(error)throw error;notice('Action enregistrée.');busy=false;await load();}catch(e){busy=false;notice(e.message,true)}
 }
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(b&&!busy)action(b.dataset.id,b.dataset.action)});
-document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings','playlists','rockstars','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;});
+document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings','playlists','rockstars','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;if(b.dataset.tab==='settings')void loadBandVisibility();});
 
 $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {error}=await sb.rpc('yarg_admin_save_settings',{p_name:$('party-name').value.trim(),p_mc:$('mc-name').value.trim(),p_party_mode:$('party-mode').checked});if(error)throw error;notice('Réglages enregistrés.');hasLoadedSettings=false;busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
 
