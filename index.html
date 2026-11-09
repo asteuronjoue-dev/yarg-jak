@@ -709,6 +709,11 @@
             box-shadow:0 0 30px rgba(37,215,207,.30);
         }
 
+
+        .performance-rainbow-button.request-unavailable,.performance-rainbow-button:disabled{
+            background:#535d63;animation:none;box-shadow:none;color:#f0f3f4;cursor:not-allowed;opacity:1;
+        }
+        .performance-rainbow-button.request-unavailable:hover,.performance-rainbow-button:disabled:hover{transform:none;box-shadow:none}
         @keyframes performanceRainbow{to{background-position:300% 0}}}
 
 
@@ -1287,6 +1292,40 @@ body>header{border-bottom:0!important}
             return PARTY_CLIENT;
         }
 
+        async function checkSheetSongAvailability(song) {
+            const btn=document.getElementById('performance-request-button');
+            btn.disabled=true;btn.classList.add('request-unavailable');
+            btn.textContent='⏳ Vérification des demandes…';
+            try {
+                const client=getPartyClient();
+                if(!client) throw new Error('Connexion non disponible');
+                const {data:settings,error:settingsError}=await client.from('party_settings').select('current_session_id').eq('id',1).single();
+                if(settingsError)throw settingsError;
+                const statuses=['waiting','full','playing','completed','played'];
+                let entries=[];
+                if(settings?.current_session_id){
+                    const {data:byId,error:idError}=await client.from('performance_requests').select('song_id,song_title,song_artist,status').eq('party_session_id',settings.current_session_id).eq('song_id',song.id).in('status',statuses).limit(10);
+                    if(idError)throw idError;
+                    entries=byId||[];
+                    if(!entries.length){
+                        const {data:byArtist,error:artistError}=await client.from('performance_requests').select('song_id,song_title,song_artist,status').eq('party_session_id',settings.current_session_id).in('status',statuses).ilike('song_artist',song.a||'').limit(200);
+                        if(artistError)throw artistError;
+                        const normalize=s=>String(s||'').trim().toLocaleLowerCase('fr-CA');
+                        entries=(byArtist||[]).filter(x=>normalize(x.song_title)===normalize(song.t)&&normalize(x.song_artist)===normalize(song.a));
+                    }
+                }
+                if(CURRENT_SHEET_SONG!==song)return;
+                const played=entries.some(x=>x.status==='completed'||x.status==='played');
+                const requested=entries.length>0;
+                btn.disabled=requested;
+                btn.classList.toggle('request-unavailable',requested);
+                btn.textContent=played?'🔒 Cette chanson a déjà été jouée ce soir':requested?'🔒 Cette chanson est déjà demandée ce soir':'✨Demander cette chanson pour ce soir!✨';
+            } catch(error){
+                console.warn('Vérification de doublon indisponible :',error);
+                if(CURRENT_SHEET_SONG===song){btn.disabled=false;btn.classList.remove('request-unavailable');btn.textContent='✨Demander cette chanson pour ce soir!✨';}
+                // Supabase still rejects duplicate submissions atomically on the server.
+            }
+        }
         async function loadPartyMode() {
             const catalogTitle = document.getElementById('catalog-title');
             const normalTitle = catalogTitle.textContent.trim();
@@ -2392,6 +2431,7 @@ body>header{border-bottom:0!important}
             updateFavoriteButton();
             const requestZone = document.getElementById('performance-request-zone');
             if (requestZone) requestZone.hidden = !PARTY_REQUESTS_ENABLED;
+            if(PARTY_REQUESTS_ENABLED)checkSheetSongAvailability(r);
             document.getElementById('sheet-title').textContent = r.t;
             document.getElementById('sheet-artist').textContent = r.a;
             document.getElementById('sheet-album').textContent = r.al || '—';
@@ -2451,7 +2491,7 @@ body>header{border-bottom:0!important}
 
 
         document.getElementById('performance-request-button').addEventListener('click', () => {
-            if (!PARTY_REQUESTS_ENABLED || !CURRENT_SHEET_SONG) return;
+            if (!PARTY_REQUESTS_ENABLED || !CURRENT_SHEET_SONG || document.getElementById('performance-request-button').disabled) return;
             const params = new URLSearchParams({
                 song_id: CURRENT_SHEET_SONG.id,
                 duration_seconds: CURRENT_SHEET_SONG.l || '',
