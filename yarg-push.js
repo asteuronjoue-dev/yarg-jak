@@ -21,6 +21,18 @@
   if(!supports())return {supported:false,subscribed:false,permission:'unsupported'};
   const registration=await navigator.serviceWorker.getRegistration('./yarg-notifications-sw.js');
   const subscription=registration?await registration.pushManager.getSubscription():null;
+  if(subscription){
+    const {data:{user}}=await client.auth.getUser();
+    if(user&&!user.is_anonymous){
+      const {data:registered,error}=await client.rpc('yarg_push_is_registered',{p_endpoint:subscription.endpoint});
+      if(error)throw error;
+      if(!registered){
+        // A shared browser may have an old subscription from a different account.
+        await subscription.unsubscribe();
+        return {supported:true,subscribed:false,permission:Notification.permission};
+      }
+    }
+  }
   return {supported:true,subscribed:!!subscription,permission:Notification.permission};
  }
  async function enable(){
@@ -46,8 +58,9 @@
   const subscription=registration?await registration.pushManager.getSubscription():null;
   if(subscription){
    const {error}=await client.rpc('yarg_push_unregister',{p_endpoint:subscription.endpoint});
-   if(error)throw error;
+   // Unsubscribe locally even if the server is temporarily unavailable.
    await subscription.unsubscribe();
+   if(error)throw error;
   }
   return {supported:supports(),subscribed:false,permission:Notification.permission};
  }
