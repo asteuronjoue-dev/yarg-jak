@@ -434,5 +434,13 @@ async function loadProfileFavorites(){
 
 initialize();
 
+document.addEventListener('yarg-band-invitation-responded',async()=>{
+ try{
+  if(!state.user || !state.profile)return;
+  await fetchStats();
+  renderStats();
+ }catch(error){console.warn('Statistiques Rockstar après invitation :',error);}
+});
+
 </script>
 <script src="yarg-stage-response.js" defer></script><script src="yarg-band-invitations.js" defer></script></body></html>
