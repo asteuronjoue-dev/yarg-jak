@@ -1,0 +1,20 @@
+{
+  "id": "/yarg-jak/",
+  "name": "Asteur On Joue — ROCKSTAR",
+  "short_name": "Asteur On Joue",
+  "description": "Catalogue, file de soirée et notifications YARG.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101214",
+  "theme_color": "#101214",
+  "lang": "fr-CA",
+  "icons": [
+    {
+      "src": "./assets/favicon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
