@@ -449,6 +449,7 @@ function render(){
  const s=snapshot.settings||{};const session=snapshot.session||{};
  applyAdminPartyMode(s);
  $('session-line').textContent=partyStillOn(s)?'Mode soirée actif : demandes ouvertes':'Mode soirée inactif : demandes fermées';
+ const rows=snapshot.requests||[];
 
  const playing=rows.filter(r=>r.status==='playing');
  $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}${mcSongTools(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
