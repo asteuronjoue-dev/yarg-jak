@@ -233,20 +233,31 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .queue-legend .legend-mine{border-color:#9c79e6;color:#e4cffd}
 .queue-legend .legend-open{border-color:#3ab97f;color:#a3f5c4}
 .queue-legend .legend-closed{border-color:#bf565d;color:#ffc5c5}
+.history-fold{margin:0 0 20px;border:1px solid #46575d;background:#192329;border-radius:15px;overflow:hidden}
+.history-fold[hidden]{display:none!important}
+.history-fold>summary{cursor:pointer;padding:15px 17px;font-weight:900;color:#b5f4e8;list-style-position:inside}
+.history-fold[open]>summary{border-bottom:1px solid #46575d}
+.history-fold-body{padding:16px}
+.history-fold .hint{display:inline;font-size:13px;margin-left:9px;font-weight:500;color:#aeb8bd}
+@media(max-width:650px){.history-fold .hint{display:block;margin:5px 0 0 19px}}
 .queue-card{border-left:0}
 .queue-card::before{width:6px}
-.queue-card--mine::before,.queue-card--joined::before{background:linear-gradient(180deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);background-size:100% 220%;animation:partyRainbowBg 6s linear infinite}
+.queue-card--mine::before,.queue-card--joined::before{background:linear-gradient(180deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);background-size:100% 300%;animation:queueRainbowBounce 2.4s ease-in-out infinite alternate}
+@keyframes queueRainbowBounce{from{background-position:50% 0%}to{background-position:50% 100%}}
 .queue-card--mine,.queue-card--joined{border-color:rgba(180,131,240,.5)}
 .queue-card--open{border-color:rgba(68,196,123,.5)}
 .queue-card--open::before{background:#48dc89}
 .queue-card--closed{border-color:rgba(233,89,98,.5)}
 .queue-card--closed::before{background:#ff6b75}
-.queue-card-top{display:flex;gap:9px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin:0 0 12px 3px}
-.queue-state{border-radius:999px;padding:5px 11px;font-size:12px;font-weight:950;letter-spacing:.01em}
+.queue-card-top{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin:-17px -17px 16px;padding:13px 17px;min-height:58px;border-bottom:2px solid transparent}
+.queue-card--mine .queue-card-top,.queue-card--joined .queue-card-top{background:linear-gradient(105deg,#522549,#432b69,#253b6a);border-bottom-color:#b47feb}
+.queue-card--open .queue-card-top{background:linear-gradient(105deg,#173a2b,#204632);border-bottom-color:#48dc89}
+.queue-card--closed .queue-card-top{background:linear-gradient(105deg,#48242b,#3e252d);border-bottom-color:#ff6b75}
+.queue-state{border-radius:9px;padding:7px 13px;font-size:13px;font-weight:950;letter-spacing:.015em}
 .queue-state--mine,.queue-state--joined{color:#fff;background:linear-gradient(90deg,#e2437b,#a55eeb,#3688e8);border:1px solid #d6a5ec}
 .queue-state--open{color:#bdffda;background:#163a2a;border:1px solid #3bb37c}
 .queue-state--closed{color:#ffd2d2;background:#452128;border:1px solid #bf5d68}
-.queue-band-highlight{color:#ffc084;font-weight:950;font-size:15px;overflow-wrap:anywhere}
+.queue-band-highlight{color:#ffdbb9;font-weight:950;font-size:15px;overflow-wrap:anywhere}
 .queue-card .band-name{color:#ffc084}
 .history-card{padding:22px}
 .history-card::before{background:#71858d;width:6px}
@@ -292,18 +303,6 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
     <div class="display-footer"><span>Les heures sont approximatives · 2 min prévues entre les chansons</span><span id="displayUpdated">Actualisation automatique toutes les 30 secondes</span></div>
   </section>
   <div class="error" id="errorBox"></div>
-  <details class="queue-rules">
-    <summary>⚖️ Comment fonctionne l'ordre des chansons ?</summary>
-    <div class="queue-rules-body">
-      <p>La file suit le classement équitable : ceux qui ont moins joué passent plus tôt, tandis que rejoindre un autre groupe apporte un bonus de points.</p>
-      <ul>
-        <li>Une seule chanson de suite par Rockstar initiatrice et par artiste : si une autre chanson admissible existe, elle passe entre les deux.</li>
-        <li>La chanson sur scène et la prochaine déjà annoncée sont protégées contre les changements de priorité.</li>
-        <li>Une chanson déjà demandée ou jouée durant cette soirée ne peut pas être redemandée. Tu peux cependant rejoindre son groupe si des places sont libres.</li>
-        <li>Les prestations « Pas prêt » restent en pause, sans heure de passage, jusqu'à ce que les musiciens soient disponibles.</li>
-      </ul>
-    </div>
-  </details>
   <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
     <details><summary>Comment gagner ou perdre des points?</summary><p class="points-note">Le plus petit score passe en premier. Le demandeur reçoit +1 point par seconde de sa chanson (4 min = +240). Rejoindre un autre groupe donne −60 points, pris en compte à partir du passage de ce groupe. Les Initiés partent à −1. Une chanson passée sans être jouée ne donne ni coût ni récompense. La prochaine prestation annoncée reste protégée.</p></details></section>
   <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
@@ -318,19 +317,11 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
       <button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button>
     </div>
     <div class="queue-legend" aria-label="Signification des couleurs">
-      <span class="legend-mine">🌈 Ma chanson / chanson rejointe</span>
-      <span class="legend-open">🟢 Places disponibles</span>
-      <span class="legend-closed">🔴 Groupe complet ou fermé</span>
+      <span class="legend-mine">Ma chanson / chanson rejointe</span>
+      <span class="legend-open">Places disponibles</span>
+      <span class="legend-closed">Groupe complet ou fermé</span>
     </div>
     <div class="cards" id="queueList"></div>
-  </section>
-
-  <section id="historySection" hidden>
-    <div class="section-head"><div>
-      <h2>🎶 Historique</h2>
-      <div class="hint">Prestations terminées pendant la soirée actuelle.</div>
-    </div></div>
-    <div class="cards" id="currentHistory"></div>
   </section>
 
   <section id="closedSection" hidden>
@@ -344,6 +335,23 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
     </div></div>
     <div class="cards" id="hallOfFame"><div class="empty">Chargement des archives…</div></div>
   </section>
+  <details id="historySection" class="history-fold" hidden>
+    <summary>Historique <span class="hint">Prestations terminées pendant la soirée actuelle</span></summary>
+    <div class="history-fold-body"><div class="cards" id="currentHistory"></div></div>
+  </details>
+
+  <details class="queue-rules">
+    <summary>⚖️ Comment fonctionne l'ordre des chansons ?</summary>
+    <div class="queue-rules-body">
+      <p>La file suit le classement équitable : ceux qui ont moins joué passent plus tôt, tandis que rejoindre un autre groupe apporte un bonus de points.</p>
+      <ul>
+        <li>Une seule chanson de suite par Rockstar initiatrice et par artiste : si une autre chanson admissible existe, elle passe entre les deux.</li>
+        <li>La chanson sur scène et la prochaine déjà annoncée sont protégées contre les changements de priorité.</li>
+        <li>Une chanson déjà demandée ou jouée durant cette soirée ne peut pas être redemandée. Tu peux cependant rejoindre son groupe si des places sont libres.</li>
+        <li>Les prestations « Pas prêt » restent en pause, sans heure de passage, jusqu'à ce que les musiciens soient disponibles.</li>
+      </ul>
+    </div>
+  </details>
 </main>
 
 <script>
@@ -604,8 +612,8 @@ function cardHtml(r, eta, mine=false, rank=null){
   const isMine=myAccountRequester(r)||isMyRequest(r);
   const isJoined=!isMine && (!!myBandMember(r)||(joinedRequestIds().has(String(r.id))&&!!myMemberToken(r)));
   const kind=isMine?'mine':isJoined?'joined':(!isPlaying&&available.length>0?'open':'closed');
-  const kindLabel=isMine?'🌈 Ma chanson':isJoined?'🌈 Je participe':kind==='open'?'🟢 Places disponibles':'🔴 Groupe complet / fermé';
-  const bandEmphasis=r.band_name?'<span class="queue-band-highlight">🤘 '+esc(r.band_name)+'</span>':'';
+  const kindLabel=isMine?'Ma chanson':isJoined?'Je participe':kind==='open'?'Places disponibles':'Groupe complet / fermé';
+  const bandEmphasis=r.band_name?'<span class="queue-band-highlight">'+esc(r.band_name)+'</span>':'';
   const classes=['card','queue-card','queue-card--'+kind,isPlaying?'playing':''].filter(Boolean).join(' ');
   const rankHtml=Number.isInteger(rank)&&rank>0?`<span class="queue-rank">#${rank}</span>`:'';
   const etaHtml=r.yarg_not_ready
@@ -631,7 +639,6 @@ function cardHtml(r, eta, mine=false, rank=null){
       <span class="status ${isPlaying?'playing':''}">${statusLabel}</span>
     </div><div class="eta-with-rank">${rankHtml}${etaHtml}</div></div>
     <div class="band">
-      ${r.band_name?`<div class="band-name">🤘 ${esc(r.band_name)}</div>`:''}
       ${displayed}
       ${readyControl}
       ${r.yarg_not_ready?'<div class="yarg-held-note">Cette chanson est temporairement en pause et ne sera pas appelée pour le moment.</div>':''}
