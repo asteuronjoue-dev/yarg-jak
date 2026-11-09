@@ -740,12 +740,21 @@ function renderHall(sessions){
  dest.innerHTML=sessions.map(session=>{
   const songs=Array.isArray(session.setlist)?session.setlist:[];
   const credits=new Map();let seconds=0;
-  for(const req of (Array.isArray(session.requests)?session.requests:[])){
-    const name=req.requester||'Rockstar',data=credits.get(name)||{requests:0,played:0};data.requests++;credits.set(name,data);
+  function accountFor(entry){
+    const name=entry.account_name||entry.requester||'Rockstar';
+    const key=entry.account_key||'name:'+String(entry.requester||'Rockstar').trim().toLocaleLowerCase();
+    if(!credits.has(key))credits.set(key,{name,requests:0,played:0});
+    return credits.get(key);
   }
-  for(const song of songs){seconds+=Math.max(0,Number(song.seconds)||0);const name=song.requester||'Rockstar';const data=credits.get(name)||{requests:0,played:0};data.played++;credits.set(name,data);}
-  const stats=[...credits.entries()].sort((a,b)=>b[1].requests-a[1].requests).map(([name,v])=>
-    `<li><b>${esc(name)}</b> : ${v.requests} demande(s), ${v.played} jouée(s)</li>`).join('');
+  for(const req of (Array.isArray(session.requests)?session.requests:[])){
+    accountFor(req).requests++;
+  }
+  for(const song of songs){
+    seconds+=Math.max(0,Number(song.seconds)||0);
+    accountFor(song).played++;
+  }
+  const stats=[...credits.values()].sort((a,b)=>b.requests-a.requests||b.played-a.played||a.name.localeCompare(b.name,'fr')).map(v=>
+    `<li><b>${esc(v.name)}</b> : ${v.requests} demande(s), ${v.played} jouée(s)</li>`).join('');
   const setlist=songs.map((song,i)=>{
     const players=[...new Set((Array.isArray(song.members)?song.members:[]).filter(Boolean))];
     return `<li><strong>${i+1}. ${esc(song.title)}</strong> — ${esc(song.artist||'')} · demande de ${esc(song.requester||'')} (${formatDuration(song.seconds)})${players.length?`<div class="hall-sub">Sur scène : ${esc(players.join(', '))}</div>`:''}</li>`;
