@@ -1009,6 +1009,29 @@ document.addEventListener("submit",async e=>{
   finally{submit.disabled=false}
 });
 
+let yargNotificationWorker=null;
+async function notificationWorker(){
+ if(!('serviceWorker' in navigator))return null;
+ if(!yargNotificationWorker){
+   yargNotificationWorker=navigator.serviceWorker.register('./yarg-notifications-sw.js')
+     .catch(error=>{yargNotificationWorker=null;console.warn('Service worker de notifications indisponible :',error);return null;});
+ }
+ return yargNotificationWorker;
+}
+async function showSongNotification(title,body,tag){
+ try{
+   if(!('Notification' in window) || Notification.permission!=='granted')return;
+   const worker=await notificationWorker();
+   if(worker && typeof worker.showNotification==='function'){
+     await worker.showNotification(title,{body,tag,icon:'./assets/favicon.png'});
+     return;
+   }
+   // Desktop-only fallback: on Android the Notification constructor throws.
+   if(!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
+     new Notification(title,{body,tag});
+   }
+ }catch(error){console.warn('Notification impossible (file toujours accessible) :',error);}
+}
 function maybeNotify(queue,etas){
   if (!("Notification" in window) || Notification.permission!=="granted") return;
   const mine=queue.filter(isMyPerformance);
@@ -1018,9 +1041,9 @@ function maybeNotify(queue,etas){
     const mins=eta?.at ? Math.round((eta.at-Date.now())/60000) : null;
 
     if(r.status==="playing" && old!=="playing"){
-      new Notification("🎸 C'EST À TOI!",{body:`${r.song_title} — ${r.song_artist}. Ramène ton groupe sur le stage!`});
+      void showSongNotification("🎸 C'EST À TOI!",`${r.song_title} — ${r.song_artist}. Ramène ton groupe sur le stage!`, 'playing-'+r.id);
     } else if(r.status!=="playing" && mins!==null && mins<=10 && mins>0 && old!=="soon"){
-      new Notification("🍺 Tu passes bientôt!",{body:`${r.song_title} devrait passer dans environ ${mins} min.`});
+      void showSongNotification("🍺 Tu passes bientôt!",`${r.song_title} devrait passer dans environ ${mins} min.`, 'soon-'+r.id);
       previousStates.set(r.id,"soon");
       continue;
     }
@@ -1033,9 +1056,12 @@ $("#notifyBtn").addEventListener("click",async()=>{
     alert("Ce navigateur ne prend pas en charge les notifications.");
     return;
   }
-  const p=await Notification.requestPermission();
-  $("#notifyBtn").textContent = p==="granted" ? "🔔 Notifications activées" : "🔕 Notifications refusées";
-  $("#notifyBtn").disabled = p==="granted";
+  try{
+    const p=await Notification.requestPermission();
+    if(p==='granted')void notificationWorker();
+    $("#notifyBtn").textContent = p==="granted" ? "🔔 Notifications activées" : "🔕 Notifications refusées";
+    $("#notifyBtn").disabled = p==="granted";
+  }catch(error){console.warn('Autorisation des notifications :',error);alert('Impossible d’activer les notifications dans ce navigateur.');}
 });
 
 function flashLive(){
@@ -1045,7 +1071,14 @@ function flashLive(){
 
 async function refresh(){
   try{ showError(""); if(!IS_PUBLIC_DISPLAY)await loadRockstarIdentity(); await loadSettings(); await loadQueue(); if(IS_PUBLIC_DISPLAY)document.getElementById('displayError').hidden=true; }
-  catch(err){ console.error(err); showError("Impossible de charger la file pour le moment. Vérifie la configuration Supabase."); if(IS_PUBLIC_DISPLAY){const b=document.getElementById('displayError');b.hidden=false;b.textContent='Connexion à la file momentanément indisponible. Dernière liste conservée, nouvel essai dans 30 secondes.';} }
+  catch(err){
+    console.error('Erreur de rafraîchissement de la file :',err);
+    const isDatabaseError=!!(err && (err.code || err.status || /supabase|classement équitable/i.test(String(err.message||''))));
+    showError(isDatabaseError
+      ? 'Impossible de récupérer toutes les données de la file. Vérifie la connexion et réessaie.'
+      : 'Erreur dans l’affichage de la file : '+String(err?.message||err||'Erreur inconnue'));
+    if(IS_PUBLIC_DISPLAY){const b=document.getElementById('displayError');b.hidden=false;b.textContent='Actualisation momentanément indisponible. Dernière liste conservée, nouvel essai dans 30 secondes.';}
+  }
 }
 
 async function startRealtime(){
