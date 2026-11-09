@@ -20,6 +20,10 @@
  const labels=[['ready','🤘HELL YEAH!🤘'],['later','Non! Je prends une pause!'],['decline','Non! Je ne veux plus participer à cette chanson!']];
  for(const [value,label] of labels){const b=document.createElement('button');b.type='button';b.dataset.stageAnswer=value;b.textContent=label;actions.append(b);}
  banner.append(heading,details,actions,pauseActions,status);document.body.prepend(banner);
+ // Stage calls take priority over secondary personal alerts.
+ const priorityStyle=document.createElement('style');
+ priorityStyle.textContent='body.yarg-stage-visible #yarg-my-next-banner,body.yarg-stage-visible #yarg-up-next-shared{display:none!important}';
+ document.head.append(priorityStyle);
  const stageStyle=document.createElement('style');
  stageStyle.textContent=`
  @keyframes yargStageRainbow{to{background-position:300% center}}
@@ -76,7 +80,7 @@
   const a=document.createElement('div');a.className='yarg-rainbow';a.textContent=message;heading.append(a);
   if(track){const b=document.createElement('div');b.className='yarg-track';b.textContent=track;heading.append(b);}
  }
- function showStageMode(mode){banner.classList.toggle('yarg-stage-is-pause',mode==='pause');actions.hidden=mode!=='next';actions.style.display=mode==='next'?'':'none';pauseActions.hidden=mode!=='pause';pauseActions.style.display=mode==='pause'?'':'none';banner.hidden=false;syncHeight();}
+ function showStageMode(mode){banner.classList.toggle('yarg-stage-is-pause',mode==='pause');actions.hidden=mode!=='next';actions.style.display=mode==='next'?'':'none';pauseActions.hidden=mode!=='pause';pauseActions.style.display=mode==='pause'?'':'none';banner.hidden=false;document.body.classList.add('yarg-stage-visible');syncHeight();}
  function instrumentForRequest(target,all,uid,owned){
   const active=all.filter(m=>String(m.performance_request_id)===String(target.id)&&!m.withdrawn_at);
   let mine=active.find(m=>String(m.rockstar_profile_id||'')===uid||owned.has(String(m.id)));
@@ -112,7 +116,7 @@
  const resize=window.ResizeObserver?new ResizeObserver(syncHeight):null;
  if(resize)resize.observe(banner);
  window.addEventListener('resize',syncHeight,{passive:true});
- function hide(){banner.hidden=true;lastRequestId='';lastAnswer='';syncHeight();}
+ function hide(){banner.hidden=true;document.body.classList.remove('yarg-stage-visible');lastRequestId='';lastAnswer='';syncHeight();}
  const getUuid=a=>String(a||'');
  async function refresh(){
      if(working)return;
