@@ -287,7 +287,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section class="card history-section"><h2>Chansons sautées</h2><p class="help">Ces chansons n’ont pas été créditées et peuvent retourner dans la file.</p><div id="history-skipped"></div></section>
 <section class="card history-section"><h2>Chansons terminées</h2><p class="help">Les prestations terminées sont conservées dans l’historique de cette soirée.</p><div id="history-completed"></div></section>
 </div>
-<div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><div class="preopen-control"><h3>Soirée et préinscriptions</h3><p id="preopen-status" class="help">Active le Mode soirée pour recevoir les demandes à l’avance, sans compte à rebours. Le jour J, lance la fenêtre de 36 heures.</p><button type="button" id="begin-live-party" class="primary" hidden>▶ Démarrer la soirée (36 h)</button></div></section>
+<div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><p class="help">Les demandes restent ouvertes jusqu’à ce que tu désactives manuellement le Mode soirée ou que tu archives la soirée.</p></section>
 <section class="card"><h2>Terminer et archiver la soirée</h2><p>Clôture la soirée en cours, conserve son historique et prépare une nouvelle session fermée. Termine ou passe d’abord toute chanson encore sur scène.</p><button type="button" id="archive-party-button" class="danger">⏹ Terminer et archiver la soirée</button><p class="help">Le nom de la soirée se modifie dans « Configuration de la soirée », juste au-dessus.</p></section></div>
 <section id="playlists-tab" hidden>
   <section class="card">
@@ -370,7 +370,7 @@ $('mc-add-form').addEventListener('submit',async e=>{
   const {error}=await sb.rpc('yarg_owner_manage_mc',{p_email:email,p_authorize:true});
   if(error)notice(error.message,true);else{$('mc-admin-email').value='';notice('MC autorisé.');await syncMcControls()}
 });
-function partyStillOn(s){return !!s.performance_requests_enabled && (!s.party_mode_until || new Date(s.party_mode_until).getTime()>Date.now())}
+function partyStillOn(s){return !!s.performance_requests_enabled}
 function applyAdminPartyMode(s){document.body.classList.toggle('party-mode',partyStillOn(s));}
 
 function notice(text,error=false){$('notice').textContent=text;$('notice').className='notice '+(error?'error':'ok');}
@@ -448,12 +448,8 @@ function render(){
  renderMcWithdrawals();
  const s=snapshot.settings||{};const session=snapshot.session||{};
  applyAdminPartyMode(s);
- const preregistration = partyStillOn(s) && !s.party_mode_until;
- const running = partyStillOn(s) && !!s.party_mode_until;
- $('session-line').textContent=partyStillOn(s)?'🟢 Mode soirée actif : demandes ouvertes':'🔴 Mode soirée inactif : demandes fermées';
- $('preopen-status').textContent=preregistration?'Préinscriptions ouvertes. Le décompte de 36 heures n’a pas commencé.':running?`La fenêtre de 36 heures se termine le ${new Date(s.party_mode_until).toLocaleString('fr-CA')}.`:partyStillOn(s)?'Demandes ouvertes.':'Pour préparer une soirée, active le Mode soirée et enregistre les réglages. (Nécessite la migration SQL de préinscription.)';
- $('begin-live-party').hidden=!preregistration;
- const rows=snapshot.requests||[];
+ $('session-line').textContent=partyStillOn(s)?'Mode soirée actif : demandes ouvertes':'Mode soirée inactif : demandes fermées';
+
  const playing=rows.filter(r=>r.status==='playing');
  $('playing').innerHTML=playing.length?playing.map(r=>`<div class="stage-song">${esc(r.song_title||'Chanson sans titre')}</div><div class="muted">${esc(r.song_artist||'')}${r.band_name?' · '+esc(r.band_name):''}</div>${mcRequestMeta(r)}${people(r)}${mcMemberTools(r)}${mcSongTools(r)}<div class="actions"><button class="success" data-action="complete" data-id="${esc(r.id)}">✓ Terminer</button><button class="danger" data-action="skip" data-id="${esc(r.id)}">Passer</button></div>`).join(''):'<div class="empty">Aucune performance en cours.</div>';
  const ranks=new Map((snapshot.fair_order||[]).map(x=>[x.request_id,Number(x.fair_position)]));
@@ -532,11 +528,7 @@ async function action(id,name){
 }
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(b&&!busy)action(b.dataset.id,b.dataset.action)});
 document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings','playlists','rockstars','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;});
-$('begin-live-party').onclick=async()=>{
- if(!confirm('Démarrer la soirée ? Le système acceptera les nouvelles demandes pendant encore 36 heures, puis les fermera automatiquement.'))return;
- busy=true;try{const {error}=await sb.rpc('yarg_admin_begin_live_party');if(error)throw error;notice('Soirée lancée : 36 heures restantes.');busy=false;await load();}catch(e){busy=false;notice(e.message,true)}
-};
-$('refresh').onclick=()=>load();
+
 $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {error}=await sb.rpc('yarg_admin_save_settings',{p_name:$('party-name').value.trim(),p_mc:$('mc-name').value.trim(),p_party_mode:$('party-mode').checked});if(error)throw error;notice('Réglages enregistrés.');hasLoadedSettings=false;busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
 
 
