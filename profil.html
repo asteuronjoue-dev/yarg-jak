@@ -92,6 +92,7 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <div style="display:flex;gap:10px;flex-wrap:wrap">
 <button type="button" id="push-enable" class="primary">Activer les notifications</button>
 <button type="button" id="push-disable" class="ghost" hidden>Désactiver sur cet appareil</button>
+<button type="button" id="push-local-test" class="ghost">Tester sur cet appareil</button>
 </div>
 <p class="hint" id="push-status" role="status" aria-live="polite"></p>
 <p class="hint">iPhone : ajoute d'abord le site à ton écran d'accueil via Safari, puis ouvre-le depuis son icône pour activer les notifications.</p>
@@ -474,6 +475,28 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
   try{await window.YargPush.enable();await sync();}
   catch(e){status.textContent='Activation impossible : '+(e.message||e);}
   finally{activate.disabled=false;}
+ });
+ const localTest=document.getElementById('push-local-test');
+ localTest.addEventListener('click',async()=>{
+  localTest.disabled=true;
+  status.textContent='Vérification du navigateur et du service worker…';
+  try{
+   if(!('Notification' in window)||!('serviceWorker' in navigator))throw Error('Ce navigateur ne permet pas ces notifications.');
+   if(Notification.permission!=='granted')throw Error('Autorisation de notifications : '+Notification.permission+'. Vérifie les permissions du site.');
+   const registration=await navigator.serviceWorker.getRegistration('./yarg-notifications-sw.js');
+   if(!registration)throw Error('Aucun service worker enregistré. Réactive les notifications puis réessaie.');
+   await registration.update();
+   const active=registration.active;
+   if(!active)throw Error('Le service worker n’est pas actif. Ferme les autres onglets YARG et recharge la page.');
+   await registration.showNotification('Test local YARG',{
+    body:'Test direct Android : aucun serveur Web Push nécessaire.',
+    icon:'./assets/favicon.png',
+    tag:'yarg-local-diagnostic-'+Date.now(),
+    requireInteraction:true
+   });
+   status.textContent='Le navigateur a accepté le test local. Vérifie tes notifications Android (volet de notifications). Si rien n’apparaît, vérifie les notifications de Chrome et du site dans Android.';
+  }catch(e){status.textContent='Test local échoué : '+(e.message||e);}
+  finally{localTest.disabled=false;}
  });
  deactivate.addEventListener('click',async()=>{
   deactivate.disabled=true;status.textContent='Désactivation…';
