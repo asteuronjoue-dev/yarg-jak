@@ -731,7 +731,7 @@ function render(){
     ?`<div class="empty">Historique indisponible pour le moment.</div>`
     :latestFirst.length?latestFirst.map(historicalCard).join('')
     :`<div class="empty">Aucune chanson terminée pour l’instant.</div>`;
-  maybeNotify(queue,etas);
+  
 }
 
 function renderHall(sessions){
@@ -1018,59 +1018,16 @@ document.addEventListener("submit",async e=>{
   finally{submit.disabled=false}
 });
 
-let yargNotificationWorker=null;
-async function notificationWorker(){
- if(!('serviceWorker' in navigator))return null;
- if(!yargNotificationWorker){
-   yargNotificationWorker=navigator.serviceWorker.register('./yarg-notifications-sw.js')
-     .catch(error=>{yargNotificationWorker=null;console.warn('Service worker de notifications indisponible :',error);return null;});
- }
- return yargNotificationWorker;
-}
-async function showSongNotification(title,body,tag){
+/* Real background Web Push replaces page-bound notification polling. */
+document.getElementById('notifyBtn').addEventListener('click',async()=>{
+ const button=document.getElementById('notifyBtn');
+ button.disabled=true;
  try{
-   if(!('Notification' in window) || Notification.permission!=='granted')return;
-   const worker=await notificationWorker();
-   if(worker && typeof worker.showNotification==='function'){
-     await worker.showNotification(title,{body,tag,icon:'./assets/favicon.png'});
-     return;
-   }
-   // Desktop-only fallback: on Android the Notification constructor throws.
-   if(!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
-     new Notification(title,{body,tag});
-   }
- }catch(error){console.warn('Notification impossible (file toujours accessible) :',error);}
-}
-function maybeNotify(queue,etas){
-  if (!("Notification" in window) || Notification.permission!=="granted") return;
-  const mine=queue.filter(isMyPerformance);
-  for(const r of mine){
-    const old=previousStates.get(r.id);
-    const eta=etas.get(r.id);
-    const mins=eta?.at ? Math.round((eta.at-Date.now())/60000) : null;
-
-    if(r.status==="playing" && old!=="playing"){
-      void showSongNotification("🎸 C'EST À TOI!",`${r.song_title} — ${r.song_artist}. Ramène ton groupe sur le stage!`, 'playing-'+r.id);
-    } else if(r.status!=="playing" && mins!==null && mins<=10 && mins>0 && old!=="soon"){
-      void showSongNotification("Tu passes bientôt!",`${r.song_title} devrait passer dans environ ${mins} min.`, 'soon-'+r.id);
-      previousStates.set(r.id,"soon");
-      continue;
-    }
-    previousStates.set(r.id,r.status);
-  }
-}
-
-$("#notifyBtn").addEventListener("click",async()=>{
-  if(!("Notification" in window)){
-    alert("Ce navigateur ne prend pas en charge les notifications.");
-    return;
-  }
-  try{
-    const p=await Notification.requestPermission();
-    if(p==='granted')void notificationWorker();
-    $("#notifyBtn").textContent = p==="granted" ? "🔔 Notifications activées" : "🔕 Notifications refusées";
-    $("#notifyBtn").disabled = p==="granted";
-  }catch(error){console.warn('Autorisation des notifications :',error);alert('Impossible d’activer les notifications dans ce navigateur.');}
+  if(!window.YargPush)throw Error('Le module de notification n’est pas encore chargé.');
+  await window.YargPush.enable();
+  button.textContent='Notifications activées';
+ }catch(error){alert('Notifications : '+(error.message||String(error)));}
+ finally{button.disabled=false;}
 });
 
 function flashLive(){
@@ -1132,6 +1089,7 @@ setInterval(()=>render(),30000);
 })();
 </script>
 
+<script src="yarg-push.js" defer></script>
 <script src="yarg-stage-response.js" defer></script>
 <script src="yarg-band-invitations.js" defer></script></body>
 </html>
