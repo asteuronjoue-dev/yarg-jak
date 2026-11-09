@@ -1768,6 +1768,10 @@ body>header{border-bottom:0!important}
             if(n.includes('disney')&&n.includes('pixar'))return 'disney-pixar.png';
             if(n.includes('guitar')&&n.includes('battl'))return 'guitar-battles.png';
             if(n.includes('francophone'))return 'francophone.png';
+            // New playlist names keep their existing artwork, despite the renamed titles.
+            if(n.includes('party starters')&&n.includes('rock'))return 'rockers-rise-up.png';
+            if(n.includes('fin de soiree'))return 'rockers-go-to-sleep-soon.png';
+            // Also support historic names if they are ever brought back.
             if(n.includes('rockers')&&n.includes('rise up'))return 'rockers-rise-up.png';
             if(n.includes('rockers')&&n.includes('sleep soon'))return 'rockers-go-to-sleep-soon.png';
             return null;
@@ -1776,7 +1780,7 @@ body>header{border-bottom:0!important}
             const btn=document.createElement('button');btn.type='button';btn.className='official-game-card'+(selected?' active':'')+(isFav&&!signedInRockstar?' playlist-signin':'');
             btn.setAttribute('aria-pressed',String(Boolean(selected)));btn.setAttribute('aria-label',title+' — '+subtitle);btn.title=title+' — '+subtitle;
             const emblem=document.createElement('span');emblem.className='official-game-logo';
-            const fallback=document.createElement('span');fallback.className='playlist-generated-icon';fallback.textContent=isFav?'♥':'♫';emblem.appendChild(fallback);
+            const fallback=document.createElement('span');fallback.className='playlist-generated-icon';fallback.textContent=isFav?'♥':title.toUpperCase().includes('PARTY STARTERS - POP')?'🪩':'♫';emblem.appendChild(fallback);
             const copy=document.createElement('span');copy.className='official-game-copy';
             const name=document.createElement('strong');name.textContent=title;
             const details=document.createElement('small');details.textContent=subtitle;copy.append(name,details);btn.append(emblem,copy);
@@ -1790,7 +1794,14 @@ body>header{border-bottom:0!important}
             btn.addEventListener('click',onClick);playlistCardsGrid.appendChild(btn);
           }
           addCard('Mes Favoris',signedInRockstar?'Mes chansons préférées':'Connexion Rockstar requise','mes-favoris.png',state.favoritesOnly,()=>{if(!signedInRockstar){location.href='profil.html';return}favFilterButton.click()},true);
-          const playlistSort=p=>{const n=normalizeName(p.name);return n.includes('rockers')&&n.includes('rise up')?0:n.includes('rockers')&&n.includes('sleep soon')?2:1};
+          const playlistSort=p=>{
+            const n=normalizeName(p.name);
+            if(n.includes('party starters')&&n.includes('rock'))return 0;
+            if(n.includes('party starters')&&n.includes('pop'))return 1;
+            if(n.includes('francophone'))return 2;
+            if(n.includes('fin de soiree'))return 4;
+            return 3;
+          };
           for(const p of [...publicPlaylists].sort((a,b)=>playlistSort(a)-playlistSort(b)||a.name.localeCompare(b.name,'fr'))){
             addCard(p.name,p.description||'Playlist publique',getArt(p.name),state.publicPlaylistId===p.id,()=>{
               curatedPicker.value=state.publicPlaylistId===p.id?'':p.id;
