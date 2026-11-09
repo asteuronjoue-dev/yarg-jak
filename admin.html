@@ -287,7 +287,7 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section class="card history-section"><h2>Chansons sautées</h2><p class="help">Ces chansons n’ont pas été créditées et peuvent retourner dans la file.</p><div id="history-skipped"></div></section>
 <section class="card history-section"><h2>Chansons terminées</h2><p class="help">Les prestations terminées sont conservées dans l’historique de cette soirée.</p><div id="history-completed"></div></section>
 </div>
-<div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><p class="help">Les demandes restent ouvertes jusqu’à ce que tu désactives manuellement le Mode soirée ou que tu archives la soirée.</p></section>
+<div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><p class="help">Désactiver le Mode soirée ferme les demandes, mais n’archive pas la soirée. Pour la faire apparaître au Hall of Fame, utilise « Terminer et archiver la soirée » ci-dessous.</p></section>
 <section class="card"><h2>Terminer et archiver la soirée</h2><p>Clôture la soirée en cours, conserve son historique et prépare une nouvelle session fermée. Termine ou passe d’abord toute chanson encore sur scène.</p><button type="button" id="archive-party-button" class="danger">⏹ Terminer et archiver la soirée</button><p class="help">Le nom de la soirée se modifie dans « Configuration de la soirée », juste au-dessus.</p></section></div>
 <section id="playlists-tab" hidden>
   <section class="card">
@@ -448,7 +448,7 @@ function render(){
  renderMcWithdrawals();
  const s=snapshot.settings||{};const session=snapshot.session||{};
  applyAdminPartyMode(s);
- $('session-line').textContent=partyStillOn(s)?'Mode soirée actif : demandes ouvertes':'Mode soirée inactif : demandes fermées';
+ $('session-line').textContent=partyStillOn(s)?'Mode soirée actif : demandes ouvertes':'Demandes fermées · soirée non archivée. Termine-la dans « Soirée » pour l’ajouter au Hall of Fame.';
  const rows=snapshot.requests||[];
 
  const playing=rows.filter(r=>r.status==='playing');
