@@ -228,11 +228,10 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .queue-rules-body{padding:4px 20px 16px;color:#d1dcdf;line-height:1.55;font-size:14px}
 .queue-rules-body ul{padding-left:20px;margin:8px 0}
 .queue-rules-body li{margin:6px 0}
-.queue-legend{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 15px}
-.queue-legend span{border-radius:999px;padding:6px 10px;font-size:12px;font-weight:850;border:1px solid var(--line);background:#1d262a}
-.queue-legend .legend-mine{border-color:#9c79e6;color:#e4cffd}
-.queue-legend .legend-open{border-color:#00db55;color:#7dffa7;background:#063c1a}
-.queue-legend .legend-closed{border-color:#ff3045;color:#ffadb7;background:#490d18}
+.queue-notify-top{margin:0 0 20px;display:flex;justify-content:flex-end}
+.queue-notify-top[hidden]{display:none!important}
+.queue-notify-top .notify{width:100%;text-align:center;padding:13px 16px}
+@media(min-width:700px){.queue-notify-top .notify{width:auto}}
 .history-fold{margin:0 0 20px;border:1px solid #46575d;background:#192329;border-radius:15px;overflow:hidden}
 .history-fold[hidden]{display:none!important}
 .history-fold>summary{cursor:pointer;padding:15px 17px;font-weight:900;color:#b5f4e8;list-style-position:inside}
@@ -305,6 +304,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
     <div class="display-footer"><span>Les heures sont approximatives · 2 min prévues entre les chansons</span><span id="displayUpdated">Actualisation automatique toutes les 30 secondes</span></div>
   </section>
   <div class="error" id="errorBox"></div>
+  <div id="notifyTop" class="queue-notify-top" hidden><button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button></div>
   <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
     <details><summary>Comment gagner ou perdre des points?</summary><p class="points-note">Le plus petit score passe en premier. Le demandeur reçoit +1 point par seconde de sa chanson (4 min = +240). Rejoindre un autre groupe donne −60 points, pris en compte à partir du passage de ce groupe. Les Initiés partent à −1. Une chanson passée sans être jouée ne donne ni coût ni récompense. La prochaine prestation annoncée reste protégée.</p></details></section>
   <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
@@ -316,12 +316,6 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
   <section id="queueSection" hidden>
     <div class="section-head">
       <div><h2>🎵 File complète de la soirée</h2><div class="hint" id="queueCounter">Prestations dans l'ordre prévu</div></div>
-      <button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button>
-    </div>
-    <div class="queue-legend" aria-label="Signification des couleurs">
-      <span class="legend-mine">Ma chanson / chanson rejointe</span>
-      <span class="legend-open">Places disponibles</span>
-      <span class="legend-closed">Groupe complet ou fermé</span>
     </div>
     <div class="cards" id="queueList"></div>
   </section>
@@ -405,7 +399,15 @@ function forgetJoined(id){const ids=joinedRequestIds();ids.delete(String(id));lo
 function rememberJoined(id){const ids=joinedRequestIds();ids.add(String(id));localStorage.setItem(JOINED_REQUESTS_KEY,JSON.stringify([...ids]))}
 document.addEventListener('yarg-stage-replied',event=>{if(event.detail?.reply!=='decline')return;const id=String(event.detail.requestId||'');if(!id)return;forgetJoined(id);const tokens=savedBandTokens();delete tokens[id];localStorage.setItem('yarg_band_tokens',JSON.stringify(tokens));joining=null;managing=null;loadQueue().catch(error=>console.warn('Actualisation après retrait :',error));});
 // Past browser join records are not proof of an active participation.
-function isMyPerformance(r){return myAccountRequester(r)||isMyRequest(r)||!!myBandMember(r);}
+function isOwnSong(r){
+ if(r.requester_withdrawn_at)return false;
+ if(myAccountRequester(r)||isMyRequest(r))return true;
+ // Group requests store the creator among their members. Only use an authenticated,
+ // linked creator entry, never an unverified display-name match alone.
+ return !!(myAuthId && r.is_group_request && myAccountMember(r) &&
+   String(r.rockstar_name||'').trim().toLocaleLowerCase()===String(myRockstarName||'').trim().toLocaleLowerCase());
+}
+function isMyPerformance(r){return isOwnSong(r)||!!myBandMember(r);}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
@@ -611,7 +613,7 @@ function cardHtml(r, eta, mine=false, rank=null){
   const available=openInstruments(r);
   const slots=(myActiveBand(r)?[]:available.filter((i,index,all)=>all.findIndex(j=>instrumentFamily(j)===instrumentFamily(i))===index)).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instrumentFamily(i)==="drums"?"Batterie":instrumentFamily(i)==="keys"?"Clavier":instruments[i])}</button>`).join("");
   const isPlaying=r.status==="playing";
-  const isMine=myAccountRequester(r)||isMyRequest(r);
+  const isMine=isOwnSong(r);
   const isJoined=!isMine && (!!myBandMember(r)||(joinedRequestIds().has(String(r.id))&&!!myMemberToken(r)));
   const kind=isMine?'mine':isJoined?'joined':(!isPlaying&&available.length>0?'open':'closed');
   const kindLabel=isMine?'Ma chanson':isJoined?'Je participe':kind==='open'?'Places disponibles':'Groupe complet / fermé';
@@ -705,6 +707,7 @@ function render(){
   const active=!!settings?.performance_requests_enabled;
   $('#yargGlobalPresence').hidden=!active||!myAuthId;
   $('#queueSection').hidden=!active;
+  $('#notifyTop').hidden=!active;
   $('#historySection').hidden=!active;
   $('#closedSection').hidden=active;
   if(!active){const banner=$('#yarg-my-next-banner');banner.hidden=true;banner.textContent='';return;}
