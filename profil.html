@@ -100,6 +100,14 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><div class="rockstar-profile-actions"><button type="submit" class="primary">Enregistrer mon profil</button><button id="logout" type="button" class="small ghost">Se déconnecter</button></div></form>
 </div>
 
+
+<div class="profile-tabs" role="tablist" aria-label="Sections du profil">
+<button type="button" class="profile-tab" data-profile-tab="achievements" aria-selected="true">Titres</button>
+<button type="button" class="profile-tab" data-profile-tab="notifications" aria-selected="false">Notifications</button>
+<button type="button" class="profile-tab" data-profile-tab="favorites" aria-selected="false">Mes favoris</button>
+<button type="button" class="profile-tab" data-profile-tab="statistics" aria-selected="false">Statistiques</button>
+
+</div>
 <div class="profile-panel" id="notifications-panel" hidden><section class="card" id="push-settings">
 <h2>Notifications sur mon téléphone</h2>
 <p class="hint">Reçois les invitations de groupe et un rappel quand ton tour approche, même si le site est fermé. Aucune notification n'est envoyée quand le MC commence une chanson.</p>
@@ -112,15 +120,8 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <p class="hint" id="push-status" role="status" aria-live="polite"></p>
 <p class="hint">iPhone : ajoute d'abord le site à ton écran d'accueil via Safari, puis ouvre-le depuis son icône pour activer les notifications.</p>
 </section></div>
-<div class="profile-tabs" role="tablist" aria-label="Sections du profil">
-<button type="button" class="profile-tab" data-profile-tab="statistics" aria-selected="true">📊 Statistiques</button>
-<button type="button" class="profile-tab" data-profile-tab="achievements" aria-selected="false">🏷️ Titres</button>
-<button type="button" class="profile-tab" data-profile-tab="favorites" aria-selected="false">💙 Mes favoris</button>
-<button type="button" class="profile-tab" data-profile-tab="notifications" aria-selected="false">Notifications</button>
-
-</div>
-<div class="profile-panel" id="statistics-panel"><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div></div>
-<div class="profile-panel" id="achievements-panel" hidden><div class="card"><div class="topline"><h2>Collection de titres</h2></div><p class="hint">Équipe un titre pour l'afficher dans la file. Le privilège Initié reste actif, quel que soit ton titre.</p><div id="titles"></div></div></div>
+<div class="profile-panel" id="statistics-panel" hidden><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div></div>
+<div class="profile-panel" id="achievements-panel"><div class="card"><div class="topline"><h2>Collection de titres</h2></div><p class="hint">Équipe un titre pour l'afficher dans la file. Le privilège Initié reste actif, quel que soit ton titre.</p><div id="titles"></div></div></div>
 <div id="yarg-unlock-backdrop" class="yarg-unlock-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="yarg-unlock-heading">
  <div class="yarg-unlock-modal"><div class="unlock-sparkle">🏆✨</div><p class="hint">NOUVEAU TITRE DÉBLOQUÉ</p><h2 id="yarg-unlock-heading"></h2><p id="yarg-unlock-reason"></p>
  <div class="yarg-unlock-actions"><button type="button" class="primary" id="yarg-unlock-equip">Équiper</button><button type="button" id="yarg-unlock-view">Voir tous mes titres</button><button type="button" class="ghost" id="yarg-unlock-dismiss">Fermer</button></div></div>
