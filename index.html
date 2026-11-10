@@ -1094,7 +1094,13 @@ body>header{border-bottom:0!important}
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
 </head>
-<body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong>🎸 Bienvenue! Trouve ta première chanson!</strong><p>Trouve une chanson avec la recherche, les filtres ou les 10 chansons au hasard. Touche la chanson pour ouvrir sa fiche, puis « Demander cette chanson pour ce soir! » quand le Mode soirée est actif. Choisis ton nom, ton instrument et ta difficulté, puis ajoute ta demande à la file. <strong>Aucun compte requis!</strong> Un compte Rockstar te permet aussi de sauvegarder tes favoris et tes stats. Amuse-toi!</p></aside><script>if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true</script>
+<body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong id="yarg-tips-title">🎸 Bienvenue! Explore le catalogue!</strong><p id="yarg-tips-copy">Trouve tes chansons avec la recherche, les filtres ou les 10 chansons au hasard. Crée un compte Rockstar pour garder tes favoris.</p></aside><script>
+function updateCatalogWelcome(requestsOpen){
+    document.getElementById('yarg-tips-title').textContent=requestsOpen?'🎸 Bienvenue! À toi de jouer!':'🎸 Bienvenue! Explore le catalogue!';
+    document.getElementById('yarg-tips-copy').textContent=requestsOpen?'Trouve une chanson, ouvre sa fiche et demande-la pour ce soir. Aucun compte requis. Amuse-toi!':'Trouve tes chansons avec la recherche, les filtres ou les 10 chansons au hasard. Crée un compte Rockstar pour garder tes favoris.';
+}
+if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true;
+</script>
     <header>
         <div class="site-topline">
             <div class="site-identity">
@@ -1361,6 +1367,7 @@ body>header{border-bottom:0!important}
                 if (error) throw error;
 
                 PARTY_REQUESTS_ENABLED = !!(data && data.performance_requests_enabled && (!data.party_mode_until || new Date(data.party_mode_until).getTime()>Date.now()));
+                updateCatalogWelcome(PARTY_REQUESTS_ENABLED);
                 if (PARTY_REQUESTS_ENABLED) {
                     document.body.classList.add('party-mode');
                     catalogTitle.style.display = 'none';
