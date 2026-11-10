@@ -163,7 +163,7 @@ const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmiq
 const titleIcons={guitar:'🎸',bass:'🎸',drums:'🥁',keys:'🎹',vocals:'🎤',attendance:'🌟',stage:'⏱️',library:'🎵'};
 const medalRanks=['bronze','argent','or','platine','diamant','maitre','grand-maitre','champion'];
 const medalCategories=new Set(['guitar','bass','drums','keys','vocals']);
-const useCustomMedals=false; // Activer après avoir créé et téléversé les PNG définitifs.
+const useCustomMedals=true; // PNG manquants : retour automatique aux icônes d’instrument classiques.
 function medalIconUrl(category,level){
  if(!useCustomMedals||!medalCategories.has(category))return '';
  const rank=Math.max(1,Math.min(8,Number(level)||1));
