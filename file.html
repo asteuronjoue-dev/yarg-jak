@@ -276,6 +276,13 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
 <script src="yarg-errors.js?v=1"></script>
+<style>
+/* Site status stays separate from the dynamic heading text. */
+.yarg-heading-line{display:flex;align-items:center;gap:.6rem;min-width:0}
+.yarg-heading-line>h1,.yarg-heading-line>.party-title{min-width:0;overflow-wrap:anywhere;margin:0}
+.yarg-beta-badge{display:inline-flex;flex:none;align-items:center;border:1px solid #8d6837;background:#2d251b;color:#ffd493;padding:.16rem .45rem;border-radius:6px;font:850 .65rem/1.35 system-ui,sans-serif;letter-spacing:.08em;white-space:nowrap}
+.queue-brand>div{min-width:0}.queue-brand .yarg-heading-line{margin-bottom:10px}
+</style>
 </head>
 </head>
 <body>
@@ -287,7 +294,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
         <div class="queue-brand">
           <img id="queueSiteLogo" src="assets/favicon.png" alt="" width="68" height="68">
           <div>
-            <h1 id="partyTitle">La bibliothèque musicale à Jak</h1>
+            <div class="yarg-heading-line"><h1 id="partyTitle">La bibliothèque musicale à Jak</h1><span class="yarg-beta-badge" title="Version bêta · site en développement">BÊTA</span></div>
             <div class="mc" id="queueMcLine" hidden>🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
           </div>
         </div>

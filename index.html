@@ -1116,6 +1116,13 @@ body>header{border-bottom:0!important}
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
 <script src="yarg-errors.js?v=1"></script>
+<style>
+/* Site status stays separate from the dynamic heading text. */
+.yarg-heading-line{display:flex;align-items:center;gap:.6rem;min-width:0}
+.yarg-heading-line>h1,.yarg-heading-line>.party-title{min-width:0;overflow-wrap:anywhere;margin:0}
+.yarg-beta-badge{display:inline-flex;flex:none;align-items:center;border:1px solid #8d6837;background:#2d251b;color:#ffd493;padding:.16rem .45rem;border-radius:6px;font:850 .65rem/1.35 system-ui,sans-serif;letter-spacing:.08em;white-space:nowrap}
+body.party-mode .yarg-catalog-heading{display:none}
+</style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong id="yarg-tips-title">🎸 Prépare-toi pour la prochaine soirée!</strong><p id="yarg-tips-copy">Repère tes chansons préférées et crée un compte Rockstar pour les garder en favoris. Une chanson manque? Demande son ajout pour la prochaine soirée!</p></aside><script>
 function updateCatalogWelcome(requestsOpen){
@@ -1129,9 +1136,9 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             <div class="site-identity">
                 <img class="site-logo" src="assets/favicon.png" alt="" aria-hidden="true" width="68" height="68">
                 <div class="site-title-stack">
-                    <h1 id="catalog-title">La bibliothèque musicale à Jak</h1>
+                    <div class="yarg-heading-line yarg-catalog-heading"><h1 id="catalog-title">La bibliothèque musicale à Jak</h1><span class="yarg-beta-badge" title="Version bêta · site en développement">BÊTA</span></div>
                     <div class="party-info" id="party-info" aria-live="polite">
-                        <div class="party-title" id="party-title"></div>
+                        <div class="yarg-heading-line"><div class="party-title" id="party-title"></div><span class="yarg-beta-badge" title="Version bêta · site en développement">BÊTA</span></div>
                         <div class="party-mc">Votre MC pour la soirée : <strong id="party-mc"></strong></div>
                     </div>
                 </div>
