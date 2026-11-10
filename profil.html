@@ -75,8 +75,8 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 .rockstar-status{margin:9px 0 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .rockstar-status #initie-tag{display:inline-flex;align-items:center}
 .rockstar-profile-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
-.rockstar-profile-actions button{margin:0!important}
-@media(max-width:520px){.rockstar-profile-actions button{flex:1 1 145px}.rockstar-identity #shown-name{font-size:1.45rem}}
+.rockstar-profile-actions button{margin:0!important;flex:1 1 0;min-width:0;min-height:46px;padding:11px 12px;font-size:.9rem;font-weight:800;line-height:1.3}
+@media(max-width:520px){.rockstar-profile-actions button{flex:1 1 0}.rockstar-identity #shown-name{font-size:1.45rem}}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -100,7 +100,7 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><div class="rockstar-profile-actions"><button type="submit" class="primary">Enregistrer mon profil</button><button id="logout" type="button" class="small ghost">Se déconnecter</button></div></form>
 </div>
 
-<section class="card" id="push-settings">
+<div class="profile-panel" id="notifications-panel" hidden><section class="card" id="push-settings">
 <h2>Notifications sur mon téléphone</h2>
 <p class="hint">Reçois les invitations de groupe et un rappel quand ton tour approche, même si le site est fermé. Aucune notification n'est envoyée quand le MC commence une chanson.</p>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -111,11 +111,12 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 </div>
 <p class="hint" id="push-status" role="status" aria-live="polite"></p>
 <p class="hint">iPhone : ajoute d'abord le site à ton écran d'accueil via Safari, puis ouvre-le depuis son icône pour activer les notifications.</p>
-</section>
+</section></div>
 <div class="profile-tabs" role="tablist" aria-label="Sections du profil">
 <button type="button" class="profile-tab" data-profile-tab="statistics" aria-selected="true">📊 Statistiques</button>
 <button type="button" class="profile-tab" data-profile-tab="achievements" aria-selected="false">🏷️ Titres</button>
 <button type="button" class="profile-tab" data-profile-tab="favorites" aria-selected="false">💙 Mes favoris</button>
+<button type="button" class="profile-tab" data-profile-tab="notifications" aria-selected="false">Notifications</button>
 
 </div>
 <div class="profile-panel" id="statistics-panel"><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div></div>
@@ -423,6 +424,7 @@ document.querySelectorAll('[data-profile-tab]').forEach(btn=>btn.addEventListene
  document.querySelectorAll('[data-profile-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===btn)));
  document.querySelectorAll('.profile-panel').forEach(panel=>panel.hidden=panel.id!==btn.dataset.profileTab+'-panel');
  if(btn.dataset.profileTab==='favorites')loadProfileFavorites();
+  if(btn.dataset.profileTab==='notifications'&&window.YargPush)window.dispatchEvent(new Event('yarg-notifications-tab-open'));
 }));
 let favoritesLoading=false;
 const favSlug=s=>String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,150)||'song';
