@@ -68,6 +68,15 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 @media(max-width:520px){.yarg-title-grid{grid-template-columns:1fr}.yarg-tier-ring{width:68px;height:68px}.yarg-unlock-actions button{flex:1 1 100%}}
 .fav-profile-list{display:grid;gap:9px;margin-top:12px}.fav-profile-song{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#222a2f;border:1px solid #37474f;border-radius:10px;padding:11px 13px}.fav-profile-song strong{display:block}.fav-profile-song small{color:var(--muted)}.fav-profile-song .remove-favorite{flex-shrink:0;background:#3d2930;border-color:#80515b;color:#ffe2e6;font-size:.83rem;padding:9px 12px}.fav-profile-song .remove-favorite:hover:not(:disabled){background:#63333c;border-color:#ff9aa8}@media(max-width:510px){.fav-profile-song{align-items:flex-start;flex-direction:column}.fav-profile-song .remove-favorite{align-self:flex-end}}
 @media(max-width:670px){.profile-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.profile-tab{min-width:0;width:100%;padding:11px 6px;font-size:.85rem;flex:none}}
+/* Rockstar identity: one aligned header, compact status and shared actions */
+.rockstar-identity{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.rockstar-identity #shown-name{margin:0;overflow-wrap:anywhere}
+.rockstar-identity #equipped-preview{display:inline-flex;align-items:center;margin:0}
+.rockstar-status{margin:9px 0 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rockstar-status #initie-tag{display:inline-flex;align-items:center}
+.rockstar-profile-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.rockstar-profile-actions button{margin:0!important}
+@media(max-width:520px){.rockstar-profile-actions button{flex:1 1 145px}.rockstar-identity #shown-name{font-size:1.45rem}}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -83,8 +92,13 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <form id="login"><label for="email">Adresse courriel</label><input id="email" type="email" autocomplete="email" required placeholder="rockstar@exemple.com"><label for="password">Mot de passe (au moins 8 caractères)</label><input id="password" type="password" autocomplete="current-password" minlength="8" required placeholder="Ton mot de passe"><div class="auth-actions"><button class="primary" type="submit">Se connecter</button><button type="button" id="register">Créer un compte</button></div></form><p class="hint">Après inscription, confirme ton courriel. Déjà inscrit sans mot de passe ? Utilise « Mot de passe oublié ».</p><button class="ghost small" type="button" id="recover">Mot de passe oublié ?</button>
 <p class="hint">En créant ton compte sur le même appareil, tes prestations individuelles pourront être conservées.</p><a href="index.html">Continuer sans compte</a></section>
 <section id="profile" hidden>
-<div class="card"><div class="topline"><div><h2 id="shown-name">Rockstar</h2><div class="meta"><span class="tag" id="initie-tag">Statut : à déterminer</span><span class="featured" id="equipped-preview"></span></div></div><button id="logout" class="small ghost">Se déconnecter</button></div><p id="privilege-note" class="hint"></p>
-<form id="finish-guest-signup" hidden class="card"><h3>🎸 Termine ton inscription</h3><p class="hint">Ton courriel est confirmé. Crée ton mot de passe pour retrouver ton compte Rockstar.</p><label for="guest-new-password">Mot de passe (8 caractères minimum)</label><input id="guest-new-password" type="password" autocomplete="new-password" minlength="8" required><button type="submit" class="primary">Enregistrer mon mot de passe</button></form><form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><button type="submit" class="primary" style="margin-top:14px">Enregistrer mon profil</button></form></div>
+<div class="card">
+<div class="rockstar-identity"><h2 id="shown-name">Rockstar</h2><span class="featured" id="equipped-preview"></span></div>
+<div class="rockstar-status"><span class="tag" id="initie-tag">Statut : à déterminer</span></div>
+<p id="privilege-note" class="hint"></p>
+<form id="finish-guest-signup" hidden class="card"><h3>🎸 Termine ton inscription</h3><p class="hint">Ton courriel est confirmé. Crée ton mot de passe pour retrouver ton compte Rockstar.</p><label for="guest-new-password">Mot de passe (8 caractères minimum)</label><input id="guest-new-password" type="password" autocomplete="new-password" minlength="8" required><button type="submit" class="primary">Enregistrer mon mot de passe</button></form>
+<form id="profile-form"><div class="form-fields"><label>Nom de Rockstar<input id="rockstar-name" maxlength="60" required placeholder="Ton nom de scène"></label><label>Nom de groupe préféré<input id="band-name" maxlength="80" placeholder="Facultatif"></label></div><div class="rockstar-profile-actions"><button type="submit" class="primary">Enregistrer mon profil</button><button id="logout" type="button" class="small ghost">Se déconnecter</button></div></form>
+</div>
 
 <section class="card" id="push-settings">
 <h2>Notifications sur mon téléphone</h2>
@@ -145,7 +159,7 @@ const instrumentIconSources={
  vocals:'assets/médailles/vocals-fallback.png'
 };
 const roleTitles=[{code:'role_admin',label:'✪ Admin',category:'secret',metric:'owner_only',threshold:1,sort_order:1},{code:'role_mc',label:'🎙 MC',category:'secret',metric:'owner_only',threshold:1,sort_order:2}];
-const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Vous étiez là au tout début.',initie:'Débute chaque soirée à −1 pt pour donner la priorité à ta première chanson.'};
+const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Vous étiez là au tout début.',initie:'Effet permanent : débute chaque soirée à −1 pt pour donner la priorité à ta première chanson.'};
 let pendingUnlocks=[],unlockActive=null,hasPresentedUnlocks=false;
 async function fetchProfile(){
  const {data,error}=await sb.from('rockstar_profiles').select('user_id,rockstar_name,preferred_band_name,equipped_title').eq('user_id',state.user.id).maybeSingle();
@@ -221,7 +235,7 @@ function renderTitles(){
  const specialGrid=titleNode('div','yarg-special-grid');
  const init=titleNode('div','yarg-special');
  init.append(titleNode('strong','','✦ Initié'+(state.initie?' ✓':' 🔒')));
- init.append(titleNode('p','',state.initie?specialDescriptions.initie:'Participe à une soirée, puis reviens à la suivante pour devenir Initié.'));
+ init.append(titleNode('p','',state.initie?specialDescriptions.initie:'Effet permanent une fois débloqué. Participe à une soirée, puis reviens à la suivante pour devenir Initié.'));
  if(state.initie){const title=state.catalog.find(t=>t.code==='initie');if(title)init.append(titleEquipButton(title));}
  specialGrid.append(init);
  for(const t of state.catalog.filter(x=>x.category==='secret'&&x.code!=='initie'&&state.unlocked.has(x.code)).sort((a,b)=>Number(a.sort_order||0)-Number(b.sort_order||0))){
