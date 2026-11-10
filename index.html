@@ -1094,10 +1094,10 @@ body>header{border-bottom:0!important}
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
 </head>
-<body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong id="yarg-tips-title">🎸 Bienvenue! Explore le catalogue!</strong><p id="yarg-tips-copy">Trouve tes chansons avec la recherche, les filtres ou les 10 chansons au hasard. Crée un compte Rockstar pour garder tes favoris.</p></aside><script>
+<body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong id="yarg-tips-title">🎸 Prépare-toi pour la prochaine soirée!</strong><p id="yarg-tips-copy">Repère tes chansons préférées et crée un compte Rockstar pour les garder en favoris. Une chanson manque? Demande son ajout pour la prochaine soirée!</p></aside><script>
 function updateCatalogWelcome(requestsOpen){
-    document.getElementById('yarg-tips-title').textContent=requestsOpen?'🎸 Bienvenue! À toi de jouer!':'🎸 Bienvenue! Explore le catalogue!';
-    document.getElementById('yarg-tips-copy').textContent=requestsOpen?'Trouve une chanson, ouvre sa fiche et demande-la pour ce soir. Aucun compte requis. Amuse-toi!':'Trouve tes chansons avec la recherche, les filtres ou les 10 chansons au hasard. Crée un compte Rockstar pour garder tes favoris.';
+    document.getElementById('yarg-tips-title').textContent=requestsOpen?'🎸 Bienvenue! À toi de jouer!':'🎸 Prépare-toi pour la prochaine soirée!';
+    document.getElementById('yarg-tips-copy').textContent=requestsOpen?'Trouve une chanson, ouvre sa fiche et demande-la pour ce soir. Aucun compte requis. Amuse-toi!':'Repère tes chansons préférées et crée un compte Rockstar pour les garder en favoris. Une chanson manque? Demande son ajout pour la prochaine soirée!';
 }
 if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true;
 </script>
