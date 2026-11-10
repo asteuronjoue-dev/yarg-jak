@@ -144,7 +144,7 @@ const instrumentIconSources={
  keys:'assets/médailles/keys-fallback.png',
  vocals:'assets/médailles/vocals-fallback.png'
 };
-const roleTitles=[{code:'role_admin',label:'Admin✨',category:'secret',metric:'owner_only',threshold:1,sort_order:1},{code:'role_mc',label:'MC🎶',category:'secret',metric:'owner_only',threshold:1,sort_order:2}];
+const roleTitles=[{code:'role_admin',label:'✪ Admin',category:'secret',metric:'owner_only',threshold:1,sort_order:1},{code:'role_mc',label:'🎙 MC',category:'secret',metric:'owner_only',threshold:1,sort_order:2}];
 const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Vous étiez là au tout début.',initie:'Débute chaque soirée à −1 pt pour donner la priorité à ta première chanson.'};
 let pendingUnlocks=[],unlockActive=null,hasPresentedUnlocks=false;
 async function fetchProfile(){
@@ -183,7 +183,7 @@ async function fetchStats(){
  state.initie=!!initie.data;
  // Le privilège Initié est indépendant du titre visible.
  if(state.initie){
-  if(!state.catalog.some(t=>t.code==='initie'))state.catalog.push({code:'initie',label:'Initié',category:'secret',metric:'past_parties',threshold:1,sort_order:0});
+  if(!state.catalog.some(t=>t.code==='initie'))state.catalog.push({code:'initie',label:'✦ Initié',category:'secret',metric:'past_parties',threshold:1,sort_order:0});
   state.unlocked.add('initie');
  }
  const newly=(unlock.data||[]).filter(x=>x.newly_unlocked).map(x=>x.title_code);
@@ -220,7 +220,7 @@ function renderTitles(){
  
  const specialGrid=titleNode('div','yarg-special-grid');
  const init=titleNode('div','yarg-special');
- init.append(titleNode('strong','','👑 Initié'+(state.initie?' ✓':' 🔒')));
+ init.append(titleNode('strong','','✦ Initié'+(state.initie?' ✓':' 🔒')));
  init.append(titleNode('p','',state.initie?specialDescriptions.initie:'Participe à une soirée, puis reviens à la suivante pour devenir Initié.'));
  if(state.initie){const title=state.catalog.find(t=>t.code==='initie');if(title)init.append(titleEquipButton(title));}
  specialGrid.append(init);
@@ -301,7 +301,7 @@ $('yarg-unlock-equip').addEventListener('click',async()=>{
 function renderProfile(){
  const p=state.profile;$('profile').hidden=false;$('auth').hidden=true;
  $('shown-name').textContent=p.rockstar_name;$('rockstar-name').value=p.rockstar_name;$('band-name').value=p.preferred_band_name||'';
- $('initie-tag').textContent=state.initie?'👑 Initié':'Pas encore Initié';$('initie-tag').className='tag '+(state.initie?'yes':'no');
+ $('initie-tag').textContent=state.initie?'✦ Initié':'Pas encore Initié';$('initie-tag').className='tag '+(state.initie?'yes':'no');
  $('privilege-note').textContent='';
  $('equipped-preview').textContent=p.equipped_title?(state.catalog.find(x=>x.code===p.equipped_title)?.label||''):'Aucun titre équipé';
  renderStats();renderTitles();showUnlockIfNeeded();
