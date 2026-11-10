@@ -1659,6 +1659,57 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         }
         let signedInRockstar=null, mcCanEdit=false, publicPlaylists=[],myFavoriteSongIds=new Set(),publicPlaylistSongIds=new Set();
         let directoryPlaylistEmojis=new Map(),playlistEmojiLoadVersion=0;
+        // Earned Rockstar instrument medals are a viewer preference, not song metadata.
+        // Guests, locked ranks, or missing PNGs always retain the original colored icons.
+        const ROCKSTAR_MEDAL_RANKS=['bronze','argent','or','platine','diamant','maitre','grand-maitre','champion'];
+        const ROCKSTAR_INSTRUMENTS=['guitar','bass','drums','keys','vocals'];
+        let rockstarMedalIcons={};
+        let rockstarMedalLoadVersion=0;
+        function instrumentIconFor(category,regularKey){
+          return rockstarMedalIcons[category]||ICON_SRC[regularKey];
+        }
+        async function loadRockstarMedalIcons(user){
+          const version=++rockstarMedalLoadVersion;
+          rockstarMedalIcons={};
+          render(true);
+          if(!user||!collectionsSb)return;
+          try{
+            const [catalog,owned]=await Promise.all([
+              collectionsSb.from('yarg_title_catalog').select('code,category,threshold,sort_order').in('category',ROCKSTAR_INSTRUMENTS),
+              collectionsSb.from('yarg_profile_titles').select('title_code').eq('user_id',user.id)
+            ]);
+            if(catalog.error)throw catalog.error;
+            if(owned.error)throw owned.error;
+            if(version!==rockstarMedalLoadVersion)return;
+            const unlocked=new Set((owned.data||[]).map(t=>t.title_code));
+            const chosen={};
+            for(const category of ROCKSTAR_INSTRUMENTS){
+              const tiers=(catalog.data||[]).filter(t=>t.category===category)
+                .sort((a,b)=>(Number(a.threshold)||0)-(Number(b.threshold)||0)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
+              const earned=tiers.filter(t=>unlocked.has(t.code));
+              if(!earned.length)continue;
+              const level=Math.min(ROCKSTAR_MEDAL_RANKS.length,tiers.indexOf(earned[earned.length-1])+1);
+              if(level<1)continue;
+              chosen[category]='assets/médailles/'+category+'-'+String(level).padStart(2,'0')+'-'+ROCKSTAR_MEDAL_RANKS[level-1]+'.png';
+            }
+            // Check availability once per instrument, not once per catalogue song.
+            // A failed image never replaces the standard colored instrument icon.
+            const loaded=await Promise.all(Object.entries(chosen).map(([category,src])=>new Promise(resolve=>{
+              const img=new Image();
+              img.onload=()=>resolve([category,src]);
+              img.onerror=()=>resolve(null);
+              img.src=src;
+            })));
+            if(version!==rockstarMedalLoadVersion)return;
+            rockstarMedalIcons=Object.fromEntries(loaded.filter(Boolean));
+            render(true);
+          }catch(error){
+            if(version!==rockstarMedalLoadVersion)return;
+            rockstarMedalIcons={};
+            console.warn('Médailles Rockstar indisponibles, icônes classiques conservées :',error);
+            render(true);
+          }
+        }
         const favoriteWritesInFlight=new Set();
         const emojiForPlaylist=name=>{
           const n=normOfficial(name||'');
@@ -1948,7 +1999,9 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
           if(!collectionsSb)return;
           await refreshPlaylistDirectory();
           const {data:{user}}=await collectionsSb.auth.getUser();
-          signedInRockstar=user&&!user.is_anonymous?user:null;
+          signedInRockstar=user&&!user.is_anonymous&&user.app_metadata?.provider!=='anonymous'?user:null;
+          // Do not block favorites, playlists or page rendering while medals load.
+          loadRockstarMedalIcons(signedInRockstar);
           const hint=document.getElementById('catalog-account-hint');
           if(signedInRockstar&&hint){hint.textContent='Chargement de tes favoris Rockstar…';}
           else if(hint){hint.textContent='Pour sauvegarder des favoris, connecte-toi dans Mon profil.';}
@@ -2386,11 +2439,11 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             const vp=hasVocals ? Math.max(1,Math.min(3,Number(r.vp)||1)) : 1;
             const key=`vocal${vp}`;
             const label=!hasVocals ? 'Voix — indisponible' : (vp===1?'Voix solo':`Harmonies (${vp})`);
-            html += `<span class="inst-icon ${hasVocals?'':'disabled'}" title="${label}"><img src="${ICON_SRC[key]}" alt="${label}"></span>`;
+            html += `<span class="inst-icon ${hasVocals?'':'disabled'}" title="${label}"><img src="${instrumentIconFor('vocals',key)}" alt="${label}"></span>`;
             for(const x of defs){
                 const available=partsLower.includes(x.part.toLowerCase());
                 const rhythm=x.part==='G' && available && hasChartGroup(r,2);
-                html += `<span class="inst-icon ${available?'':'disabled'}" title="${rhythm?'Guitare + Guitare rythmique':x.label+(available?'':' — indisponible')}"><img src="${ICON_SRC[x.key]}" alt="${x.label}">${rhythm?`<img class="rhythm-inline-icon" src="${RHYTHM_ICON}" alt="Guitare rythmique" title="Guitare rythmique">`:''}</span>`;
+                html += `<span class="inst-icon ${available?'':'disabled'}" title="${rhythm?'Guitare + Guitare rythmique':x.label+(available?'':' — indisponible')}"><img src="${instrumentIconFor(x.key,x.key)}" alt="${x.label}">${rhythm?`<img class="rhythm-inline-icon" src="${RHYTHM_ICON}" alt="Guitare rythmique" title="Guitare rythmique">`:''}</span>`;
             }
 
             return html;
