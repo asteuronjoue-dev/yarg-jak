@@ -1015,6 +1015,28 @@ header {max-height:none!important;overflow:visible!important}
 </style>
 
 <style>
+/* Desktop: lock instruments and favorites to their song's grid row. */
+@media(min-width:681px){
+  #scroll .row{grid-template-rows:minmax(0,1fr)!important;align-items:center!important}
+  #scroll .row>.cell,#scroll .row>.song-row-actions{grid-row:1!important;align-self:center!important;min-height:0}
+  #scroll .row>.cell:nth-child(1){grid-column:1!important}
+  #scroll .row>.cell:nth-child(2){grid-column:2!important}
+  #scroll .row>.cell.cell-length{grid-column:3!important}
+  #scroll .row>.cell.cell-year{grid-column:4!important}
+  #scroll .row>.song-row-actions{align-items:center!important;align-self:stretch!important}
+}
+@media(min-width:1101px){
+  #scroll .row>.cell.cell-album{grid-column:5!important}
+  #scroll .row>.cell.cell-instruments{grid-column:6!important}
+  #scroll .row>.song-row-actions{grid-column:7!important}
+}
+@media(min-width:901px) and (max-width:1100px){
+  #scroll .row>.cell.cell-instruments{grid-column:5!important}
+  #scroll .row>.song-row-actions{grid-column:6!important}
+}
+@media(min-width:681px) and (max-width:900px){
+  #scroll .row>.song-row-actions{grid-column:4!important}
+}
 /* Playlist emoji indicators and favorites in the same virtualized list. */
 @media(min-width:1101px){
  #scroll .row,.col-header{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) 62px 44px minmax(0,1fr) 234px 44px!important}
