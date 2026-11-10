@@ -111,7 +111,8 @@
             document.dispatchEvent(new CustomEvent('yarg-band-invitation-responded',{detail:{accepted:decision,invitationId:invitation.id}}));
             await refresh(true);
           }catch(error){
-            status.textContent='Impossible de répondre : '+(error.message||String(error));
+            console.error('Réponse à une invitation impossible :',error);
+            status.textContent=window.yargErrorMessage?.(error,'Ta réponse n’a pas été enregistrée. Réessaie dans un instant.')||'Ta réponse n’a pas été enregistrée. Réessaie dans un instant.';
             item.querySelectorAll('button').forEach(b=>b.disabled=false);
           }finally{busy=false;}
         });

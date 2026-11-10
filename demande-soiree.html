@@ -12,6 +12,7 @@ button.submit.duplicate-blocked,button.submit.duplicate-blocked:disabled{backgro
 </style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
+<script src="yarg-errors.js?v=1"></script>
 </head><body><main><a href="index.html">← Retour aux chansons</a><h1>Monte ton groupe 🤘</h1><p>Joue en solo ou monte ton groupe! Ajoute chaque Rockstar, puis choisis les instruments et les difficultés.</p><section class="song"><strong id="song-title"></strong><small id="song-meta"></small></section>
 <aside class="newbie-tips" id="newbie-tips"><button type="button" id="dismiss-tips">Ne plus afficher</button><strong>🎸 Première demande?</strong><p>Aucun compte requis. Le nom du band est facultatif.</p></aside><aside id="artist-warning" class="song" hidden role="status" aria-live="polite"></aside><form id="request-form"><label class="field"><span>Nom du band (facultatif)</span><input id="band-name" maxlength="80" placeholder="Les Cornichons Électriques"></label><div id="members"></div><div class="row-actions"><button type="button" class="add" id="add-member">+ Ajouter une rockstar</button></div><p class="note" id="capacity"></p><fieldset><legend>Compléter le groupe</legend><label class="check"><input type="checkbox" id="allow-fill" checked><span>Permettre aux autres invités de joindre notre band.</span></label><p class="note"></p></fieldset><p class="status" id="status" role="status" aria-live="polite"></p><button type="submit" class="submit" id="submit">Ajouter le groupe à la file 🎸</button></form></main>
 <script>
@@ -295,7 +296,7 @@ const err=validate();if(err){status.className='status error';status.textContent=
   if(!window.supabase)throw Error('Impossible de charger Supabase.');
   const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
   let {data:{session},error:sessErr}=await sb.auth.getSession();if(sessErr)throw sessErr;
-  if(!session){const result=await sb.auth.signInAnonymously();if(result.error)throw Error('Active les connexions anonymes dans Supabase Auth (Providers → Anonymous). '+result.error.message)}
+  if(!session){const result=await sb.auth.signInAnonymously();if(result.error)throw result.error}
   const args={p_song_id:song.id,p_song_title:song.title,p_song_artist:song.artist,p_duration_seconds:song.duration,p_band_name:$('band-name').value.trim(),p_members:members.map(m=>({name:m.name.trim(),mode:m.mode,difficulty:m.mode==='vocals'?'medium':m.mode==='flex'?'any':(m.difficulty==='beginner'?'easy':m.difficulty),microphone:m.mode!=='vocals'&&m.mode!=='flex'&&m.microphone,harmony:m.mode==='vocals'||m.microphone?m.harmony:null})),p_guitar_roles:availableGuitarRoles,p_available_parts:availableParts,p_vocal_parts:vocalParts,p_allow_band_fill:$('allow-fill').checked};
   // PostgreSQL RPC validates the entire band in one transaction.
   const guitarReservations=members.filter(m=>instrumentFamily(m.mode)==='guitar'&&m.guitarChoice).map(m=>({name:m.name.trim(),mode:m.mode,guitar:m.guitarChoice}));
@@ -311,6 +312,6 @@ const err=validate();if(err){status.className='status error';status.textContent=
   }
   status.className='status ok';status.textContent='Votre groupe est dans la file! 🤘';
   location.href='file.html';
- }catch(err){console.error(err);status.className='status error';status.textContent=err.message||'Impossible d’inscrire le groupe.';btn.disabled=false}
+ }catch(err){console.error(err);status.className='status error';status.textContent=window.yargErrorMessage(err,'Ton groupe n’a pas été ajouté à la file. Réessaie; si le problème persiste, préviens le MC.');btn.disabled=false}
 });
 </script><script src="yarg-stage-response.js" defer></script><script src="yarg-band-invitations.js" defer></script></body></html>

@@ -128,6 +128,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
+<script src="yarg-errors.js?v=1"></script>
 </head>
 <body>
 <div id="yarg-up-next-shared" class="yarg-up-next-shared" role="status" aria-live="polite" hidden></div>
@@ -245,7 +246,8 @@
       event.preventDefault();
 
       if (SUPABASE_URL.includes("COLLE_TON_") || SUPABASE_PUBLISHABLE_KEY.includes("COLLE_TA_")) {
-        showStatus("error", "La connexion à Supabase n'est pas encore configurée dans cette page.");
+        console.error("Configuration du service de demandes manquante.");
+        showStatus("error", "Les demandes d’ajout sont momentanément indisponibles. Réessaie plus tard ou préviens Jak.");
         return;
       }
 
@@ -295,7 +297,7 @@
         console.error(error);
         showStatus(
           "error",
-          "Impossible d'envoyer la demande pour le moment. Vérifie la configuration Supabase et réessaie."
+          window.yargErrorMessage(error, "Ta demande n’a pas été envoyée. Vérifie ta connexion, puis réessaie.")
         );
       } finally {
         button.disabled = false;

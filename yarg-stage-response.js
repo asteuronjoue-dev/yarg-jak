@@ -189,7 +189,7 @@
      document.dispatchEvent(new CustomEvent('yarg-stage-replied',{detail:{requestId:lastRequestId,reply}}));
      // No instant reappearance for a postponed bandmate's song.
      hide();
-   }catch(e){status.textContent='Impossible d’enregistrer ta réponse : '+(e?.message||e);}
+   }catch(e){console.error('Réponse à l’appel impossible :',e);status.textContent=window.yargErrorMessage?.(e,'Ta réponse n’a pas été enregistrée. Réessaie ou préviens le MC.')||'Ta réponse n’a pas été enregistrée. Réessaie ou préviens le MC.';}
    finally{working=false;for(const b of actions.querySelectorAll('button'))b.disabled=false;}
  });
  pauseActions.addEventListener('click',async event=>{
@@ -198,7 +198,7 @@
   if(action==='leave'&&!confirm('Te retirer de toutes tes prestations à venir? Tes instruments seront libérés.'))return;
   working=true;for(const btn of pauseActions.querySelectorAll('button'))btn.disabled=true;
   try{await setPartyPresence(action);partyPaused=false;hide();}
-  catch(e){status.textContent='Impossible de modifier ta disponibilité : '+(e?.message||e);}
+  catch(e){console.error('Disponibilité impossible :',e);status.textContent=window.yargErrorMessage?.(e,'Ta disponibilité n’a pas été modifiée. Réessaie ou préviens le MC.')||'Ta disponibilité n’a pas été modifiée. Réessaie ou préviens le MC.';}
   finally{working=false;for(const btn of pauseActions.querySelectorAll('button'))btn.disabled=false;refresh();}
  });
  document.addEventListener('yarg-party-presence-updated',refresh);

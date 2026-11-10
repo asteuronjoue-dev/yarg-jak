@@ -275,6 +275,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 </style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
+<script src="yarg-errors.js?v=1"></script>
 </head>
 </head>
 <body>
@@ -884,7 +885,7 @@ document.getElementById('yargPauseAll').addEventListener('click',async function(
   if(error)throw error;
   document.dispatchEvent(new CustomEvent('yarg-party-presence-updated',{detail:{action:'pause'}}));
   await loadQueue();
- }catch(error){alert('Impossible de mettre tes performances en pause : '+(error.message||String(error)));}
+ }catch(error){alert(window.yargErrorMessage(error,'Impossible de mettre tes performances en pause. Réessaie dans un instant.'));}
  finally{this.disabled=false;}
 });
 // Only Supabase can authorize readiness changes; the UI never writes directly.
@@ -901,7 +902,7 @@ document.addEventListener('click',async event=>{
     if(error)throw error;
     await loadQueue();
   }catch(error){
-    alert('Impossible de changer ta disponibilité : '+(error.message||String(error)));
+    alert(window.yargErrorMessage(error,'Ta disponibilité n’a pas été modifiée. Réessaie dans un instant.'));
     button.disabled=false;
   }
 });
@@ -919,7 +920,7 @@ document.addEventListener('click',async e=>{
  if(!confirm('Quitter ce groupe et libérer ton instrument ?'))return;
  leave.disabled=true;
  const {error}=await sb.rpc(kind?'yarg_manage_my_band_participation':'yarg_manage_band_member',kind?{p_request_id:id,p_action:'leave'}:{p_request_id:id,p_token:token,p_action:'leave'});
- if(error){alert('Impossible de quitter : '+error.message);leave.disabled=false;return}
+ if(error){alert(window.yargErrorMessage(error,'Impossible de quitter ce groupe. Actualise la file, puis réessaie.'));leave.disabled=false;return}
  const tokens=savedBandTokens();delete tokens[id];localStorage.setItem('yarg_band_tokens',JSON.stringify(tokens));forgetJoined(id);managing=null;await loadQueue();
 });
 document.addEventListener('submit',async e=>{
@@ -928,7 +929,7 @@ document.addEventListener('submit',async e=>{
  const instrument=f.elements.instrument.value;
  const singing=instrument==='vocals'||f.elements.microphone.checked;
  const args={p_request_id:id,p_action:'edit',p_instrument:instrument,p_difficulty:instrument==='vocals'?'medium':f.elements.difficulty.value,p_microphone:instrument==='vocals'?false:f.elements.microphone.checked,p_harmony:singing?Number(f.elements.harmony.value):null,p_preferred_guitar:isGuitarInstrument(instrument)?(f.elements.preferred_guitar?.value||null):null};if(!kind)args.p_token=token;const {error}=await sb.rpc(kind?'yarg_manage_my_band_participation':'yarg_manage_band_member',args);
- if(error){f.querySelector('.join-message').textContent=error.message;return}
+ if(error){f.querySelector('.join-message').textContent=window.yargErrorMessage(error,'Ta participation n’a pas été modifiée. Actualise la file, puis réessaie.');return}
  managing=null;await loadQueue();
 });
 document.addEventListener('change',e=>{if(e.target.matches('.band-change-form select[name="instrument"]'))syncBandEditGuitar(e.target.closest('.band-change-form'));});
@@ -1009,15 +1010,12 @@ document.addEventListener("submit",async e=>{
     if(!error){const saved=JSON.parse(localStorage.getItem('yarg_band_tokens')||'{}');saved[String(id)]=token;localStorage.setItem('yarg_band_tokens',JSON.stringify(saved));}
     if(error){
       console.error("Supabase refused the band member insert:",error);
-      // Show the real server error for diagnosis. Do not mislabel all uniqueness errors as guitar conflicts.
-      const code=error.code ? ` [${error.code}]` : '';
-      const details=[error.message,error.details,error.hint].filter(Boolean).join(' — ');
-      message.textContent=`Inscription refusée par Supabase${code} : ${details||'Erreur inconnue'}`;
+      message.textContent=window.yargErrorMessage(error,'Impossible de rejoindre ce groupe. Actualise la file, puis réessaie; si le problème persiste, préviens le MC.');
       return;
     }
     rememberJoinPrefs(form);
     rememberJoined(id);joining=null;await loadQueue();
-  }catch(err){console.error("Erreur pour rejoindre le groupe",err);message.textContent="Impossible de rejoindre le groupe. Vérifie la connexion et les autorisations Supabase."}
+  }catch(err){console.error("Erreur pour rejoindre le groupe",err);message.textContent=window.yargErrorMessage(err,'Impossible de rejoindre ce groupe. Actualise la file, puis réessaie.');}
   finally{submit.disabled=false}
 });
 
@@ -1029,7 +1027,7 @@ document.getElementById('notifyBtn').addEventListener('click',async()=>{
   if(!window.YargPush)throw Error('Le module de notification n’est pas encore chargé.');
   await window.YargPush.enable();
   button.textContent='Notifications activées';
- }catch(error){alert('Notifications : '+(error.message||String(error)));}
+ }catch(error){alert(window.yargErrorMessage(error,'Impossible d’activer les notifications. Réessaie; si le problème persiste, préviens le MC.'));}
  finally{button.disabled=false;}
 });
 
@@ -1042,10 +1040,7 @@ async function refresh(){
   try{ showError(""); if(!IS_PUBLIC_DISPLAY)await loadRockstarIdentity(); await loadSettings(); await loadQueue(); if(IS_PUBLIC_DISPLAY)document.getElementById('displayError').hidden=true; }
   catch(err){
     console.error('Erreur de rafraîchissement de la file :',err);
-    const isDatabaseError=!!(err && (err.code || err.status || /supabase|classement équitable/i.test(String(err.message||''))));
-    showError(isDatabaseError
-      ? 'Impossible de récupérer toutes les données de la file. Vérifie la connexion et réessaie.'
-      : 'Erreur dans l’affichage de la file : '+String(err?.message||err||'Erreur inconnue'));
+    showError(window.yargErrorMessage(err,'Impossible d’actualiser la file. Vérifie ta connexion, puis réessaie.'));
     if(IS_PUBLIC_DISPLAY){const b=document.getElementById('displayError');b.hidden=false;b.textContent='Actualisation momentanément indisponible. Dernière liste conservée, nouvel essai dans 30 secondes.';}
   }
 }

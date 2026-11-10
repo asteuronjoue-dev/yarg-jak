@@ -82,6 +82,7 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
+<script src="yarg-errors.js?v=1"></script>
 </head>
 <body><aside id="newbie-note-yarg_tips_profile_v1" class="yarg-newbie-note"><button type="button" onclick="localStorage.setItem('yarg_tips_profile_v1','1');this.parentElement.hidden=true">Ne plus afficher</button><strong>🌟 Bienvenue sur la page de profil!</strong><p>Crée ton compte Rockstar pour garder tes favoris, suivre tes performances et débloquer des titres!</p></aside><script>if(localStorage.getItem('yarg_tips_profile_v1'))document.getElementById('newbie-note-yarg_tips_profile_v1').hidden=true</script>
 <main>
@@ -346,19 +347,19 @@ async function equip(code){
  const target=state.catalog.find(t=>t.code===code);
  if(target&&target.category!=='secret'&&titleProgress(target).value<Number(target.threshold||1))return;
  const {error}=await sb.from('rockstar_profiles').update({equipped_title:code,updated_at:new Date().toISOString()}).eq('user_id',state.user.id);
- if(error){message('Impossible d’équiper ce titre : '+error.message,true);return}
+ if(error){message(window.yargErrorMessage(error,'Impossible d’équiper ce titre. Recharge ton profil, puis réessaie.'),true);return}
  state.profile.equipped_title=code;renderProfile();message('Titre équipé !');
 }
 $('profile-form').addEventListener('submit',async e=>{
  e.preventDefault();const name=safeName($('rockstar-name').value);if(!name){message('Choisis un nom de Rockstar.',true);return}
  const {error}=await sb.from('rockstar_profiles').update({rockstar_name:name,preferred_band_name:safeName($('band-name').value)||null,updated_at:new Date().toISOString()}).eq('user_id',state.user.id);
- if(error){message('Enregistrement impossible : '+error.message,true);return}
+ if(error){message(window.yargErrorMessage(error,'Ton profil n’a pas été enregistré. Réessaie dans un instant.'),true);return}
  state.profile.rockstar_name=name;state.profile.preferred_band_name=safeName($('band-name').value);renderProfile();message('Profil enregistré !');
 });
 $('login').addEventListener('submit',async e=>{
  e.preventDefault();const email=$('email').value.trim();const button=$('login').querySelector('button');button.disabled=true;
  try{const {error}=await sb.auth.signInWithPassword({email,password:$('password').value});if(error)throw error;location.reload();}
- catch(err){message('Connexion impossible : '+err.message,true)}finally{button.disabled=false}
+ catch(err){message(window.yargErrorMessage(err,'Connexion momentanément indisponible. Réessaie dans un instant.'),true)}finally{button.disabled=false}
 });
 const GUEST_UPGRADE_KEY='yarg_pending_guest_upgrade';
 $('register').onclick=async()=>{
@@ -381,7 +382,7 @@ $('register').onclick=async()=>{
    message(data.session?'Compte créé !':'Compte créé ! Confirme ton courriel, puis connecte-toi.');
    if(data.session)location.reload();
   }
- }catch(err){message('Inscription impossible : '+(err.message||String(err)),true)}
+ }catch(err){message(window.yargErrorMessage(err,'Impossible de créer ton compte pour le moment. Réessaie plus tard; si le problème persiste, préviens Jak.'),true)}
  finally{$('register').disabled=false}
 };
 $('finish-guest-signup').addEventListener('submit',async event=>{
@@ -392,7 +393,7 @@ $('finish-guest-signup').addEventListener('submit',async event=>{
   const {error}=await sb.auth.updateUser({password});if(error)throw error;
   localStorage.removeItem(GUEST_UPGRADE_KEY);$('finish-guest-signup').hidden=true;$('guest-new-password').value='';
   message('Ton compte Rockstar est prêt !');
- }catch(err){message('Impossible de définir le mot de passe : '+(err.message||String(err)),true)}
+ }catch(err){message(window.yargErrorMessage(err,'Ton mot de passe n’a pas été enregistré. Réessaie dans un instant.'),true)}
  finally{button.disabled=false}
 });
 $('recover').onclick=async()=>{
@@ -401,7 +402,7 @@ $('recover').onclick=async()=>{
  if(!$('email').reportValidity())return;
  $('recover').disabled=true;
  try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;message('Si ce compte existe, tu recevras un lien pour choisir un nouveau mot de passe. Vérifie aussi tes courriels indésirables.')}
- catch(err){message('Réinitialisation impossible : '+err.message,true)}
+ catch(err){message(window.yargErrorMessage(err,'Impossible d’envoyer le lien de réinitialisation. Réessaie plus tard; si le problème persiste, préviens Jak.'),true)}
  finally{$('recover').disabled=false}
 };
 // Keep the auth callback synchronous; submit password changes from the form.
@@ -424,7 +425,7 @@ $('recovery-form').addEventListener('submit',async event=>{
   $('recovery-password').value='';$('recovery-confirm').value='';
   message('Ton nouveau mot de passe est enregistré !');
   await initialize();
- }catch(err){message('Impossible de modifier le mot de passe : '+(err.message||String(err))+'. Si le lien a expiré, demande un nouveau lien depuis Mon profil.',true)}
+ }catch(err){message(window.yargErrorMessage(err,'Ton mot de passe n’a pas été modifié. Réessaie ou clique sur « Demander un autre lien ».'),true)}
  finally{button.disabled=false}
 });
 $('recovery-restart').onclick=()=>{
@@ -433,7 +434,7 @@ $('recovery-restart').onclick=()=>{
  $('email').value=state.user?.email||$('email').value;
  $('email').focus();message('Vérifie ton courriel, puis clique sur « Mot de passe oublié ? ».');
 };
-$('logout').addEventListener('click',async()=>{try{if(window.YargPush)await window.YargPush.disable();}catch(e){console.warn('Désactivation Web Push à la déconnexion :',e);}const {error}=await sb.auth.signOut();if(error){message(error.message,true);return}location.reload()});
+$('logout').addEventListener('click',async()=>{try{if(window.YargPush)await window.YargPush.disable();}catch(e){console.warn('Désactivation Web Push à la déconnexion :',e);}const {error}=await sb.auth.signOut();if(error){message(window.yargErrorMessage(error,'Impossible de te déconnecter. Réessaie dans un instant.'),true);return}location.reload()});
 async function initialize(){
  try{
   const {data:sessionData,error:sessionError}=await sb.auth.getSession();
@@ -477,7 +478,7 @@ async function initialize(){
    $('finish-guest-signup').hidden=false;
    message('Courriel confirmé ! Choisis maintenant ton mot de passe.');
   }
- }catch(err){$('guest-account-info').hidden=false;$('auth').hidden=false;message('Erreur de profil : '+err.message,true)}
+ }catch(err){$('guest-account-info').hidden=false;$('auth').hidden=false;message(window.yargErrorMessage(err,'Impossible de charger ton profil. Recharge la page; si le problème persiste, préviens Jak.'),true)}
 }
 // Navigation des onglets, sans perdre les données du profil.
 document.querySelectorAll('[data-profile-tab]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -519,10 +520,10 @@ async function loadProfileFavorites(){
      if(!data?.length)throw Error('Aucun favori supprimé. Vérifie tes droits d’accès.');
      ids.delete(id);card.remove();
      status.textContent=ids.size?`${ids.size} chanson${ids.size>1?'s':''} dans tes favoris Rockstar.`:'Aucun favori pour le moment. Ajoutes-en depuis le catalogue !';
-    }catch(err){message('Impossible de retirer ce favori : '+err.message,true);remove.disabled=false;remove.textContent='♥ Retirer des favoris'}
+    }catch(err){message(window.yargErrorMessage(err,'Ce favori n’a pas été retiré. Réessaie dans un instant.'),true);remove.disabled=false;remove.textContent='♥ Retirer des favoris'}
    });
    text.append(title,artist);card.append(text,remove);host.append(card)}
- }catch(e){status.textContent='Impossible de charger tes favoris : '+e.message}
+ }catch(e){status.textContent=window.yargErrorMessage(e,'Impossible de charger tes favoris. Réessaie dans un instant.')}
  finally{favoritesLoading=false}
 }
 
@@ -548,12 +549,12 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
    activate.hidden=result.subscribed;
    deactivate.hidden=!result.subscribed;
    status.textContent=!result.supported?'Web Push non disponible. Sur iPhone, installe le site à l’écran d’accueil et ouvre-le depuis là.':result.subscribed?'Notifications activées sur cet appareil.':'Notifications non activées sur cet appareil.';
-  }catch(e){status.textContent='État des notifications indisponible : '+(e.message||e);}
+  }catch(e){status.textContent=window.yargErrorMessage(e,'Impossible de vérifier tes notifications. Recharge la page, puis réessaie.');}
  }
  activate.addEventListener('click',async()=>{
   activate.disabled=true;status.textContent='Activation des notifications…';
   try{await window.YargPush.enable();await sync();}
-  catch(e){status.textContent='Activation impossible : '+(e.message||e);}
+  catch(e){status.textContent=window.yargErrorMessage(e,'Impossible d’activer les notifications. Réessaie; si le problème persiste, préviens le MC.');}
   finally{activate.disabled=false;}
  });
  const localTest=document.getElementById('push-local-test');
@@ -608,7 +609,7 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
  deactivate.addEventListener('click',async()=>{
   deactivate.disabled=true;status.textContent='Désactivation…';
   try{await window.YargPush.disable();await sync();}
-  catch(e){status.textContent='Désactivation impossible : '+(e.message||e);}
+  catch(e){status.textContent=window.yargErrorMessage(e,'Impossible de désactiver les notifications. Réessaie dans un instant.');}
   finally{deactivate.disabled=false;}
  });
  window.addEventListener('load',sync);

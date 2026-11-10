@@ -1115,6 +1115,7 @@ body>header{border-bottom:0!important}
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
+<script src="yarg-errors.js?v=1"></script>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong id="yarg-tips-title">🎸 Prépare-toi pour la prochaine soirée!</strong><p id="yarg-tips-copy">Repère tes chansons préférées et crée un compte Rockstar pour les garder en favoris. Une chanson manque? Demande son ajout pour la prochaine soirée!</p></aside><script>
 function updateCatalogWelcome(requestsOpen){
@@ -1208,7 +1209,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         </details>
         <div id="playlist-hidden-controls" hidden>
 <details class="catalog-credits-filter" aria-label="Découvrir les chansons par jeu ou créateur">
-              <summary class="catalog-credits-heading">🎮 Explorer par jeu, playlist ou charter</summary>
+              <summary class="catalog-credits-heading">🎮 Explorer par jeu, playlist ou créateur de la piste</summary>
               <div class="catalog-credits-controls">
                 <label>Playlist / jeu
                   <select id="playlist-filter"><option value="">Toutes les playlists</option></select>
@@ -1217,8 +1218,8 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                   <select id="mc-playlist-picker"><option value="">Toutes les chansons</option></select>
                 </label>
                 <button id="collection-clear" type="button">Effacer les playlists publiques</button>
-                <label>Charter (créateur des pistes)
-                  <input type="search" id="charter-filter" list="charter-suggestions" placeholder="Rechercher un charter..." autocomplete="off">
+                <label>Créateur de la piste
+                  <input type="search" id="charter-filter" list="charter-suggestions" placeholder="Rechercher un créateur de piste..." autocomplete="off">
                   <datalist id="charter-suggestions"></datalist>
                 </label>
                 <button id="credits-reset" type="button">Effacer</button>
@@ -1290,7 +1291,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                 <span class="sheet-value" id="sheet-playlist"></span>
             </div>
             <div class="sheet-row">
-                <span class="sheet-label">Autres jeux identifiés</span><span class="sheet-value" id="sheet-game-appearances"></span></div><div class="sheet-row"><span class="sheet-label">Charter</span>
+                <span class="sheet-label">Autres jeux identifiés</span><span class="sheet-value" id="sheet-game-appearances"></span></div><div class="sheet-row"><span class="sheet-label">Créateur de la piste</span>
                 <span class="sheet-value" id="sheet-charter"></span>
             </div>
             <div class="sheet-diff-list">
@@ -1655,7 +1656,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         const collectionsSb=getPartyClient();
         if(!collectionsSb){
           const favMessage=document.getElementById('catalog-account-hint');
-          if(favMessage){favMessage.classList.add('error');favMessage.textContent='⚠ Connexion Supabase indisponible. Les favoris n’ont pas été effacés : vérifie ta connexion et recharge la page.';}
+          if(favMessage){favMessage.classList.add('error');favMessage.textContent='Impossible de charger tes favoris. Vérifie ta connexion, puis recharge la page.';}
         }
         let signedInRockstar=null, mcCanEdit=false, publicPlaylists=[],myFavoriteSongIds=new Set(),publicPlaylistSongIds=new Set();
         let directoryPlaylistEmojis=new Map(),playlistEmojiLoadVersion=0;
@@ -1987,7 +1988,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             const {data,error}=await collectionsSb.from('yarg_song_favorites').select('song_id').eq('user_id',signedInRockstar.id);
             if(error){
               console.warn('Favoris non disponibles',error);
-              if(status){status.classList.add('error');status.textContent='⚠ Impossible de lire tes favoris depuis Supabase : '+error.message;}
+              if(status){status.classList.add('error');status.textContent=window.yargErrorMessage(error,'Impossible de charger tes favoris. Réessaie dans un instant.');}
             }else{
               myFavoriteSongIds=new Set((data||[]).map(x=>String(x.song_id)));
               refreshResolvedFavorites();
@@ -2023,7 +2024,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
           if(state.publicPlaylistId){state.favoritesOnly=false;favFilterButton.setAttribute('aria-pressed','false');}
           if(state.publicPlaylistId){
             const {data,error}=await collectionsSb.from('yarg_public_playlist_songs').select('song_id').eq('playlist_id',state.publicPlaylistId);
-            if(error){alert('Impossible de lire la playlist : '+error.message);return;}
+            if(error){alert(window.yargErrorMessage(error,'Impossible de charger cette playlist. Réessaie dans un instant.'));return;}
             publicPlaylistSongIds=new Set((data||[]).map(x=>String(x.song_id)));refreshResolvedPublicPlaylist();
           }drawPlaylistCards();filter();
         };
@@ -2053,8 +2054,8 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
               if(!result.error)myFavoriteSongIds.add(songId);
             }
             refreshResolvedFavorites();
-            if(result.error)alert('Favori non enregistré : '+result.error.message);
-          }catch(e){console.warn('Favori non enregistré',e);alert('Favori non enregistré : '+e.message);}
+            if(result.error)alert(window.yargErrorMessage(result.error,'La modification de tes favoris n’a pas été enregistrée. Réessaie dans un instant.'));
+          }catch(e){console.warn('Favori non enregistré',e);alert(window.yargErrorMessage(e,'La modification de tes favoris n’a pas été enregistrée. Réessaie dans un instant.'));}
           finally{
             favoriteWritesInFlight.delete(songId);
             if(CURRENT_SHEET_SONG&&String(CURRENT_SHEET_SONG.id)===songId)favouriteButton.disabled=false;
@@ -2069,7 +2070,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
           button.disabled=true;
           const {error}=await collectionsSb.from('yarg_public_playlist_songs').upsert({playlist_id:mcSheetPicker.value,song_id:String(CURRENT_SHEET_SONG.id),song_title:CURRENT_SHEET_SONG.t,song_artist:CURRENT_SHEET_SONG.a},{onConflict:'playlist_id,song_id',ignoreDuplicates:true});
           button.disabled=false;
-          label.textContent=error?'Erreur : '+error.message:'Chanson ajoutée à la playlist !';
+          label.textContent=error?window.yargErrorMessage(error,'Impossible d’ajouter cette chanson à la playlist. Réessaie dans un instant.'):'Chanson ajoutée à la playlist !';
           if(!error){if(state.publicPlaylistId===mcSheetPicker.value){publicPlaylistSongIds.add(String(CURRENT_SHEET_SONG.id));refreshResolvedPublicPlaylist();filter();}loadDirectoryPlaylistEmojis().catch(console.warn);}
         };
         if(collectionsSb){collectionsSb.auth.onAuthStateChange(()=>{setTimeout(initCollections,0)});setTimeout(initCollections,0)}
@@ -2688,7 +2689,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         const notice=document.createElement('div');
         notice.setAttribute('role','alert');
         notice.style.cssText='background:#3b1f24;color:#ffe9e9;border:1px solid #e07777;border-radius:10px;padding:15px;margin:12px 0;font-weight:700';
-        notice.textContent='Impossible de charger le catalogue depuis songs.json. Vérifie que songs.json est au même endroit que index.html et que son format est valide. Détail : '+error.message;
+        notice.textContent=window.yargErrorMessage(error,'Impossible de charger le catalogue. Vérifie ta connexion, puis recharge la page.');
         parent.appendChild(notice);
     });
     </script>
