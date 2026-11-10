@@ -244,7 +244,13 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 </style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
-</head><body><main>
+<style>
+.mc-preflight summary{cursor:pointer;font-weight:800;line-height:1.5}
+.mc-preflight-list{display:grid;gap:10px;margin:16px 0}
+.mc-preflight-list label{display:flex;align-items:flex-start;gap:10px;line-height:1.5;cursor:pointer}
+.mc-preflight-list input{width:20px;height:20px;flex-shrink:0;margin:2px 0;accent-color:var(--teal,#1fc8bd)}
+.mc-preflight-list input:checked+span{color:#acbbc2}
+</style></head><body><main>
 <header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
 <h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. La Scène et l’Historique ne s’actualisent plus automatiquement pendant que tu manipules les prestations. Utilise « Actualiser » au besoin.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
@@ -296,7 +302,19 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 <section class="card history-section"><h2>Chansons sautées</h2><p class="help">Ces chansons n’ont pas été créditées et peuvent retourner dans la file.</p><div id="history-skipped"></div></section>
 <section class="card history-section"><h2>Chansons terminées</h2><p class="help">Les prestations terminées sont conservées dans l’historique de cette soirée.</p><div id="history-completed"></div></section>
 </div>
-<div id="settings-tab" hidden><section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><p class="help">Désactiver le Mode soirée ferme les demandes, mais n’archive pas la soirée. Pour la faire apparaître au Hall of Fame, utilise « Terminer et archiver la soirée » ci-dessous.</p></section>
+<div id="settings-tab" hidden>
+<details class="card mc-preflight"><summary>Avant de commencer · <span id="mc-preflight-count">0/5 vérifications</span></summary>
+<p class="help">Coche chaque point après l’avoir vérifié. Tes coches sont conservées sur cet appareil pour cette soirée.</p>
+<div class="mc-preflight-list" id="mc-preflight-list">
+<label><input type="checkbox" data-preflight="yarg"><span>YARG est lancé et le catalogue de chansons est chargé.</span></label>
+<label><input type="checkbox" data-preflight="audio"><span>Le son de la musique est testé et le volume est ajusté.</span></label>
+<label><input type="checkbox" data-preflight="instruments"><span>Les guitares, la batterie et le clavier sont connectés et répondent.</span></label>
+<label><input type="checkbox" data-preflight="microphones"><span>Les microphones sont testés et leur volume est ajusté.</span></label>
+<label><input type="checkbox" data-preflight="qr"><span>Le code QR ouvre le catalogue sur un téléphone invité.</span></label>
+</div><p id="mc-preflight-mode" class="help"></p>
+<button type="button" id="mc-preflight-reset" class="quiet small">Décocher les vérifications</button>
+</details>
+<section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><p class="help">Désactiver le Mode soirée ferme les demandes, mais n’archive pas la soirée. Pour la faire apparaître au Hall of Fame, utilise « Terminer et archiver la soirée » ci-dessous.</p></section>
 <section class="card" id="push-health-section"><div class="flex"><h2>Notifications Web Push des Rockstars</h2><button type="button" id="push-health-refresh">Actualiser</button></div><p class="help">Appareils abonnés aux alertes d'invitation, de passage imminent et de prochain passage. Un compte peut avoir plusieurs appareils. Il faut activer les notifications dans Mon profil.</p><div id="push-health-summary" class="muted">Chargement…</div><div id="push-health-list" class="owner-list"></div></section>
 <section class="card" id="band-visibility-section"><h2>Comptes Rockstar visibles dans les invitations</h2><p class="help">Décoche les Rockstars absentes de cette soirée. Leurs comptes, invitations déjà envoyées et performances restent intacts. Les choix se réinitialisent à la prochaine soirée.</p><div class="actions" id="band-visibility-bulk" style="margin:0 0 16px"><button type="button" id="band-show-all" class="success">Tout afficher</button><button type="button" id="band-hide-all" class="danger">Tout masquer</button></div><div id="band-visibility-list" class="band-visibility-list"><p class="muted">Chargement des comptes…</p></div><div id="band-visibility-status" class="help" role="status" aria-live="polite"></div></section>
 <section class="card"><h2>Terminer et archiver la soirée</h2><p>Clôture la soirée en cours, conserve son historique et prépare une nouvelle session fermée. Termine ou passe d’abord toute chanson encore sur scène.</p><button type="button" id="archive-party-button" class="danger">⏹ Terminer et archiver la soirée</button><p class="help">Le nom de la soirée se modifie dans « Configuration de la soirée », juste au-dessus.</p></section></div>
@@ -454,11 +472,40 @@ function renderMcWithdrawals(){
   return `<div class="mc-withdrawal"><strong>❌ ${esc(x.name)}</strong> s’est retiré de <strong>${esc(r?.song_title||'Chanson archivée')}</strong><span class="muted">${esc(when)}</span></div>`;
  }).join('');
 }
+let preflightKey=null;
+function updatePreflightCount(){
+ const checks=[...document.querySelectorAll('[data-preflight]')];
+ $('mc-preflight-count').textContent=checks.filter(x=>x.checked).length+'/'+checks.length+' vérifications';
+}
+function syncPreflight(){
+ const id=snapshot?.settings?.current_session_id||snapshot?.session?.id;
+ const key=id?'yarg_mc_preflight_v1_'+id:null;
+ if(key!==preflightKey){
+  preflightKey=key;let saved=[];
+  try{const value=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(value))saved=value}catch(e){}
+  document.querySelectorAll('[data-preflight]').forEach(input=>{input.checked=saved.includes(input.dataset.preflight)});
+ }
+ document.querySelectorAll('[data-preflight]').forEach(input=>input.disabled=!key);
+ $('mc-preflight-reset').disabled=!key;
+ updatePreflightCount();
+ $('mc-preflight-mode').textContent=partyStillOn(snapshot?.settings||{})?'Mode soirée actif : les invités peuvent demander leurs chansons.':'Demandes fermées. Active le Mode soirée ci-dessous quand tu es prêt à accueillir les demandes.';
+}
+function savePreflight(){
+ if(!preflightKey)return;
+ const checked=[...document.querySelectorAll('[data-preflight]')].filter(x=>x.checked).map(x=>x.dataset.preflight);
+ try{localStorage.setItem(preflightKey,JSON.stringify(checked))}catch(e){}
+ updatePreflightCount();
+}
+$('mc-preflight-list').addEventListener('change',savePreflight);
+$('mc-preflight-reset').onclick=()=>{
+ document.querySelectorAll('[data-preflight]').forEach(input=>input.checked=false);savePreflight();
+};
 function render(){
  if(!snapshot)return;
  renderMcWithdrawals();
  const s=snapshot.settings||{};const session=snapshot.session||{};
  applyAdminPartyMode(s);
+ syncPreflight();
  $('session-line').textContent=partyStillOn(s)?'Mode soirée actif : demandes ouvertes':'Demandes fermées · soirée non archivée. Termine-la dans « Soirée » pour l’ajouter au Hall of Fame.';
  const rows=snapshot.requests||[];
 

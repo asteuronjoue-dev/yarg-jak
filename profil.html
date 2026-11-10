@@ -24,6 +24,7 @@ html,body{background:#101214!important;background-image:none!important;min-heigh
 main{max-width:1110px;padding:30px clamp(16px,3vw,35px) 80px}
 header{padding-bottom:20px;border-bottom:1px solid #354047;margin-bottom:32px}
 .auth-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px}.auth label{display:block;font-weight:750}.auth input{margin:6px 0 15px;background:#111719;border-color:#48575f}.auth p{max-width:650px}
+#recovery-restart{margin-top:12px}
 #profile-heading{font-weight:950;letter-spacing:-.035em;line-height:1.13}
 body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e);background-size:300% auto;color:transparent;background-clip:text;-webkit-background-clip:text;animation:yargPartyRainbow 5s linear infinite}
 @keyframes yargPartyRainbow{to{background-position:300% center}}
@@ -88,6 +89,14 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 <h1 id="profile-heading">Mon Profil de ROCKSTAR</h1>
 <p id="guest-account-info" hidden><strong>Créer un compte est entièrement facultatif !</strong> Tu peux demander des chansons sans compte. En t'inscrivant plus tard sur ce même appareil, tu conserves tes prestations personnelles.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
+<section id="password-recovery" class="card auth" hidden aria-labelledby="recovery-heading">
+<h2 id="recovery-heading">Choisis ton nouveau mot de passe</h2>
+<p>Entre ton nouveau mot de passe deux fois pour retrouver ton compte Rockstar.</p>
+<form id="recovery-form">
+<label for="recovery-password">Nouveau mot de passe (au moins 8 caractères)</label><input id="recovery-password" type="password" autocomplete="new-password" minlength="8" required>
+<label for="recovery-confirm">Confirme le nouveau mot de passe</label><input id="recovery-confirm" type="password" autocomplete="new-password" minlength="8" required>
+<button type="submit" class="primary">Enregistrer mon nouveau mot de passe</button>
+</form><button type="button" id="recovery-restart" class="ghost small">Demander un autre lien</button></section>
 <section id="auth" class="card auth" hidden><h2>Se connecter ou créer un compte</h2><p>Connecte-toi pour retrouver ton profil Rockstar.</p>
 <form id="login"><label for="email">Adresse courriel</label><input id="email" type="email" autocomplete="email" required placeholder="rockstar@exemple.com"><label for="password">Mot de passe (au moins 8 caractères)</label><input id="password" type="password" autocomplete="current-password" minlength="8" required placeholder="Ton mot de passe"><div class="auth-actions"><button class="primary" type="submit">Se connecter</button><button type="button" id="register">Créer un compte</button></div></form><p class="hint">Après inscription, confirme ton courriel. Déjà inscrit sans mot de passe ? Utilise « Mot de passe oublié ».</p><button class="ghost small" type="button" id="recover">Mot de passe oublié ?</button>
 <p class="hint">En créant ton compte sur le même appareil, tes prestations individuelles pourront être conservées.</p><a href="index.html">Continuer sans compte</a></section>
@@ -138,6 +147,14 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 async function syncPartyMode(){try{const {data}=await sb.from('party_settings').select('performance_requests_enabled,party_mode_until').eq('id',1).maybeSingle();document.body.classList.toggle('party-mode',!!(data?.performance_requests_enabled && (!data.party_mode_until || new Date(data.party_mode_until).getTime()>Date.now())))}catch(e){console.warn('Party Mode indisponible',e)}}syncPartyMode();
 const $=id=>document.getElementById(id);
 const state={user:null,profile:null,progress:{},catalog:[],unlocked:new Set(),initie:false};
+let recoveryUserId=null;
+const RECOVERY_KEY='yarg_password_recovery_user';
+function openPasswordRecovery(userId){
+ recoveryUserId=userId;
+ try{sessionStorage.setItem(RECOVERY_KEY,userId)}catch(e){}
+ $('auth').hidden=true;$('profile').hidden=true;$('guest-account-info').hidden=true;
+ $('password-recovery').hidden=false;$('recovery-password').focus();
+}
 function message(s,bad=false){$('notice').textContent=s;$('notice').className='notice '+(bad?'error':'ok');}
 function safeName(s){return (s||'').trim();}
 function isRegistered(user){return !!user && user.is_anonymous !== true && user.app_metadata?.provider !== 'anonymous';}
@@ -315,6 +332,7 @@ $('yarg-unlock-equip').addEventListener('click',async()=>{
 });
 
 function renderProfile(){
+ if(recoveryUserId)return;
  const p=state.profile;$('profile').hidden=false;$('auth').hidden=true;
  $('shown-name').textContent=p.rockstar_name;$('rockstar-name').value=p.rockstar_name;$('band-name').value=p.preferred_band_name||'';
  $('initie-tag').textContent=state.initie?'✦ Initié':'Pas encore Initié';$('initie-tag').className='tag '+(state.initie?'yes':'no');
@@ -346,6 +364,7 @@ const GUEST_UPGRADE_KEY='yarg_pending_guest_upgrade';
 $('register').onclick=async()=>{
  const email=$('email').value.trim(),password=$('password').value;
  if(!email){message('Entre ton adresse courriel.',true);return}
+ if(!$('email').reportValidity())return;
  $('register').disabled=true;
  try{
   const {data:{user},error:identityError}=await sb.auth.getUser();
@@ -376,8 +395,44 @@ $('finish-guest-signup').addEventListener('submit',async event=>{
  }catch(err){message('Impossible de définir le mot de passe : '+(err.message||String(err)),true)}
  finally{button.disabled=false}
 });
-$('recover').onclick=async()=>{const email=$('email').value.trim();if(!email){message('Entre ton courriel pour recevoir un lien de réinitialisation.',true);return;}try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;message('Si ce compte existe, un courriel de réinitialisation a été demandé.')}catch(err){message('Réinitialisation impossible : '+err.message,true)}};
-sb.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){setTimeout(async()=>{const password=prompt('Nouveau mot de passe (8 caractères minimum) :');if(password===null)return;if(password.length<8){message('Mot de passe trop court.',true);return;}const {error}=await sb.auth.updateUser({password});if(error)message(error.message,true);else{message('Mot de passe mis à jour.');location.reload()}},0)}});
+$('recover').onclick=async()=>{
+ const email=$('email').value.trim();
+ if(!email){message('Entre ton courriel pour recevoir un lien de réinitialisation.',true);return}
+ if(!$('email').reportValidity())return;
+ $('recover').disabled=true;
+ try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;message('Si ce compte existe, tu recevras un lien pour choisir un nouveau mot de passe. Vérifie aussi tes courriels indésirables.')}
+ catch(err){message('Réinitialisation impossible : '+err.message,true)}
+ finally{$('recover').disabled=false}
+};
+// Keep the auth callback synchronous; submit password changes from the form.
+sb.auth.onAuthStateChange((event,session)=>{
+ if(event==='PASSWORD_RECOVERY'&&session?.user){
+  recoveryUserId=session.user.id;
+  setTimeout(()=>openPasswordRecovery(session.user.id),0);
+ }
+});
+$('recovery-form').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const password=$('recovery-password').value;
+ if(password.length<8){message('Choisis un mot de passe de 8 caractères minimum.',true);return}
+ if(password!==$('recovery-confirm').value){message('Les deux mots de passe ne correspondent pas.',true);$('recovery-confirm').focus();return}
+ const button=event.currentTarget.querySelector('button');button.disabled=true;
+ try{
+  const {error}=await sb.auth.updateUser({password});if(error)throw error;
+  try{sessionStorage.removeItem(RECOVERY_KEY);localStorage.removeItem(GUEST_UPGRADE_KEY)}catch(e){}
+  recoveryUserId=null;$('password-recovery').hidden=true;
+  $('recovery-password').value='';$('recovery-confirm').value='';
+  message('Ton nouveau mot de passe est enregistré !');
+  await initialize();
+ }catch(err){message('Impossible de modifier le mot de passe : '+(err.message||String(err))+'. Si le lien a expiré, demande un nouveau lien depuis Mon profil.',true)}
+ finally{button.disabled=false}
+});
+$('recovery-restart').onclick=()=>{
+ recoveryUserId=null;try{sessionStorage.removeItem(RECOVERY_KEY)}catch(e){}
+ $('password-recovery').hidden=true;$('auth').hidden=false;
+ $('email').value=state.user?.email||$('email').value;
+ $('email').focus();message('Vérifie ton courriel, puis clique sur « Mot de passe oublié ? ».');
+};
 $('logout').addEventListener('click',async()=>{try{if(window.YargPush)await window.YargPush.disable();}catch(e){console.warn('Désactivation Web Push à la déconnexion :',e);}const {error}=await sb.auth.signOut();if(error){message(error.message,true);return}location.reload()});
 async function initialize(){
  try{
@@ -386,6 +441,10 @@ async function initialize(){
   if(!sessionData.session){$('guest-account-info').hidden=false;$('auth').hidden=false;return}
   const {data:{user},error}=await sb.auth.getUser();if(error)throw error;
   state.user=user;
+  let savedRecovery=null;try{savedRecovery=sessionStorage.getItem(RECOVERY_KEY)}catch(e){}
+  if(isRegistered(user)&&(recoveryUserId===user.id||savedRecovery===user.id)){
+   openPasswordRecovery(user.id);return;
+  }
   if(!isRegistered(user)){
    $('guest-account-info').hidden=false;
    $('auth').hidden=false;
