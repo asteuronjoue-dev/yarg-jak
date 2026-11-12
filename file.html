@@ -538,7 +538,9 @@ function medalMarkup(name,instrument,microphone,profileId){
  const category=medalFamily(instrument)||(microphone?'vocals':'');
  if(!category)return '';
  const tier=performerMedals.get(String(profileId||''))?.get(category)?.tier||0;
- const img='<img class="yarg-member-medal" src="'+medalAsset(category,tier)+'" alt="'+esc(category+' : '+(tier?medalNames[tier-1]:'Non classé'))+'">';
+ const artwork=instrument==='rhythm_guitar'?'rhythm_guitar':category;
+ const fallback='assets/medals/'+category+'-fallback.png';
+ const img='<img class="yarg-member-medal" src="'+medalAsset(artwork,tier)+'" onerror="this.onerror=null;this.src=\''+fallback+'\'" alt="'+esc(category+' : '+(tier?medalNames[tier-1]:'Non classé'))+'">';
  if(IS_PUBLIC_DISPLAY||!profileId||!performerMedals.has(String(profileId)))return img;
  return '<button type="button" class="yarg-member-medal-button" data-collection-user="'+esc(String(profileId))+'" data-collection-name="'+esc(name)+'" title="Voir les médailles de '+esc(name)+'" aria-label="Voir les médailles de '+esc(name)+'">'+img+'</button>';
 }
