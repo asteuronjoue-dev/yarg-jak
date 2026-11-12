@@ -793,8 +793,8 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  const harmonyNumber=Number(harmony)||0;
  const harmonyName=harmonyNumber===1?'Chant principal':`Harmonie ${harmonyNumber}`;
  const vocalPart=instrument==='vocals'&&harmonyNumber>0?`<span class="yarg-performer-detail" title="${esc(harmonyName)}" aria-label="${esc(harmonyName)}">${esc(harmonyName)}</span>`:'';
- // When someone plays and sings, use the plain microphone fallback beside the main instrument, not a separate earned medal.
- const extraMic=microphone&&instrument!=='vocals'?'<span class="yarg-performer-extra-vocals" title="Chante aussi"><img class="yarg-member-medal" src="assets/medals/vocals-fallback.png" alt="Microphone : chante aussi"></span>':'';
+ // When someone plays and sings, show their unlocked VOCALS medal beside the main instrument (fallback for guests and no rank).
+ const extraMic=microphone&&instrument!=='vocals'?`<span class="yarg-performer-extra-vocals" title="Chante aussi">${medalMarkup(name,'vocals',false,profileId)}</span>`:'';
  const instrumentIcons=`<span class="yarg-performer-instrument-icons">${medalMarkup(name,instrument,microphone,profileId)}${extraMic}</span>`;
  const modeLabel=instrument==='pro_drums'||instrument==='pro_keys'?'Pro':instrument==='drums_4lane'?'4 voies':instrument==='rhythm_guitar'?'Rythmique':instrument==='flex'?'Flex':'';
  const mode=modeLabel?`<span class="yarg-performer-detail" title="${esc(instruments[instrument]||modeLabel)}">${esc(modeLabel)}</span>`:'';
