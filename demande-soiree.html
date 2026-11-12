@@ -97,11 +97,12 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
 .member .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .member .field{min-width:0}.member .field>span,.instrument-chooser>strong{display:block;font-size:.81rem;margin-bottom:5px}
 .member select,.member input{min-height:40px;padding:9px}
-.member .account-first,.instrument-chooser,.instrument-information{grid-column:1/-1}
+.member .account-first,.instrument-chooser,.instrument-information,.member .instrument-difficulty-field{grid-column:1/-1}
 .instrument-chooser{min-width:0}
 .instrument-icons{display:flex;gap:7px;flex-wrap:wrap}
 .instrument-choice{width:56px;height:55px;flex:0 0 56px;display:grid;place-items:center;padding:3px;background:#202d32;border:1px solid #445862;border-radius:10px}
 .instrument-choice img{width:43px;height:43px;object-fit:contain}
+.instrument-flex-mark{font-size:2rem;font-weight:950;color:#a0d8ce;line-height:1}
 .instrument-choice[aria-pressed="true"]{border:2px solid #62d9ba;background:#244038}
 .instrument-choice:disabled{opacity:.27;cursor:not-allowed}
 .instrument-choice:focus-visible{outline:2px solid #ff8a24;outline-offset:2px}
@@ -328,7 +329,7 @@ function render(){
   const card=document.createElement('section');card.className='member';
   const heading=document.createElement('div');heading.className='member-head';
   const h=document.createElement('h2');h.textContent=`Rockstar #${i+1}`;heading.append(h);
-   if(i===0&&ownBandProfile){const own=document.createElement('span');own.className='own-profile';own.textContent=`Compte Rockstar associé automatiquement : ${ownBandProfile.rockstar_name} (moi)`;heading.append(own)}
+   if(i===0&&ownBandProfile){const own=document.createElement('span');own.className='own-profile';own.textContent='Moi';heading.append(own)}
   if(members.length>1&&!(i===0&&ownBandProfile)){const remove=document.createElement('button');remove.type='button';remove.className='remove';remove.textContent='Retirer';remove.onclick=()=>{members=members.filter(x=>x!==m);render()};heading.append(remove)}
   const grid=document.createElement('div');grid.className='grid';
   function field(label,el){const wrap=document.createElement('label');wrap.className='field';const span=document.createElement('span');span.textContent=label;wrap.append(span,el);grid.append(wrap);return wrap}
@@ -369,9 +370,13 @@ function render(){
    button.title=text;button.setAttribute('aria-label',text);
    button.setAttribute('aria-pressed',String(categoryOf(m.mode)===value));
    button.disabled=!allowed(m,chooseMode(value,m.mode));
-   const img=document.createElement('img');img.alt='';img.src=instrumentIcon(m.profileId,value);
-   img.onerror=()=>{img.onerror=null;img.src='assets/medals/'+(value==='rhythm_guitar'?'guitar':value==='flex'?'guitar':value)+'-fallback.png'};
-   button.append(img);
+   if(value==='flex'){
+    const any=document.createElement('span');any.className='instrument-flex-mark';any.textContent='?';button.append(any);
+   }else{
+    const img=document.createElement('img');img.alt='';img.src=instrumentIcon(m.profileId,value);
+    img.onerror=()=>{img.onerror=null;img.src='assets/medals/'+(value==='rhythm_guitar'?'guitar':value)+'-fallback.png'};
+    button.append(img);
+   }
    button.onclick=()=>{
     if(categoryOf(m.mode)===value){m.instrumentInfoOpen=!m.instrumentInfoOpen;render();return}
     const prefs=memberPreferences(m);
@@ -415,6 +420,7 @@ function render(){
   if(m.mode==='vocals')m.difficulty='medium';
   if(m.mode!=='vocals'&&m.mode!=='flex'&&category!=='drums'&&category!=='keys'){
      const diffField=field('Difficulté de l’instrument *',diff);
+     diffField.classList.add('instrument-difficulty-field');
      if(guide)diffField.append(guide);
    }
   if(category==='drums'||category==='keys'){
