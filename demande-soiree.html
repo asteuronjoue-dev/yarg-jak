@@ -100,8 +100,29 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
 .member .account-first,.instrument-chooser,.instrument-information,.member .instrument-difficulty-field{grid-column:1/-1}
 .instrument-chooser{min-width:0}
 .instrument-icons{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
-.extra-vocals-choice{margin-left:auto;border-color:#386b83}
-.extra-vocals-choice[aria-pressed="true"]{border-color:#7bc1ff;background:#15334b}
+.instrument-choice.extra-vocals-choice{
+ margin-left:auto;
+ width:auto;min-width:139px;max-width:180px;min-height:55px;flex:0 0 auto;
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:5px 9px;
+ border:2px solid #56646c;background:#242a2f;color:#bac5cc;
+}
+.instrument-choice.extra-vocals-choice img{
+ width:35px;height:35px;flex:0 0 35px;filter:grayscale(1) brightness(.7);opacity:.8;
+}
+.instrument-choice.extra-vocals-choice[aria-pressed="true"]{
+ border-color:#72bdff;background:#153e65;color:#d5eeff;
+ box-shadow:0 0 0 1px rgba(75,169,255,.35);
+}
+.instrument-choice.extra-vocals-choice[aria-pressed="true"] img{
+ filter:grayscale(1) brightness(0) saturate(100%) invert(73%) sepia(32%) saturate(1002%) hue-rotate(176deg) brightness(108%) contrast(102%);
+ opacity:1;
+}
+.extra-vocals-label{display:block;flex:1;font-size:.77rem;font-weight:900;line-height:1.13;text-align:left;max-width:100px}
+@media(max-width:600px){
+ .instrument-choice.extra-vocals-choice{min-width:126px;min-height:49px;padding:4px 7px;gap:6px}
+ .instrument-choice.extra-vocals-choice img{width:30px;height:30px;flex-basis:30px}
+ .extra-vocals-label{font-size:.71rem}
+}
 .member .vocal-only-harmony{grid-column:1/-1}
 .instrument-choice{width:56px;height:55px;flex:0 0 56px;display:grid;place-items:center;padding:3px;background:#202d32;border:1px solid #445862;border-radius:10px}
 .instrument-choice img{width:43px;height:43px;object-fit:contain}
@@ -395,11 +416,13 @@ function render(){
     const mic=document.createElement('button');mic.type='button';
     mic.className='instrument-choice extra-vocals-choice';
     mic.setAttribute('aria-pressed',String(m.microphone));
-    mic.setAttribute('aria-label',m.microphone?'Ne plus chanter aussi':'Chanter aussi en jouant');
-    mic.title=m.microphone?'Chant activé — cliquer pour retirer':'Chanter aussi';
+    mic.setAttribute('aria-label',m.microphone?'Chant activé. Désactiver le chant supplémentaire.':'Tu veux chanter aussi ?');
+    mic.title=m.microphone?'Chant activé — cliquer pour retirer':'Chanter aussi en jouant';
     mic.disabled=!m.microphone&&counts().mics>=limits.mics;
     const image=document.createElement('img');image.src='assets/medals/vocals-fallback.png';image.alt='';
-    mic.append(image);mic.onclick=()=>{m.microphone=!m.microphone;render()};
+    const caption=document.createElement('span');caption.className='extra-vocals-label';
+    caption.textContent=m.microphone?'✓ Téméraire !':'Chanter aussi ?';
+    mic.append(image,caption);mic.onclick=()=>{m.microphone=!m.microphone;render()};
     icons.append(mic);
   }
   chooser.append(icons);grid.append(chooser);
