@@ -230,7 +230,7 @@ function chooseMode(category, priorMode=''){
  if(category==='keys')return keyModes.some(([v])=>v===priorMode)?priorMode:(keyModes[0]?.[0]||'keys');
  return category;
 }
-let members=[];let nextId=0;let bandDirectory=[];let ownBandProfile=null;
+let members=[];let nextId=0;let bandDirectory=[];let ownBandProfile=null;let lastPlayedByAccount=new Map();
 const medalRanks=['wood','bronze','silver','gold','platinum','emerald','diamond','master','grand-master','champion'];
 let directoryMedals=new Map();
 function iconCategory(mode){return mode==='rhythm_guitar'?'guitar':mode==='drums_4lane'||mode==='pro_drums'?'drums':mode==='pro_keys'?'keys':mode}
@@ -274,6 +274,18 @@ function saveMemberPreferences(m){
  all[id]=prefs;
  try{localStorage.setItem(YARG_MEMBER_PREFS_KEY,JSON.stringify(all))}catch(e){console.warn('Préférences Rockstar non sauvegardées',e)}
 }
+function applyLastPlayedAccountSetup(m){
+ const last=lastPlayedByAccount.get(m.profileId);
+ if(!last?.instrument_mode)return;
+ const desired=last.instrument_mode;
+ if(!options.some(([category])=>categoryOf(desired)===category))return;
+ const mode=chooseMode(categoryOf(desired),desired);
+ if(!allowed(m,mode))return;
+ m.mode=mode;
+ if(diffOptions.some(([v])=>v===last.difficulty))m.difficulty=last.difficulty;
+ if(instrumentFamily(mode)==='guitar'&&guitarNames.some(([v])=>v===last.preferred_guitar))m.guitarChoice=last.preferred_guitar;
+ m.microphone=Boolean(last.microphone)&&hasVocals&&mode!=='vocals'&&counts().mics<limits.mics;
+}
 function applyMemberPreferences(m){
  const prefs=memberPreferences(m),category=categoryOf(m.mode);
  if(category==='drums'||category==='keys')m.mode=chooseMode(category,prefs.modes?.[category]||m.mode);
@@ -300,7 +312,8 @@ function showGuitarPhoto(m,card){
 async function loadBandDirectory(){
  try{
   const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
-  const [directory,medals]=await Promise.all([client.rpc('yarg_band_directory'),client.rpc('yarg_band_directory_medals')]);
+  const [directory,medals,lastPlayed]=await Promise.all([client.rpc('yarg_band_directory'),client.rpc('yarg_band_directory_medals'),client.rpc('yarg_band_last_played_preferences')]);
+  if(!lastPlayed.error)lastPlayedByAccount=new Map((lastPlayed.data||[]).map(row=>[row.user_id,row]));else console.warn('Préférences de dernière prestation indisponibles',lastPlayed.error);
   if(directory.error)throw directory.error;
   bandDirectory=(directory.data||[]).sort((a,b)=>a.rockstar_name.localeCompare(b.rockstar_name,'fr',{sensitivity:'base'}));
   directoryMedals=new Map();
@@ -332,7 +345,7 @@ async function prefillSignedInRockstar(){
 const instrumentFamily=mode=>mode==='flex'?'flex':['guitar','rhythm_guitar','bass'].includes(mode)?'guitar':mode==='vocals'?'vocals':mode.startsWith('drums_')||mode==='pro_drums'?'drums':'keys';
 function model(){return {id:++nextId,name:'',guestName:'',mode:options[0]?.[0]||'',difficulty:'',microphone:false,harmony:1,profileId:'',guitarChoice:'',instrumentInfoOpen:false}}
 function counts(){return {guitars:members.filter(m=>instrumentFamily(m.mode)==='guitar').length,drums:members.filter(m=>instrumentFamily(m.mode)==='drums').length,keys:members.filter(m=>instrumentFamily(m.mode)==='keys').length,mics:members.filter(m=>m.mode==='vocals'||m.microphone).length,flex:members.filter(m=>m.mode==='flex').length}}
-const limits={guitars:availableGuitarRoles.length?3:0,drums:song.parts.includes('D')?1:0,keys:song.parts.includes('K')?1:0,mics:vocalParts};
+const limits={guitars:availableGuitarRoles.length?3:0,drums:song.parts.includes('D')?1:0,keys:song.parts.includes('K')?1:0,mics:hasVocals?3:0};
 function freeInstrumentCapacity(c){return (limits.guitars-c.guitars)+(limits.drums-c.drums)+(limits.keys-c.keys)+(limits.mics-c.mics)-c.flex}
 function allowed(m,mode){
  const others=members.filter(x=>x!==m), fam=instrumentFamily(mode);
@@ -392,16 +405,21 @@ function render(){
     m.profileId=account.value;
     const player=bandDirectory.find(x=>x.user_id===m.profileId);
     m.name=player?player.rockstar_name:(m.guestName||'');
-    if(player)applyMemberPreferences(m);
+    if(player){applyMemberPreferences(m);applyLastPlayedAccountSetup(m)}
     m.instrumentInfoOpen=false;render();
    };
    field('Compte Rockstar',account).classList.add('account-first');
-   if(!m.profileId){
-    const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de Rockstar';
-    name.value=m.name;
-    name.oninput=()=>{m.name=name.value;m.guestName=name.value};
-    name.onchange=()=>{applyMemberPreferences(m);render()};
-    field('Nom de Rockstar *',name).classList.add('account-first');
+   const name=document.createElement('input');name.maxLength=60;name.required=true;
+   name.placeholder=m.profileId?'Nom de scène pour cette prestation':'Nom de Rockstar';
+   name.value=m.name;
+   name.oninput=()=>{m.name=name.value;if(!m.profileId)m.guestName=name.value};
+   if(!m.profileId)name.onchange=()=>{applyMemberPreferences(m);render()};
+   const stage=field(m.profileId?'Nom pour cette prestation *':'Nom de Rockstar *',name);
+   stage.classList.add('account-first');
+   if(m.profileId){
+    const help=document.createElement('small');help.className='stage-name-help';
+    help.textContent='Ce nom de scène ne change pas le compte Rockstar invité ni ses statistiques.';
+    stage.append(help);
    }
   }
   const chooser=document.createElement('div');chooser.className='instrument-chooser';
