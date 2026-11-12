@@ -98,6 +98,10 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
 .member .field{min-width:0}.member .field>span,.instrument-chooser>strong{display:block;font-size:.81rem;margin-bottom:5px}
 .member select,.member input{min-height:40px;padding:9px}
 .member .account-first,.instrument-chooser,.instrument-information,.member .instrument-difficulty-field{grid-column:1/-1}
+.member .connected-account{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid #376256;background:#17342e;color:#dcfff2;border-radius:9px;padding:10px 12px;font-size:.86rem}
+.member .connected-account strong{font-weight:900}
+.member .connected-account small{color:#bedbd0}
+.member .stage-name-help{display:block;margin-top:5px;font-size:.77rem;line-height:1.4;color:#acbec5}
 .instrument-chooser{min-width:0}
 .instrument-icons{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 .instrument-choice.extra-vocals-choice{
@@ -356,33 +360,49 @@ function render(){
   const grid=document.createElement('div');grid.className='grid';
   function field(label,el){const wrap=document.createElement('label');wrap.className='field';const span=document.createElement('span');span.textContent=label;wrap.append(span,el);grid.append(wrap);return wrap}
 
-  // Account comes first. Only guests need to type a Rockstar name.
-  const account=document.createElement('select');
-  const guest=document.createElement('option');guest.value='';guest.textContent='Sans compte — entrer un nom';account.append(guest);
-  for(const player of bandDirectory){
-   if(player.user_id===ownBandProfile?.user_id&&!(i===0&&m.profileId===ownBandProfile.user_id))continue;
-   const option=document.createElement('option');option.value=player.user_id;option.textContent=player.rockstar_name;account.append(option);
-  }
-  if(m.profileId&&!Array.from(account.options).some(x=>x.value===m.profileId)){
-   const option=document.createElement('option');option.value=m.profileId;option.textContent=m.name||'Compte Rockstar';account.append(option);
-  }
-  account.value=m.profileId||'';
-  account.disabled=Boolean(i===0&&ownBandProfile);
-  account.onchange=()=>{
-   if(!m.profileId)m.guestName=m.name;
-   m.profileId=account.value;
-   const player=bandDirectory.find(x=>x.user_id===m.profileId);
-   m.name=player?player.rockstar_name:(m.guestName||'');
-   if(player)applyMemberPreferences(m);
-   m.instrumentInfoOpen=false;render();
-  };
-  field('Compte Rockstar',account).classList.add('account-first');
-  if(!m.profileId){
-   const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de Rockstar';
-   name.value=m.name;
-   name.oninput=()=>{m.name=name.value;m.guestName=name.value};
-   name.onchange=()=>{applyMemberPreferences(m);render()};
-   field('Nom de Rockstar *',name).classList.add('account-first');
+  // Rockstar #1 is authenticated: show identity and a performance-only display name.
+  if(i===0&&ownBandProfile&&m.profileId===ownBandProfile.user_id){
+   const connected=document.createElement('div');connected.className='connected-account';
+   const indicator=document.createElement('strong');indicator.textContent='✓ Compte Rockstar connecté';
+   const identity=document.createElement('small');identity.textContent=ownBandProfile.rockstar_name;
+   connected.append(indicator,identity);grid.append(connected);
+   const stageName=document.createElement('input');stageName.type='text';
+   stageName.maxLength=60;stageName.required=true;stageName.autocomplete='off';
+   stageName.placeholder=ownBandProfile.rockstar_name;stageName.value=m.name;
+   stageName.oninput=()=>{m.name=stageName.value};
+   const wrap=field('Nom pour cette prestation *',stageName);
+   wrap.classList.add('account-first');
+   const help=document.createElement('small');help.className='stage-name-help';
+   help.textContent='Tu peux changer ton nom pour cette chanson. Ton compte, tes points et tes succès restent liés à ton profil Rockstar.';
+   wrap.append(help);
+  }else{
+   // Co-stars retain the account picker; guests can supply their name.
+   const account=document.createElement('select');
+   const guest=document.createElement('option');guest.value='';guest.textContent='Sans compte — entrer un nom';account.append(guest);
+   for(const player of bandDirectory){
+    if(player.user_id===ownBandProfile?.user_id)continue;
+    const option=document.createElement('option');option.value=player.user_id;option.textContent=player.rockstar_name;account.append(option);
+   }
+   if(m.profileId&&!Array.from(account.options).some(x=>x.value===m.profileId)){
+    const option=document.createElement('option');option.value=m.profileId;option.textContent=m.name||'Compte Rockstar';account.append(option);
+   }
+   account.value=m.profileId||'';
+   account.onchange=()=>{
+    if(!m.profileId)m.guestName=m.name;
+    m.profileId=account.value;
+    const player=bandDirectory.find(x=>x.user_id===m.profileId);
+    m.name=player?player.rockstar_name:(m.guestName||'');
+    if(player)applyMemberPreferences(m);
+    m.instrumentInfoOpen=false;render();
+   };
+   field('Compte Rockstar',account).classList.add('account-first');
+   if(!m.profileId){
+    const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de Rockstar';
+    name.value=m.name;
+    name.oninput=()=>{m.name=name.value;m.guestName=name.value};
+    name.onchange=()=>{applyMemberPreferences(m);render()};
+    field('Nom de Rockstar *',name).classList.add('account-first');
+   }
   }
   const chooser=document.createElement('div');chooser.className='instrument-chooser';
   const label=document.createElement('strong');label.textContent='Instrument *';chooser.append(label);
