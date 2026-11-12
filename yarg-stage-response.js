@@ -6,6 +6,12 @@
  const base='https://xbhfjzurytdknbqvksjq.supabase.co';
  const key='sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM';
  const client=window.supabase.createClient(base,key);
+ if(!document.getElementById('yarg-banner-font')){
+   const font=document.createElement('link');
+   font.id='yarg-banner-font';font.rel='stylesheet';
+   font.href='https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&display=swap';
+   document.head.append(font);
+ }
  const root=document.documentElement;
  const banner=document.createElement('aside');banner.id='yarg-stage-banner';banner.className='yarg-stage-banner';banner.hidden=true;
  banner.setAttribute('aria-label','Confirmation de la prestation');
@@ -29,7 +35,7 @@
  @keyframes yargStageRainbow{to{background-position:300% center}}
  #yarg-stage-banner{position:fixed;top:0;left:0;right:0;z-index:15000;padding:12px clamp(10px,3vw,32px);text-align:center;box-shadow:0 6px 21px #0008;font:900 15px/1.4 system-ui,sans-serif}
  #yarg-stage-banner[hidden]{display:none!important}
- #yarg-stage-banner .yarg-stage-heading{font-size:clamp(19px,3vw,30px);line-height:1.23}
+ #yarg-stage-banner .yarg-stage-heading{font-family:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;font-size:clamp(21px,3.3vw,34px);font-weight:800;letter-spacing:.025em;line-height:1.13}
  #yarg-stage-banner .yarg-stage-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
  #yarg-stage-banner .yarg-stage-actions button{font:900 15px system-ui,sans-serif;min-height:43px;border:2px solid #131a1c;border-radius:10px;padding:9px 14px;cursor:pointer;color:#101214}
  #yarg-stage-banner [data-stage-answer=ready]{background:#85eab2}
@@ -49,16 +55,16 @@
  /* White lettering with a dark outline stays legible over every rainbow color. */
  #yarg-stage-banner .yarg-stage-heading .yarg-rainbow{
   background:none;animation:none;color:#fff;
-  -webkit-text-stroke:.55px #10141c;
-  text-shadow:0 2px 3px #10141c,0 0 8px #10141c,0 0 2px #10141c;
+  -webkit-text-stroke:0;
+  text-shadow:0 2px 4px rgba(10,16,22,.78);
  }
  #yarg-stage-banner .yarg-stage-heading .yarg-track{
-  color:#fff;font-size:.8em;margin-top:4px;
-  text-shadow:0 2px 3px #10141c,0 0 7px #10141c;
+  color:#fff;font-family:system-ui,sans-serif;font-weight:750;font-size:.53em;letter-spacing:0;margin-top:5px;
+  text-shadow:0 1px 2px rgba(10,16,22,.7);
  }
  #yarg-stage-banner .yarg-stage-details{
-  color:#fff;font-weight:850;margin-top:8px;font-size:clamp(14px,2vw,18px);
-  text-shadow:0 2px 3px #10141c,0 0 7px #10141c;
+  color:#fff;font-family:system-ui,sans-serif;font-weight:750;margin-top:8px;font-size:clamp(14px,2vw,18px);
+  text-shadow:0 1px 2px rgba(10,16,22,.65);
  }
  #yarg-stage-banner .yarg-stage-message{color:#fff;text-shadow:0 1px 3px #10141c}
  #yarg-stage-banner [data-party-action=ready]{background:#85eab2;color:#141a22}
@@ -135,7 +141,7 @@
      // Keep the pause warning visible on *every* page, even when none of
      // this account's requests is among the next two songs.
      if(partyPaused){
-       renderStageHeading('⏸️ Tu es en pause! ⏸️','Tes prestations à venir restent suspendues.');
+       renderStageHeading('Tu es en pause','Tes prestations à venir restent suspendues.');
        details.textContent='Appuie sur « Je suis prêt » pour reprendre ta place dans la file.';
        status.textContent='';
        lastRequestId='';
@@ -160,7 +166,7 @@
        (!r.requester_withdrawn_at && (getUuid(r.requester_profile_id)===id||getUuid(r.guest_user_id)===id)) ||
        (members||[]).some(m=>getUuid(m.performance_request_id)===getUuid(r.id)&&!m.withdrawn_at&&(getUuid(m.rockstar_profile_id)===id||owned.has(getUuid(m.id)))));
      if(partyPaused&&target?.status!=='playing'){
-      renderStageHeading('⏸️Toutes tes performances à venir sont en pause.⏸️','');details.textContent='';status.textContent='';lastRequestId='';showStageMode('pause');return;
+      renderStageHeading('Tes performances sont en pause','');details.textContent='';status.textContent='';lastRequestId='';showStageMode('pause');return;
      }
      if(!target){hide();return;}
      const uuid=getUuid(target.id);
@@ -176,7 +182,7 @@
      const mine=instrumentForRequest(target,members||[],id,owned);
      const info=stageInstrumentDetail(target,mine,members||[]);
      if(target.status==='playing'){
-       renderStageHeading(`${info.emoji} C'est ta toune en ce moment! ${info.emoji}`,`🎶${esc(target.song_title)} • ${esc(target.song_artist)}🎶`);
+       renderStageHeading("C'EST TA TOUNE EN CE MOMENT!",`${esc(target.song_title)} • ${esc(target.song_artist)}`);
        details.textContent='🤘 ROCK ON! 🤘';
        status.textContent='';showStageMode('live');
      }else if(savedReply==='ready'){
@@ -184,7 +190,7 @@
        details.textContent='Reste dans le coin, ça s’en vient!';
        status.textContent='';showStageMode('ready');
      }else{
-       renderStageHeading("C'EST TA TOUNE! READY TO ROCK?",`🎶${esc(target.song_title)} • ${esc(target.song_artist)}🎶`);
+       renderStageHeading("C'EST TA TOUNE! READY TO ROCK?",`${esc(target.song_title)} • ${esc(target.song_artist)}`);
        details.textContent=info.label;
        status.textContent='';showStageMode('next');
      }

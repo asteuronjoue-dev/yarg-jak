@@ -42,7 +42,7 @@
     
     #yarg-invite-banner *{box-sizing:border-box}
     #yarg-invite-banner .yarg-invite-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}
-    #yarg-invite-banner .yarg-invite-header strong{font-size:16px}
+    #yarg-invite-banner .yarg-invite-header strong{font-family:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;font-weight:800;font-size:clamp(19px,2.6vw,24px);letter-spacing:.025em;line-height:1.12}
     #yarg-invite-banner .yarg-invite-list{display:flex;flex-wrap:wrap;gap:9px}
     #yarg-invite-banner .yarg-invite-item{display:flex;flex:1 1 300px;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid #45616a;background:#23383e}
     #yarg-invite-banner .yarg-invite-song{min-width:0;flex:1 1 190px;overflow-wrap:anywhere}

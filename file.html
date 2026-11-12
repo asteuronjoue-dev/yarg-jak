@@ -114,7 +114,7 @@
       linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e) border-box;
       animation:skittlePulse .7s ease-in-out infinite alternate}
     .skittles::before{width:0}
-    .skittle-banner{font-size:clamp(20px,5vw,34px);font-weight:1000;text-align:center;padding:8px 4px 13px;
+    .skittle-banner{font-family:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;font-size:clamp(21px,5vw,34px);font-weight:800;letter-spacing:.02em;text-align:center;padding:8px 4px 13px;
       background:linear-gradient(90deg,#ff5577,#ffad42,#ffe66d,#54e0a2,#54c7ff,#b889ff,#ff5577);
       background-size:250% auto;color:transparent;background-clip:text;-webkit-background-clip:text;animation:rainbow 1.5s linear infinite}
     @keyframes rainbow{to{background-position:250% center}}
@@ -201,7 +201,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-pause-all:disabled{opacity:.6;cursor:wait}
 /* Coordinated MC response banner (also used on index.html) */
 .yarg-stage-banner{position:fixed;top:0;left:0;right:0;z-index:15000;background:linear-gradient(90deg,#ff355e,#ffbd48,#dbf080,#64d9bb);color:#101214;padding:12px clamp(10px,3vw,32px);text-align:center;box-shadow:0 6px 21px #0008}
-.yarg-stage-heading{font-size:clamp(19px,3vw,30px);font-weight:1000;line-height:1.23}
+.yarg-stage-heading{font-family:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;font-size:clamp(21px,3.3vw,34px);font-weight:800;letter-spacing:.025em;line-height:1.13}
 .yarg-stage-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
 .yarg-stage-actions button{font:inherit;font-weight:900;min-height:43px;border:2px solid #131a1c;border-radius:10px;padding:9px 14px;cursor:pointer;color:#101214}
 .yarg-stage-actions [data-stage-answer="ready"]{background:#85eab2}
