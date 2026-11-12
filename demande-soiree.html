@@ -90,6 +90,38 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
 }
 
 .yarg-difficulty-guide{display:block;margin-top:7px;padding:9px 11px;background:#17272d;border:1px solid #34535d;border-left:3px solid #ff8a24;border-radius:9px;color:#d6e5e8;font-size:.81rem;font-weight:500;line-height:1.5;white-space:normal}
+
+/* Compact account-first chooser, with earned icons from the selected Rockstar. */
+.member{padding:12px;margin:10px 0;border-radius:13px}
+.member-head{margin-bottom:8px}.member-head h2{font-size:1rem}
+.member .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.member .field{min-width:0}.member .field>span,.instrument-chooser>strong{display:block;font-size:.81rem;margin-bottom:5px}
+.member select,.member input{min-height:40px;padding:9px}
+.member .account-first,.instrument-chooser,.instrument-information{grid-column:1/-1}
+.instrument-chooser{min-width:0}
+.instrument-icons{display:flex;gap:7px;flex-wrap:wrap}
+.instrument-choice{width:56px;height:55px;flex:0 0 56px;display:grid;place-items:center;padding:3px;background:#202d32;border:1px solid #445862;border-radius:10px}
+.instrument-choice img{width:43px;height:43px;object-fit:contain}
+.instrument-choice[aria-pressed="true"]{border:2px solid #62d9ba;background:#244038}
+.instrument-choice:disabled{opacity:.27;cursor:not-allowed}
+.instrument-choice:focus-visible{outline:2px solid #ff8a24;outline-offset:2px}
+.instrument-information{border:1px solid #38535d;background:#17272d;border-radius:9px;padding:8px 10px}
+.instrument-information strong{font-size:.88rem}
+.instrument-information small{display:block;color:#d2e1e5;font-size:.79rem;line-height:1.4;margin-top:3px}
+.member .yarg-difficulty-guide{padding:7px 9px;font-size:.78rem;margin-top:5px}
+.member .guitar-chooser{grid-column:1/-1}.member .guitar-tiles{gap:6px}
+.member .guitar-tile{min-height:82px;padding:5px 3px;gap:4px;font-size:.71rem}
+.member .guitar-tile img{height:43px}
+@media(max-width:600px){
+ .member .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .instrument-choice{width:50px;height:49px;flex-basis:50px}
+ .instrument-choice img{width:38px;height:38px}
+ .member .guitar-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .member .guitar-tile{min-height:72px;font-size:.67rem}
+ .member .guitar-tile img{height:36px}
+ .member .vocal-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:390px){.member .guitar-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
@@ -154,7 +186,7 @@ function yargDifficultyCategory(mode){
 function yargDifficultyDescription(mode,level){
  const entry=YARG_DIFFICULTY_GUIDE[yargDifficultyCategory(mode)];
  if(!entry)return '';
- return entry.intro+' '+(entry[level]||'Choisis un niveau pour savoir à quoi t’attendre.')+' Les partitions peuvent varier selon la chanson.';
+ return (entry[level]||'Choisis un niveau pour savoir à quoi t’attendre.')+' Les partitions peuvent varier selon la chanson.';
 }
 
 const MODE_DESCRIPTIONS={
@@ -170,6 +202,24 @@ function chooseMode(category, priorMode=''){
  return category;
 }
 let members=[];let nextId=0;let bandDirectory=[];let ownBandProfile=null;
+const medalRanks=['wood','bronze','silver','gold','platinum','emerald','diamond','master','grand-master','champion'];
+let directoryMedals=new Map();
+function iconCategory(mode){return mode==='rhythm_guitar'?'guitar':mode==='drums_4lane'||mode==='pro_drums'?'drums':mode==='pro_keys'?'keys':mode}
+function instrumentIcon(account,mode){
+ const category=iconCategory(mode);
+ if(!['guitar','bass','drums','keys','vocals'].includes(category))return 'assets/medals/guitar-fallback.png';
+ const tier=Math.max(0,Math.min(10,Number(directoryMedals.get(account)?.get(category))||0));
+ return tier?'assets/medals/'+category+'-'+String(tier).padStart(2,'0')+'-'+medalRanks[tier-1]+'.png':'assets/medals/'+category+'-fallback.png';
+}
+const instrumentInfo={
+ vocals:'Chant principal ou harmonies. La difficulté des voix est fixée à Moyen.',
+ guitar:YARG_DIFFICULTY_GUIDE.guitar.intro,
+ rhythm_guitar:'Accompagne le morceau avec des riffs et des accords. '+YARG_DIFFICULTY_GUIDE.guitar.intro,
+ bass:YARG_DIFFICULTY_GUIDE.bass.intro,
+ drums:YARG_DIFFICULTY_GUIDE.drums.intro,
+ keys:'Joue la partie de clavier de la chanson.',
+ flex:'Aucun instrument précis réservé : tu prendras une place disponible.'
+};
 // Préférences locales par Rockstar (compte connecté ou nom de scène).
 // Aucune modification des tables Supabase nécessaire.
 const YARG_MEMBER_PREFS_KEY='yarg_song_request_member_preferences_v1';
@@ -220,8 +270,21 @@ function showGuitarPhoto(m,card){
  img.src=path;
  if(img.complete&&img.naturalWidth>0)img.hidden=false;
 }
-async function loadBandDirectory(){try{const c=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);const {data,error}=await c.rpc('yarg_band_directory');if(error)throw error;bandDirectory=(data||[]).sort((a,b)=>a.rockstar_name.localeCompare(b.rockstar_name,'fr',{sensitivity:'base'}));render()}catch(e){console.warn('Annuaire Rockstar indisponible, les invités peuvent entrer leurs noms.',e)}}
-
+async function loadBandDirectory(){
+ try{
+  const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+  const [directory,medals]=await Promise.all([client.rpc('yarg_band_directory'),client.rpc('yarg_band_directory_medals')]);
+  if(directory.error)throw directory.error;
+  bandDirectory=(directory.data||[]).sort((a,b)=>a.rockstar_name.localeCompare(b.rockstar_name,'fr',{sensitivity:'base'}));
+  directoryMedals=new Map();
+  if(medals.error)console.warn('Médailles indisponibles, images de base utilisées :',medals.error);
+  else for(const row of medals.data||[]){
+   if(!directoryMedals.has(row.user_id))directoryMedals.set(row.user_id,new Map());
+   directoryMedals.get(row.user_id).set(row.category,row.tier);
+  }
+  render();
+ }catch(e){console.warn('Annuaire Rockstar indisponible, invités acceptés :',e)}
+}
 
 async function prefillSignedInRockstar(){
  try{
@@ -240,7 +303,7 @@ async function prefillSignedInRockstar(){
 }
 
 const instrumentFamily=mode=>mode==='flex'?'flex':['guitar','rhythm_guitar','bass'].includes(mode)?'guitar':mode==='vocals'?'vocals':mode.startsWith('drums_')||mode==='pro_drums'?'drums':'keys';
-function model(){return {id:++nextId,name:'',mode:options[0]?.[0]||'',difficulty:'',microphone:false,harmony:1,profileId:'',guitarChoice:''}}
+function model(){return {id:++nextId,name:'',guestName:'',mode:options[0]?.[0]||'',difficulty:'',microphone:false,harmony:1,profileId:'',guitarChoice:'',instrumentInfoOpen:false}}
 function counts(){return {guitars:members.filter(m=>instrumentFamily(m.mode)==='guitar').length,drums:members.filter(m=>instrumentFamily(m.mode)==='drums').length,keys:members.filter(m=>instrumentFamily(m.mode)==='keys').length,mics:members.filter(m=>m.mode==='vocals'||m.microphone).length,flex:members.filter(m=>m.mode==='flex').length}}
 const limits={guitars:availableGuitarRoles.length?3:0,drums:song.parts.includes('D')?1:0,keys:song.parts.includes('K')?1:0,mics:vocalParts};
 function freeInstrumentCapacity(c){return (limits.guitars-c.guitars)+(limits.drums-c.drums)+(limits.keys-c.keys)+(limits.mics-c.mics)-c.flex}
@@ -269,12 +332,66 @@ function render(){
   if(members.length>1&&!(i===0&&ownBandProfile)){const remove=document.createElement('button');remove.type='button';remove.className='remove';remove.textContent='Retirer';remove.onclick=()=>{members=members.filter(x=>x!==m);render()};heading.append(remove)}
   const grid=document.createElement('div');grid.className='grid';
   function field(label,el){const wrap=document.createElement('label');wrap.className='field';const span=document.createElement('span');span.textContent=label;wrap.append(span,el);grid.append(wrap);return wrap}
-  const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de rockstar';name.value=m.name;name.readOnly=Boolean(i===0&&ownBandProfile);name.oninput=()=>m.name=name.value;name.onchange=()=>{applyMemberPreferences(m);render()};field('Nom de rockstar *',name);
-  const instrument=document.createElement('select');for(const [value,label] of options){const o=document.createElement('option');o.value=value;o.textContent=label;o.disabled=!allowed(m,chooseMode(value,m.mode));instrument.append(o)}
-  instrument.value=categoryOf(m.mode);
-  instrument.onchange=()=>{const prefs=memberPreferences(m);m.mode=chooseMode(instrument.value,prefs.modes?.[instrument.value]||m.mode);const category=categoryOf(m.mode);m.difficulty=m.mode==='flex'?'any':(prefs.difficulties?.[category]||'');if(m.mode==='flex'){m.microphone=false;m.guitarChoice='';}if(m.mode==='vocals'){m.microphone=false;m.difficulty='medium'}if(['guitar','bass','rhythm_guitar'].includes(category)){m.guitarChoice=guitarNames.some(([value])=>value===prefs.guitar)?prefs.guitar:'';}render()};
-  const instrumentField=field('Partie / instrument *',instrument);
-  if(m.mode==='flex'){const note=document.createElement('small');note.className='mode-note';note.textContent='Flex : aucune partie n’est réservée. Le groupe garde une place disponible pour toi, selon les instruments et micros de la chanson.';instrumentField.append(note)}
+
+  // Account comes first. Only guests need to type a Rockstar name.
+  const account=document.createElement('select');
+  const guest=document.createElement('option');guest.value='';guest.textContent='Sans compte — entrer un nom';account.append(guest);
+  for(const player of bandDirectory){
+   if(player.user_id===ownBandProfile?.user_id&&!(i===0&&m.profileId===ownBandProfile.user_id))continue;
+   const option=document.createElement('option');option.value=player.user_id;option.textContent=player.rockstar_name;account.append(option);
+  }
+  if(m.profileId&&!Array.from(account.options).some(x=>x.value===m.profileId)){
+   const option=document.createElement('option');option.value=m.profileId;option.textContent=m.name||'Compte Rockstar';account.append(option);
+  }
+  account.value=m.profileId||'';
+  account.disabled=Boolean(i===0&&ownBandProfile);
+  account.onchange=()=>{
+   if(!m.profileId)m.guestName=m.name;
+   m.profileId=account.value;
+   const player=bandDirectory.find(x=>x.user_id===m.profileId);
+   m.name=player?player.rockstar_name:(m.guestName||'');
+   if(player)applyMemberPreferences(m);
+   m.instrumentInfoOpen=false;render();
+  };
+  field('Compte Rockstar',account).classList.add('account-first');
+  if(!m.profileId){
+   const name=document.createElement('input');name.maxLength=60;name.required=true;name.placeholder='Nom de Rockstar';
+   name.value=m.name;
+   name.oninput=()=>{m.name=name.value;m.guestName=name.value};
+   name.onchange=()=>{applyMemberPreferences(m);render()};
+   field('Nom de Rockstar *',name).classList.add('account-first');
+  }
+  const chooser=document.createElement('div');chooser.className='instrument-chooser';
+  const label=document.createElement('strong');label.textContent='Instrument *';chooser.append(label);
+  const icons=document.createElement('div');icons.className='instrument-icons';icons.setAttribute('role','group');icons.setAttribute('aria-label','Choisir un instrument');
+  for(const [value,text] of options){
+   const button=document.createElement('button');button.type='button';button.className='instrument-choice';
+   button.title=text;button.setAttribute('aria-label',text);
+   button.setAttribute('aria-pressed',String(categoryOf(m.mode)===value));
+   button.disabled=!allowed(m,chooseMode(value,m.mode));
+   const img=document.createElement('img');img.alt='';img.src=instrumentIcon(m.profileId,value);
+   img.onerror=()=>{img.onerror=null;img.src='assets/medals/'+(value==='rhythm_guitar'?'guitar':value==='flex'?'guitar':value)+'-fallback.png'};
+   button.append(img);
+   button.onclick=()=>{
+    if(categoryOf(m.mode)===value){m.instrumentInfoOpen=!m.instrumentInfoOpen;render();return}
+    const prefs=memberPreferences(m);
+    m.mode=chooseMode(value,prefs.modes?.[value]||m.mode);
+    const cat=categoryOf(m.mode);
+    m.difficulty=m.mode==='flex'?'any':(prefs.difficulties?.[cat]||'');
+    if(m.mode==='flex'){m.microphone=false;m.guitarChoice=''}
+    if(m.mode==='vocals'){m.microphone=false;m.difficulty='medium'}
+    if(['guitar','bass','rhythm_guitar'].includes(cat))m.guitarChoice=guitarNames.some(([k])=>k===prefs.guitar)?prefs.guitar:'';
+    m.instrumentInfoOpen=true;render();
+   };
+   icons.append(button);
+  }
+  chooser.append(icons);grid.append(chooser);
+  if(m.instrumentInfoOpen){
+   const info=document.createElement('div');info.className='instrument-information';
+   const title=document.createElement('strong');title.textContent=options.find(([v])=>v===categoryOf(m.mode))?.[1]||'Instrument';
+   const desc=document.createElement('small');desc.textContent=instrumentInfo[m.mode]||instrumentInfo[categoryOf(m.mode)]||'';
+   info.append(title,desc);grid.append(info);
+  }
   const category=categoryOf(m.mode);
   if(category==='drums'||category==='keys'){
     const variants=category==='drums'?drumModes:keyModes;
@@ -288,17 +405,6 @@ function render(){
   }
   if(m.mode==='vocals')m.difficulty='medium';
   if(m.mode==='flex')m.difficulty='any';
-  // Account association belongs in the heading for the signed-in requester.
-  if(i===0&&ownBandProfile){m.profileId=ownBandProfile.user_id;m.name=ownBandProfile.rockstar_name}
-  else{
-    const profileChoice=document.createElement('select');
-    const none=document.createElement('option');none.value='';none.textContent='Compte non associé (invité)';profileChoice.append(none);
-    for(const entry of bandDirectory.filter(x=>x.user_id!==ownBandProfile?.user_id)){const o=document.createElement('option');o.value=entry.user_id;o.textContent=entry.rockstar_name;profileChoice.append(o)}
-    profileChoice.value=m.profileId;
-    profileChoice.onchange=()=>{m.profileId=profileChoice.value;const match=bandDirectory.find(x=>x.user_id===m.profileId);if(match){m.name=match.rockstar_name;applyMemberPreferences(m);render()}};
-    const wrap=field('Inviter un compte Rockstar (facultatif)',profileChoice);
-    const info=document.createElement('small');info.className='mode-note';info.textContent='Les rockstars invitées confirmeront leur participation depuis Mon Profil.';wrap.append(info);
-  }
   const diff=document.createElement('select');
   const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choisir une difficulté';placeholder.disabled=true;diff.append(placeholder);
   for(const [value,label] of diffOptions){const o=document.createElement('option');o.value=value;o.textContent=label;diff.append(o)}
