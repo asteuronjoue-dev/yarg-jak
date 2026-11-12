@@ -64,6 +64,11 @@
  #yarg-stage-banner [data-party-action=ready]{background:#85eab2;color:#141a22}
  #yarg-stage-banner [data-party-action=leave]{background:#ff7883;color:#141a22}
  #yarg-stage-banner .yarg-stage-actions button{white-space:normal}
+ #yarg-stage-banner.yarg-stage-is-ready{background:#193238;background-image:none;animation:none;border-bottom:2px solid #4fc9b9;padding:10px clamp(10px,3vw,32px)}
+ #yarg-stage-banner.yarg-stage-is-ready .yarg-stage-heading{font-size:clamp(16px,2.5vw,22px)}
+ #yarg-stage-banner.yarg-stage-is-ready .yarg-stage-heading .yarg-rainbow{color:#b2f8dd;-webkit-text-stroke:0;text-shadow:none}
+ #yarg-stage-banner.yarg-stage-is-ready .yarg-stage-heading .yarg-track,#yarg-stage-banner.yarg-stage-is-ready .yarg-stage-details{font-size:13px;margin-top:3px;text-shadow:none;color:#e0f2ef}
+ body.yarg-invite-active #yarg-stage-banner.yarg-stage-is-ready{display:none!important}
  `;
  document.head.append(stageStyle);
  let lastRequestId='',lastAnswer='',working=false,partyPaused=false,presenceSupported=false;
@@ -80,7 +85,7 @@
   const a=document.createElement('div');a.className='yarg-rainbow';a.textContent=message;heading.append(a);
   if(track){const b=document.createElement('div');b.className='yarg-track';b.textContent=track;heading.append(b);}
  }
- function showStageMode(mode){banner.classList.toggle('yarg-stage-is-pause',mode==='pause');actions.hidden=mode!=='next';actions.style.display=mode==='next'?'':'none';pauseActions.hidden=mode!=='pause';pauseActions.style.display=mode==='pause'?'':'none';banner.hidden=false;document.body.classList.add('yarg-stage-visible');syncHeight();}
+ function showStageMode(mode){banner.classList.toggle('yarg-stage-is-ready',mode==='ready');banner.classList.toggle('yarg-stage-is-pause',mode==='pause');actions.hidden=mode!=='next';actions.style.display=mode==='next'?'':'none';pauseActions.hidden=mode!=='pause';pauseActions.style.display=mode==='pause'?'':'none';banner.hidden=false;document.body.classList.add('yarg-stage-visible');syncHeight();}
  function instrumentForRequest(target,all,uid,owned){
   const active=all.filter(m=>String(m.performance_request_id)===String(target.id)&&!m.withdrawn_at);
   let mine=active.find(m=>String(m.rockstar_profile_id||'')===uid||owned.has(String(m.id)));
@@ -107,7 +112,8 @@
   document.dispatchEvent(new CustomEvent('yarg-party-presence-updated',{detail:{action}}));
  }
  function syncHeight(){
-   const height=banner.hidden?0:Math.ceil(banner.getBoundingClientRect().height);
+   const suppressed=document.body.classList.contains('yarg-invite-active')&&banner.classList.contains('yarg-stage-is-ready');
+   const height=banner.hidden||suppressed?0:Math.ceil(banner.getBoundingClientRect().height);
    root.style.setProperty('--yarg-stage-height',height+'px');
    document.body.style.paddingTop=height?height+'px':'';
    // index.html already adds padding for the legacy fixed banner. Disable it.
@@ -158,14 +164,25 @@
      }
      if(!target){hide();return;}
      const uuid=getUuid(target.id);
-     if(target.status!=='playing' && acknowledgedWaiting.has(uuid)){hide();return;}
      if(uuid!==lastRequestId){lastAnswer='';status.textContent='';lastRequestId=uuid;}
+     // The response is stored server-side. Reading it restores the correct banner on every page.
+     let savedReply='';
+     if(target.status!=='playing'){
+       const {data:reply,error:replyError}=await client.rpc('yarg_my_stage_reply',{p_request_id:uuid});
+       if(replyError)throw replyError;
+       savedReply=String(reply||'');
+     }
+     if(target.status!=='playing' && (savedReply==='decline'||savedReply==='later'||(acknowledgedWaiting.has(uuid)&&savedReply!=='ready'))){hide();return;}
      const mine=instrumentForRequest(target,members||[],id,owned);
      const info=stageInstrumentDetail(target,mine,members||[]);
      if(target.status==='playing'){
        renderStageHeading(`${info.emoji} C'est ta toune en ce moment! ${info.emoji}`,`🎶${esc(target.song_title)} • ${esc(target.song_artist)}🎶`);
        details.textContent='🤘 ROCK ON! 🤘';
        status.textContent='';showStageMode('live');
+     }else if(savedReply==='ready'||lastAnswer==='ready'){
+       renderStageHeading('Tu es prêt! Le MC prépare ta chanson.',esc(target.song_title)+' • '+esc(target.song_artist));
+       details.textContent='Reste dans le coin, ça s’en vient!';
+       status.textContent='';showStageMode('ready');
      }else{
        renderStageHeading("C'EST TA TOUNE! READY TO ROCK?",`🎶${esc(target.song_title)} • ${esc(target.song_artist)}🎶`);
        details.textContent=info.label;
@@ -184,13 +201,14 @@
      if(reply==='later'&&presenceSupported)await setPartyPresence('pause');
      else{const {error}=await client.rpc('yarg_respond_stage_call',{p_request_id:lastRequestId,p_reply:reply});if(error)throw error;}
      lastAnswer=reply;
-     if(reply!=='later')acknowledgedWaiting.add(lastRequestId);
+     if(reply==='decline')acknowledgedWaiting.add(lastRequestId);
+     if(reply==='ready')acknowledgedWaiting.delete(lastRequestId);
      status.textContent=reply==='ready'?'✅ Super! Le MC voit que tu es prêt.':reply==='later'?'⏸ Le MC est averti.':'❌ Participation retirée. Ton instrument est libre; le MC est informé.';
      document.dispatchEvent(new CustomEvent('yarg-stage-replied',{detail:{requestId:lastRequestId,reply}}));
-     // No instant reappearance for a postponed bandmate's song.
-     hide();
+     // An acknowledged ready call now changes into the preparation message.
+     if(reply!=='ready')hide();
    }catch(e){console.error('Réponse à l’appel impossible :',e);status.textContent=window.yargErrorMessage?.(e,'Ta réponse n’a pas été enregistrée. Réessaie ou préviens le MC.')||'Ta réponse n’a pas été enregistrée. Réessaie ou préviens le MC.';}
-   finally{working=false;for(const b of actions.querySelectorAll('button'))b.disabled=false;}
+   finally{working=false;for(const b of actions.querySelectorAll('button'))b.disabled=false;refresh();}
  });
  pauseActions.addEventListener('click',async event=>{
   const b=event.target.closest('button[data-party-action]');if(!b||working)return;
@@ -201,6 +219,7 @@
   catch(e){console.error('Disponibilité impossible :',e);status.textContent=window.yargErrorMessage?.(e,'Ta disponibilité n’a pas été modifiée. Réessaie ou préviens le MC.')||'Ta disponibilité n’a pas été modifiée. Réessaie ou préviens le MC.';}
   finally{working=false;for(const btn of pauseActions.querySelectorAll('button'))btn.disabled=false;refresh();}
  });
+ document.addEventListener('yarg-invitation-visibility-changed',syncHeight);
  document.addEventListener('yarg-party-presence-updated',refresh);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
  document.addEventListener('yarg-stage-replied',()=>setTimeout(refresh,700));
