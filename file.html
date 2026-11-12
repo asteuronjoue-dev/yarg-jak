@@ -830,7 +830,7 @@ function openInstruments(r){
  const players=performerEntries(r);
  const occupied=new Set(players.map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=="vocals"));
  const singers=players.filter(m=>m.instrument==="vocals"||m.microphone).length;
- const capacity=Math.max(0,Math.min(3,Number(r.vocal_parts)||0));
+ const capacity=Number(r.vocal_parts)>0?3:0;
  const guitarChoices=new Set(availableGuitarCharts(r.fillable_instruments,players));
  const maxGuitars=(r.available_guitar_roles||[]).length?3:0;
  const maxDrums=(r.available_parts||[]).includes('drums')?1:0;
@@ -884,7 +884,7 @@ function joinFormHtml(r){
  const canSing=instrument!=='flex'&&(Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone);
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instrumentFamily(instrument)==="drums"?"Batterie":instrumentFamily(instrument)==="keys"?"Clavier":instruments[instrument])}</strong>
- <label>Nom de ROCKSTAR 🤘 <input name="rockstar" maxlength="60" required readonly value="${esc(myRockstarName)}" placeholder="Connecte-toi à ton profil" autocomplete="nickname"></label>
+ <label>Nom pour cette prestation <input name="rockstar" maxlength="60" required value="${esc(myRockstarName)}" placeholder="Nom de scène" autocomplete="off"><small>Ton compte, tes points et tes statistiques restent associés à ton profil Rockstar.</small></label>
  ${modeChoice}
  ${vocals||instrument==="flex"?"":`<label>Difficulté <select name="difficulty">${["beginner","easy","medium","hard","expert"].map(d=>`<option value="${d}" ${d===chosenDifficulty?'selected':''}>${esc(difficulties[d])}</option>`).join("")}</select>${yargDifficultyCategory(defaultMode)?`<small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite">${esc(yargDifficultyDescription(defaultMode,chosenDifficulty))}</small>`:''} </label>`}
  ${["guitar","bass","rhythm_guitar"].includes(instrument)?joinGuitarChoices(r):""}
@@ -1263,7 +1263,7 @@ document.addEventListener("submit",async e=>{
   const id=form.dataset.joinRequest, instrument=form.elements.instrument_mode?.value||form.dataset.instrument;
   const singing=instrument==="vocals"||!!form.elements.microphone?.checked;
   const harmony=singing?Number(form.elements.harmony.value):null;
-  let name=myRockstarName||form.elements.rockstar.value.trim();
+  let name=form.elements.rockstar.value.trim();
   const preferredGuitar=form.elements.preferred_guitar?.value||null;
   const message=form.querySelector(".join-message"),submit=form.querySelector(".join-submit");
   if(!name){message.textContent="Entre ton nom de ROCKSTAR.";return}
@@ -1295,8 +1295,8 @@ document.addEventListener("submit",async e=>{
     if(!account?.user){message.textContent='Connecte-toi à ton compte Rockstar pour rejoindre une chanson.';return;}
     const {data:rockstar,error:profileError}=await sb.from('rockstar_profiles').select('rockstar_name').eq('user_id',account.user.id).maybeSingle();
     if(profileError||!rockstar?.rockstar_name){message.textContent='Crée ton profil Rockstar avant de rejoindre une chanson.';return;}
-    name=rockstar.rockstar_name;
-    const existingMe=membersFor(id).some(m=>String(m.rockstar_name||'').trim().toLowerCase()===name.toLowerCase());
+    // Keep the per-song alias; the backend links the member by authenticated user ID.
+    const existingMe=membersFor(id).some(m=>String(m.rockstar_profile_id||'')===account.user.id || String(m.rockstar_name||'').trim().toLowerCase()===name.toLowerCase() || String(m.rockstar_name||'').trim().toLowerCase()===rockstar.rockstar_name.toLowerCase());
     const reqNow=requests.find(r=>String(r.id)===String(id));
     if(existingMe||reqNow?.rockstar_name?.trim().toLowerCase()===name.toLowerCase()){message.textContent="Tu participes déjà à cette chanson.";return;}
     const tokenBytes=crypto.getRandomValues(new Uint8Array(32));
