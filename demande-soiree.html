@@ -235,7 +235,7 @@ function instrumentIcon(account,mode){
  const artwork=mode==='rhythm_guitar'?'rhythm_guitar':category;
  if(!['guitar','bass','drums','keys','vocals'].includes(category))return 'assets/medals/guitar-fallback.png';
  const tier=Math.max(0,Math.min(10,Number(directoryMedals.get(account)?.get(category))||0));
- return tier?'assets/medals/'+artwork+'-'+String(tier).padStart(2,'0')+'-'+medalRanks[tier-1]+'.png':'assets/medals/'+(artwork==='rhythm_guitar'?'guitar':artwork)+'-fallback.png';
+ return tier?'assets/medals/'+artwork+'-'+String(tier).padStart(2,'0')+'-'+medalRanks[tier-1]+'.png':'assets/medals/'+artwork+'-fallback.png';
 }
 const instrumentInfo={
  guitar:YARG_DIFFICULTY_GUIDE.guitar.intro,
@@ -396,7 +396,7 @@ function render(){
     const any=document.createElement('span');any.className='instrument-flex-mark';any.textContent='?';button.append(any);
    }else{
     const img=document.createElement('img');img.alt='';img.src=instrumentIcon(m.profileId,value);
-    img.onerror=()=>{img.onerror=null;img.src='assets/medals/'+(value==='rhythm_guitar'?'guitar':value)+'-fallback.png'};
+    img.onerror=()=>{img.onerror=null;img.src='assets/medals/'+value+'-fallback.png'};
     button.append(img);
    }
    button.onclick=()=>{
