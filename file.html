@@ -260,7 +260,9 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 @media(prefers-reduced-motion:reduce){.queue-state--mine,.queue-state--joined{animation:none}}
 .queue-state--open{color:#fff;background:#08732b;border:0}
 .queue-state--closed{color:#fff;background:#bb102e;border:0}
-.queue-band-highlight{color:#ffdbb9;font-weight:950;font-size:15px;overflow-wrap:anywhere}
+.queue-band-highlight{color:#ffdbb9;font-weight:950;font-size:15px;overflow-wrap:anywhere;min-width:0;line-height:1.25;align-self:center}
+.queue-card-top>.queue-state,.queue-card-top>.queue-band-highlight{display:inline-flex;align-items:center;min-height:34px;box-sizing:border-box}
+@media(max-width:650px){.queue-card-top{align-items:center}}
 .queue-card .band-name{color:#ffc084}
 .history-card{padding:22px}
 .history-card::before{background:#71858d;width:6px}
@@ -321,6 +323,18 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 }
 @keyframes yargMyPerformerRainbow{
   to{background-position:0 0,300% 0}
+}
+/* Reserve exactly the same inset for bandmates; the rainbow border no longer offsets your medal. */
+.member.yarg-performer-row:not(.yarg-performer-row--mine){
+  border:2px solid transparent;
+  padding:5px 8px;
+}
+/* Clickable medal buttons and plain fallback icons share an identical 36px column. */
+.yarg-performer-row .yarg-member-medal-button{
+  width:36px;height:36px;min-width:36px;min-height:36px;flex:0 0 36px;
+}
+.yarg-performer-row>.yarg-member-medal{
+  width:36px;height:36px;box-sizing:border-box;padding:3px;flex:0 0 36px;
 }
 .member.yarg-performer-row--mine .yarg-performer-name>b{color:#fff}
 @media(prefers-reduced-motion:reduce){
