@@ -470,7 +470,7 @@ function applyAdminPartyMode(s){document.body.classList.toggle('party-mode',part
 function notice(text,error=false){$('notice').textContent=text;$('notice').className='notice '+(error?'error':'ok');}
 function fmt(seconds){const s=Math.max(0,Number(seconds)||0);return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
 function membersFor(r){const m=(snapshot.members||[]).filter(x=>x.performance_request_id===r.id&&!x.withdrawn_at);if(r.is_group_request)return m;return [...(!r.requester_withdrawn_at?[{rockstar_name:r.rockstar_name,instrument_mode:r.requester_instrument_mode||r.requester_instrument,microphone:r.requester_microphone,difficulty:r.requester_difficulty,rockstar_profile_id:r.requester_profile_id}]:[]),...m]}
-function part(mode){return ({guitar:'Guitare',rhythm_guitar:'Guitare rythmique',bass:'Basse',vocals:'Voix',drums:'Batterie',drums_4lane:'Batterie - 4-Lane',pro_drums:'Batterie - Pro Drums',keys:'Keys - 5-Lane',pro_keys:'Keys - Pro Keys',flex:'Flex'})[mode]||mode||'—';}
+function part(mode){return ({guitar:'Guitare',rhythm_guitar:'Guitare rythmique',bass:'Basse',vocals:'Voix',drums:'Batterie',drums_4lane:'Batterie - 4-Lane',pro_drums:'Batterie - Pro Drums',keys:'Keys - 5-Lanes',pro_keys:'Keys - Pro Keys',flex:'Flex'})[mode]||mode||'—';}
 function yargReplyFor(r,name,userId){
  const who=String(name||'').trim().toLocaleLowerCase();
  if(pausedRockstarFor(r,name))return '<span class="yarg-reply later">⏸ Pas prêt</span>';
