@@ -179,7 +179,7 @@
        renderStageHeading(`${info.emoji} C'est ta toune en ce moment! ${info.emoji}`,`🎶${esc(target.song_title)} • ${esc(target.song_artist)}🎶`);
        details.textContent='🤘 ROCK ON! 🤘';
        status.textContent='';showStageMode('live');
-     }else if(savedReply==='ready'||lastAnswer==='ready'){
+     }else if(savedReply==='ready'){
        renderStageHeading('Tu es prêt! Le MC prépare ta chanson.',esc(target.song_title)+' • '+esc(target.song_artist));
        details.textContent='Reste dans le coin, ça s’en vient!';
        status.textContent='';showStageMode('ready');
