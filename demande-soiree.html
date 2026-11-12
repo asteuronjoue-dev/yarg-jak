@@ -151,7 +151,7 @@ const vocalParts=hasVocals?Math.max(1,Math.min(3,song.vocals||1)):0;
 const availableParts=[...(hasVocals?['vocals']:[]),...(song.parts.includes('G')?['guitar']:[]),...(song.parts.includes('B')?['bass']:[]),...(song.parts.includes('D')?['drums']:[]),...(song.parts.includes('K')?['keys']:[])];
 const options=[...(hasVocals?[['vocals','Voix / harmonies']]:[]),...(availableGuitarRoles.includes('guitar')?[['guitar','Guitare']]:[]),...(availableGuitarRoles.includes('rhythm_guitar')?[['rhythm_guitar','Guitare rythmique']]:[]),...(availableGuitarRoles.includes('bass')?[['bass','Basse']]:[]),...(song.parts.includes('D')?[['drums','Batterie']]:[]),...(song.parts.includes('K')?[['keys','Clavier']]:[]),...(availableParts.length?[['flex','Peu importe']]:[])];
 const drumModes=[...(song.parts.includes('D')?[['drums_4lane','4-Lane']]:[]),...(chartGroup(5)>0?[['pro_drums','Pro Drums']]:[])];
-const keyModes=[...(song.parts.includes('K')?[['keys','Keys - 5-Lane']]:[]),...(chartGroup(7)>0?[['pro_keys','Keys - Pro Keys']]:[])];
+const keyModes=[...(song.parts.includes('K')?[['keys','Keys - 5-Lanes']]:[]),...(chartGroup(7)>0?[['pro_keys','Keys - Pro Keys']]:[])];
 const diffOptions=[['beginner','Débutant'],['easy','Facile'],['medium','Moyen'],['hard','Difficile'],['expert','Expert']];
 
 /* Repères rapides pour choisir sa difficulté. */
@@ -196,7 +196,7 @@ function yargDifficultyDescription(mode,level){
 const MODE_DESCRIPTIONS={
  drums_4lane:'Quatre pistes de couleur : tu frappes les pads de la batterie. Pas besoin de distinguer les cymbales.',
  pro_drums:'Les cymbales et les pads ont des notes distinctes : une partie plus proche d’une vraie batterie.',
- keys:'Keys - 5-Lane : cinq touches colorées, comme sur une guitare de Rock Band.',
+ keys:'Keys - 5-Lanes : cinq touches colorées, comme sur une guitare de Rock Band.',
  pro_keys:'Keys - Pro Keys : davantage de touches et de notes, comme sur un vrai clavier.'
 };
 function categoryOf(mode){return mode==='drums_4lane'||mode==='pro_drums'?'drums':mode==='keys'||mode==='pro_keys'?'keys':mode}
