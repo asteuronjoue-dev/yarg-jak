@@ -138,6 +138,7 @@ header{align-items:flex-start;margin-bottom:27px;padding-bottom:19px}
 .legacy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .legacy-form{display:flex;align-items:end;gap:8px;border:1px solid #354047;background:#171d20;border-radius:10px;padding:12px}
 .legacy-form label{flex:1;min-width:0;margin:0;font-size:.83rem}
+.legacy-form small{display:block;font-size:.74rem;line-height:1.35;color:#b7c5cb;margin-top:4px;font-weight:500}
 .legacy-form input{display:block;width:100%;min-width:0;margin-top:6px}
 .legacy-form button{flex:0 0 auto;font-size:.8rem;padding:10px}
 .old-guard-choice{display:flex;gap:10px;align-items:center;margin:16px 0 0;color:#e9d2a0;font-weight:800}
@@ -678,7 +679,18 @@ function libraryRequestVisible(item){
  const time=Date.parse(date);
  return !Number.isFinite(time)||Date.now()-time>=ZOMBIE_WAIT_MS;
 }
-const creditMetrics=[["parties","Soirées antérieures"],["played","Chansons terminées"],["guitar","Guitare / Rythmique"],["bass","Basse"],["drums","Batterie"],["keys","Clavier"],["vocals","Voix"],["stage_minutes","Minutes sur scène"],["confirmed_additions","Ajouts à la bibliothèque"],["library_requests","Demandes de bibliothèque"]];
+const creditMetrics=[
+ ["parties","Soirées antérieures","Titres de présence"],
+ ["played","Chansons terminées","Statistique uniquement : pas de titre pour ce total"],
+ ["guitar","Guitare / Rythmique","Médailles de guitare"],
+ ["bass","Basse","Médailles de basse"],
+ ["drums","Batterie","Médailles de batterie"],
+ ["keys","Clavier","Médailles de clavier"],
+ ["vocals","Voix","Médailles de voix"],
+ ["stage_minutes","Minutes sur scène","Titres de temps sur scène"],
+ ["confirmed_additions","Chansons confirmées et ajoutées","Titres de demandes spéciales"],
+ ["library_requests","Demandes de chansons soumises","Statistique uniquement : ne débloque pas les titres de demandes spéciales"]
+];
 // Destruction des archives : RPC propriétaire, transaction atomique et confirmation du nom.
 let ownerSessionsBusy=false;
 async function loadArchivedSessions(){
@@ -755,10 +767,10 @@ function drawOwner(){
  $('owner-players').innerHTML=ownerData.players.length?ownerData.players.map(p=>{
   const credits=ownerData.credits.filter(c=>c.user_id===p.user_id);
   const current=m=>Number(credits.find(c=>c.metric===m)?.amount||0);
-  const metrics=creditMetrics.map(([metric,label])=>`<form class="legacy-form" data-credit-user="${esc(p.user_id)}" data-credit-metric="${esc(metric)}"><label>${esc(label)}<input type="number" name="amount" min="0" max="1000000" step="1" value="${current(metric)}" required></label><button type="submit">Enregistrer</button></form>`).join('');
+  const metrics=creditMetrics.map(([metric,label,description])=>`<form class="legacy-form" data-credit-user="${esc(p.user_id)}" data-credit-metric="${esc(metric)}"><label>${esc(label)}<small>${esc(description)}</small><input type="number" name="amount" min="0" max="1000000" step="1" value="${current(metric)}" required></label><button type="submit">Enregistrer</button></form>`).join('');
   const oldGuard=ownerData.oldGuard.includes(p.user_id);
   const titleChoices=ownerData.titles.filter(t=>t.code!=='vieille_garde'||oldGuard);
-  return `<details class="owner-item owner-rockstar-details" data-rockstar-id="${esc(p.user_id)}" ${expandedOwnerRockstars.has(String(p.user_id))?'open':''}><summary><strong>${esc(p.rockstar_name)}</strong></summary><div class="owner-rockstar-body"><div class="owner-item-fields"><label>Privilège Initié<select data-initie-for="${esc(p.user_id)}">${ownerSelect([['auto','Automatique'],['yes','Accorder'],['no','Retirer']],p.manual_initie===true?'yes':p.manual_initie===false?'no':'auto')}</select></label><label>Titre affiché<select data-title-for="${esc(p.user_id)}">${ownerSelect([['','Aucun'],...titleChoices.map(t=>[t.code,t.label])],p.equipped_title||'')}</select></label></div><label class="old-guard-choice"><input type="checkbox" data-old-guard-for="${esc(p.user_id)}" ${oldGuard?'checked':''}> 🏅 La Vieille Garde — titre secret (ancien du setup)</label><details class="legacy-details"><summary>Crédits historiques d’exploits</summary><p class="help">Ajoute les participations de soirées antérieures non comptées automatiquement (y compris la dernière soirée si aucune performance n’a été enregistrée). Ne crédite pas deux fois une même présence. Chaque valeur est un supplément aux statistiques réelles, pas leur total. Les titres se débloquent à la prochaine visite du profil.</p><div class="legacy-grid">${metrics}</div></details></div></details>`;
+  return `<details class="owner-item owner-rockstar-details" data-rockstar-id="${esc(p.user_id)}" ${expandedOwnerRockstars.has(String(p.user_id))?'open':''}><summary><strong>${esc(p.rockstar_name)}</strong></summary><div class="owner-rockstar-body"><div class="owner-item-fields"><label>Privilège Initié<select data-initie-for="${esc(p.user_id)}">${ownerSelect([['auto','Automatique'],['yes','Accorder'],['no','Retirer']],p.manual_initie===true?'yes':p.manual_initie===false?'no':'auto')}</select></label><label>Titre affiché<select data-title-for="${esc(p.user_id)}">${ownerSelect([['','Aucun'],...titleChoices.map(t=>[t.code,t.label])],p.equipped_title||'')}</select></label></div><label class="old-guard-choice"><input type="checkbox" data-old-guard-for="${esc(p.user_id)}" ${oldGuard?'checked':''}> 🏅 La Vieille Garde — titre secret (ancien du setup)</label><details class="legacy-details"><summary>Crédits historiques d’exploits</summary><p class="help">Ajoute les participations de soirées antérieures non comptées automatiquement (y compris la dernière soirée si aucune performance n’a été enregistrée). Ne crédite pas deux fois une même présence. Chaque valeur est un supplément aux statistiques réelles, pas leur total. Les crédits de demandes soumises et de chansons terminées changent les statistiques, pas les titres. Les titres se débloquent à la prochaine visite du profil.</p><div class="legacy-grid">${metrics}</div></details></div></details>`;
  }).join(''):'<p class="muted">Aucun profil Rockstar inscrit.</p>';
  const pending=ownerData.library.filter(l=>l.status==='pending').length;
  const badge=$('owner-library-pending');
