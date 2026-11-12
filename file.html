@@ -615,7 +615,7 @@ function isMyPerformance(r){return isOwnSong(r)||!!myBandMember(r);}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie 4-Lane",pro_drums:"Pro Drums",keys:"Clavier 5-Lane",pro_keys:"Pro Keys",flex:"Flex"};
+const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie - 4-Lane",pro_drums:"Batterie - Pro Drums",keys:"Keys - 5-Lane",pro_keys:"Keys - Pro Keys",flex:"Flex"};
 const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
 
 /* Descriptions indicatives : les partitions varient selon la chanson. */
@@ -654,7 +654,7 @@ function yargDifficultyCategory(mode){
 function yargDifficultyDescription(mode,level){
  const entry=YARG_DIFFICULTY_GUIDE[yargDifficultyCategory(mode)];
  if(!entry)return '';
- return entry.intro+' '+(entry[level]||'Choisis un niveau pour savoir à quoi t’attendre.')+' Les partitions peuvent varier selon la chanson.';
+ return entry.intro+' '+(entry[level]||'Choisis un niveau pour savoir à quoi t’attendre.');
 }
 
 // Personal defaults per logged-in Rockstar, stored only on this browser.
