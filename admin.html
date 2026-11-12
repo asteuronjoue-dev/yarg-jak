@@ -242,6 +242,64 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 #band-visibility-section .band-visibility-item input{flex:0 0 20px;width:20px;height:20px;margin:0}
 #band-visibility-section .band-visibility-item span{min-width:0;overflow-wrap:anywhere}
 #band-visibility-status{min-height:22px;margin-top:12px}
+
+/* YARG shared visual language: catalogue-inspired glow, flat charcoal panels and orange active actions. */
+html{background:#101214}
+body.yarg-unified-page{
+  background:
+    radial-gradient(ellipse 55% 430px at 0% 0%,rgba(255,138,36,.065),transparent 75%),
+    radial-gradient(ellipse 55% 430px at 100% 0%,rgba(31,200,189,.055),transparent 75%),
+    #101214!important;
+  background-image:
+    radial-gradient(ellipse 55% 430px at 0% 0%,rgba(255,138,36,.065),transparent 75%),
+    radial-gradient(ellipse 55% 430px at 100% 0%,rgba(31,200,189,.055),transparent 75%)!important;
+  background-repeat:no-repeat!important;
+  color:#f5f7f8;
+  min-height:100vh;
+}
+.yarg-page-header{
+  display:block!important;
+  position:relative;
+  box-sizing:border-box;
+  width:100%;
+  margin:0!important;
+  padding:24px clamp(16px,3vw,35px) 20px!important;
+  background:
+    radial-gradient(circle at 10% 0%,rgba(255,138,36,.15),transparent 34%),
+    radial-gradient(circle at 90% 0%,rgba(31,200,189,.14),transparent 34%),
+    #101214;
+  border:0!important;
+  border-bottom:1px solid #30383d!important;
+}
+.yarg-page-header-inner{
+  width:100%;max-width:1110px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:14px 20px;
+}
+.yarg-page-header h1{
+  flex:1 1 260px;min-width:0;
+  font-size:clamp(28px,5vw,46px);
+  font-weight:950;letter-spacing:-.035em;line-height:1.13;
+  margin:0;
+}
+.yarg-page-header .yarg-navigation{margin:0}
+.yarg-page-header .yarg-navigation a{font-weight:800}
+@media(max-width:700px){
+ .yarg-page-header{padding:18px 15px 17px!important}
+ .yarg-page-header-inner{gap:13px}
+ .yarg-page-header h1{flex:1 1 100%}
+ .yarg-page-header .yarg-navigation{
+   width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+   gap:7px;
+ }
+ .yarg-page-header .yarg-navigation a{
+   min-width:0;min-height:40px;text-align:center;
+   padding:9px 6px;font-size:.8rem;white-space:normal;
+ }
+}
+
+.yarg-admin-intro{margin:0 0 24px;max-width:740px;font-size:.96rem;color:#b9c5cb}
+@media(max-width:700px){main{padding-top:19px}}
 </style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
@@ -251,9 +309,15 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .mc-preflight-list label{display:flex;align-items:flex-start;gap:10px;line-height:1.5;cursor:pointer}
 .mc-preflight-list input{width:20px;height:20px;flex-shrink:0;margin:2px 0;accent-color:var(--teal,#1fc8bd)}
 .mc-preflight-list input:checked+span{color:#acbbc2}
-</style></head><body><main>
-<header><strong>🎤 YARG • Régie MC</strong><nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav></header>
-<h1 id="admin-party-heading">Régie de la soirée</h1><p>Contrôle la scène et la file de la soirée. La Scène et l’Historique ne s’actualisent plus automatiquement pendant que tu manipules les prestations. Utilise « Actualiser » au besoin.</p>
+</style></head><body class="yarg-unified-page">
+<header class="yarg-page-header">
+  <div class="yarg-page-header-inner">
+    <h1 id="admin-party-heading">Régie de la soirée</h1>
+    <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden aria-current="page">Régie MC</a></nav>
+  </div>
+</header>
+<main>
+<p class="yarg-admin-intro">Contrôle la scène et la file de la soirée. La Scène et l’Historique ne s’actualisent plus automatiquement pendant que tu manipules les prestations. Utilise « Actualiser » au besoin.</p>
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
 <section id="auth" class="card" hidden><h2>Connexion du MC</h2><p>Connecte-toi avec le courriel et le mot de passe de ton compte MC autorisé.</p><form id="sign-in"><label>Adresse courriel<input name="email" type="email" autocomplete="email" placeholder="mc@exemple.com" required></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary">Se connecter</button></form><p class="help">Le compte doit être ajouté à la liste des MC via le script SQL. Cette page n'accepte pas le simple fait de connaître son URL.</p></section>
 <section id="forbidden" class="card" hidden><h2>Accès réservé</h2><p>Ce compte n'est pas autorisé à gérer la soirée. Connecte-toi avec l'adresse du MC.</p><button id="sign-out-forbidden">Changer de compte</button></section>
