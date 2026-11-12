@@ -159,8 +159,8 @@ function openPasswordRecovery(userId){
 function message(s,bad=false){$('notice').textContent=s;$('notice').className='notice '+(bad?'error':'ok');}
 function safeName(s){return (s||'').trim();}
 function isRegistered(user){return !!user && user.is_anonymous !== true && user.app_metadata?.provider !== 'anonymous';}
-const metrics={played:'Prestations terminées',parties:'Soirées jouées',stage_minutes:'Minutes sur scène',library_requests:'Demandes bibliothèque',guitar:'Guitare',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix'};
-const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Demandes spéciales'};
+const metrics={played:'Prestations terminées',parties:'Soirées jouées',stage_minutes:'Minutes sur scène',confirmed_additions:'Ajouts confirmés à la bibliothèque',library_requests:'Demandes de bibliothèque',guitar:'Guitare',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix'};
+const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Ajouts à la bibliothèque'};
 const titleIcons={guitar:'🎸',bass:'🎸',drums:'🥁',keys:'🎹',vocals:'🎤',attendance:'🌟',stage:'⏱️',library:'🎵'};
 const medalRanks=['wood','bronze','silver','gold','platinum','emerald','diamond','master','grand-master','champion'];
 const medalCategories=new Set(['guitar','bass','drums','keys','vocals']);
@@ -232,7 +232,7 @@ async function fetchStats(){
  pendingUnlocks.push(...[...new Set(newly)].filter(code=>names.has(code)&&!pendingUnlocks.includes(code)));
 }
 
-function renderStats(){const list=['played','parties','stage_minutes','guitar','bass','drums','keys','vocals','library_requests'];$('stats').replaceChildren();for(const metric of list){const box=document.createElement('div');box.className='stat';const strong=document.createElement('strong');strong.textContent=String(state.progress[metric]||0);const label=document.createElement('span');label.textContent=metrics[metric];box.append(strong,label);$('stats').append(box)}}
+function renderStats(){const list=['played','parties','stage_minutes','guitar','bass','drums','keys','vocals','confirmed_additions','library_requests'];$('stats').replaceChildren();for(const metric of list){const box=document.createElement('div');box.className='stat';const strong=document.createElement('strong');strong.textContent=String(state.progress[metric]||0);const label=document.createElement('span');label.textContent=metrics[metric];box.append(strong,label);$('stats').append(box)}}
 function titleNode(tag,className,text){
  const el=document.createElement(tag);if(className)el.className=className;if(text!==undefined)el.textContent=text;return el;
 }
@@ -274,7 +274,7 @@ function renderTitles(){
  const grid=titleNode('div','yarg-title-grid');
  for(const tiers of groups.values()){
   tiers.sort((a,b)=>Number(a.threshold||0)-Number(b.threshold||0)||Number(a.sort_order||0)-Number(b.sort_order||0));
-  if(['attendance','stage','library'].includes(tiers[0]?.category))tiers.splice(5);
+  // Preserve upper ranks (Maître, Grand maître, Champion) for every achievement category.
   const earned=tiers.filter(t=>state.unlocked.has(t.code)&&titleProgress(t).value>=Number(t.threshold||1));
   const current=earned[earned.length-1],next=tiers.find(t=>!earned.includes(t));
   const category=tiers[0].category;
