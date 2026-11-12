@@ -162,21 +162,21 @@ function isRegistered(user){return !!user && user.is_anonymous !== true && user.
 const metrics={played:'Prestations terminées',parties:'Soirées jouées',stage_minutes:'Minutes sur scène',library_requests:'Demandes bibliothèque',guitar:'Guitare',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix'};
 const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Demandes spéciales'};
 const titleIcons={guitar:'🎸',bass:'🎸',drums:'🥁',keys:'🎹',vocals:'🎤',attendance:'🌟',stage:'⏱️',library:'🎵'};
-const medalRanks=['bronze','argent','or','platine','diamant','maitre','grand-maitre','champion'];
+const medalRanks=['wood','bronze','silver','gold','platinum','emerald','diamond','master','grand-master','champion'];
 const medalCategories=new Set(['guitar','bass','drums','keys','vocals']);
 const useCustomMedals=true; // PNG manquants : retour automatique aux icônes d’instrument classiques.
 function medalIconUrl(category,level){
  if(!useCustomMedals||!medalCategories.has(category))return '';
- const rank=Math.max(1,Math.min(8,Number(level)||1));
- return 'assets/médailles/'+category+'-'+String(rank).padStart(2,'0')+'-'+medalRanks[rank-1]+'.png';
+ const rank=Math.max(1,Math.min(10,Number(level)||1));
+ return 'assets/medals/'+category+'-'+String(rank).padStart(2,'0')+'-'+medalRanks[rank-1]+'.png';
 }
 // Icônes de secours locales, fournies par Jak. Ne jamais les lire depuis index.html.
 const instrumentIconSources={
- guitar:'assets/médailles/guitar-fallback.png',
- bass:'assets/médailles/bass-fallback.png',
- drums:'assets/médailles/drums-fallback.png',
- keys:'assets/médailles/keys-fallback.png',
- vocals:'assets/médailles/vocals-fallback.png'
+ guitar:'assets/medals/guitar-fallback.png',
+ bass:'assets/medals/bass-fallback.png',
+ drums:'assets/medals/drums-fallback.png',
+ keys:'assets/medals/keys-fallback.png',
+ vocals:'assets/medals/vocals-fallback.png'
 };
 const roleTitles=[{code:'role_admin',label:'✪ Admin',category:'secret',metric:'owner_only',threshold:1,sort_order:1},{code:'role_mc',label:'🎙 MC',category:'secret',metric:'owner_only',threshold:1,sort_order:2}];
 const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Vous étiez là au tout début.',initie:'Effet permanent : débute chaque soirée à −1 pt pour donner la priorité à ta première chanson.'};
