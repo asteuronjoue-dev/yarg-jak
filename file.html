@@ -307,6 +307,66 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-performer-detail{font-size:11px;color:#bad5d9;font-weight:800;border-radius:7px;background:#21333b;border:1px solid #3c555f;padding:3px 5px;white-space:nowrap}
 .yarg-performer-own-difficulty{font-size:11px;color:#bac7cc;font-weight:750;white-space:nowrap}
 @media(max-width:550px){.member.yarg-performer-row{gap:6px 8px}.yarg-guitar-thumbnail{height:33px;width:50px}}
+
+/* Highlight the signed-in Rockstar's entry, including in group songs and party history. */
+.member.yarg-performer-row--mine{
+  border:2px solid transparent;
+  border-radius:12px;
+  padding:5px 8px;
+  background:
+    linear-gradient(#1b252c,#1b252c) padding-box,
+    linear-gradient(110deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e) border-box;
+  background-size:100% 100%,300% 100%;
+  animation:yargMyPerformerRainbow 5s linear infinite;
+}
+@keyframes yargMyPerformerRainbow{
+  to{background-position:0 0,300% 0}
+}
+.member.yarg-performer-row--mine .yarg-performer-name>b{color:#fff}
+@media(prefers-reduced-motion:reduce){
+  .member.yarg-performer-row--mine{animation:none;background-position:0 0,0 0}
+}
+/* Editing controls stay small until the Rockstar opens the form. */
+.member-editor.member-editor--compact{
+  border:0;
+  padding:0;
+  margin:7px 0 0;
+  background:transparent;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+}
+.member-editor--compact .member-editor-tools{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:center;
+  gap:6px;
+}
+.member-editor--compact .member-editor-tools button{
+  margin:0;
+  padding:6px 10px;
+  min-height:34px;
+  border-radius:8px;
+  font-size:12px;
+  line-height:1.2;
+  font-weight:800;
+}
+.member-editor--compact .member-editor-tools [data-band-edit]{
+  background:#233e40;
+  border-color:#456f70;
+  color:#c9fff2;
+}
+.member-editor--compact .member-editor-tools [data-band-leave]{
+  background:#37252c;
+  border-color:#75434c;
+  color:#ffc9cf;
+}
+.member-editor--compact .band-change-form{
+  width:100%;
+  margin-top:10px;
+  align-self:stretch;
+}
 </style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
@@ -633,6 +693,21 @@ function performerEntries(r){
   });
 }
 
+
+function isMyPerformerEntry(r,m){
+ if(IS_PUBLIC_DISPLAY||!myAuthId||!m)return false;
+ const uid=String(myAuthId);
+ // Linked accounts identify the Rockstar even when a member has no profile ID.
+ if(String(m.rockstar_profile_id||'')===uid || (m.id&&myAccountMemberIds.has(String(m.id))))return true;
+ const ownsRequest=!r.requester_withdrawn_at &&
+   (String(r.requester_profile_id||'')===uid||String(r.guest_user_id||'')===uid);
+ if(!ownsRequest)return false;
+ // Legacy solo requests don't always have a matching performance_members row.
+ if(!m.id&&!r.is_group_request)return true;
+ // A group creator may have an unlinked row; never highlight unrelated bandmates.
+ const creator=String(r.rockstar_name||'').trim().toLocaleLowerCase();
+ return !!creator && String(m.rockstar_name||'').trim().toLocaleLowerCase()===creator;
+}
 function tidyEquippedTitle(label){
  const text=String(label||'').trim();
  if(/^(?:✦\\s*)?(?:✪\\s*)?admin(?:✨)?$/i.test(text))return '✪ Admin';
@@ -640,9 +715,9 @@ function tidyEquippedTitle(label){
  if(/^(?:✦\\s*)?initié$/i.test(text))return '✦ Initié';
  return text.startsWith('✦')?text:'✦ '+text;
 }
-function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuitar,profileId,paused=false,ready=false){
+function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuitar,profileId,paused=false,ready=false,owned=false){
  const title=equippedTitles.get(String(profileId||''));
- const myRow=!!profileId && !!myAuthId && String(profileId)===String(myAuthId);
+ const myRow=owned || (!IS_PUBLIC_DISPLAY && !!profileId && !!myAuthId && String(profileId)===String(myAuthId));
  const sings=instrument==='vocals'||!!microphone;
  const isGuitar=['guitar','bass','rhythm_guitar'].includes(instrument);
  const guitarLabel=({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[preferredGuitar]||'';
@@ -656,7 +731,7 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  const pauseBadge=paused?'<span class="yarg-member-paused">⏸ Pas prêt</span>':'';
  const readyBadge=!paused&&ready?'<span class="yarg-member-ready" aria-label="Prêt à jouer">Prêt</span>':'';
  const titleHtml=title?`<span class="yarg-equipped-title">${esc(tidyEquippedTitle(title))}</span>`:'';
- return `<div class="member yarg-performer-row">${medalMarkup(name,instrument,microphone,profileId)}<span class="yarg-performer-name"><b>${esc(name)}</b>${titleHtml}</span>${mode}${extraMic}${vocalPart}${guitarThumbnail}${myDifficulty}${pauseBadge}${readyBadge}</div>`;
+ return `<div class="member yarg-performer-row${myRow?' yarg-performer-row--mine':''}">${medalMarkup(name,instrument,microphone,profileId)}<span class="yarg-performer-name"><b>${esc(name)}</b>${titleHtml}</span>${mode}${extraMic}${vocalPart}${guitarThumbnail}${myDifficulty}${pauseBadge}${readyBadge}</div>`;
 }
 function instrumentFamily(i){return ['drums','drums_4lane','pro_drums'].includes(i)?'drums':['keys','pro_keys'].includes(i)?'keys':i;}
 function isGuitarChart(i){return ['guitar','bass','rhythm_guitar'].includes(i)}
@@ -747,7 +822,7 @@ function joinFormHtml(r){
 }
 function cardHtml(r, eta, mine=false, rank=null){
   const performers=performerEntries(r);
-  const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id || (r.is_group_request && m.rockstar_name===r.rockstar_name?r.requester_profile_id:null),pausedMember(r.id,m.rockstar_name),readyMember(r.id,m.id,!r.is_group_request&&!m.id&&!r.requester_withdrawn_at))).join("");
+  const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id || (r.is_group_request && m.rockstar_name===r.rockstar_name?r.requester_profile_id:null),pausedMember(r.id,m.rockstar_name),readyMember(r.id,m.id,!r.is_group_request&&!m.id&&!r.requester_withdrawn_at),isMyPerformerEntry(r,m))).join("");
   const available=openInstruments(r);
   const slots=(myActiveBand(r)?[]:available.filter((i,index,all)=>all.findIndex(j=>instrumentFamily(j)===instrumentFamily(i))===index)).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instrumentFamily(i)==="drums"?"Batterie":instrumentFamily(i)==="keys"?"Clavier":instruments[i])}</button>`).join("");
   const isPlaying=r.status==="playing";
@@ -785,7 +860,7 @@ function cardHtml(r, eta, mine=false, rank=null){
       ${readyControl}
       ${r.yarg_not_ready?'<div class="yarg-held-note">Cette chanson est temporairement en pause et ne sera pas appelée pour le moment.</div>':''}
       ${slots?`<div class="open-slots">${slots}</div>`:''}
-      ${!isPlaying && (accountEditKind(r)|| (myBandMember(r)&&myMemberToken(r))) ? `<div class="member-editor"><strong>🎸 Ta participation</strong><p>Tu peux modifier ton instrument ou quitter ce groupe.</p><button type="button" data-band-edit="${esc(r.id)}">✏️ Modifier</button><button type="button" data-band-leave="${esc(r.id)}">🚪 Quitter le groupe</button>${managing===String(r.id)?bandEditFormHtml(r):''}</div>` : (!isPlaying && myBandMember(r) ? `<div class="member-editor">Cette participation n'est pas reliée à ton compte : demande au MC de la rattacher.</div>` : '')}
+      ${!isPlaying && (accountEditKind(r)|| (myBandMember(r)&&myMemberToken(r))) ? `<div class="member-editor member-editor--compact"><div class="member-editor-tools"><button type="button" data-band-edit="${esc(r.id)}" aria-expanded="${managing===String(r.id)}" aria-controls="band-edit-${esc(r.id)}">✎ Modifier ma participation</button><button type="button" data-band-leave="${esc(r.id)}">Quitter</button></div>${managing===String(r.id)?bandEditFormHtml(r):''}</div>` : (!isPlaying && myBandMember(r) ? `<div class="member-editor">Cette participation n'est pas reliée à ton compte : demande au MC de la rattacher.</div>` : '')}
       ${joinFormHtml(r)}
     </div>
   </article>`;
@@ -801,7 +876,7 @@ function historicalCard(r){
   const playedTime=playedAt&&!Number.isNaN(playedAt.getTime())?formatClock(playedAt):'Heure inconnue';
   const finishedTime=finishedAt&&!Number.isNaN(finishedAt.getTime())?formatClock(finishedAt):'—';
   const requestedTime=requestedAt&&!Number.isNaN(requestedAt.getTime())?formatClock(requestedAt):'—';
-  const people=performers.length?performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id||(r.is_group_request&&m.rockstar_name===r.rockstar_name?r.requester_profile_id:null))).join(''):`<div class='member'>👥 ${esc(names.join(', ')||r.rockstar_name||'Participants inconnus')}</div>`;
+  const people=performers.length?performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id||(r.is_group_request&&m.rockstar_name===r.rockstar_name?r.requester_profile_id:null),false,false,isMyPerformerEntry(r,m))).join(''):`<div class='member'>👥 ${esc(names.join(', ')||r.rockstar_name||'Participants inconnus')}</div>`;
   return `<article class='card history-card'>
     <div class='history-head'><span class='history-number'>#${r._playNumber||'—'}</span><div><div class='song'>${esc(r.song_title||'Chanson')}</div><div class='artist'>${esc(r.song_artist||'Artiste inconnu')}</div></div><div class='history-times'><strong>▶ Jouée à ${esc(playedTime)}</strong><span>Terminée à ${esc(finishedTime)}</span></div></div>
     ${r.band_name?`<div class='history-band'>🤘 ${esc(r.band_name)}</div>`:''}
@@ -1046,10 +1121,10 @@ document.addEventListener('click',async event=>{
 function bandEditFormHtml(r){
  const m=myAccountMember(r) || (myAccountRequester(r)?{instrument:r.requester_instrument,difficulty:r.requester_difficulty,microphone:r.requester_microphone,vocal_harmony:r.vocal_harmony,preferred_guitar:null}:myBandMember(r));if(!m)return '';
  const choices=[...new Set((r.fillable_instruments||[]).concat([m.instrument]))].filter(i=>instruments[i]);
- return `<form class="join-form band-change-form" data-band-change="${esc(r.id)}"><label>Instrument<select name="instrument">${choices.map(i=>`<option value="${esc(i)}" ${m.instrument===i?'selected':''}>${esc(instruments[i])}</option>`).join('')}</select></label><label>Difficulté<select name="difficulty">${Object.entries(difficulties).filter(([i])=>i!=='any').map(([i,label])=>`<option value="${i}" ${m.difficulty===i?'selected':''}>${esc(label)}</option>`).join('')}</select></label><label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label><label><input type="checkbox" name="microphone" ${m.microphone?'checked':''}> Chanter aussi</label><label>Harmonie<select name="harmony">${harmonyOptions(r).replace(`value="${m.vocal_harmony}"`,`value="${m.vocal_harmony}" selected`)}</select></label><button type="submit">Enregistrer</button><button type="button" data-band-cancel>Annuler</button><div class="join-message" role="status"></div></form>`
+ return `<form id="band-edit-${esc(r.id)}" class="join-form band-change-form" data-band-change="${esc(r.id)}"><label>Instrument<select name="instrument">${choices.map(i=>`<option value="${esc(i)}" ${m.instrument===i?'selected':''}>${esc(instruments[i])}</option>`).join('')}</select></label><label>Difficulté<select name="difficulty">${Object.entries(difficulties).filter(([i])=>i!=='any').map(([i,label])=>`<option value="${i}" ${m.difficulty===i?'selected':''}>${esc(label)}</option>`).join('')}</select></label><label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label><label><input type="checkbox" name="microphone" ${m.microphone?'checked':''}> Chanter aussi</label><label>Harmonie<select name="harmony">${harmonyOptions(r).replace(`value="${m.vocal_harmony}"`,`value="${m.vocal_harmony}" selected`)}</select></label><button type="submit">Enregistrer</button><button type="button" data-band-cancel>Annuler</button><div class="join-message" role="status"></div></form>`
 }
 document.addEventListener('click',async e=>{
- const edit=e.target.closest('[data-band-edit]');if(edit){managing=edit.dataset.bandEdit;render();document.querySelectorAll('.band-change-form').forEach(syncBandEditGuitar);return}
+ const edit=e.target.closest('[data-band-edit]');if(edit){managing=managing===edit.dataset.bandEdit?null:edit.dataset.bandEdit;render();document.querySelectorAll('.band-change-form').forEach(syncBandEditGuitar);return}
  const cancel=e.target.closest('[data-band-cancel]');if(cancel){managing=null;render();return}
  const leave=e.target.closest('[data-band-leave]');if(!leave)return;
  const id=leave.dataset.bandLeave,request=requests.find(r=>String(r.id)===String(id)),kind=request&&accountEditKind(request),token=savedBandTokens()[id];if(!kind&&!token){alert('Cette participation doit être reliée à ton compte pour être modifiée.');return}
