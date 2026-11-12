@@ -88,6 +88,8 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
  .yarg-request-header .yarg-page-header-inner{align-items:stretch}
  .yarg-back-catalogue{align-self:flex-start}
 }
+
+.yarg-difficulty-guide{display:block;margin-top:7px;padding:9px 11px;background:#17272d;border:1px solid #34535d;border-left:3px solid #ff8a24;border-radius:9px;color:#d6e5e8;font-size:.81rem;font-weight:500;line-height:1.5;white-space:normal}
 </style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
@@ -115,6 +117,46 @@ const options=[...(hasVocals?[['vocals','Voix / harmonies']]:[]),...(availableGu
 const drumModes=[...(song.parts.includes('D')?[['drums_4lane','4-Lane']]:[]),...(chartGroup(5)>0?[['pro_drums','Pro Drums']]:[])];
 const keyModes=[...(song.parts.includes('K')?[['keys','Keys']]:[]),...(chartGroup(7)>0?[['pro_keys','Pro Keys']]:[])];
 const diffOptions=[['beginner','Débutant'],['easy','Facile'],['medium','Moyen'],['hard','Difficile'],['expert','Expert']];
+
+/* Descriptions indicatives : les partitions varient selon la chanson. */
+const YARG_DIFFICULTY_GUIDE={
+ guitar:{
+  intro:'Guitare : plus exigeante que la basse, avec parfois des accords (plusieurs frettes en même temps).',
+  beginner:'Débutant : pour découvrir les commandes et prendre confiance avant de passer à Facile.',
+  easy:'Facile : surtout vert, rouge et jaune, avec des motifs simples. Accords de deux notes au maximum.',
+  medium:'Moyen : surtout vert, rouge, jaune et bleu. Accords de deux notes au maximum.',
+  hard:'Difficile : les cinq couleurs sont utilisées. Partition simplifiée comparée à Expert; des accords de trois notes commencent à apparaître.',
+  expert:'Expert : toute la chanson, toutes les couleurs et toute la vitesse. Tu risques de souffrir!'
+ },
+ bass:{
+  intro:'Basse : généralement plus facile que la guitare. Presque pas d’accords : surtout une note à la fois.',
+  beginner:'Débutant : pour découvrir les commandes et prendre confiance avant de passer à Facile.',
+  easy:'Facile : surtout vert, rouge et jaune, avec des motifs simples.',
+  medium:'Moyen : surtout vert, rouge, jaune et bleu, avec des motifs un peu plus complexes.',
+  hard:'Difficile : les cinq couleurs sont utilisées. Partition simplifiée comparée à Expert.',
+  expert:'Expert : toute la chanson, toutes les couleurs et toute la vitesse. Tu risques de souffrir!'
+ },
+ drums:{
+  intro:'Batterie : suis le rythme avec les pads et la pédale de grosse caisse.',
+  beginner:'Débutant : pour prendre tes repères avant de passer à Facile.',
+  easy:'Facile : le strict essentiel! Grosse caisse et caisse claire simplifiées, généralement sans ride.',
+  medium:'Moyen : grosse caisse, caisse claire et ride simplifiées, quelques accents et très peu de notes entre les temps (parfois aucune).',
+  hard:'Difficile : une version simplifiée d’Expert qui garde plusieurs passages difficiles.',
+  expert:'Expert : accroche tes bas, ça risque de faire mal!'
+ }
+};
+function yargDifficultyCategory(mode){
+ if(mode==='guitar'||mode==='rhythm_guitar')return 'guitar';
+ if(mode==='bass')return 'bass';
+ if(mode==='drums'||mode==='drums_4lane'||mode==='pro_drums')return 'drums';
+ return '';
+}
+function yargDifficultyDescription(mode,level){
+ const entry=YARG_DIFFICULTY_GUIDE[yargDifficultyCategory(mode)];
+ if(!entry)return '';
+ return entry.intro+' '+(entry[level]||'Choisis un niveau pour savoir à quoi t’attendre.')+' Les partitions peuvent varier selon la chanson.';
+}
+
 const MODE_DESCRIPTIONS={
  drums_4lane:'Quatre pistes de couleur : tu frappes les pads de la batterie. Pas besoin de distinguer les cymbales.',
  pro_drums:'Les cymbales et les pads ont des notes distinctes : une partie plus proche d’une vraie batterie.',
@@ -260,14 +302,20 @@ function render(){
   const diff=document.createElement('select');
   const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choisir une difficulté';placeholder.disabled=true;diff.append(placeholder);
   for(const [value,label] of diffOptions){const o=document.createElement('option');o.value=value;o.textContent=label;diff.append(o)}
-  diff.value=m.difficulty;diff.required=true;diff.onchange=()=>{m.difficulty=diff.value;saveMemberPreferences(m)};
+  diff.value=m.difficulty;diff.required=true;
+   const guide=yargDifficultyCategory(m.mode)?document.createElement('small'):null;
+   if(guide){guide.className='yarg-difficulty-guide';guide.setAttribute('aria-live','polite');guide.textContent=yargDifficultyDescription(m.mode,m.difficulty);}
+   diff.onchange=()=>{m.difficulty=diff.value;saveMemberPreferences(m);if(guide)guide.textContent=yargDifficultyDescription(m.mode,m.difficulty)};
   if(m.mode==='vocals')m.difficulty='medium';
-  if(m.mode!=='vocals'&&m.mode!=='flex'&&category!=='drums'&&category!=='keys')field('Difficulté de l’instrument *',diff);
+  if(m.mode!=='vocals'&&m.mode!=='flex'&&category!=='drums'&&category!=='keys'){
+     const diffField=field('Difficulté de l’instrument *',diff);
+     if(guide)diffField.append(guide);
+   }
   if(category==='drums'||category==='keys'){
     // Place difficulty immediately beside the 4-lane/pro-mode selector.
     const modeField=Array.from(grid.children).find(x=>x.classList.contains('mode-field'));
     const diffField=document.createElement('label');diffField.className='field';
-    const label=document.createElement('span');label.textContent='Difficulté de l’instrument *';diffField.append(label,diff);
+    const label=document.createElement('span');label.textContent='Difficulté de l’instrument *';diffField.append(label,diff);if(guide)diffField.append(guide);
     if(modeField)modeField.after(diffField);
   }
   if(['guitar','rhythm_guitar','bass'].includes(m.mode)){
