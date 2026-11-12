@@ -798,7 +798,9 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  const instrumentIcons=`<span class="yarg-performer-instrument-icons">${medalMarkup(name,instrument,microphone,profileId)}${extraMic}</span>`;
  const modeLabel=instrument==='pro_drums'||instrument==='pro_keys'?'Pro':instrument==='drums_4lane'?'4 voies':instrument==='rhythm_guitar'?'Rythmique':instrument==='flex'?'Flex':'';
  const mode=modeLabel?`<span class="yarg-performer-detail" title="${esc(instruments[instrument]||modeLabel)}">${esc(modeLabel)}</span>`:'';
- const myDifficulty=myRow&&instrument!=='vocals'&&instrument!=='flex'&&difficulty?`<span class="yarg-performer-own-difficulty" title="Ta difficulté">${esc(difficulties[difficulty]||difficulty)}</span>`:'';
+ const difficultySubtype=({drums_4lane:'Drums - 4-Lane',pro_drums:'Drums - Pro Drums',keys:'Keys - 5-Lanes',pro_keys:'Keys - Pro Keys'})[instrument]||'';
+ const difficultyText=[difficultySubtype,difficulties[difficulty]||difficulty].filter(Boolean).join(' · ');
+ const myDifficulty=myRow&&instrument!=='vocals'&&instrument!=='flex'&&difficulty?`<span class="yarg-performer-own-difficulty" title="Ton instrument et ta difficulté">${esc(difficultyText)}</span>`:'';
  const pauseBadge=paused?'<span class="yarg-member-paused">⏸ Pas prêt</span>':'';
  const readyBadge=!paused&&ready?'<span class="yarg-member-ready" aria-label="Prêt à jouer">Prêt</span>':'';
  const titleHtml=title?`<span class="yarg-equipped-title">${esc(tidyEquippedTitle(title))}</span>`:'';
