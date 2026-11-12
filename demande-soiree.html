@@ -322,6 +322,10 @@ async function loadBandDirectory(){
    if(!directoryMedals.has(row.user_id))directoryMedals.set(row.user_id,new Map());
    directoryMedals.get(row.user_id).set(row.category,row.tier);
   }
+  // Once the authenticated identity and history have both loaded, restore the latest playable setup.
+  if(ownBandProfile&&members[0]?.profileId===ownBandProfile.user_id&&!members[0].lastSetupApplied){
+   applyLastPlayedAccountSetup(members[0]);members[0].lastSetupApplied=true;
+  }
   render();
  }catch(e){console.warn('Annuaire Rockstar indisponible, invités acceptés :',e)}
 }
@@ -337,7 +341,9 @@ async function prefillSignedInRockstar(){
   if(profileError||!profile)return;
   if(profile.preferred_band_name&&!$('band-name').value.trim())$('band-name').value=profile.preferred_band_name;
   if(profile.rockstar_name && members.length){
-    ownBandProfile={user_id:user.id,rockstar_name:profile.rockstar_name};members[0].profileId=user.id;members[0].name=profile.rockstar_name;applyMemberPreferences(members[0]);render();
+    ownBandProfile={user_id:user.id,rockstar_name:profile.rockstar_name};members[0].profileId=user.id;members[0].name=profile.rockstar_name;applyMemberPreferences(members[0]);
+    if(lastPlayedByAccount.has(user.id)){applyLastPlayedAccountSetup(members[0]);members[0].lastSetupApplied=true}
+    render();
   }
  }catch(err){console.warn('Préremplissage du profil indisponible',err)}
 }
