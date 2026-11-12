@@ -1722,9 +1722,10 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             const category=img.dataset.rankIcon;
             img.src=rockstarMedalIcons[category]||ICON_SRC[category==='vocals'?'vocal1':category];
           });
-          // Rhythm guitar uses the same earned guitar tier, but its own medal art.
+          // Keep the rhythm-guitar filter visually consistent for every Rockstar.
+          // Earned medal artwork remains available elsewhere on the website.
           const rhythmFilter=document.getElementById('rhythm-filter-icon');
-          if(rhythmFilter)rhythmFilter.src=rockstarMedalIcons.rhythm_guitar||RHYTHM_ICON;
+          if(rhythmFilter)rhythmFilter.src=RHYTHM_ICON;
         }
         async function loadRockstarMedalIcons(user){
           const version=++rockstarMedalLoadVersion;
