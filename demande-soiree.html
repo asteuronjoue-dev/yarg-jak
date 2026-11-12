@@ -99,7 +99,10 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
 .member select,.member input{min-height:40px;padding:9px}
 .member .account-first,.instrument-chooser,.instrument-information,.member .instrument-difficulty-field{grid-column:1/-1}
 .instrument-chooser{min-width:0}
-.instrument-icons{display:flex;gap:7px;flex-wrap:wrap}
+.instrument-icons{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.extra-vocals-choice{margin-left:auto;border-color:#386b83}
+.extra-vocals-choice[aria-pressed="true"]{border-color:#7bc1ff;background:#15334b}
+.member .vocal-only-harmony{grid-column:1/-1}
 .instrument-choice{width:56px;height:55px;flex:0 0 56px;display:grid;place-items:center;padding:3px;background:#202d32;border:1px solid #445862;border-radius:10px}
 .instrument-choice img{width:43px;height:43px;object-fit:contain}
 .instrument-flex-mark{font-size:2rem;font-weight:950;color:#a0d8ce;line-height:1}
@@ -148,10 +151,10 @@ const vocalParts=hasVocals?Math.max(1,Math.min(3,song.vocals||1)):0;
 const availableParts=[...(hasVocals?['vocals']:[]),...(song.parts.includes('G')?['guitar']:[]),...(song.parts.includes('B')?['bass']:[]),...(song.parts.includes('D')?['drums']:[]),...(song.parts.includes('K')?['keys']:[])];
 const options=[...(hasVocals?[['vocals','Voix / harmonies']]:[]),...(availableGuitarRoles.includes('guitar')?[['guitar','Guitare']]:[]),...(availableGuitarRoles.includes('rhythm_guitar')?[['rhythm_guitar','Guitare rythmique']]:[]),...(availableGuitarRoles.includes('bass')?[['bass','Basse']]:[]),...(song.parts.includes('D')?[['drums','Batterie']]:[]),...(song.parts.includes('K')?[['keys','Clavier']]:[]),...(availableParts.length?[['flex','Peu importe']]:[])];
 const drumModes=[...(song.parts.includes('D')?[['drums_4lane','4-Lane']]:[]),...(chartGroup(5)>0?[['pro_drums','Pro Drums']]:[])];
-const keyModes=[...(song.parts.includes('K')?[['keys','Keys']]:[]),...(chartGroup(7)>0?[['pro_keys','Pro Keys']]:[])];
+const keyModes=[...(song.parts.includes('K')?[['keys','Keys - 5-Lane']]:[]),...(chartGroup(7)>0?[['pro_keys','Keys - Pro Keys']]:[])];
 const diffOptions=[['beginner','Débutant'],['easy','Facile'],['medium','Moyen'],['hard','Difficile'],['expert','Expert']];
 
-/* Descriptions indicatives : les partitions varient selon la chanson. */
+/* Repères rapides pour choisir sa difficulté. */
 const YARG_DIFFICULTY_GUIDE={
  guitar:{
   intro:'Guitare : plus exigeante que la basse, avec parfois des accords (plusieurs frettes en même temps).',
@@ -187,14 +190,14 @@ function yargDifficultyCategory(mode){
 function yargDifficultyDescription(mode,level){
  const entry=YARG_DIFFICULTY_GUIDE[yargDifficultyCategory(mode)];
  if(!entry)return '';
- return (entry[level]||'Choisis un niveau pour savoir à quoi t’attendre.')+' Les partitions peuvent varier selon la chanson.';
+ return entry[level]||'Choisis une difficulté.';
 }
 
 const MODE_DESCRIPTIONS={
  drums_4lane:'Quatre pistes de couleur : tu frappes les pads de la batterie. Pas besoin de distinguer les cymbales.',
  pro_drums:'Les cymbales et les pads ont des notes distinctes : une partie plus proche d’une vraie batterie.',
- keys:'Clavier classique : cinq touches au maximum, à partir de la touche la plus à gauche du clavier.',
- pro_keys:'Pro Keys : davantage de touches et de notes à jouer, comme sur un vrai clavier.'
+ keys:'Keys - 5-Lane : cinq touches colorées, comme sur une guitare de Rock Band.',
+ pro_keys:'Keys - Pro Keys : davantage de touches et de notes, comme sur un vrai clavier.'
 };
 function categoryOf(mode){return mode==='drums_4lane'||mode==='pro_drums'?'drums':mode==='keys'||mode==='pro_keys'?'keys':mode}
 function chooseMode(category, priorMode=''){
@@ -213,12 +216,9 @@ function instrumentIcon(account,mode){
  return tier?'assets/medals/'+category+'-'+String(tier).padStart(2,'0')+'-'+medalRanks[tier-1]+'.png':'assets/medals/'+category+'-fallback.png';
 }
 const instrumentInfo={
- vocals:'Chant principal ou harmonies. La difficulté des voix est fixée à Moyen.',
  guitar:YARG_DIFFICULTY_GUIDE.guitar.intro,
  rhythm_guitar:'Accompagne le morceau avec des riffs et des accords. '+YARG_DIFFICULTY_GUIDE.guitar.intro,
  bass:YARG_DIFFICULTY_GUIDE.bass.intro,
- drums:YARG_DIFFICULTY_GUIDE.drums.intro,
- keys:'Joue la partie de clavier de la chanson.',
  flex:'Aucun instrument précis réservé : tu prendras une place disponible.'
 };
 // Préférences locales par Rockstar (compte connecté ou nom de scène).
@@ -390,12 +390,26 @@ function render(){
    };
    icons.append(button);
   }
+  // One optional singing control, on the far right of the instrument icons.
+  if(hasVocals && m.mode!=='vocals' && m.mode!=='flex'){
+    const mic=document.createElement('button');mic.type='button';
+    mic.className='instrument-choice extra-vocals-choice';
+    mic.setAttribute('aria-pressed',String(m.microphone));
+    mic.setAttribute('aria-label',m.microphone?'Ne plus chanter aussi':'Chanter aussi en jouant');
+    mic.title=m.microphone?'Chant activé — cliquer pour retirer':'Chanter aussi';
+    mic.disabled=!m.microphone&&counts().mics>=limits.mics;
+    const image=document.createElement('img');image.src='assets/medals/vocals-fallback.png';image.alt='';
+    mic.append(image);mic.onclick=()=>{m.microphone=!m.microphone;render()};
+    icons.append(mic);
+  }
   chooser.append(icons);grid.append(chooser);
   if(m.instrumentInfoOpen){
    const info=document.createElement('div');info.className='instrument-information';
    const title=document.createElement('strong');title.textContent=options.find(([v])=>v===categoryOf(m.mode))?.[1]||'Instrument';
-   const desc=document.createElement('small');desc.textContent=instrumentInfo[m.mode]||instrumentInfo[categoryOf(m.mode)]||'';
-   info.append(title,desc);grid.append(info);
+   const explanation=instrumentInfo[m.mode]||instrumentInfo[categoryOf(m.mode)]||'';
+   info.append(title);
+   if(explanation){const desc=document.createElement('small');desc.textContent=explanation;info.append(desc)}
+   grid.append(info);
   }
   const category=categoryOf(m.mode);
   if(category==='drums'||category==='keys'){
@@ -445,23 +459,18 @@ function render(){
     }
     choose.append(tiles);grid.append(choose);
   }
-  if(hasVocals&&m.mode!=='flex'){
-    // Microphone button left, vocal part dropdown right, for both vocal-only and instrumentalists.
-    const vocalRow=document.createElement('div');vocalRow.className='vocal-row';
-    const micSlot=document.createElement('div');micSlot.className='mic-wrap';
-    const mic=document.createElement('button');mic.type='button';mic.className='mic-toggle';
-    const isSinger=m.mode==='vocals';const active=isSinger||m.microphone;
-    mic.setAttribute('aria-pressed',String(active));mic.setAttribute('aria-label',isSinger?'Micro pour le chant':active?'Micro activé — désactiver le chant':'Ajouter un micro pour chanter aussi');
-    mic.title=isSinger?'Chant principal':active?'Retirer le micro':'Chanter aussi';
-    mic.disabled=isSinger||(!active&&counts().mics>=3);
-    const image=document.createElement('img');image.src=MIC_ICON;image.alt='';image.setAttribute('aria-hidden','true');mic.append(image);
-    mic.onclick=()=>{m.microphone=!m.microphone;render()};micSlot.append(mic);
-    const info=document.createElement('span');info.className='mic-info';info.textContent=isSinger?'Micro pour le chant':active?'Micro activé':'Chanter aussi';micSlot.append(info);vocalRow.append(micSlot);
-    if(active){const vocalField=document.createElement('label');vocalField.className='field';const title=document.createElement('span');title.textContent='Partie vocale';vocalField.append(title);
-      const harmony=document.createElement('select');for(let n=1;n<=vocalParts;n++){const o=document.createElement('option');o.value=n;o.textContent=n===1?'Chant principal':`Harmonie ${n}`;harmony.append(o)}
-      harmony.value=String(m.harmony<=vocalParts?m.harmony:1);harmony.onchange=()=>m.harmony=Number(harmony.value);vocalField.append(harmony);vocalRow.append(vocalField);
-    }else{const hint=document.createElement('span');hint.className='mic-info';hint.textContent='Appuie sur le micro pour choisir une partie vocale.';vocalRow.append(hint)}
-    grid.append(vocalRow);
+  // Vocal-only players choose harmony; instrumentalists just reserve a mic.
+  if(m.mode==='vocals'&&hasVocals){
+    const vocalField=document.createElement('label');vocalField.className='field vocal-only-harmony';
+    const title=document.createElement('span');title.textContent='Partie vocale';vocalField.append(title);
+    const harmony=document.createElement('select');
+    for(let n=1;n<=vocalParts;n++){
+      const opt=document.createElement('option');opt.value=n;
+      opt.textContent=n===1?'Chant principal':`Harmonie ${n}`;harmony.append(opt);
+    }
+    harmony.value=String(m.harmony<=vocalParts?m.harmony:1);
+    harmony.onchange=()=>m.harmony=Number(harmony.value);
+    vocalField.append(harmony);grid.append(vocalField);
   }
   card.append(heading,grid);host.append(card);
  });
@@ -536,7 +545,7 @@ const err=validate();if(err){status.className='status error';status.textContent=
   const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
   let {data:{session},error:sessErr}=await sb.auth.getSession();if(sessErr)throw sessErr;
   if(!session){const result=await sb.auth.signInAnonymously();if(result.error)throw result.error}
-  const args={p_song_id:song.id,p_song_title:song.title,p_song_artist:song.artist,p_duration_seconds:song.duration,p_band_name:$('band-name').value.trim(),p_members:members.map(m=>({name:m.name.trim(),mode:m.mode,difficulty:m.mode==='vocals'?'medium':m.mode==='flex'?'any':(m.difficulty==='beginner'?'easy':m.difficulty),microphone:m.mode!=='vocals'&&m.mode!=='flex'&&m.microphone,harmony:m.mode==='vocals'||m.microphone?m.harmony:null})),p_guitar_roles:availableGuitarRoles,p_available_parts:availableParts,p_vocal_parts:vocalParts,p_allow_band_fill:$('allow-fill').checked};
+  const args={p_song_id:song.id,p_song_title:song.title,p_song_artist:song.artist,p_duration_seconds:song.duration,p_band_name:$('band-name').value.trim(),p_members:members.map(m=>({name:m.name.trim(),mode:m.mode,difficulty:m.mode==='vocals'?'medium':m.mode==='flex'?'any':(m.difficulty==='beginner'?'easy':m.difficulty),microphone:m.mode!=='vocals'&&m.mode!=='flex'&&m.microphone,harmony:m.mode==='vocals'?m.harmony:null})),p_guitar_roles:availableGuitarRoles,p_available_parts:availableParts,p_vocal_parts:vocalParts,p_allow_band_fill:$('allow-fill').checked};
   // PostgreSQL RPC validates the entire band in one transaction.
   const guitarReservations=members.filter(m=>instrumentFamily(m.mode)==='guitar'&&m.guitarChoice).map(m=>({name:m.name.trim(),mode:m.mode,guitar:m.guitarChoice}));
   const {data,error}=await sb.rpc('yarg_submit_group_request_with_guitars',{...args,p_guitar_reservations:guitarReservations});if(error)throw error;
