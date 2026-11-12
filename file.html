@@ -272,6 +272,26 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .history-people{margin-top:13px;border-top:1px solid var(--line);padding-top:11px}
 .history-extra{font-size:13px;color:#b2c5cb;margin-top:9px}
 @media(max-width:650px){.history-times{align-items:flex-start;width:100%}.queue-card-top{align-items:flex-start}.queue-legend span{font-size:11px}}
+
+.yarg-member-medal{height:30px;width:30px;object-fit:contain;vertical-align:middle}
+.yarg-member-medal-button{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;padding:2px;border:1px solid #546870;border-radius:9px;background:#202d34;cursor:pointer;vertical-align:middle}
+.yarg-member-medal-button:hover,.yarg-member-medal-button:focus-visible{border-color:#79e7d3;outline-offset:2px}
+.yarg-collection-overlay{position:fixed;inset:0;background:#03080ddc;z-index:30000;display:grid;place-items:center;padding:14px}
+.yarg-collection-overlay[hidden]{display:none!important}
+.yarg-collection-dialog{width:min(700px,100%);max-height:85vh;overflow:auto;background:#18252d;border:1px solid #61717b;color:#fff;border-radius:18px;padding:18px;box-shadow:0 20px 70px #000b}
+.yarg-collection-top{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.yarg-collection-top h2{margin:0 0 4px}
+.yarg-collection-top button{border:1px solid #677b84;background:#283a43;color:#fff;border-radius:9px;padding:8px 12px;cursor:pointer}
+.yarg-collection-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:11px;margin-top:17px}
+.yarg-collection-item{background:#1d3039;border:1px solid #455862;border-radius:13px;padding:11px;min-width:0}
+.yarg-collection-identity{display:flex;align-items:center;gap:9px}
+.yarg-collection-identity img{height:55px;width:55px;object-fit:contain;flex:none}
+.yarg-collection-identity b,.yarg-collection-identity small{display:block}
+.yarg-collection-identity small{color:#b7cbd4;margin-top:4px}
+.yarg-collection-bar{height:6px;background:#364951;border-radius:20px;margin-top:11px;overflow:hidden}
+.yarg-collection-bar>span{height:100%;background:#65e0bd;display:block}
+.yarg-collection-count{color:#c5d5da;font-size:12px;margin-top:8px}
+@media(max-width:550px){.yarg-collection-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.yarg-collection-item{padding:8px}.yarg-collection-identity img{height:39px;width:39px}.yarg-collection-dialog{padding:12px}}
 </style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
@@ -361,6 +381,13 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
   </details>
 </main>
 
+<div id="yarg-collection-overlay" class="yarg-collection-overlay" hidden>
+ <section class="yarg-collection-dialog" role="dialog" aria-modal="true" aria-labelledby="yarg-collection-name" tabindex="-1">
+  <div class="yarg-collection-top"><div><h2 id="yarg-collection-name">Collection Rockstar</h2><p class="hint">Médailles et prestations par instrument</p></div><button type="button" id="yarg-collection-close" aria-label="Fermer la collection">Fermer</button></div>
+  <div id="yarg-collection-grid" class="yarg-collection-grid"></div>
+ </section>
+</div>
+
 <script>
 /* Colle ici les MÊMES valeurs que dans demande.html / index.html. */
 const SUPABASE_URL = "https://xbhfjzurytdknbqvksjq.supabase.co";
@@ -396,6 +423,72 @@ const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
 const BAND_TOKEN_KEY='yarg_band_secret_v1';
 function myBandToken(){let t=localStorage.getItem(BAND_TOKEN_KEY);if(!t){t=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem(BAND_TOKEN_KEY,t)}return t}
 let scoreRows=[];let managing=null;let myAccountMemberIds=new Set();let myRockstarName='';let myAuthId='';let equippedTitles=new Map();
+
+let performerMedals=new Map();
+let collectionTrigger=null;
+const medalNames=['En bois','Bronze','Argent','Or','Platine','Émeraude','Diamant','Maître','Grand Maître','Champion'];
+const medalSlugs=['wood','bronze','silver','gold','platinum','emerald','diamond','master','grand-master','champion'];
+const medalThresholds=[1,5,15,25,40,60,90,120,150,200];
+const medalCategories=[['guitar','Guitare'],['bass','Basse'],['drums','Batterie'],['keys','Clavier'],['vocals','Voix']];
+function medalFamily(x){return ['guitar','rhythm_guitar'].includes(x)?'guitar':['drums','drums_4lane','pro_drums'].includes(x)?'drums':['keys','pro_keys'].includes(x)?'keys':['bass','vocals'].includes(x)?x:'';}
+function medalAsset(category,tier){const n=Math.max(0,Math.min(10,Number(tier)||0));return n?'assets/medals/'+category+'-'+String(n).padStart(2,'0')+'-'+medalSlugs[n-1]+'.png':'assets/medals/'+category+'-fallback.png';}
+function medalMarkup(name,instrument,microphone,profileId){
+ const category=medalFamily(instrument)||(microphone?'vocals':'');
+ if(!category)return '';
+ const tier=performerMedals.get(String(profileId||''))?.get(category)?.tier||0;
+ const img='<img class="yarg-member-medal" src="'+medalAsset(category,tier)+'" alt="'+esc(category+' : '+(tier?medalNames[tier-1]:'Non classé'))+'">';
+ if(IS_PUBLIC_DISPLAY||!profileId||!performerMedals.has(String(profileId)))return img;
+ return '<button type="button" class="yarg-member-medal-button" data-collection-user="'+esc(String(profileId))+'" data-collection-name="'+esc(name)+'" title="Voir les médailles de '+esc(name)+'" aria-label="Voir les médailles de '+esc(name)+'">'+img+'</button>';
+}
+function openMedalCollection(userId,name,button){
+ const collection=performerMedals.get(String(userId));if(!collection)return;
+ collectionTrigger=button;
+ document.getElementById('yarg-collection-name').textContent='Collection de '+name;
+ const grid=document.getElementById('yarg-collection-grid');grid.replaceChildren();
+ for(const [category,label] of medalCategories){
+  const details=collection.get(category)||{tier:0,performances:0};
+  const tier=Math.max(0,Math.min(10,Number(details.tier)||0));
+  const performances=Math.max(0,Number(details.performances)||0);
+  const item=document.createElement('div');item.className='yarg-collection-item';
+  const identity=document.createElement('div');identity.className='yarg-collection-identity';
+  const image=document.createElement('img');image.alt='';image.src=medalAsset(category,tier);image.onerror=()=>{image.onerror=null;image.src=medalAsset(category,0)};
+  const heading=document.createElement('div');
+  const bold=document.createElement('b');bold.textContent=label;
+  const desc=document.createElement('small');desc.textContent=tier?medalNames[tier-1]:'Aucune médaille';
+  heading.append(bold,desc);identity.append(image,heading);
+  const bar=document.createElement('div');bar.className='yarg-collection-bar';
+  const fill=document.createElement('span');const next=medalThresholds[tier],previous=tier?medalThresholds[tier-1]:0;
+  fill.style.width=(next?Math.max(0,Math.min(100,(performances-previous)*100/(next-previous))):100)+'%';bar.append(fill);
+  const count=document.createElement('div');count.className='yarg-collection-count';
+  count.textContent=performances+' prestation'+(performances===1?'':'s')+(next?' · Prochain rang : '+next:' · Champion atteint');
+  item.append(identity,bar,count);grid.append(item);
+ }
+ document.getElementById('yarg-collection-overlay').hidden=false;document.getElementById('yarg-collection-close').focus();
+}
+function closeMedalCollection(){
+ document.getElementById('yarg-collection-overlay').hidden=true;
+ if(collectionTrigger?.isConnected)collectionTrigger.focus();
+ collectionTrigger=null;
+}
+document.getElementById('yarg-collection-close').addEventListener('click',closeMedalCollection);
+document.getElementById('yarg-collection-overlay').addEventListener('click',e=>{if(e.target.id==='yarg-collection-overlay')closeMedalCollection()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('yarg-collection-overlay').hidden)closeMedalCollection()});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-collection-user]');if(b)openMedalCollection(b.dataset.collectionUser,b.dataset.collectionName||'Rockstar',b)});
+async function loadPerformerMedals(){
+ performerMedals=new Map();
+ if(!settings?.current_session_id)return;
+ try{
+  const {data,error}=await sb.rpc('yarg_public_performer_medals',{p_session_id:settings.current_session_id});
+  if(error)throw error;
+  for(const row of data||[]){
+   const userId=String(row.user_id||'');
+   if(!userId||!medalCategories.some(x=>x[0]===row.category))continue;
+   if(!performerMedals.has(userId))performerMedals.set(userId,new Map());
+   performerMedals.get(userId).set(row.category,{tier:Math.max(0,Math.min(10,Number(row.tier)||0)),performances:Math.max(0,Number(row.performances)||0)});
+  }
+ }catch(e){console.warn('Médailles des participants indisponibles',e)}
+}
+
 function savedBandTokens(){try{return JSON.parse(localStorage.getItem('yarg_band_tokens')||'{}')}catch{return {}}}
 function myAccountMember(r){return myAuthId?membersFor(r.id).find(m=>(String(m.rockstar_profile_id||'')===myAuthId || myAccountMemberIds.has(String(m.id)) || (r.is_group_request && myAccountRequester(r) && String(m.rockstar_name||'').trim().toLowerCase()===String(r.rockstar_name||'').trim().toLowerCase())))||null:null}
 function myAccountRequester(r){return !!(myAuthId && String(r.requester_profile_id||'')===myAuthId && !r.requester_withdrawn_at)}
@@ -529,7 +622,7 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  const guitarLabel=({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[preferredGuitar];
  const title=equippedTitles.get(String(profileId||""));
  const pauseBadge=paused?'<span class="yarg-member-paused">⏸ Pas prêt</span>':'';
- return `<div class="member">👤 <b>${esc(name)}</b>${title?` <span class="yarg-equipped-title">✦ ${esc(title)}</span>`:""}${pauseBadge} — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 ${esc(guitarLabel)}`:''}</div>`;
+ return `<div class="member">${medalMarkup(name,instrument,microphone,profileId)} <b>${esc(name)}</b>${title?` <span class="yarg-equipped-title">✦ ${esc(title)}</span>`:""}${pauseBadge} — ${esc(inst+(microphone?" + Voix":"")+diff+vocal)}${guitarLabel?` · 🎸 ${esc(guitarLabel)}`:''}</div>`;
 }
 function instrumentFamily(i){return ['drums','drums_4lane','pro_drums'].includes(i)?'drums':['keys','pro_keys'].includes(i)?'keys':i;}
 function isGuitarChart(i){return ['guitar','bass','rhythm_guitar'].includes(i)}
@@ -856,14 +949,14 @@ async function loadQueue(){
   }
 
   const ids=[...new Set([...requests,...completedRequests].map(x=>x.id))];
-  if(!ids.length){members=[];render();return;}
+  if(!ids.length){members=[];performerMedals=new Map();render();return;}
 
   const {data:m,error:e2}=await sb.from('performance_members')
     .select('id,performance_request_id,rockstar_profile_id,rockstar_name,instrument,difficulty,microphone,vocal_harmony,preferred_guitar,withdrawn_at,created_at')
     .in('performance_request_id',ids);
   if(e2)throw e2;
   members=m||[];
-  await loadEquippedTitles();
+  await Promise.all([loadEquippedTitles(),loadPerformerMedals()]);
   render();
 }
 
