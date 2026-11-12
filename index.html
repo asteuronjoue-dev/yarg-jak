@@ -592,9 +592,12 @@
             object-fit:contain;
             display:block;
         }
-        /* Both guitars take turns occupying the exact same full-size icon slot.
-           The fixed slot keeps instrument names perfectly aligned. */
+        /* Only one guitar is rendered at a time, including transparent pixels.
+           Keep the icon slot fixed so every instrument label remains aligned. */
         .sheet-diff-icon.sheet-dual-guitar{position:relative}
+        .sheet-diff-icon.sheet-dual-guitar .sheet-lead-alternate{
+            animation:sheet-lead-switch 4s steps(1,end) infinite;
+        }
         .sheet-diff-icon.sheet-dual-guitar .sheet-rhythm-alternate{
             position:absolute;
             inset:0;
@@ -602,19 +605,25 @@
             width:27px;
             height:27px;
             object-fit:contain;
-            opacity:0;
-            animation:sheet-guitar-switch 4s steps(1,end) infinite;
+            visibility:hidden;
+            animation:sheet-rhythm-switch 4s steps(1,end) infinite;
         }
-        @keyframes sheet-guitar-switch{
-            0%,49.999%{opacity:0}
-            50%,100%{opacity:1}
+        @keyframes sheet-lead-switch{
+            0%,49.999%{visibility:visible}
+            50%,100%{visibility:hidden}
+        }
+        @keyframes sheet-rhythm-switch{
+            0%,49.999%{visibility:hidden}
+            50%,100%{visibility:visible}
         }
         @media(max-width:650px){
             .sheet-diff-icon.sheet-dual-guitar .sheet-rhythm-alternate{width:23px;height:23px}
         }
         @media(prefers-reduced-motion:reduce){
-            .sheet-diff-icon.sheet-dual-guitar .sheet-rhythm-alternate{animation:none;opacity:0}
-        }        .sheet-diff-name{
+            .sheet-diff-icon.sheet-dual-guitar .sheet-lead-alternate{animation:none;visibility:visible}
+            .sheet-diff-icon.sheet-dual-guitar .sheet-rhythm-alternate{animation:none;visibility:hidden}
+        }
+        .sheet-diff-name{
             color:var(--text);
             font-weight:750;
             white-space:nowrap;
@@ -2637,7 +2646,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
 
                 if (part === 'G' && rhythmBits !== 0n) {
                     diffHtml += `<div class="sheet-diff-row">`;
-                    diffHtml += `<div class="sheet-diff-part"><span class="sheet-diff-icon sheet-dual-guitar" title="Guitare et guitare rythmique"><img src="${ICON_SRC.guitar}" alt=""><img class="sheet-rhythm-alternate" src="${RHYTHM_ICON}" alt=""></span><span class="sheet-diff-name">Guitare & Guitare Rythmique</span></div>`;
+                    diffHtml += `<div class="sheet-diff-part"><span class="sheet-diff-icon sheet-dual-guitar" title="Guitare et guitare rythmique"><img class="sheet-lead-alternate" src="${ICON_SRC.guitar}" alt=""><img class="sheet-rhythm-alternate" src="${RHYTHM_ICON}" alt=""></span><span class="sheet-diff-name">Guitare & Guitare Rythmique</span></div>`;
                     diffHtml += `<div class="sheet-diff-tier">${esc(diffLabel(n))}</div>`;
                     diffHtml += `<div>${diffMeterHtml(n)}</div>`;
                     diffHtml += `</div>`;
