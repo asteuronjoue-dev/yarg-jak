@@ -310,7 +310,9 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-performer-name b{font-size:1.03em;overflow-wrap:anywhere}
 .yarg-performer-row .yarg-equipped-title{display:inline-flex;align-items:center;border-color:#49545b;background:rgba(255,175,82,.06);padding:3px 8px;color:#ffbe82;font-size:.78em}
 .yarg-guitar-thumbnail{width:56px;height:36px;object-fit:contain;flex:0 0 auto;border:1px solid #35454d;border-radius:8px;background:#19252b;padding:2px}
-.yarg-performer-mic{height:20px;width:20px;object-fit:contain;flex:none}
+.yarg-performer-extra-vocals{display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px}
+.yarg-performer-extra-vocals>.yarg-member-medal{width:36px;height:36px;box-sizing:border-box;padding:3px;object-fit:contain;flex:0 0 36px}
+.yarg-performer-extra-vocals>.yarg-member-medal-button{width:36px;height:36px;min-width:36px;min-height:36px;flex:0 0 36px}
 .yarg-performer-detail{font-size:11px;color:#bad5d9;font-weight:800;border-radius:7px;background:#21333b;border:1px solid #3c555f;padding:3px 5px;white-space:nowrap}
 .yarg-performer-own-difficulty{font-size:11px;color:#bac7cc;font-weight:750;white-space:nowrap}
 @media(max-width:550px){.member.yarg-performer-row{gap:6px 8px}.yarg-guitar-thumbnail{height:33px;width:50px}}
@@ -784,8 +786,11 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  const guitarLabel=({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[preferredGuitar]||'';
  const guitarSrc=isGuitar?joinGuitarPhotos[preferredGuitar]:null;
  const guitarThumbnail=guitarSrc?`<img class="yarg-guitar-thumbnail" src="${esc(guitarSrc)}" alt="Guitare choisie : ${esc(guitarLabel)}" title="${esc(guitarLabel)}" loading="lazy" onerror="this.hidden=true">`:'';
- const vocalPart=sings&&Number(harmony)>0?`<span class="yarg-performer-detail" title="Harmonie ${Number(harmony)}" aria-label="Harmonie ${Number(harmony)}">H${Number(harmony)}</span>`:'';
- const extraMic=microphone&&instrument!=='vocals'?'<img class="yarg-performer-mic" src="assets/medals/vocals-fallback.png" alt="Chant supplémentaire" title="Chante aussi">':'';
+ const harmonyNumber=Number(harmony)||0;
+ const harmonyName=harmonyNumber===1?'Chant principal':`Harmonie ${harmonyNumber}`;
+ const vocalPart=instrument==='vocals'&&harmonyNumber>0?`<span class="yarg-performer-detail" title="${esc(harmonyName)}" aria-label="${esc(harmonyName)}">${esc(harmonyName)}</span>`:'';
+ // A secondary singer gets their earned VOCALS medal, at the same size as the main instrument medal.
+ const extraMic=microphone&&instrument!=='vocals'?`<span class="yarg-performer-extra-vocals" title="Chante aussi">${medalMarkup(name,'vocals',false,profileId)}</span>`:'';
  const modeLabel=instrument==='pro_drums'||instrument==='pro_keys'?'Pro':instrument==='drums_4lane'?'4 voies':instrument==='rhythm_guitar'?'Rythmique':instrument==='flex'?'Flex':'';
  const mode=modeLabel?`<span class="yarg-performer-detail" title="${esc(instruments[instrument]||modeLabel)}">${esc(modeLabel)}</span>`:'';
  const myDifficulty=myRow&&instrument!=='vocals'&&instrument!=='flex'&&difficulty?`<span class="yarg-performer-own-difficulty" title="Ta difficulté">${esc(difficulties[difficulty]||difficulty)}</span>`:'';
