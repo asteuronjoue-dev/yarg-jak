@@ -69,7 +69,7 @@
   let manuallyExpanded = false;
   function stageOffset(){
     const stage = document.getElementById('yarg-stage-banner');
-    const active = !!(stage && !stage.hidden);
+    const active = !!(stage && !stage.hidden && getComputedStyle(stage).display!=='none');
     const height = active ? Math.ceil(stage.getBoundingClientRect().height) : 0;
     if(height !== lastStageHeight){
       lastStageHeight = height;
@@ -81,8 +81,12 @@
     expand.textContent=manuallyExpanded?'Réduire':'Voir les invitations';
   }
   function render(){
-    stageOffset();
     banner.hidden = !currentUser || !pending.length || muted;
+    const hasInvitation=!banner.hidden;
+    const wasActive=document.body.classList.contains('yarg-invite-active');
+    document.body.classList.toggle('yarg-invite-active',hasInvitation);
+    stageOffset();
+    if(wasActive!==hasInvitation)document.dispatchEvent(new Event('yarg-invitation-visibility-changed'));
     if(banner.hidden) return;
     const compact=banner.classList.contains('is-compact');
     title.textContent = compact ? (pending.length===1?'1 invitation en attente':pending.length+' invitations en attente') : (pending.length===1?'Invitation à rejoindre un groupe':pending.length+' invitations à rejoindre un groupe');
