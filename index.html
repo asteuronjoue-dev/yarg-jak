@@ -592,11 +592,13 @@
             object-fit:contain;
             display:block;
         }
-        /* Only one guitar is rendered at a time, including transparent pixels.
-           Keep the icon slot fixed so every instrument label remains aligned. */
+        /* Lead and rhythm guitar alternate with a gentle fade, never overlapping
+           their transparent PNGs. Keep the fixed slot and mobile artwork sizes. */
         .sheet-diff-icon.sheet-dual-guitar{position:relative}
         .sheet-diff-icon.sheet-dual-guitar .sheet-lead-alternate{
-            animation:sheet-lead-switch 4s steps(1,end) infinite;
+            opacity:0;
+            visibility:visible;
+            animation:sheet-lead-fade 6s ease-in-out infinite;
         }
         .sheet-diff-icon.sheet-dual-guitar .sheet-rhythm-alternate{
             position:absolute;
@@ -605,23 +607,30 @@
             width:27px;
             height:27px;
             object-fit:contain;
+            opacity:0;
             visibility:hidden;
-            animation:sheet-rhythm-switch 4s steps(1,end) infinite;
+            animation:sheet-rhythm-fade 6s ease-in-out infinite;
         }
-        @keyframes sheet-lead-switch{
-            0%,49.999%{visibility:visible}
-            50%,100%{visibility:hidden}
+        @keyframes sheet-lead-fade{
+            0%{opacity:0;visibility:visible}
+            10%,40%{opacity:1;visibility:visible}
+            49.99%{opacity:0;visibility:visible}
+            50%,99.99%{opacity:0;visibility:hidden}
+            100%{opacity:0;visibility:visible}
         }
-        @keyframes sheet-rhythm-switch{
-            0%,49.999%{visibility:hidden}
-            50%,100%{visibility:visible}
+        @keyframes sheet-rhythm-fade{
+            0%,49.99%{opacity:0;visibility:hidden}
+            50%{opacity:0;visibility:visible}
+            60%,90%{opacity:1;visibility:visible}
+            99.99%{opacity:0;visibility:visible}
+            100%{opacity:0;visibility:hidden}
         }
         @media(max-width:650px){
             .sheet-diff-icon.sheet-dual-guitar .sheet-rhythm-alternate{width:23px;height:23px}
         }
         @media(prefers-reduced-motion:reduce){
-            .sheet-diff-icon.sheet-dual-guitar .sheet-lead-alternate{animation:none;visibility:visible}
-            .sheet-diff-icon.sheet-dual-guitar .sheet-rhythm-alternate{animation:none;visibility:hidden}
+            .sheet-diff-icon.sheet-dual-guitar .sheet-lead-alternate{animation:none;opacity:1;visibility:visible}
+            .sheet-diff-icon.sheet-dual-guitar .sheet-rhythm-alternate{animation:none;opacity:0;visibility:hidden}
         }
         .sheet-diff-name{
             color:var(--text);
