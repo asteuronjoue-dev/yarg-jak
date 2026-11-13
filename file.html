@@ -656,7 +656,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie - 4-Lanes",pro_drums:"Batterie - Pro Drums",keys:"Keys - 5-Lanes",pro_keys:"Keys - Pro Keys",flex:"Flex"};
 const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
 const chartBits={beginner:2n,easy:2n,medium:4n,hard:8n,expert:16n};
-const chartGroups={guitar:[0],bass:[1],rhythm_guitar:[2],drums:[3,4],drums_4lane:[3,4],pro_drums:[5,4],keys:[6],pro_keys:[7]};
+const chartGroups={guitar:[0],bass:[1],rhythm_guitar:[2],drums:[3,4],drums_4lane:[3,4],pro_drums:[5],keys:[6],pro_keys:[7]};
 function chartDifficulties(r,mode){
  if(mode==='vocals')return ['medium'];if(mode==='flex')return ['any'];
  if(!/^\d+$/.test(String(r?.chart_mask||'')))return Object.keys(chartBits);
