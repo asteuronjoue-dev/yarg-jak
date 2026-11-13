@@ -104,7 +104,7 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
 .member .stage-name-help{display:block;margin-top:5px;font-size:.77rem;line-height:1.4;color:#acbec5}
 .instrument-chooser{min-width:0}
 .instrument-icons{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
-/* Keep the original single-row desktop flow; split into two rows on phones. */
+/* Keep the original single-row desktop flow; use a 3-column instrument grid plus an auxiliary row on phones. */
 .instrument-primary-row,.instrument-auxiliary-row{display:contents}
 .instrument-choice.extra-vocals-choice{
  margin-left:auto;
@@ -145,12 +145,18 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
 .member .guitar-tile img{height:43px}
 @media(max-width:600px){
  .member .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
- .instrument-icons{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:7px}
- .instrument-primary-row{display:flex;align-items:center;flex-wrap:nowrap;gap:3px;min-width:0;max-width:100%;overflow-x:auto;scrollbar-width:thin}
- .instrument-auxiliary-row{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-height:49px}
- .instrument-choice.extra-vocals-choice{margin-left:0}
- .instrument-choice{width:50px;height:49px;flex-basis:50px}
- .instrument-choice img{width:38px;height:38px}
+ /* Up to six instruments: three large, equally-sized touch targets per row. */
+ .instrument-icons{--instrument-mobile-gap:8px;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:var(--instrument-mobile-gap)}
+ .instrument-primary-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--instrument-mobile-gap);min-width:0;width:100%}
+ .instrument-primary-row .instrument-choice{width:100%;height:clamp(88px,24vw,118px);min-width:0;flex:none;padding:4px}
+ .instrument-primary-row .instrument-choice img{width:clamp(60px,19vw,88px);height:clamp(60px,19vw,88px);max-width:100%;object-fit:contain}
+ /* FLEX matches a main tile's width, beside the wider singing option. */
+ .instrument-auxiliary-row{display:flex;align-items:stretch;justify-content:flex-end;gap:var(--instrument-mobile-gap);min-height:clamp(88px,24vw,118px)}
+ .instrument-auxiliary-row .instrument-choice:not(.extra-vocals-choice){width:calc((100% - 2 * var(--instrument-mobile-gap))/3);height:clamp(88px,24vw,118px);flex:0 0 calc((100% - 2 * var(--instrument-mobile-gap))/3)}
+ .instrument-auxiliary-row .instrument-flex-mark{font-size:clamp(2.6rem,11vw,4rem)}
+ .instrument-choice.extra-vocals-choice{margin-left:0;width:min(52%,220px);max-width:220px;min-width:0;min-height:clamp(88px,24vw,118px);height:auto;flex:0 1 auto;padding:8px;gap:7px}
+ .instrument-choice.extra-vocals-choice img{width:clamp(39px,12vw,56px);height:clamp(39px,12vw,56px);flex:0 0 clamp(39px,12vw,56px)}
+ .extra-vocals-label{font-size:clamp(.76rem,2.8vw,.94rem)}
  .member .guitar-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
  .member .guitar-tile{min-height:72px;font-size:.67rem}
  .member .guitar-tile img{height:36px}
