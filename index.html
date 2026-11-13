@@ -1133,7 +1133,7 @@ body>header{border-bottom:0!important}
 }
 .catalog-directory-topline{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:nowrap}
 .catalog-directory-label{color:#e7f2f2;font-size:clamp(.84rem,2.9vw,1.13rem);font-weight:900;white-space:nowrap;flex:0 0 auto}
-.catalog-directory-counts{display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:7px;min-width:0;margin-left:auto}
+.catalog-directory-counts{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:7px;min-width:0;margin:6px 0 12px}
 .catalog-directory-count{display:inline-flex;align-items:center;gap:6px;border:1px solid #36434a;background:#1b2429;color:#bacbd0;padding:7px 11px;border-radius:999px;font-size:.78rem;font-weight:800;white-space:nowrap}
 .catalog-directory-count-dot{width:6px;height:6px;border-radius:50%;background:#1fc8bd}
 .catalog-directory-count-shown{color:#ffca8d;background:#2c251f;border-color:#695036}
@@ -1208,7 +1208,10 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                 </div>
             </div>
         </div>
-
+        <div class="catalog-directory-counts" aria-live="polite" aria-atomic="true">
+                <span class="catalog-directory-count"><span class="catalog-directory-count-dot" aria-hidden="true"></span><span id="total-count">Total : 0</span></span>
+                <span class="catalog-directory-count catalog-directory-count-shown"><span id="count">Affichées : 0</span></span>
+            </div>
 
         <div class="filters">
             <div class="filter-line filter-line-vocals">
@@ -1280,10 +1283,6 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
     <section class="catalog-directory-heading" aria-label="Nombre de chansons du catalogue">
         <div class="catalog-directory-topline">
             <strong class="catalog-directory-label">🎼 Catalogue</strong>
-            <div class="catalog-directory-counts" aria-live="polite" aria-atomic="true">
-                <span class="catalog-directory-count"><span class="catalog-directory-count-dot" aria-hidden="true"></span><span id="total-count">Total : 0</span></span>
-                <span class="catalog-directory-count catalog-directory-count-shown"><span id="count">Affichées : 0</span></span>
-            </div>
         </div>
         <div class="catalog-directory-accent" aria-hidden="true"></div>
     </section>
