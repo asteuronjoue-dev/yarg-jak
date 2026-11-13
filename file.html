@@ -746,7 +746,7 @@ function performerEntries(r){
   const entries=membersFor(r.id);
   const useLegacyLeader=!r.requester_withdrawn_at && (!r.is_group_request || entries.length===0) && !entries.some(m=>String(m.rockstar_name||'').trim().toLocaleLowerCase()===String(r.rockstar_name||'').trim().toLocaleLowerCase());
   const all=useLegacyLeader?[{
-    rockstar_name:r.rockstar_name,rockstar_profile_id:r.requester_profile_id,instrument:r.requester_instrument,
+    rockstar_name:r.rockstar_name,rockstar_profile_id:r.requester_profile_id,instrument:r.requester_instrument,instrument_mode:r.requester_instrument_mode,
     difficulty:r.requester_difficulty,microphone:r.requester_microphone,
     vocal_harmony:r.vocal_harmony,preferred_guitar:null
   },...entries]:entries;
@@ -782,7 +782,10 @@ function tidyEquippedTitle(label){
  if(/^(?:✦\\s*)?initié$/i.test(text))return '✦ Initié';
  return text.startsWith('✦')?text:'✦ '+text;
 }
-function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuitar,profileId,paused=false,ready=false,owned=false){
+function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuitar,profileId,paused=false,ready=false,owned=false,instrumentMode=null){
+ // Older band rows store the instrument family and chart subtype separately.
+ const chartMode=instrumentFamily(instrument)===instrumentFamily(instrumentMode)&&
+   ['drums_4lane','pro_drums','keys','pro_keys'].includes(instrumentMode)?instrumentMode:instrument;
  const title=equippedTitles.get(String(profileId||''));
  const myRow=owned || (!IS_PUBLIC_DISPLAY && !!profileId && !!myAuthId && String(profileId)===String(myAuthId));
  const sings=instrument==='vocals'||!!microphone;
@@ -795,10 +798,10 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  const vocalPart=instrument==='vocals'&&harmonyNumber>0?`<span class="yarg-performer-detail" title="${esc(harmonyName)}" aria-label="${esc(harmonyName)}">${esc(harmonyName)}</span>`:'';
  // When someone plays and sings, show their unlocked VOCALS medal beside the main instrument (fallback for guests and no rank).
  const extraMic=microphone&&instrument!=='vocals'?`<span class="yarg-performer-extra-vocals" title="Chante aussi">${medalMarkup(name,'vocals',false,profileId)}</span>`:'';
- const instrumentIcons=`<span class="yarg-performer-instrument-icons">${medalMarkup(name,instrument,microphone,profileId)}${extraMic}</span>`;
- const modeLabel=instrument==='pro_drums'||instrument==='pro_keys'?'Pro':instrument==='drums_4lane'?'4 voies':instrument==='rhythm_guitar'?'Rythmique':instrument==='flex'?'Flex':'';
- const mode=modeLabel?`<span class="yarg-performer-detail" title="${esc(instruments[instrument]||modeLabel)}">${esc(modeLabel)}</span>`:'';
- const difficultySubtype=({drums_4lane:'Drums - 4-Lane',pro_drums:'Drums - Pro Drums',keys:'Keys - 5-Lanes',pro_keys:'Keys - Pro Keys'})[instrument]||'';
+ const instrumentIcons=`<span class="yarg-performer-instrument-icons">${medalMarkup(name,chartMode,microphone,profileId)}${extraMic}</span>`;
+ const modeLabel=chartMode==='pro_drums'||chartMode==='pro_keys'?'Pro':chartMode==='drums_4lane'?'4 voies':chartMode==='rhythm_guitar'?'Rythmique':chartMode==='flex'?'Flex':'';
+ const mode=modeLabel?`<span class="yarg-performer-detail" title="${esc(instruments[chartMode]||modeLabel)}">${esc(modeLabel)}</span>`:'';
+ const difficultySubtype=({drums_4lane:'Drums - 4-Lane',pro_drums:'Drums - Pro Drums',keys:'Keys - 5-Lanes',pro_keys:'Keys - Pro Keys'})[chartMode]||'';
  const difficultyText=[difficultySubtype,difficulties[difficulty]||difficulty].filter(Boolean).join(' · ');
  const myDifficulty=myRow&&instrument!=='vocals'&&instrument!=='flex'&&difficulty?`<span class="yarg-performer-own-difficulty" title="Ton instrument et ta difficulté">${esc(difficultyText)}</span>`:'';
  const pauseBadge=paused?'<span class="yarg-member-paused">⏸ Pas prêt</span>':'';
@@ -912,7 +915,7 @@ function joinFormHtml(r){
 }
 function cardHtml(r, eta, mine=false, rank=null){
   const performers=performerEntries(r);
-  const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id || (r.is_group_request && m.rockstar_name===r.rockstar_name?r.requester_profile_id:null),pausedMember(r.id,m.rockstar_name),readyMember(r.id,m.id,!r.is_group_request&&!m.id&&!r.requester_withdrawn_at),isMyPerformerEntry(r,m))).join("");
+  const displayed=performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id || (r.is_group_request && m.rockstar_name===r.rockstar_name?r.requester_profile_id:null),pausedMember(r.id,m.rockstar_name),readyMember(r.id,m.id,!r.is_group_request&&!m.id&&!r.requester_withdrawn_at),isMyPerformerEntry(r,m),m.instrument_mode)).join("");
   const available=openInstruments(r);
   const slots=(myActiveBand(r)?[]:available.filter((i,index,all)=>all.findIndex(j=>instrumentFamily(j)===instrumentFamily(i))===index)).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instrumentFamily(i)==="drums"?"Batterie":instrumentFamily(i)==="keys"?"Clavier":instruments[i])}</button>`).join("");
   const isPlaying=r.status==="playing";
@@ -966,7 +969,7 @@ function historicalCard(r){
   const playedTime=playedAt&&!Number.isNaN(playedAt.getTime())?formatClock(playedAt):'Heure inconnue';
   const finishedTime=finishedAt&&!Number.isNaN(finishedAt.getTime())?formatClock(finishedAt):'—';
   const requestedTime=requestedAt&&!Number.isNaN(requestedAt.getTime())?formatClock(requestedAt):'—';
-  const people=performers.length?performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id||(r.is_group_request&&m.rockstar_name===r.rockstar_name?r.requester_profile_id:null),false,false,isMyPerformerEntry(r,m))).join(''):`<div class='member'>👥 ${esc(names.join(', ')||r.rockstar_name||'Participants inconnus')}</div>`;
+  const people=performers.length?performers.map(m=>memberLine(m.rockstar_name,m.instrument,m.difficulty,m.microphone,m.vocal_harmony,m.preferred_guitar,m.rockstar_profile_id||(r.is_group_request&&m.rockstar_name===r.rockstar_name?r.requester_profile_id:null),false,false,isMyPerformerEntry(r,m),m.instrument_mode)).join(''):`<div class='member'>👥 ${esc(names.join(', ')||r.rockstar_name||'Participants inconnus')}</div>`;
   return `<article class='card history-card'>
     <div class='history-head'><span class='history-number'>#${r._playNumber||'—'}</span><div><div class='song'>${esc(r.song_title||'Chanson')}</div><div class='artist'>${esc(r.song_artist||'Artiste inconnu')}</div></div><div class='history-times'><strong>▶ Jouée à ${esc(playedTime)}</strong><span>Terminée à ${esc(finishedTime)}</span></div></div>
     ${r.band_name?`<div class='history-band'>🤘 ${esc(r.band_name)}</div>`:''}
@@ -1101,7 +1104,7 @@ async function loadQueue(){
     requests=[];members=[];completedRequests=[];historyLoadError="";pauseReasonNames=new Map();confirmedReadyMembers=new Set();confirmedReadyRequesters=new Set();render();return;
   }
   const {data:r,error:e1}=await sb.from("performance_requests")
-    .select("id,guest_user_id,requester_profile_id,requester_withdrawn_at,is_group_request,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,status,yarg_not_ready,queue_position,started_at,created_at")
+    .select("id,guest_user_id,requester_profile_id,requester_withdrawn_at,is_group_request,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_instrument_mode,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,status,yarg_not_ready,queue_position,started_at,created_at")
     .eq("party_session_id",settings.current_session_id)
     .in("status",["waiting","full","playing"])
     .order("queue_position",{ascending:true,nullsFirst:false});
@@ -1153,7 +1156,7 @@ async function loadQueue(){
   if(!ids.length){members=[];performerMedals=new Map();confirmedReadyMembers=new Set();confirmedReadyRequesters=new Set();render();return;}
 
   const {data:m,error:e2}=await sb.from('performance_members')
-    .select('id,performance_request_id,rockstar_profile_id,rockstar_name,instrument,difficulty,microphone,vocal_harmony,preferred_guitar,withdrawn_at,created_at')
+    .select('id,performance_request_id,rockstar_profile_id,rockstar_name,instrument,instrument_mode,difficulty,microphone,vocal_harmony,preferred_guitar,withdrawn_at,created_at')
     .in('performance_request_id',ids);
   if(e2)throw e2;
   members=m||[];
