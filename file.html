@@ -171,6 +171,13 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-detail{font-size:clamp(11px,1.16vw,17px);color:#9db1ba;margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .display-joinable{color:#83ead1;font-weight:900}
 .display-closed{color:#adbbc2;font-weight:750}
+/* Écran public : petits pictogrammes des instruments encore disponibles.
+   Toujours utiliser les icônes colorées de base, jamais les médailles acquises. */
+.display-available-instruments{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;max-width:100%;padding:2px 5px;border:1px solid #41616a;border-radius:9px;background:#152b30;vertical-align:middle}
+.display-available-slot{display:inline-flex;align-items:center;justify-content:center;gap:1px;flex:0 0 auto;min-height:27px}
+.display-available-slot img{display:block;width:clamp(22px,2vw,29px);height:clamp(22px,2vw,29px);object-fit:contain}
+.display-available-slot-count{color:#d5f7ee;font-size:12px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums}
+@media(max-width:680px){.display-available-slot img{width:22px;height:22px}.display-available-instruments{gap:2px;padding:2px 4px}.display-available-slot-count{font-size:11px}}
 .display-time{text-align:right;justify-self:end;white-space:nowrap}
 .display-time strong{display:block;font-size:clamp(21px,3vw,44px);font-variant-numeric:tabular-nums;color:#ffae62;line-height:1.1}
 .display-time span{display:block;color:#b3c0c7;font-size:clamp(11px,1.15vw,18px);margin-top:4px}
@@ -932,6 +939,35 @@ function openInstruments(r){
  if(!settings?.performance_requests_enabled||r.yarg_not_ready||!r.allow_band_fill||!['waiting','full'].includes(r.status))return [];
  return freeInstrumentsForPlayers(r,performerEntries(r));
 }
+// Écran public : mêmes places libres que la file interactive, avec les icônes
+// de base (et non les médailles des Rockstars). Le mode Flex n'est pas un instrument.
+function publicDisplayAvailableInstruments(r,slots){
+ const available=new Set(slots);
+ const players=performerEntries(r);
+ const singers=players.filter(m=>m.instrument==='vocals'||m.microphone).length;
+ const voiceCount=Math.max(0,3-singers); // Même limite de micros que freeInstrumentsForPlayers().
+ const options=[
+  ['vocals','vocals','Voix'],
+  ['guitar','guitar','Guitare'],
+  ['rhythm_guitar','rhythm_guitar','Guitare rythmique'],
+  ['bass','bass','Basse'],
+  ['drums','drums','Batterie'],
+  ['keys','keys','Clavier']
+ ];
+ const icons=[];
+ const labels=[];
+ for(const [mode,artwork,label] of options){
+  const isAvailable=mode==='drums'?['drums','drums_4lane','pro_drums'].some(x=>available.has(x)):
+   mode==='keys'?['keys','pro_keys'].some(x=>available.has(x)):available.has(mode);
+  if(!isAvailable)continue;
+  const count=mode==='vocals'?voiceCount:1;
+  if(count<=0)continue;
+  const caption=mode==='vocals'?label+' : '+count+' micro'+(count>1?'s':'')+' libre'+(count>1?'s':''):label+' disponible';
+  labels.push(caption);
+  icons.push(`<span class="display-available-slot" title="${esc(caption)}"><img src="assets/medals/${artwork}-fallback.png" alt="" aria-hidden="true" loading="lazy">${count>1?`<span class="display-available-slot-count" aria-hidden="true">×${count}</span>`:''}</span>`);
+ }
+ return icons.length?`<span class="display-available-instruments" role="group" aria-label="Places disponibles : ${esc(labels.join(', '))}">${icons.join('')}</span>`:'';
+}
 function editableInstruments(r,m){
  if(!m||!['waiting','full'].includes(r.status))return [];
  const others=performerEntries(r).filter(player=>{
@@ -1072,6 +1108,7 @@ function renderPublicDisplay(){
     const playing=r.status==='playing';
     const slots=!playing?openInstruments(r):[];
     const joinable=slots.length>0;
+    const slotIcons=joinable?publicDisplayAvailableInstruments(r,slots):'';
     const nextUp=!playing && i===(hasPlaying?1:0);
     const when=playing?'EN COURS':nextUp?'BIENTÔT':eta?.at?formatClock(eta.at):'—';
     const until=playing?'Sur scène maintenant':eta?.at?relativeMinutes(eta.at):'Horaire inconnu';
@@ -1080,7 +1117,7 @@ function renderPublicDisplay(){
     return `<article class="display-performance ${playing?'is-playing':i===(hasPlaying?1:0)?'is-next':''}">
       <div class="display-rank">${playing?'♫':hasPlaying?i:i+1}</div>
       <div class="display-info"><div class="display-song">${esc(r.song_title||'Chanson')}</div><div class="display-artist">${esc(r.song_artist||'Artiste inconnu')}</div>${r.band_name?`<div class="display-band">🤘 ${esc(r.band_name)}</div>`:''}
-      <div class="display-detail"><span class="${joinable?'display-joinable':'display-closed'}">${joinable?'● Places libres':playing?'● En cours':'● Complet'}</span><span>${esc(formatDuration(r.song_duration_seconds))}</span>${performers}</div></div>
+      <div class="display-detail"><span class="${joinable?'display-joinable':'display-closed'}">${joinable?'● Places libres':playing?'● En cours':'● Complet'}</span>${slotIcons}<span>${esc(formatDuration(r.song_duration_seconds))}</span>${performers}</div></div>
       <div class="display-time"><strong>${esc(when)}</strong><span>${esc(until)}</span></div>
     </article>`;
   }).join(''):'<div class="display-empty">Aucune prestation à venir pour le moment. 🤘</div>';
