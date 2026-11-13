@@ -935,15 +935,20 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
 .official-game-copy strong{font-size:.98rem;line-height:1.25;overflow-wrap:anywhere}
 .official-game-copy small{color:#a9c0c5;font-size:.8rem;line-height:1.2}
 #public-playlists-discovery{margin-top:9px}
-#public-playlist-cards{margin-top:12px}
-#public-playlist-cards .official-game-card{min-height:94px}
-#public-playlist-cards .official-game-logo{background:#101b2b}
+/* The new playlist covers are square artwork, not the old landscape banners.
+   Keep these tile rules scoped to playlists so the game cards are untouched. */
+#public-playlist-cards{margin-top:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:11px}
+#public-playlist-cards .official-game-card{min-height:0;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:8px;padding:7px;overflow:hidden;text-align:center}
+#public-playlist-cards .official-game-card.active{padding:6px}
+#public-playlist-cards .official-game-logo{background:#101b2b;flex:0 0 auto;width:min(36%,78px);height:auto;aspect-ratio:1;margin-inline:auto}
 #public-playlist-cards .official-game-logo img{object-fit:cover;width:100%;height:100%}
-#public-playlist-cards .playlist-generated-icon{font-size:1.7rem}
+#public-playlist-cards .official-game-copy{align-items:center}
+#public-playlist-cards .playlist-generated-icon{font-size:clamp(1.7rem,4vw,2.6rem)}
 #public-playlist-cards .playlist-signin{opacity:.8}
-#public-playlist-cards .official-game-card.has-art{display:block;padding:8px;overflow:hidden}
-#public-playlist-cards .official-game-card.has-art .official-game-logo{display:block;position:relative;width:100%;height:92px;min-height:92px;max-height:92px;flex:none;border-radius:10px;background:#0d1622;overflow:hidden}
-#public-playlist-cards .official-game-card.has-art .official-game-logo img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;border-radius:10px}
+#public-playlist-cards .official-game-card.has-art{display:block;padding:7px;overflow:hidden}
+#public-playlist-cards .official-game-card.has-art.active{padding:6px}
+#public-playlist-cards .official-game-card.has-art .official-game-logo{display:block;position:relative;width:100%;height:auto;min-height:0;max-height:none;aspect-ratio:1/1;flex:none;margin:0;border-radius:10px;background:#0d1622;overflow:hidden}
+#public-playlist-cards .official-game-card.has-art .official-game-logo img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;border-radius:10px}
 #public-playlist-cards .official-game-card.has-art .playlist-generated-icon,
 #public-playlist-cards .official-game-card.has-art .official-game-copy{display:none!important}
 .discovery-clear{background:#24343a;color:#e2f8f2;border:1px solid #447b79;border-radius:9px;padding:9px 12px;margin-top:12px;cursor:pointer;font-weight:800}
@@ -972,7 +977,8 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
  .official-game-logo img{height:53px;width:53px}
  .official-game-copy strong{font-size:.83rem}
  .official-game-copy small{font-size:.72rem}
- #public-playlist-cards .official-game-card.has-art .official-game-logo{height:72px;min-height:72px;max-height:72px}
+ #public-playlist-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #public-playlist-cards .official-game-card.has-art .official-game-logo{height:auto;min-height:0;max-height:none}
 }
 @media(prefers-reduced-motion:reduce){#sheet-favourite,.official-game-card{transition:none}}
 
