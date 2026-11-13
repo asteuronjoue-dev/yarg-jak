@@ -655,6 +655,23 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie - 4-Lanes",pro_drums:"Batterie - Pro Drums",keys:"Keys - 5-Lanes",pro_keys:"Keys - Pro Keys",flex:"Flex"};
 const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
+const chartBits={beginner:2n,easy:2n,medium:4n,hard:8n,expert:16n};
+const chartGroups={guitar:[0],bass:[1],rhythm_guitar:[2],drums:[3,4],drums_4lane:[3,4],pro_drums:[5,4],keys:[6],pro_keys:[7]};
+function chartDifficulties(r,mode){
+ if(mode==='vocals')return ['medium'];if(mode==='flex')return ['any'];
+ if(!/^\d+$/.test(String(r?.chart_mask||'')))return Object.keys(chartBits);
+ const mask=BigInt(r.chart_mask);
+ return Object.keys(chartBits).filter(d=>(chartGroups[mode]||[]).some(g=>(((mask>>(BigInt(g)*6n))&63n)&chartBits[d])!==0n));
+}
+function chartOptions(r,mode,preferred){return chartDifficulties(r,mode).map(d=>`<option value="${d}" ${d===preferred?'selected':''}>${esc(difficulties[d])}</option>`).join('')}
+function syncChartSelect(form,r,mode,preferred){
+ const select=form.elements.difficulty;if(!select||select.disabled)return;
+ const options=chartDifficulties(r,mode),old=preferred||select.value;
+ select.replaceChildren(...options.map(d=>{const o=document.createElement('option');o.value=d;o.textContent=difficulties[d];return o}));
+ select.value=options.includes(old)?old:(options[0]||'');
+ const submit=form.querySelector('[type="submit"]');if(submit)submit.disabled=!options.length;
+ syncBandDifficultyGuide(form);
+}
 
 /* Descriptions indicatives : les partitions varient selon la chanson. */
 const YARG_DIFFICULTY_GUIDE={
@@ -937,14 +954,15 @@ function joinFormHtml(r){
  const modes=joinModes(openInstruments(r),instrument);
  const savedMode=joinPrefs().modes?.[instrumentFamily(instrument)];
  const defaultMode=modes.includes(savedMode)?savedMode:(instrument==="drums"?"drums_4lane":instrument);
- const chosenDifficulty=joinPrefs().difficulties?.[defaultMode]||'beginner';
+ const savedDifficulty=joinPrefs().difficulties?.[defaultMode]||'beginner';
+  const chosenDifficulty=chartDifficulties(r,defaultMode).includes(savedDifficulty)?savedDifficulty:chartDifficulties(r,defaultMode)[0];
  const modeChoice=(instrumentFamily(instrument)==="drums"||instrumentFamily(instrument)==="keys")?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===defaultMode?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select></label>`:"";
  const canSing=instrument!=='flex'&&(Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone);
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instrumentFamily(instrument)==="drums"?"Batterie":instrumentFamily(instrument)==="keys"?"Clavier":instruments[instrument])}</strong>
  <label>Nom pour cette prestation <input name="rockstar" maxlength="60" required value="${esc(myRockstarName)}" placeholder="Nom de scène" autocomplete="off"><small>Ton compte, tes points et tes statistiques restent associés à ton profil Rockstar.</small></label>
  ${modeChoice}
- ${vocals||instrument==="flex"?"":`<label>Difficulté <select name="difficulty">${["beginner","easy","medium","hard","expert"].map(d=>`<option value="${d}" ${d===chosenDifficulty?'selected':''}>${esc(difficulties[d])}</option>`).join("")}</select>${yargDifficultyCategory(defaultMode)?`<small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite">${esc(yargDifficultyDescription(defaultMode,chosenDifficulty))}</small>`:''} </label>`}
+ ${vocals||instrument==="flex"?"":`<label>Difficulté <select name="difficulty">${chartOptions(r,defaultMode,chosenDifficulty)}</select>${yargDifficultyCategory(defaultMode)?`<small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite">${esc(yargDifficultyDescription(defaultMode,chosenDifficulty))}</small>`:''} </label>`}
  ${["guitar","bass","rhythm_guitar"].includes(instrument)?joinGuitarChoices(r):""}
  ${vocals||instrument==="flex"?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${canSing?"":"disabled"}> Je veux aussi chanter au micro</label>`}
  <label class="join-harmony" ${vocals?"":"hidden"}>Partie vocale (difficulté Moyen)<select name="harmony">${harmonyOptions(r)}</select></label>
@@ -1142,7 +1160,7 @@ async function loadQueue(){
     requests=[];members=[];completedRequests=[];historyLoadError="";pauseReasonNames=new Map();confirmedReadyMembers=new Set();confirmedReadyRequesters=new Set();render();return;
   }
   const {data:r,error:e1}=await sb.from("performance_requests")
-    .select("id,guest_user_id,requester_profile_id,requester_withdrawn_at,is_group_request,song_id,song_title,song_artist,song_duration_seconds,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_instrument_mode,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,status,yarg_not_ready,queue_position,started_at,created_at")
+    .select("id,guest_user_id,requester_profile_id,requester_withdrawn_at,is_group_request,song_id,song_title,song_artist,song_duration_seconds,chart_mask,vocal_parts,vocal_harmony,rockstar_name,band_name,requester_instrument,requester_instrument_mode,requester_difficulty,requester_microphone,allow_band_fill,fillable_instruments,available_guitar_roles,available_parts,status,yarg_not_ready,queue_position,started_at,created_at")
     .eq("party_session_id",settings.current_session_id)
     .in("status",["waiting","full","playing"])
     .order("queue_position",{ascending:true,nullsFirst:false});
@@ -1284,7 +1302,7 @@ function syncBandEditMode(form){
  form.querySelector('[data-edit-harmony]').hidden=!singing;
  form.elements.harmony.disabled=!singing;
  syncBandEditGuitar(form);
- syncBandDifficultyGuide(form);
+ syncChartSelect(form,r,selectedEditInstrument(form));
 }
 function bandEditFormHtml(r){
  const m=myAccountMember(r)||(myAccountRequester(r)?{instrument:r.requester_instrument,difficulty:r.requester_difficulty,microphone:r.requester_microphone,vocal_harmony:r.vocal_harmony,preferred_guitar:null}:myBandMember(r));
@@ -1301,7 +1319,7 @@ function bandEditFormHtml(r){
  return `<form id="band-edit-${esc(r.id)}" class="join-form band-change-form" data-band-change="${esc(r.id)}" data-original-instrument="${esc(m.instrument)}">
  <label>Instrument<select name="instrument">${instrumentsHtml}</select></label>
  <label data-mode-field ${family==='drums'||family==='keys'?'':'hidden'}>Mode de jeu<select name="instrument_mode">${variantHtml}</select></label>
- <label data-edit-difficulty>Difficulté<select name="difficulty">${Object.entries(difficulties).filter(([i])=>i!=='any').map(([i,label])=>`<option value="${i}" ${difficulty===i?'selected':''}>${esc(label)}</option>`).join('')}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${yargDifficultyCategory(m.instrument)?'':'hidden'}>${esc(yargDifficultyDescription(m.instrument,difficulty))}</small></label>
+ <label data-edit-difficulty>Difficulté<select name="difficulty">${chartOptions(r,m.instrument,difficulty)}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${yargDifficultyCategory(m.instrument)?'':'hidden'}>${esc(yargDifficultyDescription(m.instrument,difficulty))}</small></label>
  <label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
  <label data-edit-mic><input type="checkbox" name="microphone" ${m.microphone?'checked':''}> Chanter aussi</label>
  <label data-edit-harmony>Harmonie<select name="harmony">${harmonyOptions(r).replace(`value="${m.vocal_harmony}"`,`value="${m.vocal_harmony}" selected`)}</select></label>
@@ -1330,7 +1348,8 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('change',e=>{
  const form=e.target.closest('.band-change-form');if(!form)return;
  if(e.target.matches('select[name="instrument"]'))syncBandEditMode(form);
- if(e.target.matches('select[name="instrument_mode"], select[name="difficulty"]'))syncBandDifficultyGuide(form);
+ if(e.target.matches('select[name="instrument_mode"]'))syncBandEditMode(form);
+ if(e.target.matches('select[name="difficulty"]'))syncBandDifficultyGuide(form);
  if(e.target.matches('input[name="microphone"]'))syncBandEditMode(form);
 });
 // Délégation des événements: les cartes sont recréées à chaque mise à jour.
@@ -1351,7 +1370,7 @@ document.addEventListener("change",e=>{
   const form=e.target.closest('.join-form');
   if(e.target.matches('select[name="instrument_mode"]')){
    const previous=joinPrefs().difficulties?.[e.target.value];
-   if(previous&&form.elements.difficulty)form.elements.difficulty.value=previous;
+   if(form.elements.difficulty){const request=requests.find(r=>String(r.id)===form.dataset.joinRequest);syncChartSelect(form,request,e.target.value,previous)}
   }
   rememberJoinPrefs(form);
   if(e.target.matches('select[name="preferred_guitar"]'))updateJoinGuitarPhoto(form);
@@ -1377,7 +1396,7 @@ document.addEventListener("submit",async e=>{
   try{
     // Relire l'état juste avant l'insertion pour éviter les places déjà prises.
     const {data:request,error:re}=await sb.from("performance_requests")
-      .select("id,status,allow_band_fill,fillable_instruments,available_parts,rockstar_name,requester_instrument,requester_withdrawn_at,requester_microphone,vocal_parts")
+      .select("id,status,allow_band_fill,fillable_instruments,available_parts,chart_mask,rockstar_name,requester_instrument,requester_withdrawn_at,requester_microphone,vocal_parts")
       .eq("id",id).single();
     if(re)throw re;
     const {data:existing,error:me}=await sb.from("performance_members")
@@ -1397,6 +1416,7 @@ document.addEventListener("submit",async e=>{
       message.textContent="Cette guitare vient d’être réservée. Choisis-en une autre ou « Peu importe ».";return;
     }
     const difficulty=instrument==="vocals"?"medium":instrument==="flex"?"any":form.elements.difficulty.value;
+    if(!chartDifficulties(request,instrument).includes(difficulty)){message.textContent="Difficulté absente de cette partition.";return;}
     const {data:account}=await sb.auth.getUser();
     if(!account?.user){message.textContent='Connecte-toi à ton compte Rockstar pour rejoindre une chanson.';return;}
     const {data:rockstar,error:profileError}=await sb.from('rockstar_profiles').select('rockstar_name').eq('user_id',account.user.id).maybeSingle();
