@@ -545,16 +545,7 @@ function mcBandSummary(r,entries){
  let freeMic=Math.max(0,vocals-micCount),freeGuitar=Math.max(0,(roles.length?3:0)-guitarCount);
  let freeDrums=parts.includes('drums')?Math.max(0,1-drumCount):0;
  let freeKeys=parts.includes('keys')?Math.max(0,1-keyCount):0;
- let flexToReserve=flexCount;
- for(const type of ['guitar','drums','keys','vocals']){
-  const available=type==='guitar'?freeGuitar:type==='drums'?freeDrums:type==='keys'?freeKeys:freeMic;
-  const amount=Math.min(flexToReserve,available);
-  if(type==='guitar')freeGuitar-=amount;
-  if(type==='drums')freeDrums-=amount;
-  if(type==='keys')freeKeys-=amount;
-  if(type==='vocals')freeMic-=amount;
-  flexToReserve-=amount;
- }
+ // A Flex player reserves one slot without choosing its instrument. Do not guess which type it will use.
  const slots=[];
  const add=(icon,label,count)=>{if(count>0)slots.push({icon,label,count});};
  add(mcFallbackIcons.vocals,'Micro',freeMic);
@@ -566,11 +557,12 @@ function mcBandSummary(r,entries){
  }
  add(mcFallbackIcons.drums,'Batterie',freeDrums);
  add(mcFallbackIcons.keys,'Clavier',freeKeys);
- if(!slots.length)return '<div class="mc-performer-availability-note">Groupe complet — aucune place restante</div>';
- return `<div class="mc-performer-summary" aria-label="Places encore disponibles"><span class="mc-performer-availability-label">Places disponibles</span>${slots.map(x=>`<span class="mc-performer-summary-item" title="${esc(x.label)}"><img src="${esc(x.icon)}" alt="${esc(x.label)}"><span>${x.count}</span></span>`).join('')}</div>`;
+ const remainingTotal=slots.reduce((sum,item)=>sum+item.count,0)-flexCount;
+ if(remainingTotal<=0)return '<div class="mc-performer-availability-note">Groupe complet — aucune place restante</div>';
+ return `<div class="mc-performer-summary" aria-label="Places encore disponibles"><span class="mc-performer-availability-label">Places potentiellement disponibles${flexCount?` · ${flexCount} Flex à attribuer`:``}</span>${slots.map(x=>`<span class="mc-performer-summary-item" title="${esc(x.label)}"><img src="${esc(x.icon)}" alt="${esc(x.label)}"><span>${x.count}</span></span>`).join('')}</div>`;
 }
 
-function people(r){const entries=membersFor(r);return `<div class="mc-performers">${entries.length?mcBandSummary(r,entries)+entries.map(m=>mcPerformerMarkup(r,m)).join(''):'<span class="muted">Aucun participant actif</span>'}</div>`;}
+function people(r){const entries=membersFor(r);return `<div class="mc-performers">${mcBandSummary(r,entries)}${entries.length?entries.map(m=>mcPerformerMarkup(r,m)).join(''):'<span class="muted">Aucun participant actif</span>'}</div>`;}
 
 let mcRequestMetrics=new Map();
 function mcRequestMeta(r){
