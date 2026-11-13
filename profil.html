@@ -55,6 +55,14 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 .yarg-tier-ring.has-medal .yarg-tier-inner{background:#151c21}
 .yarg-tier-ring.has-medal .yarg-tier-icon{width:100%;height:auto;min-height:0}
 .yarg-tier-ring.has-medal .yarg-tier-icon img.yarg-rank-medal{width:52px;height:52px;max-width:100%;object-fit:contain;filter:drop-shadow(0 1px 3px #0009)}
+/* Alternate lead/rhythm medal designs while retaining a single shared guitar rank. */
+.yarg-tier-ring.has-medal .yarg-tier-icon .yarg-guitar-medal-duo{display:block;position:relative;width:52px;height:52px;flex:0 0 52px}
+.yarg-tier-ring.has-medal .yarg-tier-icon .yarg-guitar-medal-duo img.yarg-rank-medal{position:absolute;inset:0;width:100%;height:100%;max-width:none}
+.yarg-guitar-medal-duo img:first-child{z-index:1;animation:yargGuitarMedalSwap 6s ease-in-out infinite}
+@keyframes yargGuitarMedalSwap{0%,40%{opacity:1}50%,90%{opacity:0}100%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.yarg-guitar-medal-duo img:first-child{animation:none}}
+.yarg-tier-ring.has-medal.is-unearned .yarg-guitar-medal-duo{opacity:.48;filter:grayscale(1)}
+.yarg-tier-ring.has-medal.is-unearned .yarg-guitar-medal-duo .yarg-rank-medal{opacity:1;filter:none!important}
 .yarg-tier-ring.has-medal .yarg-tier-count{position:static;border-radius:5px;background:#111c24e8;padding:1px 4px;border:1px solid #45565f;white-space:nowrap;line-height:1.1;margin-top:1px;font-size:.6rem}
 .yarg-tier-ring.has-medal.is-unearned .yarg-rank-medal{opacity:.48;filter:grayscale(1) !important}.yarg-tier-count{font-size:.65rem;color:#c7d6dc;font-weight:850;margin-top:2px}
 .yarg-special-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0 23px}
@@ -222,7 +230,7 @@ const metrics={played:'Prestations terminées',parties:'Soirées jouées',stage_
 const groupNames={attendance:'Présence aux soirées',guitar:'Guitare et rythmique',bass:'Basse',drums:'Batterie',keys:'Clavier',vocals:'Voix',stage:'Temps sur scène',library:'Ajouts à la bibliothèque'};
 const titleIcons={guitar:'🎸',bass:'🎸',drums:'🥁',keys:'🎹',vocals:'🎤',attendance:'🌟',stage:'⏱️',library:'🎵'};
 const medalRanks=['wood','bronze','silver','gold','platinum','emerald','diamond','master','grand-master','champion'];
-const medalCategories=new Set(['guitar','bass','drums','keys','vocals']);
+const medalCategories=new Set(['guitar','rhythm_guitar','bass','drums','keys','vocals']);
 const useCustomMedals=true; // PNG manquants : retour automatique aux icônes d’instrument classiques.
 function medalIconUrl(category,level){
  if(!useCustomMedals||!medalCategories.has(category))return '';
@@ -232,6 +240,7 @@ function medalIconUrl(category,level){
 // Icônes de secours locales, fournies par Jak. Ne jamais les lire depuis index.html.
 const instrumentIconSources={
  guitar:'assets/medals/guitar-fallback.png',
+ rhythm_guitar:'assets/medals/rhythm_guitar-fallback.png',
  bass:'assets/medals/bass-fallback.png',
  drums:'assets/medals/drums-fallback.png',
  keys:'assets/medals/keys-fallback.png',
@@ -345,7 +354,16 @@ function renderTitles(){
   const ring=titleNode('div','yarg-tier-ring'+(medalSrc?' has-medal':'')+(!current?' is-unearned':''));ring.style.setProperty('--value',String(progress.pct));
   const inside=titleNode('div','yarg-tier-inner');
   const icon=titleNode('span','yarg-tier-icon');
-  if(medalSrc){
+  if(medalSrc && category==='guitar'){
+   const duo=titleNode('span','yarg-guitar-medal-duo');
+   for(const artwork of ['guitar','rhythm_guitar']){
+    const img=document.createElement('img');img.alt='';img.className='yarg-rank-medal';
+    img.src=medalIconUrl(artwork,medalLevel);
+    img.onerror=()=>{img.onerror=null;img.src=instrumentIconSources[artwork]};
+    duo.append(img);
+   }
+   icon.append(duo);
+  }else if(medalSrc){
    const img=document.createElement('img');img.alt='';img.className='yarg-rank-medal';img.src=medalSrc;
    img.onerror=()=>{ring.classList.remove('has-medal','is-unearned');img.remove();if(instrumentIconSources[category]){const fallback=document.createElement('img');fallback.alt='';fallback.src=instrumentIconSources[category];fallback.onerror=()=>{fallback.remove();icon.textContent=titleIcons[category]||'🏆'};icon.append(fallback)}else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆')};
    icon.append(img);
