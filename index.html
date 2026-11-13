@@ -1116,6 +1116,8 @@ header {max-height:none!important;overflow:visible!important}
 </style>
 
 <style>
+/* Keep song counts visually attached to search and aligned with the filters. */
+header .search-row{margin-bottom:0}
 /* Clear, lightweight transition from discovery filters to the song directory. */
 .counts-request-only{justify-content:flex-end}
 /* Suppress the old grey header separator, but keep the vivid teal accents. */
@@ -1133,7 +1135,7 @@ body>header{border-bottom:0!important}
 }
 .catalog-directory-topline{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:nowrap}
 .catalog-directory-label{color:#e7f2f2;font-size:clamp(.84rem,2.9vw,1.13rem);font-weight:900;white-space:nowrap;flex:0 0 auto}
-.catalog-directory-counts{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:7px;min-width:0;margin:6px 0 12px}
+.catalog-directory-counts{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:7px;min-width:0;margin:7px 0 10px}
 .catalog-directory-count{display:inline-flex;align-items:center;gap:6px;border:1px solid #36434a;background:#1b2429;color:#bacbd0;padding:7px 11px;border-radius:999px;font-size:.78rem;font-weight:800;white-space:nowrap}
 .catalog-directory-count-dot{width:6px;height:6px;border-radius:50%;background:#1fc8bd}
 .catalog-directory-count-shown{color:#ffca8d;background:#2c251f;border-color:#695036}
@@ -1141,7 +1143,7 @@ body>header{border-bottom:0!important}
 @media(max-width:680px){
  .catalog-directory-heading{margin-top:7px;padding:11px 11px 0}
  .catalog-directory-topline{align-items:center;gap:5px}
- .catalog-directory-counts{width:auto;gap:5px;justify-content:flex-end}
+ .catalog-directory-counts{width:auto;gap:5px;justify-content:flex-start;margin:7px 0 9px}
  .catalog-directory-count{padding:6px 7px;font-size:clamp(.65rem,2.65vw,.75rem)}
  .catalog-directory-label{font-size:clamp(.76rem,3.5vw,.97rem)}
  .catalog-directory-count-dot{width:5px;height:5px}
