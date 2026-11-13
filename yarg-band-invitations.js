@@ -80,7 +80,7 @@
     if(invitedParts[key])return invitedParts[key];
     if(!key)return {label:'Au choix',icon:null};
     // No raw database-style underscore names in the invitation banner.
-    return {label:key.replace(/[_-]+/g,' ').replace(/\\b\\w/g,c=>c.toUpperCase()),icon:null};
+    return {label:key.replace(/[_-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),icon:null};
   }
 
   let currentUser = null;
