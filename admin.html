@@ -304,21 +304,24 @@ body.yarg-unified-page{
 
 /* MC roster: colorful stock icons, not achievement medals. */
 .mc-performers{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;margin:12px 0 9px;min-width:0}
-.mc-performer{display:grid;grid-template-columns:78px minmax(110px,1fr) minmax(0,auto) 90px auto;align-items:center;gap:10px;min-height:58px;padding:7px 11px;border:1px solid #46616b;border-radius:12px;background:#203038;color:#eef4f6;min-width:0}
+.mc-performer{display:grid;grid-template-columns:78px minmax(110px,1fr) minmax(0,auto) 110px auto;align-items:center;gap:10px;min-height:58px;padding:7px 11px;border:1px solid #46616b;border-radius:12px;background:#203038;color:#eef4f6;min-width:0}
 .mc-performer-icons{display:flex;align-items:center;gap:3px}
 .mc-performer-icon{width:36px;height:36px;object-fit:contain;flex:0 0 36px}
 .mc-performer-name{font-size:.92rem;font-weight:850;line-height:1.25;overflow-wrap:anywhere;min-width:0}
 .mc-performer-info{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .mc-performer-tag{font-size:.76rem;font-weight:850;line-height:1.2;white-space:nowrap;border:1px solid #516773;border-radius:7px;padding:5px 8px;background:#17262e;color:#ebf4f6}
 .mc-performer-difficulty{border-color:#577b73;background:#1a3633;color:#c7f5e8}
-.mc-performer-guitar{width:88px;height:44px;object-fit:contain;display:block;justify-self:end}
-.mc-performer-guitar-space{width:88px}
+.mc-performer-guitar{width:104px;height:57px;object-fit:contain;display:block;justify-self:end}
+.mc-performer-guitar-space{width:104px}
 .mc-performer .yarg-reply{margin:0;white-space:nowrap}
 .mc-performer-state{display:flex;align-items:center;justify-content:flex-end}
 .mc-performer-summary{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:8px 0 10px}
 .mc-performer-summary-item{display:inline-flex;align-items:center;gap:5px;color:#c9d8de;background:#1b272d;border:1px solid #374c56;border-radius:8px;padding:3px 8px;font-weight:850;font-size:.76rem}
 .mc-performer-summary-item img{width:24px;height:24px;object-fit:contain}
-@media(max-width:750px){.mc-performer{display:flex;align-items:center;flex-wrap:wrap;gap:6px 9px;min-height:0;padding:9px 10px}.mc-performer-icon{width:31px;height:31px;flex-basis:31px}.mc-performer-name{flex:1 1 calc(100% - 92px)}.mc-performer-info{flex:1 1 auto}.mc-performer-guitar{width:70px;height:43px;margin-left:auto}.mc-performer-guitar-space{display:none}.mc-performer-state{margin-left:auto}}
+.mc-performer-availability-label{color:#c6d5dc;font-size:.76rem;font-weight:900}
+.mc-performer-availability-note{font-size:.76rem;color:#a8bbc4;padding:4px 0}
+.mc-performer-summary-item{border-color:#466b65;background:#1b302f}
+@media(max-width:750px){.mc-performer{display:flex;align-items:center;flex-wrap:wrap;gap:6px 9px;min-height:0;padding:9px 10px}.mc-performer-icon{width:31px;height:31px;flex-basis:31px}.mc-performer-name{flex:1 1 calc(100% - 92px)}.mc-performer-info{flex:1 1 auto}.mc-performer-guitar{width:clamp(118px,37vw,188px);height:clamp(88px,28vw,130px);max-width:100%;margin:0 0 0 auto;object-fit:contain}.mc-performer-guitar-space{display:none}.mc-performer-state{margin-left:auto}}
 
 </style><style>.mc-request-metrics{display:flex;flex-wrap:wrap;gap:5px 12px;margin:9px 0;padding:8px 10px;border-radius:9px;background:#152b30;border:1px solid #31595d;color:#b3e5df;font-size:.78rem;font-weight:750}.mc-request-metrics span:last-child{color:#dce5e6}</style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -527,18 +530,47 @@ function mcPerformerMarkup(r,m){
  const photoHtml=photo?`<img class="mc-performer-guitar" src="${esc(photo)}" alt="Guitare physique sélectionnée" loading="lazy">`:'<span class="mc-performer-guitar-space" aria-hidden="true"></span>';
  return `<div class="mc-performer"><span class="mc-performer-icons">${instrumentImage}${vocalImage}</span><span class="mc-performer-name">${esc(m.rockstar_name)}</span><span class="mc-performer-info">${tags.join('')}</span>${photoHtml}<span class="mc-performer-state">${yargReplyFor(r,m.rockstar_name,m.rockstar_profile_id)}</span></div>`;
 }
-function mcBandSummary(entries){
- const categories=['vocals','guitar','rhythm_guitar','bass','drums','keys'];
- const summary=categories.map(category=>{
-  const count=entries.filter(m=>{
-   const mode=m.instrument_mode||m.instrument||'';
-   return category==='vocals'?(mode==='vocals'||!!m.microphone):category==='drums'?['drums','drums_4lane','pro_drums'].includes(mode):category==='keys'?['keys','pro_keys'].includes(mode):mode===category;
-  }).length;
-  return count?`<span class="mc-performer-summary-item" title="${esc(part(category))}"><img src="${esc(mcFallbackIcons[category])}" alt=""><span>${count}</span></span>`:'';
- }).join('');
- return summary?`<div class="mc-performer-summary" aria-label="Répartition des instruments">${summary}</div>`:'';
+
+function mcBandSummary(r,entries){
+ if(!['waiting','full'].includes(r.status))return '';
+ if(!r.allow_band_fill)return '<div class="mc-performer-availability-note">Groupe fermé — aucune place ouverte</div>';
+ const parts=Array.isArray(r.available_parts)?r.available_parts:[];
+ const roles=Array.isArray(r.available_guitar_roles)?r.available_guitar_roles.filter(x=>['guitar','rhythm_guitar','bass'].includes(x)):[];
+ const vocals=Math.max(0,Math.min(3,Number(r.vocal_parts)||0));
+ const micCount=entries.filter(m=>m.instrument==='vocals'||m.instrument_mode==='vocals'||m.microphone).length;
+ const guitarCount=entries.filter(m=>['guitar','rhythm_guitar','bass'].includes(m.instrument_mode||m.instrument)).length;
+ const drumCount=entries.filter(m=>['drums','drums_4lane','pro_drums'].includes(m.instrument_mode||m.instrument)).length;
+ const keyCount=entries.filter(m=>['keys','pro_keys'].includes(m.instrument_mode||m.instrument)).length;
+ const flexCount=entries.filter(m=>(m.instrument_mode||m.instrument)==='flex').length;
+ let freeMic=Math.max(0,vocals-micCount),freeGuitar=Math.max(0,(roles.length?3:0)-guitarCount);
+ let freeDrums=parts.includes('drums')?Math.max(0,1-drumCount):0;
+ let freeKeys=parts.includes('keys')?Math.max(0,1-keyCount):0;
+ let flexToReserve=flexCount;
+ for(const type of ['guitar','drums','keys','vocals']){
+  const available=type==='guitar'?freeGuitar:type==='drums'?freeDrums:type==='keys'?freeKeys:freeMic;
+  const amount=Math.min(flexToReserve,available);
+  if(type==='guitar')freeGuitar-=amount;
+  if(type==='drums')freeDrums-=amount;
+  if(type==='keys')freeKeys-=amount;
+  if(type==='vocals')freeMic-=amount;
+  flexToReserve-=amount;
+ }
+ const slots=[];
+ const add=(icon,label,count)=>{if(count>0)slots.push({icon,label,count});};
+ add(mcFallbackIcons.vocals,'Micro',freeMic);
+ if(freeGuitar>0){
+  const filled=new Set(entries.map(m=>m.instrument_mode||m.instrument).filter(mode=>roles.includes(mode)));
+  const missing=roles.filter(role=>!filled.has(role));
+  for(const role of missing.slice(0,freeGuitar))add(mcFallbackIcons[role],part(role),1);
+  if(freeGuitar>missing.length)add(mcFallbackIcons.guitar,'Guitare supplémentaire (partie au choix)',freeGuitar-missing.length);
+ }
+ add(mcFallbackIcons.drums,'Batterie',freeDrums);
+ add(mcFallbackIcons.keys,'Clavier',freeKeys);
+ if(!slots.length)return '<div class="mc-performer-availability-note">Groupe complet — aucune place restante</div>';
+ return `<div class="mc-performer-summary" aria-label="Places encore disponibles"><span class="mc-performer-availability-label">Places disponibles</span>${slots.map(x=>`<span class="mc-performer-summary-item" title="${esc(x.label)}"><img src="${esc(x.icon)}" alt="${esc(x.label)}"><span>${x.count}</span></span>`).join('')}</div>`;
 }
-function people(r){const entries=membersFor(r);return `<div class="mc-performers">${entries.length?mcBandSummary(entries)+entries.map(m=>mcPerformerMarkup(r,m)).join(''):'<span class="muted">Aucun participant actif</span>'}</div>`;}
+
+function people(r){const entries=membersFor(r);return `<div class="mc-performers">${entries.length?mcBandSummary(r,entries)+entries.map(m=>mcPerformerMarkup(r,m)).join(''):'<span class="muted">Aucun participant actif</span>'}</div>`;}
 
 let mcRequestMetrics=new Map();
 function mcRequestMeta(r){
