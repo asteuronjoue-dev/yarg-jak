@@ -1225,6 +1225,53 @@ body.party-mode .yarg-catalog-heading{display:none}
   .yarg-navigation .yarg-nav-request{display:none!important}
 }
 </style>
+
+<style>
+/* Desktop catalogue filters: uniform tiles and typography across both rows. */
+@media (min-width:761px){
+  header .filter-line{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
+    align-items:stretch;
+  }
+  header .filter-line .chip{
+    box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+    min-width:0;
+    min-height:54px;
+    height:100%;
+    padding:8px 10px;
+    border:1px solid #36434a;
+    border-radius:12px;
+    background:#181c1f;
+    color:#eef3f4;
+    font:800 .82rem/1.25 inherit;
+    font-size:.82rem;
+    font-weight:800;
+    line-height:1.25;
+    text-align:center;
+    white-space:normal;
+  }
+  header .filter-line .chip-icon,
+  header .filter-line .harmony-filter-icon{width:30px;height:30px;flex:0 0 30px;object-fit:contain}
+  header .filter-line .rhythm-icon{width:30px;height:30px;flex:0 0 30px}
+  header .filter-line .rhythm-icon img{width:30px;height:30px;object-fit:contain}
+  header .filter-line .band-builder-toggle{font-size:.82rem}
+  header .filter-line .chip-clear-all{font-size:.82rem!important;font-weight:800}
+  header .filter-line .chip-fav .fav-heart{font-size:22px}
+}
+@media (min-width:960px){
+  header .filter-line{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (min-width:1200px){
+  header .filter-line{grid-template-columns:repeat(6,minmax(0,1fr))}
+}
+</style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong id="yarg-tips-title">🎸 Prépare-toi pour la prochaine soirée!</strong><p id="yarg-tips-copy">Repère tes chansons préférées et crée un compte Rockstar pour les garder en favoris. Une chanson manque? Demande son ajout pour la prochaine soirée!</p></aside><script>
 function updateCatalogWelcome(requestsOpen){
