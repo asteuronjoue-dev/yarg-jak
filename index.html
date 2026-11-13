@@ -1157,12 +1157,12 @@ body>header{border-bottom:0!important}
 /* Mobile: two balanced rows, with controls filling each of five columns. */
 @media (max-width:680px){
   header .filters{gap:7px;margin-top:0}
-  header .filter-line{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;width:100%;align-items:stretch}
+  header .filter-line{display:flex;flex-wrap:nowrap;justify-content:space-between;gap:6px;width:100%;align-items:stretch}
   header .filter-line .chip{
-    box-sizing:border-box;width:100%;min-width:0;height:auto;aspect-ratio:1/1;
+    box-sizing:border-box;width:calc((100% - 24px)/5);min-width:0;height:auto;aspect-ratio:1/1;
     padding:5px;display:flex;align-items:center;justify-content:center;
     border-radius:50%;font-size:clamp(1.3rem,5vw,2rem);
-    flex:none;
+    flex:0 0 calc((100% - 24px)/5);
   }
   header .filter-line .chip-icon,
   header .filter-line .harmony-filter-icon{
