@@ -829,9 +829,9 @@
             }
             .filter-line .chip .chip-long,
             .filter-line .chip .chip-short,
-            .filter-line .chip > span:not(.rhythm-icon) { display: none !important; }
+            .filter-line .chip > span:not(.rhythm-icon):not(.filter-action-icon) { display: none !important; }
             .filter-line .band-builder-toggle { font-size: 0; }
-            .filter-line .band-builder-toggle::before { content: '🔍'; font-size: 22px; line-height: 1; }
+            .filter-line .band-builder-toggle::before { content: none; }
             .filter-line .band-builder-toggle > span { display: none !important; }
         }
     
@@ -1184,7 +1184,7 @@ body>header{border-bottom:0!important}
   header .filter-line .rhythm-icon{width:82%;height:82%;display:grid;place-items:center}
   header .filter-line .rhythm-icon img{width:100%;height:100%;object-fit:contain}
   header .filter-line .band-builder-toggle{font-size:0}
-  header .filter-line .band-builder-toggle::before{font-size:clamp(23px,6vw,35px)}
+  header .filter-line .band-builder-toggle .filter-action-icon{font-size:clamp(23px,6vw,35px)}
   header .filter-line .chip-clear-all{font-size:clamp(1.3rem,5vw,2rem)}
 }
 </style>
@@ -1227,47 +1227,77 @@ body.party-mode .yarg-catalog-heading{display:none}
 </style>
 
 <style>
-/* Desktop catalogue: matching filter tiles in both rows. */
-@media(min-width:761px){
-  header .filter-line{
+/* Desktop catalogue: one consistent tile size, type scale and icon scale. */
+@media (min-width:761px) {
+  header .filters { gap:8px; }
+  header .filter-line {
     display:grid;
     grid-template-columns:repeat(6,minmax(0,1fr));
     gap:8px;
+    width:100%;
     align-items:stretch;
   }
-  header .filter-line .chip{
+  header .filter-line .chip {
     box-sizing:border-box;
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:7px;
+    gap:5px;
     width:100%;
     min-width:0;
-    min-height:58px;
+    min-height:78px;
     height:100%;
-    padding:8px 7px;
+    padding:9px 6px;
     border:1px solid #36434a;
     border-radius:12px;
     background:#181c1f;
     color:#eef3f4;
     font-family:inherit;
-    font-size:.85rem!important;
-    font-weight:800;
+    font-size:.82rem!important;
+    font-weight:800!important;
     line-height:1.2;
+    letter-spacing:normal;
     text-align:center;
     white-space:normal;
+    overflow-wrap:break-word;
   }
   header .filter-line .chip-icon,
-  header .filter-line .harmony-filter-icon{
-    display:block;width:34px;height:34px;flex:0 0 34px;object-fit:contain;
+  header .filter-line .harmony-filter-icon {
+    display:block;
+    width:40px;
+    height:40px;
+    flex:0 0 40px;
+    object-fit:contain;
   }
-  header .filter-line .rhythm-icon{width:34px;height:34px;flex:0 0 34px}
-  header .filter-line .rhythm-icon img{width:34px;height:34px;object-fit:contain}
-  header .filter-line .chip-fav .fav-heart{font-size:26px}
-  header .filter-line .band-builder-toggle{font-size:.85rem!important}
-  header .filter-line .chip-clear-all{font-size:.85rem!important;font-weight:800}
-  /* The first row has five filters and the second six. All boxes keep the
-     same dimensions rather than stretching differently from row to row. */
+  header .filter-line .rhythm-icon {
+    width:40px;
+    height:40px;
+    flex:0 0 40px;
+    display:grid;
+    place-items:center;
+  }
+  header .filter-line .rhythm-icon img {
+    width:40px;
+    height:40px;
+    object-fit:contain;
+  }
+  header .filter-line .chip-fav .fav-heart {
+    font-size:34px;
+    line-height:40px;
+    height:40px;
+  }
+  header .filter-line .filter-action-icon {
+    display:block;
+    font-size:30px;
+    line-height:40px;
+    height:40px;
+    flex:0 0 40px;
+  }
+  header .filter-line .band-builder-toggle::before { content:none; }
+  header .filter-line .band-builder-toggle,
+  header .filter-line .chip-clear-all { font-size:.82rem!important; font-weight:800!important; }
+  /* Keep intentional selected/clear/favourite colours; unify their geometry. */
 }
 </style>
 </head>
@@ -1327,8 +1357,8 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                 <button class="chip chip-v" data-part="V" aria-label="Voix / Harmonies" title="Voix/Harmonies - Au moins une partie vocale."><img class="chip-icon" data-rank-icon="vocals" src="assets/medals/vocals-fallback.png" alt=""> <span class="chip-long">Voix/Harmonies</span><span class="chip-short">V</span></button>
                 <button class="chip" data-extra="h2" title="Deux Harmonies - Au moins deux parties vocales." aria-label="Deux Harmonies"><img class="chip-icon harmony-filter-icon" id="harmony2-filter-icon" alt="" aria-hidden="true"> <span>Deux Harmonies</span></button>
                 <button class="chip" data-extra="h3" title="Trois Harmonies - Chacun a sa propre partie vocale!" aria-label="Trois Harmonies"><img class="chip-icon harmony-filter-icon" id="harmony3-filter-icon" alt="" aria-hidden="true"> <span>Trois Harmonies</span></button>
-                <button class="chip band-builder-toggle" id="band-builder-toggle" type="button" aria-expanded="false" aria-controls="band-builder" aria-label="Trouve une toune pour tout ton groupe" title="Trouve une toune pour tout ton groupe">🔍 Trouve une toune pour tout ton groupe <span id="band-filter-total"></span></button>
-            <button id="clear-all-filters" class="chip chip-clear-all" type="button" title="Effacer tous les filtres" aria-label="Effacer tous les filtres">❌ <span class="chip-long">Tout effacer</span></button>
+                <button class="chip band-builder-toggle" id="band-builder-toggle" type="button" aria-expanded="false" aria-controls="band-builder" aria-label="Trouve une toune pour tout ton groupe" title="Trouve une toune pour tout ton groupe"><span class="filter-action-icon" aria-hidden="true">🔍</span><span class="filter-action-label">Pour le groupe</span><span id="band-filter-total"></span></button>
+            <button id="clear-all-filters" class="chip chip-clear-all" type="button" title="Effacer tous les filtres" aria-label="Effacer tous les filtres"><span class="filter-action-icon" aria-hidden="true">❌</span><span class="chip-long">Tout effacer</span></button>
             <button id="favorites-only" class="chip chip-fav" type="button" aria-pressed="false" title="Mes favoris (connexion requise)" aria-label="Mes favoris"><span class="fav-heart">♥</span><span class="chip-long">Mes favoris</span></button>
             </div>
             <div class="filter-line filter-line-instruments">
