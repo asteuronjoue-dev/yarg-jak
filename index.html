@@ -1237,6 +1237,14 @@ body.party-mode .yarg-catalog-heading{display:none}
     width:100%;
     align-items:stretch;
   }
+  /* Center the five vocal controls while retaining the six-column tile width. */
+  header .filter-line-vocals {
+    display:flex;
+    justify-content:center;
+  }
+  header .filter-line-vocals .chip {
+    flex:0 0 calc((100% - 40px)/6);
+  }
   header .filter-line .chip {
     box-sizing:border-box;
     display:flex;
