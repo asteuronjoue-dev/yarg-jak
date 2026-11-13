@@ -48,6 +48,8 @@
     #yarg-invite-banner .yarg-invite-song{min-width:0;flex:1 1 190px;overflow-wrap:anywhere}
     #yarg-invite-banner .yarg-invite-song strong{display:block;font-size:14px;color:#fff}
     #yarg-invite-banner .yarg-invite-song small{color:#c5d6dc;display:block;font-size:12px;margin-top:3px}
+    #yarg-invite-banner .yarg-invite-song .yarg-invite-part{display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:3px 10px 3px 5px;border:1px solid #4d7576;border-radius:9px;background:#183136;color:#d7f5ed;font-size:12px;font-weight:850;max-width:100%}
+    #yarg-invite-banner .yarg-invite-part img{display:block;flex:0 0 24px;width:24px;height:24px;object-fit:contain}
     #yarg-invite-banner .yarg-invite-buttons{display:flex;gap:8px;flex-wrap:wrap}
     #yarg-invite-banner button{cursor:pointer;min-height:38px;border:1px solid #54707b;border-radius:8px;padding:8px 12px;font:800 13px system-ui,sans-serif}
     #yarg-invite-banner button:disabled{opacity:.5;cursor:wait}
@@ -59,6 +61,27 @@
     @media(max-width:600px){#yarg-invite-banner .yarg-invite-item{flex-basis:100%}#yarg-invite-banner .yarg-invite-buttons{width:100%}#yarg-invite-banner .yarg-invite-buttons button{flex:1}}
   `;
   document.head.append(style);
+
+  // All chart modes use friendly names and the bright default icons, never medals.
+  const invitedParts = {
+    vocals:        {label:'Voix', icon:'vocals'},
+    guitar:        {label:'Guitare', icon:'guitar'},
+    rhythm_guitar: {label:'Guitare rythmique', icon:'rhythm_guitar'},
+    bass:          {label:'Basse', icon:'bass'},
+    drums:         {label:'Batterie', icon:'drums'},
+    drums_4lane:   {label:'Drums - 4-Lanes', icon:'drums'},
+    pro_drums:     {label:'Drums - Pro Drums', icon:'drums'},
+    keys:          {label:'Keys - 5-Lanes', icon:'keys'},
+    pro_keys:      {label:'Keys - Pro Keys', icon:'keys'},
+    flex:          {label:'Peu importe', icon:null}
+  };
+  function invitedPart(mode){
+    const key=String(mode||'').trim().toLowerCase();
+    if(invitedParts[key])return invitedParts[key];
+    if(!key)return {label:'Au choix',icon:null};
+    // No raw database-style underscore names in the invitation banner.
+    return {label:key.replace(/[_-]+/g,' ').replace(/\\b\\w/g,c=>c.toUpperCase()),icon:null};
+  }
 
   let currentUser = null;
   let pending = [];
@@ -97,7 +120,18 @@
       const song = document.createElement('strong');
       song.textContent = (invitation.song_title || 'Chanson') + ' — ' + (invitation.song_artist || 'Artiste inconnu');
       const detail = document.createElement('small');
-      detail.textContent = 'Rockstar : ' + (invitation.rockstar_name || '—') + ' · Instrument : ' + (invitation.instrument_mode || 'Au choix');
+      detail.className = 'yarg-invite-part';
+      const part = invitedPart(invitation.instrument_mode);
+      if(part.icon){
+        const img=document.createElement('img');
+        img.src='assets/medals/'+part.icon+'-fallback.png';
+        img.alt='';
+        img.setAttribute('aria-hidden','true');
+        detail.append(img);
+      }
+      const partLabel=document.createElement('span');
+      partLabel.textContent=part.label;
+      detail.append(partLabel);
       info.append(song,detail);
       const actions = document.createElement('div');actions.className='yarg-invite-buttons';
       for(const [decision,label,cls] of [[true,'Accepter','yarg-invite-accept'],[false,'Refuser','yarg-invite-decline']]){
