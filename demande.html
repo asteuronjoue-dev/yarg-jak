@@ -16,36 +16,41 @@
       --text: #f4f5f7;
       --muted: #a7adb8;
       --border: #303640;
-      --accent: #7c5cff;
-      --accent2: #947cff;
+      --accent: #ff8a24;
+      --accent2: #ffb45e;
       --danger: #ff6b6b;
       --success: #5bd68a;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: radial-gradient(circle at top, #1a1730 0, var(--bg) 42%);
+      background: radial-gradient(circle at top, rgba(255,138,36,.10) 0, rgba(31,200,189,.035) 30%, var(--bg) 52%);
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       min-height: 100vh;
     }
     .wrap { width: min(760px, calc(100% - 28px)); margin: 0 auto; padding: 34px 0 60px; }
     .top { margin-bottom: 24px; }
-    .back { color: var(--muted); text-decoration: none; font-size: .92rem; }
-    .back:hover { color: var(--text); }
+    .back {
+      display:inline-flex;align-items:center;justify-content:center;
+      min-height:38px;padding:.48rem .7rem;border-radius:10px;
+      border:1px solid #3b4b53;background:#1b2429;
+      color:#eaf1f3;text-decoration:none;font-size:.85rem;font-weight:800;
+    }
+    .back:hover,.back:focus-visible { background:#263338;border-color:#1fc8bd;color:#fff; }
     h1 { font-size: clamp(1.8rem, 5vw, 2.7rem); margin: 18px 0 8px; line-height: 1.08; }
     .intro { color: var(--muted); line-height: 1.55; margin: 0; }
     .party-notice {
-      margin-top: 16px;
-      padding: 13px 15px;
-      border: 1px solid rgba(124,92,255,.35);
-      background: rgba(124,92,255,.10);
-      border-radius: 12px;
-      color: #ddd8ff;
-      line-height: 1.5;
-      font-size: .92rem;
+      margin-top:16px;padding:15px 17px;border:1px solid rgba(255,255,255,.25);
+      border-radius:12px;color:#101214;font-size:.94rem;font-weight:850;line-height:1.5;
+      background:linear-gradient(95deg,#ff6479,#ffb94a,#ffe985,#73e3cb,#8ebdff,#d4a0ff,#ff6479);
+      background-size:250% 100%;
+      animation:partyNoticeRainbow 5s ease-in-out infinite alternate;
+      box-shadow:0 6px 24px rgba(0,0,0,.2);
     }
-    .party-notice strong:first-child { color: #fff; }
+    .party-notice[hidden],#automatic-favorites-panel[hidden]{display:none!important}
+    @keyframes partyNoticeRainbow{from{background-position:0% center}to{background-position:100% center}}
+    @media(prefers-reduced-motion:reduce){.party-notice{animation:none}}
     .card {
       background: color-mix(in srgb, var(--panel) 94%, transparent);
       border: 1px solid var(--border);
@@ -56,7 +61,9 @@
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .full { grid-column: 1 / -1; }
     label { display: block; font-weight: 650; margin-bottom: 8px; }
-    .required::after { content: " *"; color: var(--accent2); }
+    .required::after { content: " *"; color: #57b6ff; }
+    .required-legend { margin:0 0 18px;color:var(--muted);font-size:.85rem; }
+    .legend-star { color:#57b6ff;font-weight:900;font-size:1.05em; }
     input, select, textarea {
       width: 100%;
       border: 1px solid var(--border);
@@ -69,7 +76,7 @@
     }
     input:focus, select:focus, textarea:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(124,92,255,.15);
+      box-shadow: 0 0 0 3px rgba(255,138,36,.17);
     }
     textarea { min-height: 120px; resize: vertical; }
     .help { color: var(--muted); font-size: .86rem; line-height: 1.4; margin: 6px 0 0; }
@@ -88,7 +95,7 @@
       font-weight: 500;
     }
     .choice input { width: auto; margin: 0; accent-color: var(--accent); }
-    .choice:has(input:checked) { border-color: var(--accent); background: rgba(124,92,255,.13); }
+    .choice:has(input:checked) { border-color: var(--accent); background: rgba(255,138,36,.13); }
     .actions { margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px; align-items: center; }
     button {
       border: 0;
@@ -102,6 +109,8 @@
     }
     button:hover { background: var(--accent2); }
     button:disabled { opacity: .55; cursor: wait; }
+    #submitButton { background:#ff8a24;color:#111;font-weight:900;box-shadow:0 5px 18px rgba(255,138,36,.16); }
+    #submitButton:hover:not(:disabled),#submitButton:focus-visible { background:#ffad55;color:#111; }
     .status { margin-top: 18px; border-radius: 11px; padding: 12px 14px; line-height: 1.45; display: none; }
     .status.success { display: block; background: rgba(91,214,138,.12); border: 1px solid rgba(91,214,138,.35); color: #b8f3ce; }
     .status.error { display: block; background: rgba(255,107,107,.12); border: 1px solid rgba(255,107,107,.35); color: #ffc0c0; }
@@ -136,11 +145,12 @@
     <header class="top">
       <a class="back" href="index.html">← Retour au catalogue</a>
       <h1>Demander l'ajout d'une chanson</h1>
-      <p class="intro">Une chanson manque? Propose-la pour une prochaine soirée! Jak cherchera une version jouable et tu recevras le résultat par courriel.</p>
-      <div class="party-notice">Pour jouer une chanson déjà au catalogue, demande-la depuis sa fiche.</div>
+      <p class="intro">Tu ne trouves pas ta chanson dans le catalogue? Jak peut la trouver pour toi! Entre ces quelques infos et il s'y mettera dès qu'il en aura envie!</p>
+      <div class="party-notice" id="party-request-notice" hidden>Comme Jak est occupé avec le party en ce moment, ta demande sera traitée à une date ultérieure. Si c'était pour ce soir, sucks to be you et trouve toi une autre toune. 🧡</div>
     </header>
 
     <form class="card" id="requestForm">
+      <p class="required-legend">L’étoile bleue <span class="legend-star" aria-hidden="true">*</span> indique un champ obligatoire.</p>
       <div class="grid">
         <div>
           <label class="required" for="name">Nom</label>
@@ -148,13 +158,13 @@
         </div>
 
         <div>
-          <label class="required" for="email">Courriel</label>
-          <input id="email" name="email" type="email" autocomplete="email" required maxlength="320">
-          <p class="help">On utilisera cette adresse pour te tenir au courant du résultat de la recherche.</p>
+          <label for="email">Courriel</label>
+          <input id="email" name="email" type="email" autocomplete="email" maxlength="320">
+          <p class="help">Pour recevoir une confirmation et des nouvelles de ta demande par courriel.</p>
         </div>
 
         <div>
-          <label for="title">Titre de la chanson (facultatif)</label>
+          <label for="title">Titre de la chanson</label>
           <input id="title" name="title" maxlength="200" placeholder="Laisse vide pour demander plusieurs chansons de l’artiste">
         </div>
 
@@ -170,18 +180,6 @@
       </div>
 
       <div class="section">
-        <label>Instruments souhaités</label>
-        <p class="help">Sélectionne les instruments que tu aimerais pouvoir jouer sur cette chanson.</p>
-        <div class="check-grid" style="margin-top:9px">
-          <label class="choice"><input type="checkbox" name="instrument" value="vocals"> 🎤 Voix</label>
-          <label class="choice"><input type="checkbox" name="instrument" value="guitar"> 🎸 Guitare</label>
-          <label class="choice"><input type="checkbox" name="instrument" value="bass"> 🎸 Basse</label>
-          <label class="choice"><input type="checkbox" name="instrument" value="drums"> 🥁 Batterie</label>
-          <label class="choice"><input type="checkbox" name="instrument" value="keys"> 🎹 Clavier</label>
-        </div>
-      </div>
-
-      <div class="section">
         <label for="download">Lien de téléchargement</label>
         <input id="download" name="download" type="url" maxlength="1000" placeholder="https://...">
         <p class="help">Tu as un lien vers cette chanson? Colle-le ici pour faciliter les recherches de Jak.</p>
@@ -192,12 +190,12 @@
         <textarea id="message" name="message" maxlength="2000" placeholder="Un détail pour aider Jak à trouver la bonne version? Commentaires et compliments au maître des chansons bienvenus! 😎"></textarea>
       </div>
 
-      <div class="section" id="automatic-favorites-panel" style="border:1px solid #4b605e;border-radius:12px;padding:14px;">
+      <div class="section" id="automatic-favorites-panel" hidden style="border:1px solid #4b605e;border-radius:12px;padding:14px;">
         <strong>♥ Favoris Rockstar</strong>
         <p class="help">Si tu demandes une chanson précise et qu’elle est trouvée, elle sera automatiquement ajoutée à tes favoris lorsque tu es connecté à ton compte Rockstar.</p>
         <label class="choice" style="display:flex;align-items:flex-start;gap:10px;margin-top:12px"><input type="checkbox" id="favoriteArtistExtras" style="margin-top:4px">
           <span><strong>Ajouter aussi les autres chansons trouvées de cet artiste à mes favoris</strong><span class="help" style="display:block">Tu pourras les retirer manuellement de tes favoris à tout moment.</span></span></label>
-        <p class="help" id="favorite-account-info" aria-live="polite">Connecte-toi à ton compte Rockstar pour activer les favoris automatiques.</p>
+        <p class="help" id="favorite-account-info" aria-live="polite">Compte Rockstar connecté : les favoris de ta demande seront mis à jour automatiquement.</p>
       </div>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
@@ -230,17 +228,43 @@
       return value.trim();
     }
 
-    (async()=>{
+    const client = window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+    const favoritePanel = document.getElementById('automatic-favorites-panel');
+    const favoriteArtistExtras = document.getElementById('favoriteArtistExtras');
+    const partyNotice = document.getElementById('party-request-notice');
+
+    async function refreshRockstarState(){
+      let connected = false;
       try {
-        const authClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
-        const {data:{user}}=await authClient.auth.getUser();
-        const connected=!!(user&&!user.is_anonymous);
-        document.getElementById('favoriteArtistExtras').disabled=!connected;
-        document.getElementById('favorite-account-info').textContent=connected
-          ? 'Compte Rockstar connecté : les favoris de ta demande seront mis à jour automatiquement.'
-          : 'Connecte-toi dans Mon profil pour profiter des favoris automatiques. Tu peux quand même demander une chanson.';
-      }catch(e){document.getElementById('favoriteArtistExtras').disabled=true;}
-    })();
+        const {data:{user},error} = await client.auth.getUser();
+        if(error) throw error;
+        connected = !!(user && !user.is_anonymous);
+      } catch(error) { console.warn('Impossible de vérifier la session Rockstar.',error); }
+      favoritePanel.hidden = !connected;
+      favoriteArtistExtras.disabled = !connected;
+      if(!connected) favoriteArtistExtras.checked = false;
+    }
+
+    async function refreshPartyMode(){
+      try{
+        const {data,error} = await client.from('party_settings')
+          .select('performance_requests_enabled,party_mode_until').eq('id',1).maybeSingle();
+        if(error) throw error;
+        partyNotice.hidden = !(data?.performance_requests_enabled &&
+          (!data.party_mode_until || new Date(data.party_mode_until).getTime() > Date.now()));
+      }catch(error){
+        partyNotice.hidden=true;
+        console.warn('Impossible de vérifier le mode party.',error);
+      }
+    }
+
+    refreshRockstarState();
+    refreshPartyMode();
+    client.auth.onAuthStateChange(()=>{setTimeout(refreshRockstarState,0)});
+    document.addEventListener('visibilitychange',()=>{
+      if(!document.hidden){refreshPartyMode();refreshRockstarState();}
+    });
+    setInterval(()=>{if(!document.hidden)refreshPartyMode();},60000);
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -251,23 +275,20 @@
         return;
       }
 
-      const instruments = [...document.querySelectorAll('input[name="instrument"]:checked')]
-        .map(input => input.value);
-
       const data = {
         requester_name: clean(document.getElementById("name").value),
-        requester_email: clean(document.getElementById("email").value),
+        requester_email: clean(document.getElementById("email").value) || null,
         song_title: clean(document.getElementById("title").value),
         artist: clean(document.getElementById("artist").value),
         album: clean(document.getElementById("album").value) || null,
         desired_difficulty: "any",
-        desired_instruments: instruments,
+        desired_instruments: [],
         personal_message: clean(document.getElementById("message").value) || null,
         download_url: clean(document.getElementById("download").value) || null,
-        favorite_artist_extras: document.getElementById("favoriteArtistExtras").checked
+        favorite_artist_extras: !favoritePanel.hidden && favoriteArtistExtras.checked
       };
 
-      if (!data.requester_name || !data.requester_email || !data.artist) {
+      if (!data.requester_name || !data.artist) {
         showStatus("error", "Merci de remplir tous les champs obligatoires.");
         return;
       }
@@ -277,9 +298,6 @@
       statusBox.className = "status";
 
       try {
-        const { createClient } = window.supabase;
-        const client = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
         const {data: authData} = await client.auth.getUser();
         const user = authData?.user;
         // The database links a request only to the authenticated Rockstar account.
@@ -291,7 +309,9 @@
         form.reset();
         showStatus(
           "success",
-          "Demande envoyée! 🎸 Tu recevras une confirmation par courriel, puis un avis lorsque la recherche sera terminée."
+          data.requester_email
+            ? "Demande envoyée! 🎸 Tu recevras une confirmation par courriel et des nouvelles lorsque la recherche sera terminée."
+            : "Demande envoyée! 🎸 Jak s'en occupera dès qu'il pourra."
         );
       } catch (error) {
         console.error(error);
