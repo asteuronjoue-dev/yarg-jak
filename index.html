@@ -832,7 +832,7 @@
             .filter-line .chip > span:not(.rhythm-icon):not(.filter-action-icon) { display: none !important; }
             .filter-line .band-builder-toggle { font-size: 0; }
             .filter-line .band-builder-toggle::before { content: none; }
-            .filter-line .band-builder-toggle > span { display: none !important; }
+            .filter-line .band-builder-toggle > span:not(.filter-action-icon) { display: none !important; }
         }
     
 /* Navigation partagée : visible sur toutes les pages, sans bloquer l'accès invité. */
@@ -1328,7 +1328,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                     </div>
                 </div>
             </div>
-            <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html" aria-current="page">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a><a class="yarg-nav-request" href="demande.html">➕ Demander une chanson</a></nav>
+            <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html" aria-current="page">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a><a class="yarg-nav-request" href="demande.html">➕ Demander un ajout</a></nav>
         </div>
         <button id="theme-toggle">
             <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
