@@ -207,7 +207,7 @@ const hasVocals=song.parts.includes('V')||song.vocals>0;
 const vocalParts=hasVocals?Math.max(1,Math.min(3,song.vocals||1)):0;
 const availableParts=[...(hasVocals?['vocals']:[]),...(song.parts.includes('G')?['guitar']:[]),...(song.parts.includes('B')?['bass']:[]),...(song.parts.includes('D')?['drums']:[]),...(song.parts.includes('K')?['keys']:[])];
 const options=[...(hasVocals?[['vocals','Voix / harmonies']]:[]),...(availableGuitarRoles.includes('guitar')?[['guitar','Guitare']]:[]),...(availableGuitarRoles.includes('rhythm_guitar')?[['rhythm_guitar','Guitare rythmique']]:[]),...(availableGuitarRoles.includes('bass')?[['bass','Basse']]:[]),...(song.parts.includes('D')?[['drums','Batterie']]:[]),...(song.parts.includes('K')?[['keys','Clavier']]:[]),...(availableParts.length?[['flex','Peu importe']]:[])];
-const drumModes=[...(song.parts.includes('D')?[['drums_4lane','Drums - 4-Lane']]:[]),...(chartGroup(5)>0?[['pro_drums','Drums - Pro Drums']]:[])];
+const drumModes=[...(song.parts.includes('D')?[['drums_4lane','Drums - 4-Lanes']]:[]),...(chartGroup(5)>0?[['pro_drums','Drums - Pro Drums']]:[])];
 const keyModes=[...(song.parts.includes('K')?[['keys','Keys - 5-Lanes']]:[]),...(chartGroup(7)>0?[['pro_keys','Keys - Pro Keys']]:[])];
 const diffOptions=[['beginner','Débutant'],['easy','Facile'],['medium','Moyen'],['hard','Difficile'],['expert','Expert']];
 
