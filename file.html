@@ -856,10 +856,10 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  const extraMic=microphone&&instrument!=='vocals'?`<span class="yarg-performer-extra-vocals" title="Chante aussi">${medalMarkup(name,'vocals',false,profileId)}</span>`:'';
  const instrumentIcons=`<span class="yarg-performer-instrument-icons">${medalMarkup(name,chartMode,microphone,profileId)}${extraMic}</span>`;
  const subtypeText=({
-  drums_4lane:'Drums - 4-Lanes',
-  pro_drums:'Drums - Pro Drums',
-  keys:'Keys - 5-Lanes',
-  pro_keys:'Keys - Pro Keys',
+  drums_4lane:'4-Lanes',
+  pro_drums:'Pro Drums',
+  keys:'5-Lanes',
+  pro_keys:'Pro Keys',
   flex:'Flex'
  })[chartMode]||'';
  const subtypeBadge=subtypeText?`<span class="yarg-performer-pill yarg-performer-pill--subtype" title="${esc(subtypeText)}">${esc(subtypeText)}</span>`:'';
