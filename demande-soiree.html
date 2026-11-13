@@ -548,7 +548,9 @@ $('add-member').onclick=()=>{if(members.length<8&&freeInstrumentCapacity(counts(
 if(options.length){members.push(model());render();prefillSignedInRockstar();loadBandDirectory()}else{$('status').textContent='Aucun instrument jouable trouvé pour cette chanson.';$('submit').disabled=true}
 function validate(){
  const c=counts();if(c.guitars>limits.guitars||c.mics>limits.mics||c.drums>limits.drums||c.keys>limits.keys||freeInstrumentCapacity(c)<0)return 'Trop de personnes pour le matériel disponible.';
- const used=new Set();for(const m of members){if(!m.name.trim())return 'Donne un nom à chaque rockstar.';
+ const used=new Set(),usedNames=new Set(),usedProfiles=new Set();for(const m of members){if(!m.name.trim())return 'Donne un nom à chaque rockstar.';
+ const stageName=m.name.trim().toLocaleLowerCase('fr-CA');if(usedNames.has(stageName))return 'Chaque Rockstar doit avoir un nom de scène différent pour cette prestation.';usedNames.add(stageName);
+ if(m.profileId){if(usedProfiles.has(m.profileId))return 'Le même compte Rockstar ne peut pas occuper deux places dans le groupe.';usedProfiles.add(m.profileId)}
  if(m.mode!=='vocals'&&m.mode!=='flex'&&!diffOptions.some(([value])=>value===m.difficulty))return 'Choisis une difficulté pour chaque rockstar.';
  if(instrumentFamily(m.mode)==='guitar'){
    if(members.some(other=>other!==m&&instrumentFamily(other.mode)==='guitar'&&m.guitarChoice&&other.guitarChoice===m.guitarChoice))return 'Cette guitare est déjà réservée par un autre membre de ton groupe.';
@@ -616,11 +618,12 @@ const err=validate();if(err){status.className='status error';status.textContent=
   const args={p_song_id:song.id,p_song_title:song.title,p_song_artist:song.artist,p_duration_seconds:song.duration,p_band_name:$('band-name').value.trim(),p_members:members.map(m=>({name:m.name.trim(),mode:m.mode,difficulty:m.mode==='vocals'?'medium':m.mode==='flex'?'any':(m.difficulty==='beginner'?'easy':m.difficulty),microphone:m.mode!=='vocals'&&m.mode!=='flex'&&m.microphone,harmony:m.mode==='vocals'?m.harmony:null})),p_guitar_roles:availableGuitarRoles,p_available_parts:availableParts,p_vocal_parts:vocalParts,p_allow_band_fill:$('allow-fill').checked};
   // PostgreSQL RPC validates the entire band in one transaction.
   const guitarReservations=members.filter(m=>instrumentFamily(m.mode)==='guitar'&&m.guitarChoice).map(m=>({name:m.name.trim(),mode:m.mode,guitar:m.guitarChoice}));
-  const {data,error}=await sb.rpc('yarg_submit_group_request_with_guitars',{...args,p_guitar_reservations:guitarReservations});if(error)throw error;
+  // One atomic transaction: band, guitar reservations and account invitations.
+  const profileLinks=members.filter(m=>m.profileId).map(m=>({name:m.name.trim(),mode:m.mode,profile_id:m.profileId}));
+  const {data,error}=await sb.rpc('yarg_submit_group_request_with_guitars_and_invites',{...args,p_guitar_reservations:guitarReservations,p_profile_links:profileLinks});if(error)throw error;
    // Mémoriser également le choix final de chaque Rockstar après confirmation.
    members.forEach(saveMemberPreferences);
   const key='yarg_owned_performance_requests';let owned=[];try{owned=JSON.parse(localStorage.getItem(key)||'[]')}catch{}if(!Array.isArray(owned))owned=[];if(!owned.includes(data))owned.push(data);localStorage.setItem(key,JSON.stringify(owned));
-  const invites=members.filter(m=>m.profileId).map(m=>({name:m.name.trim(),mode:m.mode,profile_id:m.profileId}));for(const entry of invites){const {error:linkErr}=await sb.rpc('yarg_offer_member_profile_link',{p_request_id:data,p_rockstar_name:entry.name,p_instrument_mode:entry.mode,p_profile_id:entry.profile_id});if(linkErr)console.warn('Invitation non enregistrée',linkErr)}
   // Une demande solo d'un Rockstar déjà inscrit peut se rattacher aussitôt au profil.
   if(session?.user && !session.user.is_anonymous && members.length===1){
     const {error:claimError}=await sb.rpc('yarg_claim_my_guest_solo_requests');
