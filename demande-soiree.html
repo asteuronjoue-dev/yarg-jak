@@ -345,7 +345,7 @@ function applyLastPlayedAccountSetup(m){
  m.mode=mode;
  if(availableDifficulties(mode).includes(last.difficulty))m.difficulty=last.difficulty;
  reconcileDifficulty(m);
- if(instrumentFamily(mode)==='guitar')m.guitarChoice=normalizeGuitarChoice(last.preferred_guitar);
+ // A physical guitar is optional: default to « Peu importe » rather than restoring a previous reservation.
  m.microphone=Boolean(last.microphone)&&hasVocals&&mode!=='vocals'&&counts().mics<limits.mics;
 }
 function applyMemberPreferences(m){
@@ -354,7 +354,7 @@ function applyMemberPreferences(m){
  const diff=prefs.difficulties?.[category];
  if(availableDifficulties(m.mode).includes(diff))m.difficulty=diff;
  reconcileDifficulty(m);
- if(['guitar','bass','rhythm_guitar'].includes(category))m.guitarChoice=normalizeGuitarChoice(prefs.guitar);
+ // A physical guitar is optional: default to « Peu importe » rather than restoring a previous reservation.
 }
 
 const guitarNames=[['','Peu importe — je prendrai une guitare restante'],['osp uze','OSPUZE - Rockband'],['crkd','Blue Guitar - CRKD'],['sunburst','Sunburst - Guitar Hero']];
@@ -520,7 +520,7 @@ function render(){
     m.difficulty=m.mode==='flex'?'any':(prefs.difficulties?.[cat]||'');reconcileDifficulty(m);
     if(m.mode==='flex'){m.microphone=false;m.guitarChoice=''}
     if(m.mode==='vocals'){m.microphone=false;m.difficulty='medium'}
-    if(['guitar','bass','rhythm_guitar'].includes(cat))m.guitarChoice=normalizeGuitarChoice(prefs.guitar);
+    if(['guitar','bass','rhythm_guitar'].includes(cat))m.guitarChoice='';
     m.instrumentInfoOpen=true;render();
    };
    (value==='flex'?auxiliaryIcons:primaryIcons).append(button);
