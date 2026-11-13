@@ -1959,8 +1959,21 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
               const emblem=document.createElement('span');emblem.className='official-game-logo';
               const fallback=document.createElement('span');fallback.className='official-game-fallback';fallback.textContent=series==='gh'?'GH':'RB';
               const img=document.createElement('img');img.alt='';img.loading='lazy';
-              img.src='https://gitlab.com/clonehero/sources/-/raw/master/public/icons/'+(gameIconIds[game.id]||game.id)+'.png';
-              img.addEventListener('error',()=>img.remove(),{once:true});emblem.append(fallback,img);
+              // GitLab raw-file endpoints may reject browser image requests.
+              // Prefer Clone Hero's published static site, with independent mirrors.
+              const iconFile=(gameIconIds[game.id]||game.id)+'.png';
+              const iconUrls=[
+                'https://sources.clonehero.net/icons/'+iconFile,
+                'https://clonehero.gitlab.io/sources/icons/'+iconFile,
+                'https://gitlab.com/clonehero/sources/-/raw/master/public/icons/'+iconFile
+              ];
+              let iconAttempt=0;
+              img.addEventListener('error',()=>{
+                iconAttempt++;
+                if(iconAttempt<iconUrls.length)img.src=iconUrls[iconAttempt];
+                else img.remove(); // Keep readable GH/RB initials behind the icon.
+              });
+              emblem.append(fallback,img);img.src=iconUrls[0];
               const copy=document.createElement('span');copy.className='official-game-copy';
               const title=document.createElement('strong');title.textContent=game.name;
               const sub=document.createElement('small');sub.textContent=count.toLocaleString('fr-CA')+' chansons · '+game.year;
