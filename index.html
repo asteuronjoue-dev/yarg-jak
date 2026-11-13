@@ -1216,18 +1216,28 @@ body.party-mode .yarg-catalog-heading{display:none}
 }
 </style>
 <style>
-/* Keep the song-request action alongside the navigation on desktop.
-   The original standalone request button remains exclusive to mobile. */
-@media(min-width:681px){
-  .counts-request-only{display:none!important}
-}
+/* The song-addition request belongs to the navigation at every width. */
+.counts-request-only{display:none!important}
 @media(max-width:680px){
-  .yarg-navigation .yarg-nav-request{display:none!important}
+  .yarg-navigation .yarg-nav-request{
+    display:inline-flex!important;
+    background:#30373b!important;
+    color:#bac2c6!important;
+    border-color:#4b555a!important;
+    box-shadow:none!important;
+    font-weight:800;
+  }
+  .yarg-navigation .yarg-nav-request:hover,
+  .yarg-navigation .yarg-nav-request:focus-visible{
+    background:#404b50!important;
+    color:#eef1f2!important;
+    border-color:#69777d!important;
+  }
 }
 </style>
 
 <style>
-/* Desktop catalogue: one consistent tile size, type scale and icon scale. */
+/* Desktop: compact, uniform filter tiles; icon and label stay side by side. */
 @media (min-width:761px) {
   header .filters { gap:8px; }
   header .filter-line {
@@ -1237,75 +1247,65 @@ body.party-mode .yarg-catalog-heading{display:none}
     width:100%;
     align-items:stretch;
   }
-  /* Center the five vocal controls while retaining the six-column tile width. */
-  header .filter-line-vocals {
-    display:flex;
-    justify-content:center;
-  }
-  header .filter-line-vocals .chip {
-    flex:0 0 calc((100% - 40px)/6);
-  }
   header .filter-line .chip {
     box-sizing:border-box;
-    display:flex;
-    flex-direction:column;
+    display:inline-flex;
+    flex-direction:row;
     align-items:center;
     justify-content:center;
-    gap:5px;
+    gap:7px;
     width:100%;
     min-width:0;
-    min-height:78px;
+    min-height:60px;
     height:100%;
-    padding:9px 6px;
+    padding:8px 7px;
     border:1px solid #36434a;
     border-radius:12px;
     background:#181c1f;
     color:#eef3f4;
     font-family:inherit;
-    font-size:.82rem!important;
+    font-size:.9rem!important;
     font-weight:800!important;
     line-height:1.2;
     letter-spacing:normal;
     text-align:center;
     white-space:normal;
-    overflow-wrap:break-word;
   }
   header .filter-line .chip-icon,
   header .filter-line .harmony-filter-icon {
     display:block;
-    width:40px;
-    height:40px;
-    flex:0 0 40px;
+    width:37px;
+    height:37px;
+    flex:0 0 37px;
     object-fit:contain;
   }
   header .filter-line .rhythm-icon {
-    width:40px;
-    height:40px;
-    flex:0 0 40px;
+    width:37px;
+    height:37px;
+    flex:0 0 37px;
     display:grid;
     place-items:center;
   }
   header .filter-line .rhythm-icon img {
-    width:40px;
-    height:40px;
+    width:37px;
+    height:37px;
     object-fit:contain;
   }
   header .filter-line .chip-fav .fav-heart {
-    font-size:34px;
-    line-height:40px;
-    height:40px;
+    font-size:29px;
+    line-height:37px;
+    height:37px;
   }
   header .filter-line .filter-action-icon {
-    display:block;
-    font-size:30px;
-    line-height:40px;
-    height:40px;
-    flex:0 0 40px;
+    display:inline-block;
+    font-size:27px;
+    line-height:37px;
+    height:37px;
+    flex:0 0 37px;
   }
   header .filter-line .band-builder-toggle::before { content:none; }
   header .filter-line .band-builder-toggle,
-  header .filter-line .chip-clear-all { font-size:.82rem!important; font-weight:800!important; }
-  /* Keep intentional selected/clear/favourite colours; unify their geometry. */
+  header .filter-line .chip-clear-all { font-size:.9rem!important; font-weight:800!important; }
 }
 </style>
 </head>
