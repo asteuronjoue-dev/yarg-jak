@@ -1227,11 +1227,11 @@ body.party-mode .yarg-catalog-heading{display:none}
 </style>
 
 <style>
-/* Desktop catalogue filters: uniform tiles and typography across both rows. */
-@media (min-width:761px){
+/* Desktop catalogue: matching filter tiles in both rows. */
+@media(min-width:761px){
   header .filter-line{
     display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-columns:repeat(6,minmax(0,1fr));
     gap:8px;
     align-items:stretch;
   }
@@ -1240,36 +1240,34 @@ body.party-mode .yarg-catalog-heading{display:none}
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:8px;
+    gap:7px;
     width:100%;
     min-width:0;
-    min-height:54px;
+    min-height:58px;
     height:100%;
-    padding:8px 10px;
+    padding:8px 7px;
     border:1px solid #36434a;
     border-radius:12px;
     background:#181c1f;
     color:#eef3f4;
-    font:800 .82rem/1.25 inherit;
-    font-size:.82rem;
+    font-family:inherit;
+    font-size:.85rem!important;
     font-weight:800;
-    line-height:1.25;
+    line-height:1.2;
     text-align:center;
     white-space:normal;
   }
   header .filter-line .chip-icon,
-  header .filter-line .harmony-filter-icon{width:30px;height:30px;flex:0 0 30px;object-fit:contain}
-  header .filter-line .rhythm-icon{width:30px;height:30px;flex:0 0 30px}
-  header .filter-line .rhythm-icon img{width:30px;height:30px;object-fit:contain}
-  header .filter-line .band-builder-toggle{font-size:.82rem}
-  header .filter-line .chip-clear-all{font-size:.82rem!important;font-weight:800}
-  header .filter-line .chip-fav .fav-heart{font-size:22px}
-}
-@media (min-width:960px){
-  header .filter-line{grid-template-columns:repeat(4,minmax(0,1fr))}
-}
-@media (min-width:1200px){
-  header .filter-line{grid-template-columns:repeat(6,minmax(0,1fr))}
+  header .filter-line .harmony-filter-icon{
+    display:block;width:34px;height:34px;flex:0 0 34px;object-fit:contain;
+  }
+  header .filter-line .rhythm-icon{width:34px;height:34px;flex:0 0 34px}
+  header .filter-line .rhythm-icon img{width:34px;height:34px;object-fit:contain}
+  header .filter-line .chip-fav .fav-heart{font-size:26px}
+  header .filter-line .band-builder-toggle{font-size:.85rem!important}
+  header .filter-line .chip-clear-all{font-size:.85rem!important;font-weight:800}
+  /* The first row has five filters and the second six. All boxes keep the
+     same dimensions rather than stretching differently from row to row. */
 }
 </style>
 </head>
@@ -1342,6 +1340,22 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             </div>
             
         </div>
+        <script>
+        /* Move the existing button, not a duplicate: filtering listeners stay attached. */
+        (() => {
+          const clear = document.getElementById('clear-all-filters');
+          const vocals = document.querySelector('.filter-line-vocals');
+          const instruments = document.querySelector('.filter-line-instruments');
+          const favorites = document.getElementById('favorites-only');
+          const desktop = window.matchMedia('(min-width: 761px)');
+          function placeClearFilter() {
+            if (desktop.matches) instruments.appendChild(clear);
+            else vocals.insertBefore(clear, favorites);
+          }
+          placeClearFilter();
+          desktop.addEventListener('change', placeClearFilter);
+        })();
+        </script>
         <div class="band-builder" id="band-builder" hidden>
             <div class="band-builder-heading">🔍 Trouve une toune pour tout ton groupe</div>
             <div class="band-builder-help">Ajoute un instrument et sa difficulté pour chaque rockstar. La chanson doit satisfaire <strong>toutes</strong> les conditions; les instruments supplémentaires restent permis. « Peu importe » signifie que n’importe quelle difficulté disponible convient.</div>
