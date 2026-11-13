@@ -154,9 +154,9 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
  .instrument-auxiliary-row{display:flex;align-items:stretch;justify-content:flex-end;gap:var(--instrument-mobile-gap);min-height:clamp(88px,24vw,118px)}
  .instrument-auxiliary-row .instrument-choice:not(.extra-vocals-choice){width:calc((100% - 16px) / 3);height:clamp(88px,24vw,118px);flex:0 0 calc((100% - 16px) / 3)}
  .instrument-auxiliary-row .instrument-flex-mark{font-size:clamp(2.6rem,11vw,4rem)}
- .instrument-choice.extra-vocals-choice{margin-left:0;width:min(52%,220px);max-width:220px;min-width:0;min-height:clamp(88px,24vw,118px);height:auto;flex:0 1 auto;padding:8px;gap:7px}
+ .instrument-choice.extra-vocals-choice{margin-left:0;width:auto;max-width:none;min-width:0;min-height:clamp(88px,24vw,118px);height:auto;flex:1 1 0;padding:8px;gap:7px}
  .instrument-choice.extra-vocals-choice img{width:clamp(39px,12vw,56px);height:clamp(39px,12vw,56px);flex:0 0 clamp(39px,12vw,56px)}
- .extra-vocals-label{font-size:clamp(.76rem,2.8vw,.94rem)}
+ .extra-vocals-label{font-size:clamp(1rem,4.2vw,1.3rem);font-weight:950;line-height:1.16;text-align:center;max-width:none;white-space:pre-line}
  .member .guitar-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
  .member .guitar-tile{min-height:72px;font-size:.67rem}
  .member .guitar-tile img{height:36px}
@@ -509,7 +509,7 @@ function render(){
     mic.disabled=!m.microphone&&counts().mics>=limits.mics;
     const image=document.createElement('img');image.src='assets/medals/vocals-fallback.png';image.alt='';
     const caption=document.createElement('span');caption.className='extra-vocals-label';
-    caption.textContent=m.microphone?'✓ Téméraire !':'Chanter aussi ?';
+    caption.textContent=m.microphone?'✓ Téméraire !':'Chanter\naussi ?';
     mic.append(image,caption);mic.onclick=()=>{m.microphone=!m.microphone;render()};
     auxiliaryIcons.append(mic);
   }
