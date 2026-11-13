@@ -176,8 +176,7 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-available-instruments{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;max-width:100%;padding:2px 5px;border:1px solid #41616a;border-radius:9px;background:#152b30;vertical-align:middle}
 .display-available-slot{display:inline-flex;align-items:center;justify-content:center;gap:1px;flex:0 0 auto;min-height:27px}
 .display-available-slot img{display:block;width:clamp(22px,2vw,29px);height:clamp(22px,2vw,29px);object-fit:contain}
-.display-available-slot-count{color:#d5f7ee;font-size:12px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums}
-@media(max-width:680px){.display-available-slot img{width:22px;height:22px}.display-available-instruments{gap:2px;padding:2px 4px}.display-available-slot-count{font-size:11px}}
+@media(max-width:680px){.display-available-slot img{width:22px;height:22px}.display-available-instruments{gap:2px;padding:2px 4px}}
 .display-time{text-align:right;justify-self:end;white-space:nowrap}
 .display-time strong{display:block;font-size:clamp(21px,3vw,44px);font-variant-numeric:tabular-nums;color:#ffae62;line-height:1.1}
 .display-time span{display:block;color:#b3c0c7;font-size:clamp(11px,1.15vw,18px);margin-top:4px}
@@ -963,8 +962,9 @@ function publicDisplayAvailableInstruments(r,slots){
   const count=mode==='vocals'?voiceCount:1;
   if(count<=0)continue;
   const caption=mode==='vocals'?label+' : '+count+' micro'+(count>1?'s':'')+' libre'+(count>1?'s':''):label+' disponible';
+  const iconSource=mode==='vocals'?(count===3?'assets/medals/vocals-harmony-3.png':count===2?'assets/medals/vocals-harmony-2.png':'assets/medals/vocals-fallback.png'):'assets/medals/'+artwork+'-fallback.png';
   labels.push(caption);
-  icons.push(`<span class="display-available-slot" title="${esc(caption)}"><img src="assets/medals/${artwork}-fallback.png" alt="" aria-hidden="true" loading="lazy">${count>1?`<span class="display-available-slot-count" aria-hidden="true">×${count}</span>`:''}</span>`);
+  icons.push(`<span class="display-available-slot" title="${esc(caption)}"><img src="${iconSource}" alt="" aria-hidden="true" loading="lazy"></span>`);
  }
  return icons.length?`<span class="display-available-instruments" role="group" aria-label="Places disponibles : ${esc(labels.join(', '))}">${icons.join('')}</span>`:'';
 }
