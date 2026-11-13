@@ -156,6 +156,22 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
  .member .guitar-tile img{height:36px}
  .member .vocal-row{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+/* Grow the artwork with the available display width, without changing phone-sized icons. */
+@media(min-width:760px){
+ .instrument-choice:not(.extra-vocals-choice){
+  width:clamp(64px,8vw,76px);height:clamp(64px,8vw,76px);
+  flex:0 0 clamp(64px,8vw,76px);
+ }
+ .instrument-choice:not(.extra-vocals-choice) img{
+  width:clamp(52px,6.6vw,64px);height:clamp(52px,6.6vw,64px);
+ }
+ .instrument-flex-mark{font-size:clamp(2.3rem,4vw,2.9rem)}
+ .instrument-choice.extra-vocals-choice{min-height:clamp(64px,8vw,76px)}
+ .instrument-choice.extra-vocals-choice img{
+  width:clamp(40px,5vw,50px);height:clamp(40px,5vw,50px);
+  flex-basis:clamp(40px,5vw,50px);
+ }
+}
 @media(max-width:390px){.member .guitar-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:372px){
  body.yarg-unified-page main{padding-left:9px;padding-right:9px}
