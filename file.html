@@ -1306,7 +1306,7 @@ document.addEventListener("click",e=>{
   if(form?.elements.preferred_guitar)updateJoinGuitarPhoto(form);
 });
 document.addEventListener("change",e=>{
- if(e.target.matches('.join-form select[name="preferred_guitar"], .join-form select[name="difficulty"], .join-form select[name="instrument_mode"]')){
+ if(e.target.matches('.join-form:not(.band-change-form) select[name="preferred_guitar"], .join-form:not(.band-change-form) select[name="difficulty"], .join-form:not(.band-change-form) select[name="instrument_mode"]')){
   const form=e.target.closest('.join-form');
   if(e.target.matches('select[name="instrument_mode"]')){
    const previous=joinPrefs().difficulties?.[e.target.value];
@@ -1319,7 +1319,7 @@ document.addEventListener("change",e=>{
  }
 });
 document.addEventListener("change",e=>{
- if(!e.target.matches('.join-form input[name="microphone"]'))return;
+ if(!e.target.matches('.join-form:not(.band-change-form) input[name="microphone"]'))return;
  const form=e.target.closest('.join-form');form.querySelector('.join-harmony').hidden=!e.target.checked;
 });
 document.addEventListener("submit",async e=>{
