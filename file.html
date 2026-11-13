@@ -316,7 +316,9 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-performer-extra-vocals>.yarg-member-medal{width:36px;height:36px;box-sizing:border-box;padding:3px;object-fit:contain;flex:0 0 36px}
 .yarg-performer-extra-vocals>.yarg-member-medal-button{width:36px;height:36px;min-width:36px;min-height:36px;flex:0 0 36px}
 .yarg-performer-detail{font-size:11px;color:#bad5d9;font-weight:800;border-radius:7px;background:#21333b;border:1px solid #3c555f;padding:3px 5px;white-space:nowrap}
-.yarg-performer-own-difficulty{font-size:11px;color:#bac7cc;font-weight:750;white-space:nowrap}
+.yarg-performer-pill{display:inline-flex;align-items:center;max-width:100%;padding:4px 8px;border-radius:7px;border:1px solid #627f90;background:#223744;color:#e4f4fa;font-size:11px;font-weight:800;line-height:1.2;white-space:nowrap}
+.yarg-performer-pill--subtype{border-color:#5684a7;background:#1e384c;color:#cce9ff}
+.yarg-performer-pill--difficulty{border-color:#6e9e8b;background:#223c36;color:#d9f7e7}
 @media(max-width:550px){.member.yarg-performer-row{gap:6px 8px}.yarg-guitar-thumbnail{height:33px;width:50px}}
 
 /* Highlight the signed-in Rockstar's entry, including in group songs and party history. */
@@ -621,7 +623,7 @@ function isMyPerformance(r){return isOwnSong(r)||!!myBandMember(r);}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie - 4-Lane",pro_drums:"Batterie - Pro Drums",keys:"Keys - 5-Lanes",pro_keys:"Keys - Pro Keys",flex:"Flex"};
+const instruments = {vocals:"Voix",guitar:"Guitare",rhythm_guitar:"Guitare rythmique",bass:"Basse",drums:"Batterie",drums_4lane:"Batterie - 4-Lanes",pro_drums:"Batterie - Pro Drums",keys:"Keys - 5-Lanes",pro_keys:"Keys - Pro Keys",flex:"Flex"};
 const difficulties = {beginner:"Débutant",any:"Peu importe",easy:"Facile",medium:"Moyen",hard:"Difficile",expert:"Expert"};
 
 /* Descriptions indicatives : les partitions varient selon la chanson. */
@@ -799,15 +801,21 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  // When someone plays and sings, show their unlocked VOCALS medal beside the main instrument (fallback for guests and no rank).
  const extraMic=microphone&&instrument!=='vocals'?`<span class="yarg-performer-extra-vocals" title="Chante aussi">${medalMarkup(name,'vocals',false,profileId)}</span>`:'';
  const instrumentIcons=`<span class="yarg-performer-instrument-icons">${medalMarkup(name,chartMode,microphone,profileId)}${extraMic}</span>`;
- const modeLabel=chartMode==='pro_drums'||chartMode==='pro_keys'?'Pro':chartMode==='drums_4lane'?'4 voies':chartMode==='rhythm_guitar'?'Rythmique':chartMode==='flex'?'Flex':'';
- const mode=modeLabel?`<span class="yarg-performer-detail" title="${esc(instruments[chartMode]||modeLabel)}">${esc(modeLabel)}</span>`:'';
- const difficultySubtype=({drums_4lane:'Drums - 4-Lane',pro_drums:'Drums - Pro Drums',keys:'Keys - 5-Lanes',pro_keys:'Keys - Pro Keys'})[chartMode]||'';
- const difficultyText=[difficultySubtype,difficulties[difficulty]||difficulty].filter(Boolean).join(' · ');
- const myDifficulty=myRow&&instrument!=='vocals'&&instrument!=='flex'&&difficulty?`<span class="yarg-performer-own-difficulty" title="Ton instrument et ta difficulté">${esc(difficultyText)}</span>`:'';
+ const subtypeText=({
+  drums_4lane:'Drums - 4-Lanes',
+  pro_drums:'Drums - Pro Drums',
+  keys:'Keys - 5-Lanes',
+  pro_keys:'Keys - Pro Keys',
+  rhythm_guitar:'Guitare rythmique',
+  flex:'Flex'
+ })[chartMode]||'';
+ const subtypeBadge=subtypeText?`<span class="yarg-performer-pill yarg-performer-pill--subtype" title="${esc(subtypeText)}">${esc(subtypeText)}</span>`:'';
+ const difficultyBadge=myRow&&chartMode!=='vocals'&&chartMode!=='flex'&&difficulty?
+  `<span class="yarg-performer-pill yarg-performer-pill--difficulty" title="Ta difficulté">${esc(difficulties[difficulty]||difficulty)}</span>`:'';
  const pauseBadge=paused?'<span class="yarg-member-paused">⏸ Pas prêt</span>':'';
  const readyBadge=!paused&&ready?'<span class="yarg-member-ready" aria-label="Prêt à jouer">Prêt</span>':'';
  const titleHtml=title?`<span class="yarg-equipped-title">${esc(tidyEquippedTitle(title))}</span>`:'';
- return `<div class="member yarg-performer-row${myRow?' yarg-performer-row--mine':''}">${instrumentIcons}<span class="yarg-performer-name"><b>${esc(name)}</b>${titleHtml}</span>${mode}${vocalPart}${guitarThumbnail}${myDifficulty}${pauseBadge}${readyBadge}</div>`;
+ return `<div class="member yarg-performer-row${myRow?' yarg-performer-row--mine':''}">${instrumentIcons}<span class="yarg-performer-name"><b>${esc(name)}</b>${titleHtml}</span>${subtypeBadge}${vocalPart}${guitarThumbnail}${difficultyBadge}${pauseBadge}${readyBadge}</div>`;
 }
 function instrumentFamily(i){return ['drums','drums_4lane','pro_drums'].includes(i)?'drums':['keys','pro_keys'].includes(i)?'keys':i;}
 function isGuitarChart(i){return ['guitar','bass','rhythm_guitar'].includes(i)}
