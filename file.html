@@ -881,7 +881,27 @@ function joinModes(choices,instrument){
  if(family==='keys')return ['keys','pro_keys'].filter(mode=>choices.includes(mode));
  return [instrument];
 }
-function freeInstrumentsForPlayers(r,players){
+// Do not confuse public joining permissions with an existing member's edit rights.
+function editInstrumentOptions(r){
+ if(r.allow_band_fill)return [...new Set(r.fillable_instruments||[])];
+ const parts=r.available_parts||[],roles=r.available_guitar_roles||[];
+ const choices=[
+  ...roles.filter(i=>isGuitarChart(i)&&((i==='bass'&&parts.includes('bass'))||(i!=='bass'&&parts.includes('guitar')))),
+  ...(parts.includes('drums')?['drums_4lane','pro_drums']:[]),
+  ...(parts.includes('keys')?['keys','pro_keys']:[]),
+  ...(parts.includes('vocals')&&Number(r.vocal_parts)>0?['vocals']:[]),
+  ...(parts.length?['flex']:[])
+ ];
+ return [...new Set(choices)].filter(i=>i==='flex'||i==='vocals'||chartDifficulties(r,i).length>0);
+}
+function activeChartMode(m){
+ if(!m)return '';
+ const mode=m.instrument_mode;
+ if(m.instrument==='guitar'&&mode==='rhythm_guitar')return mode;
+ if(instrumentFamily(m.instrument)===instrumentFamily(mode)&&['drums_4lane','pro_drums','keys','pro_keys'].includes(mode))return mode;
+ return m.instrument;
+}
+function freeInstrumentsForPlayers(r,players,editableChoices=null){
  const occupied=new Set(players.map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=='vocals'&&i!=='flex'));
  const singers=players.filter(m=>m.instrument==='vocals'||m.microphone).length;
  const capacity=Number(r.vocal_parts)>0?3:0;
@@ -889,7 +909,8 @@ function freeInstrumentsForPlayers(r,players){
  const maxGuitars=guitarRoles.length?3:0;
  const maxDrums=(r.available_parts||[]).includes('drums')?1:0;
  const maxKeys=(r.available_parts||[]).includes('keys')?1:0;
- const eligibleGuitars=(r.fillable_instruments||[]).filter(i=>isGuitarChart(i)&&(!guitarRoles.length||guitarRoles.includes(i)));
+ const offered=editableChoices===null?(r.fillable_instruments||[]):editableChoices;
+ const eligibleGuitars=offered.filter(i=>isGuitarChart(i)&&(!guitarRoles.length||guitarRoles.includes(i)));
  const guitarChoices=new Set(availableGuitarCharts(eligibleGuitars,players));
  const usedGuitars=players.filter(m=>isGuitarChart(m.instrument)).length;
  const usedDrums=players.filter(m=>instrumentFamily(m.instrument)==='drums').length;
@@ -897,7 +918,7 @@ function freeInstrumentsForPlayers(r,players){
  const flexible=players.filter(m=>m.instrument==='flex').length;
  const remaining=maxGuitars-usedGuitars+maxDrums-usedDrums+maxKeys-usedKeys+capacity-singers-flexible;
  if(remaining<=0)return [];
- const choices=[...new Set([...(r.fillable_instruments||[]),...((r.available_parts||[]).length?['flex']:[])])];
+ const choices=[...new Set([...offered,...((r.available_parts||[]).length?['flex']:[])])];
  return choices.filter(i=>instruments[i]&&(
    i==='flex'?true:
    i==='vocals'?(capacity>0&&singers<capacity):
@@ -916,9 +937,10 @@ function editableInstruments(r,m){
  const others=performerEntries(r).filter(player=>{
   if(m.id)return String(player.id||'')!==String(m.id);
   return !!player.id||r.is_group_request;
- });
- const choices=freeInstrumentsForPlayers(r,others);
- if(!choices.some(i=>instrumentFamily(i)===instrumentFamily(m.instrument)))choices.push(m.instrument);
+ }).map(player=>({...player,instrument:activeChartMode(player)}));
+ const choices=freeInstrumentsForPlayers(r,others,editInstrumentOptions(r));
+ const current=activeChartMode(m);
+ if(!choices.some(i=>instrumentFamily(i)===instrumentFamily(current)))choices.push(current);
  return [...new Set(choices)];
 }
 function harmonyOptions(r){
@@ -1283,7 +1305,7 @@ function syncBandEditMode(form){
  const family=form.elements.instrument.value;
  const sub=form.querySelector('[data-mode-field]');
  const select=form.elements.instrument_mode;
- const variants=r?joinModes([...(r.fillable_instruments||[]),form.dataset.originalInstrument],family):[];
+ const variants=r?joinModes([...editInstrumentOptions(r),form.dataset.originalInstrument],family):[];
  const usesMode=family==='drums'||family==='keys';
  sub.hidden=!usesMode;select.disabled=!usesMode;
  if(usesMode){
@@ -1305,21 +1327,22 @@ function syncBandEditMode(form){
  syncChartSelect(form,r,selectedEditInstrument(form));
 }
 function bandEditFormHtml(r){
- const m=myAccountMember(r)||(myAccountRequester(r)?{instrument:r.requester_instrument,difficulty:r.requester_difficulty,microphone:r.requester_microphone,vocal_harmony:r.vocal_harmony,preferred_guitar:null}:myBandMember(r));
+ const m=myAccountMember(r)||(myAccountRequester(r)?{instrument:r.requester_instrument,instrument_mode:r.requester_instrument_mode,difficulty:r.requester_difficulty,microphone:r.requester_microphone,vocal_harmony:r.vocal_harmony,preferred_guitar:null}:myBandMember(r));
  if(!m)return '';
+ const current=activeChartMode(m);
  const choices=editableInstruments(r,m);
  const families=[...new Set(choices.map(instrumentFamily))];
- const family=instrumentFamily(m.instrument);
+ const family=instrumentFamily(current);
  if(!families.includes(family))families.unshift(family);
  const familyLabels={drums:'Batterie',keys:'Clavier'};
  const instrumentsHtml=families.map(i=>`<option value="${esc(i)}" ${i===family?'selected':''}>${esc(familyLabels[i]||instruments[i]||i)}</option>`).join('');
- const variants=joinModes([...(r.fillable_instruments||[]),m.instrument],family);
- const variantHtml=variants.map(i=>`<option value="${esc(i)}" ${i===m.instrument?'selected':''}>${esc(instruments[i])}</option>`).join('');
+ const variants=joinModes([...editInstrumentOptions(r),current],family);
+ const variantHtml=variants.map(i=>`<option value="${esc(i)}" ${i===current?'selected':''}>${esc(instruments[i])}</option>`).join('');
  const difficulty=m.difficulty==='any'?'beginner':m.difficulty;
- return `<form id="band-edit-${esc(r.id)}" class="join-form band-change-form" data-band-change="${esc(r.id)}" data-original-instrument="${esc(m.instrument)}">
+ return `<form id="band-edit-${esc(r.id)}" class="join-form band-change-form" data-band-change="${esc(r.id)}" data-original-instrument="${esc(current)}">
  <label>Instrument<select name="instrument">${instrumentsHtml}</select></label>
  <label data-mode-field ${family==='drums'||family==='keys'?'':'hidden'}>Mode de jeu<select name="instrument_mode">${variantHtml}</select></label>
- <label data-edit-difficulty>Difficulté<select name="difficulty">${chartOptions(r,m.instrument,difficulty)}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${yargDifficultyCategory(m.instrument)?'':'hidden'}>${esc(yargDifficultyDescription(m.instrument,difficulty))}</small></label>
+ <label data-edit-difficulty>Difficulté<select name="difficulty">${chartOptions(r,current,difficulty)}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${yargDifficultyCategory(current)?'':'hidden'}>${esc(yargDifficultyDescription(current,difficulty))}</small></label>
  <label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
  <label data-edit-mic><input type="checkbox" name="microphone" ${m.microphone?'checked':''}> Chanter aussi</label>
  <label data-edit-harmony>Harmonie<select name="harmony">${harmonyOptions(r).replace(`value="${m.vocal_harmony}"`,`value="${m.vocal_harmony}" selected`)}</select></label>
