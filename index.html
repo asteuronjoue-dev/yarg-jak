@@ -921,6 +921,12 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
 .games-discovery>summary{cursor:pointer;font-weight:850;font-size:1.06rem;color:#eafafa}
 .games-discovery-intro{color:#b5ccd1;font-size:.88rem;margin:12px 0 18px;line-height:1.5}
 .official-game-reference-info{font-size:.83rem;color:#9fdad0;margin:0 0 10px;line-height:1.45}
+.official-dlc-control{display:flex;align-items:center;gap:11px;min-height:46px;cursor:pointer;max-width:100%;width:max-content;margin:0 0 12px;padding:9px 12px;border:1px solid #567b84;border-radius:11px;background:#1b3039;color:#ebfaf9}
+.official-dlc-control:focus-within{outline:2px solid #ffb45d;outline-offset:2px}
+.official-dlc-control input{width:22px;height:22px;flex:none;margin:0;accent-color:#ffb45d;cursor:pointer}
+.official-dlc-control span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.official-dlc-control strong{font-size:.94rem}
+.official-dlc-control small{font-size:.78rem;color:#bdd5d7;line-height:1.35}
 .official-games-grid{display:grid;gap:19px}
 .official-game-section h3{font-size:1rem;color:#58d8cb;margin:0 0 10px;font-weight:900}
 .official-game-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:11px}
@@ -1281,7 +1287,8 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         </details>
         <details id="official-games-discovery" class="games-discovery" aria-label="Explorer les chansons de Guitar Hero et Rock Band">
           <summary class="catalog-credits-heading">🎮 Explorer par jeu Guitar Hero et RockBand</summary>
-          <p class="games-discovery-intro">Retrouve les chansons d’un jeu, DLC inclus.</p>
+          <p class="games-discovery-intro">Les chansons du jeu original sont affichées par défaut.</p>
+          <label class="official-dlc-control" for="include-game-dlc"><input type="checkbox" id="include-game-dlc"><span><strong>Inclure les DLC</strong><small>Ajoute aussi les chansons téléchargeables (et GHTV pour Guitar Hero Live).</small></span></label>
           <div id="official-game-reference-info" class="official-game-reference-info" role="status"></div>
           <div id="official-games-grid" class="official-games-grid" aria-label="Jeux Guitar Hero et Rock Band"></div>
           <button id="clear-visual-games" class="discovery-clear" type="button" hidden>✕ Effacer le filtre de jeu</button>
@@ -1708,6 +1715,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             bandRequirements: [],
             searchFields: { artist: true, title: true, album: false },
             playlist: '',
+            includeDlc: false,
             charterQuery: '',
             favoritesOnly:false,
             publicPlaylistId:'', 
@@ -1880,6 +1888,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
           ['rb4','Rock Band 4','rb',2015,1,['Rock Band 4']]
         ].map(([id,name,series,year,releaseOrder,aliases])=>({id,name,series,year,releaseOrder,aliases}));
         const gameGrid = document.getElementById('official-games-grid');
+        const gameDlcCheckbox = document.getElementById('include-game-dlc');
         const playlistCardsGrid = document.getElementById('public-playlist-cards');
         const visualGameInfo = document.getElementById('official-game-reference-info');
         const gameClearButton = document.getElementById('clear-visual-games');
@@ -1903,12 +1912,22 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                 if(!fallbackGameByName.has(key)) fallbackGameByName.set(key,game.id);
             }
         }
+        // Keep main-game and extra-content membership separate. A song can be on
+        // a game's disc and also have a DLC release, so both sets may contain it.
+        function addGameMembership(song,gameId,kinds){
+            const flags=new Set(kinds||[]);
+            if(flags.has('disc')||flags.has('network')||!flags.size) song.baseGameIds.add(gameId);
+            if(flags.has('dlc')||flags.has('ghtv')) song.dlcGameIds.add(gameId);
+            song.gameIds.add(gameId);
+        }
         function rebuildFallbackGameIds(){
             DATA.forEach(song=>{
-                song.gameIds=new Set();
+                song.gameIds=new Set();song.baseGameIds=new Set();song.dlcGameIds=new Set();
                 for(const label of song.games||[]){
-                    const gameId=fallbackGameByName.get(normOfficial(label).replace(/ dlc$/,''));
-                    if(gameId) song.gameIds.add(gameId);
+                    const normalized=normOfficial(label);
+                    const dlc=normalized.endsWith(' dlc');
+                    const gameId=fallbackGameByName.get(dlc?normalized.slice(0,-4):normalized);
+                    if(gameId)addGameMembership(song,gameId,[dlc?'dlc':'disc']);
                 }
             });
         }
@@ -1922,7 +1941,11 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         function drawOfficialGames(){
           gameGrid.replaceChildren();
           const gameCounts=new Map(visualGameSpecs.map(g=>[g.id,0]));
-          DATA.forEach(song=>song.gameIds?.forEach(id=>gameCounts.set(id,(gameCounts.get(id)||0)+1)));
+          DATA.forEach(song=>{
+            const visibleIds=new Set(song.baseGameIds||[]);
+            if(state.includeDlc)for(const id of song.dlcGameIds||[])visibleIds.add(id);
+            for(const id of visibleIds)gameCounts.set(id,(gameCounts.get(id)||0)+1);
+          });
           for(const series of ['gh','rb']){
             const games=visualGameSpecs.filter(g=>g.series===series&&gameCounts.get(g.id)>0)
               .sort((a,b)=>(a.id==='rbn'?1:0)-(b.id==='rbn'?1:0)||a.year-b.year||a.releaseOrder-b.releaseOrder);
@@ -1949,6 +1972,11 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
           }
           updateGameSelection();
         }
+        gameDlcCheckbox.addEventListener('change',()=>{
+          state.includeDlc=gameDlcCheckbox.checked;
+          drawOfficialGames();
+          filter();
+        });
         function drawPlaylistCards(){
           playlistCardsGrid.replaceChildren();
           const normalizeName=s=>normOfficial(s);
@@ -2005,23 +2033,46 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             if(!response.ok)throw new Error('HTTP '+response.status);
             const doc=await response.json();
             if(doc.schema!=='yarg-original-game-setlists-v2'||!doc.games||typeof doc.games!=='object')throw new Error('Format incompatible');
-            const keysByGame=new Map(Object.entries(doc.games).map(([id,songs])=>[id,new Set(songs.map(s=>gameSongKey(s.t,s.a)))]));
+            // Each source track has provenance flags: disc, dlc, network, or ghtv.
+            // Use those flags for both direct matches and manual catalogue aliases.
+            const keysByGame=new Map(Object.entries(doc.games).map(([id,songs])=>{
+              const byKey=new Map();
+              for(const source of songs){
+                const key=gameSongKey(source.t,source.a);
+                if(!byKey.has(key))byKey.set(key,new Set());
+                for(const kind of source.k||['disc'])byKey.get(key).add(kind);
+              }
+              return [id,byKey];
+            }));
             const byId=new Map(DATA.map(s=>[String(s.id),s]));
-            DATA.forEach(song=>{song.gameIds=new Set();const key=gameSongKey(song.t,song.a);for(const [id,set] of keysByGame)if(set.has(key))song.gameIds.add(id)});
+            DATA.forEach(song=>{
+              song.gameIds=new Set();song.baseGameIds=new Set();song.dlcGameIds=new Set();
+              const key=gameSongKey(song.t,song.a);
+              for(const [id,matches] of keysByGame){
+                const kinds=matches.get(key);
+                if(kinds)addGameMembership(song,id,kinds);
+              }
+            });
             try{
               const links=await fetch('game-song-matches.json',{cache:'no-cache'});
               if(links.ok){const manual=await links.json();if(manual.schema==='yarg-game-song-matches-v1'){
                 const officialGamesForKey=new Map();
-                for(const [game,keys] of keysByGame)for(const key of keys){if(!officialGamesForKey.has(key))officialGamesForKey.set(key,new Set());officialGamesForKey.get(key).add(game)}
+                for(const [game,keys] of keysByGame)for(const [key,kinds] of keys){
+                  if(!officialGamesForKey.has(key))officialGamesForKey.set(key,new Map());
+                  officialGamesForKey.get(key).set(game,kinds);
+                }
                 for(const [officialOriginal,link] of Object.entries(manual.matches||{})){
-                  const song=byId.get(String(link?.songId||''));const allowed=officialGamesForKey.get(officialOriginal);
-                  if(song&&allowed&&gameSongKey(song.t,song.a)===gameSongKey(link.title,link.artist))for(const game of allowed)song.gameIds.add(game);
+                  const song=byId.get(String(link?.songId||''));
+                  const allowed=officialGamesForKey.get(officialOriginal);
+                  if(song&&allowed&&gameSongKey(song.t,song.a)===gameSongKey(link.title,link.artist)){
+                    for(const [game,kinds] of allowed)addGameMembership(song,game,kinds);
+                  }
                 }
               }}
             }catch(e){console.warn('Associations manuelles non disponibles',e)}
             usingOfficialReference=true;
             DATA.forEach(song=>{song.games=[...song.gameIds].map(id=>gameById.get(id)?.name||id)});
-            visualGameInfo.textContent='🎮 Sélections originales nord-américaines vérifiées par artiste et titre; DLC regroupés par jeu.';
+            visualGameInfo.textContent='🎮 Jeux de base séparés des DLC; active « Inclure les DLC » pour ajouter les chansons téléchargeables.';
             drawOfficialGames();filter();
           }catch(e){
             visualGameInfo.textContent='Sélection basée sur les catégories YARG. Référentiel officiel non accessible pour le moment.';
@@ -2219,7 +2270,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
 
             if (state.favoritesOnly && !resolvedFavoriteSongIds.has(String(r.id))) return false;
             if (state.publicPlaylistId && !resolvedPublicPlaylistSongIds.has(String(r.id))) return false;
-            if (state.playlist && !(r.gameIds && r.gameIds.has(state.playlist))) return false;
+            if (state.playlist && !((r.baseGameIds && r.baseGameIds.has(state.playlist)) || (state.includeDlc && r.dlcGameIds && r.dlcGameIds.has(state.playlist)))) return false;
             if (state.charterQuery && !(r._hayCharter || '').includes(state.charterQuery)) return false;
 
             // Check all required parts (case-insensitive: K/k both mean Keys present)
@@ -2404,6 +2455,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             document.querySelectorAll('.filter-line .chip.active').forEach(chip=>chip.classList.remove('active'));
             state.bandRequirements.length=0;drawBandRequirements();
             state.playlist='';playlistSelect.value='';
+            state.includeDlc=false;gameDlcCheckbox.checked=false;
             state.charterQuery='';charterSearch.value='';
             state.favoritesOnly=false;state.publicPlaylistId='';
             publicPlaylistSongIds.clear();
