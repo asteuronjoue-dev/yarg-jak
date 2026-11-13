@@ -921,6 +921,7 @@ html { scroll-padding-top: var(--yarg-next-banner-height, 0px); }
 .games-discovery>summary{cursor:pointer;font-weight:850;font-size:1.06rem;color:#eafafa}
 .games-discovery-intro{color:#b5ccd1;font-size:.88rem;margin:12px 0 18px;line-height:1.5}
 .official-game-reference-info{font-size:.83rem;color:#9fdad0;margin:0 0 10px;line-height:1.45}
+.official-game-reference-info:empty{display:none}
 .official-dlc-control{display:flex;align-items:center;gap:11px;min-height:46px;cursor:pointer;max-width:100%;width:max-content;margin:0 0 12px;padding:9px 12px;border:1px solid #567b84;border-radius:11px;background:#1b3039;color:#ebfaf9}
 .official-dlc-control:focus-within{outline:2px solid #ffb45d;outline-offset:2px}
 .official-dlc-control input{width:22px;height:22px;flex:none;margin:0;accent-color:#ffb45d;cursor:pointer}
@@ -1287,7 +1288,6 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         </details>
         <details id="official-games-discovery" class="games-discovery" aria-label="Explorer les chansons de Guitar Hero et Rock Band">
           <summary class="catalog-credits-heading">🎮 Explorer par jeu Guitar Hero et RockBand</summary>
-          <p class="games-discovery-intro">Les chansons du jeu original sont affichées par défaut.</p>
           <label class="official-dlc-control" for="include-game-dlc"><input type="checkbox" id="include-game-dlc"><span><strong>Inclure les DLC</strong><small>Ajoute aussi les chansons téléchargeables (et GHTV pour Guitar Hero Live).</small></span></label>
           <div id="official-game-reference-info" class="official-game-reference-info" role="status"></div>
           <div id="official-games-grid" class="official-games-grid" aria-label="Jeux Guitar Hero et Rock Band"></div>
@@ -2072,7 +2072,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             }catch(e){console.warn('Associations manuelles non disponibles',e)}
             usingOfficialReference=true;
             DATA.forEach(song=>{song.games=[...song.gameIds].map(id=>gameById.get(id)?.name||id)});
-            visualGameInfo.textContent='🎮 Jeux de base séparés des DLC; active « Inclure les DLC » pour ajouter les chansons téléchargeables.';
+            visualGameInfo.textContent='';
             drawOfficialGames();filter();
           }catch(e){
             visualGameInfo.textContent='Sélection basée sur les catégories YARG. Référentiel officiel non accessible pour le moment.';
