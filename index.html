@@ -1199,6 +1199,22 @@ body>header{border-bottom:0!important}
 .yarg-beta-badge{display:inline-flex;flex:none;align-items:center;border:1px solid #8d6837;background:#2d251b;color:#ffd493;padding:.16rem .45rem;border-radius:6px;font:850 .65rem/1.35 system-ui,sans-serif;letter-spacing:.08em;white-space:nowrap}
 body.party-mode .yarg-catalog-heading{display:none}
 </style>
+<style>
+/* Song counts share the search row, without taking space from mobile filters. */
+.catalog-search-toolbar{display:flex;align-items:center;gap:10px;min-width:0;margin-bottom:10px}
+.catalog-search-toolbar>.search-row{flex:1 1 auto;min-width:0;margin:0!important}
+.catalog-search-toolbar .search-input-wrap{min-width:0}
+.catalog-search-toolbar #search{min-width:0}
+.catalog-search-toolbar>.catalog-directory-counts{flex:0 0 auto;display:flex;align-items:center;flex-wrap:nowrap;gap:7px;width:auto;margin:0}
+.catalog-search-toolbar .catalog-directory-count{flex:0 0 auto}
+@media(max-width:680px){
+ .catalog-search-toolbar{gap:6px;margin-bottom:8px}
+ .catalog-search-toolbar .catalog-directory-count:not(.catalog-directory-count-shown){display:none}
+ .catalog-search-toolbar .catalog-directory-count-shown{padding:7px 8px;font-size:clamp(.65rem,2.6vw,.76rem)}
+ .catalog-search-toolbar .search-gear{width:32px}
+ .catalog-search-toolbar #search{font-size:16px;padding:8px 6px}
+}
+</style>
 </head>
 <body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong id="yarg-tips-title">🎸 Prépare-toi pour la prochaine soirée!</strong><p id="yarg-tips-copy">Repère tes chansons préférées et crée un compte Rockstar pour les garder en favoris. Une chanson manque? Demande son ajout pour la prochaine soirée!</p></aside><script>
 function updateCatalogWelcome(requestsOpen){
@@ -1229,6 +1245,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         <div class="counts counts-request-only">
             <a class="library-request-link" href="demande.html">➕ Demander l'ajout d'une chanson</a>
         </div>
+        <div class="catalog-search-toolbar">
         <div class="search-row">
             <div class="search-input-wrap">
                 <input type="search" id="search" enterkeyhint="search" placeholder="Rechercher une chanson...">
@@ -1247,6 +1264,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                 <span class="catalog-directory-count"><span class="catalog-directory-count-dot" aria-hidden="true"></span><span id="total-count">Total : 0</span></span>
                 <span class="catalog-directory-count catalog-directory-count-shown"><span id="count">Affichées : 0</span></span>
             </div>
+        </div>
 
         <div class="filters">
             <div class="filter-line filter-line-vocals">
