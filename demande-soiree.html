@@ -104,6 +104,8 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
 .member .stage-name-help{display:block;margin-top:5px;font-size:.77rem;line-height:1.4;color:#acbec5}
 .instrument-chooser{min-width:0}
 .instrument-icons{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+/* Keep the original single-row desktop flow; split into two rows on phones. */
+.instrument-primary-row,.instrument-auxiliary-row{display:contents}
 .instrument-choice.extra-vocals-choice{
  margin-left:auto;
  width:auto;min-width:139px;max-width:180px;min-height:55px;flex:0 0 auto;
@@ -143,6 +145,10 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
 .member .guitar-tile img{height:43px}
 @media(max-width:600px){
  .member .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .instrument-icons{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:7px}
+ .instrument-primary-row{display:flex;align-items:center;flex-wrap:nowrap;gap:3px;min-width:0;max-width:100%;overflow-x:auto;scrollbar-width:thin}
+ .instrument-auxiliary-row{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-height:49px}
+ .instrument-choice.extra-vocals-choice{margin-left:0}
  .instrument-choice{width:50px;height:49px;flex-basis:50px}
  .instrument-choice img{width:38px;height:38px}
  .member .guitar-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -151,6 +157,10 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
  .member .vocal-row{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:390px){.member .guitar-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:372px){
+ body.yarg-unified-page main{padding-left:9px;padding-right:9px}
+ .member{padding-left:9px;padding-right:9px}
+}
 </style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <meta name="theme-color" content="#101214">
@@ -204,12 +214,21 @@ const YARG_DIFFICULTY_GUIDE={
   medium:'Moyen : grosse caisse, caisse claire et ride simplifiées, quelques accents et très peu de notes entre les temps (parfois aucune).',
   hard:'Difficile : une version simplifiée d’Expert qui garde plusieurs passages difficiles.',
   expert:'Expert : accroche tes bas, ça risque de faire mal!'
+ },
+ pro_keys:{
+  intro:'Pro Keys : joue directement les notes sur le clavier.',
+  beginner:'Débutant : pour découvrir le clavier avant de passer à Facile.',
+  easy:'Facile : On commence ici.',
+  medium:"Moyen : Tu te dis que c'est comme la guitare à medium mais non. Joue à facile.",
+  hard:'Difficile : Deathwish level.',
+  expert:'Expert : Bruh.'
  }
 };
 function yargDifficultyCategory(mode){
  if(mode==='guitar'||mode==='rhythm_guitar')return 'guitar';
  if(mode==='bass')return 'bass';
  if(mode==='drums'||mode==='drums_4lane'||mode==='pro_drums')return 'drums';
+ if(mode==='pro_keys')return 'pro_keys';
  return '';
 }
 function yargDifficultyDescription(mode,level){
@@ -221,7 +240,7 @@ function yargDifficultyDescription(mode,level){
 const MODE_DESCRIPTIONS={
  drums_4lane:'Quatre pistes de couleur : tu frappes les pads de la batterie. Pas besoin de distinguer les cymbales.',
  pro_drums:'Les cymbales et les pads ont des notes distinctes : une partie plus proche d’une vraie batterie.',
- keys:'Keys - 5-Lanes : cinq touches colorées, comme sur une guitare de Rock Band.',
+ keys:'Keys - 5-Lanes : utilise les cinq notes les plus à gauche du clavier pour jouer les cinq pistes de couleur.',
  pro_keys:'Keys - Pro Keys : davantage de touches et de notes, comme sur un vrai clavier.'
 };
 function categoryOf(mode){return mode==='drums_4lane'||mode==='pro_drums'?'drums':mode==='keys'||mode==='pro_keys'?'keys':mode}
@@ -431,6 +450,8 @@ function render(){
   const chooser=document.createElement('div');chooser.className='instrument-chooser';
   const label=document.createElement('strong');label.textContent='Instrument *';chooser.append(label);
   const icons=document.createElement('div');icons.className='instrument-icons';icons.setAttribute('role','group');icons.setAttribute('aria-label','Choisir un instrument');
+  const primaryIcons=document.createElement('div');primaryIcons.className='instrument-primary-row';
+  const auxiliaryIcons=document.createElement('div');auxiliaryIcons.className='instrument-auxiliary-row';
   for(const [value,text] of options){
    const button=document.createElement('button');button.type='button';button.className='instrument-choice';
    button.title=text;button.setAttribute('aria-label',text);
@@ -454,9 +475,9 @@ function render(){
     if(['guitar','bass','rhythm_guitar'].includes(cat))m.guitarChoice=guitarNames.some(([k])=>k===prefs.guitar)?prefs.guitar:'';
     m.instrumentInfoOpen=true;render();
    };
-   icons.append(button);
+   (value==='flex'?auxiliaryIcons:primaryIcons).append(button);
   }
-  // One optional singing control, on the far right of the instrument icons.
+  // Optional singing stays beside FLEX on mobile and at the far right on desktop.
   if(hasVocals && m.mode!=='vocals' && m.mode!=='flex'){
     const mic=document.createElement('button');mic.type='button';
     mic.className='instrument-choice extra-vocals-choice';
@@ -468,8 +489,9 @@ function render(){
     const caption=document.createElement('span');caption.className='extra-vocals-label';
     caption.textContent=m.microphone?'✓ Téméraire !':'Chanter aussi ?';
     mic.append(image,caption);mic.onclick=()=>{m.microphone=!m.microphone;render()};
-    icons.append(mic);
+    auxiliaryIcons.append(mic);
   }
+  icons.append(primaryIcons,auxiliaryIcons);
   chooser.append(icons);grid.append(chooser);
   if(m.instrumentInfoOpen){
    const info=document.createElement('div');info.className='instrument-information';
