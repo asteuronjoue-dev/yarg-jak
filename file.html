@@ -598,7 +598,7 @@ async function loadPerformerMedals(){
 function savedBandTokens(){try{return JSON.parse(localStorage.getItem('yarg_band_tokens')||'{}')}catch{return {}}}
 function myAccountMember(r){return myAuthId?membersFor(r.id).find(m=>(String(m.rockstar_profile_id||'')===myAuthId || myAccountMemberIds.has(String(m.id)) || (r.is_group_request && myAccountRequester(r) && String(m.rockstar_name||'').trim().toLowerCase()===String(r.rockstar_name||'').trim().toLowerCase())))||null:null}
 function myAccountRequester(r){return !!(myAuthId && String(r.requester_profile_id||'')===myAuthId && !r.requester_withdrawn_at)}
-function myBandMember(r){return myAccountMember(r) || (!myRockstarName?null:membersFor(r.id).find(m=>String(m.rockstar_name||'').trim().toLowerCase()===myRockstarName.toLowerCase())) || null}
+function myBandMember(r){return myAccountMember(r)}
 function accountEditKind(r){return myAccountMember(r)?'member':myAccountRequester(r)?'requester':null}
 function myMemberToken(r){return savedBandTokens()[String(r.id)]||null}
 function myActiveBand(r){return !!myAccountRequester(r) || !!myBandMember(r) || isMyRequest(r);}
@@ -819,32 +819,49 @@ function availableGuitarCharts(choices,players){
 function joinModes(choices,instrument){
  const family=instrumentFamily(instrument);
  if(!choices.some(i=>instrumentFamily(i)===family))return [];
- // The request's legacy generic "drums"/"keys" entries represent the
- // family; choose the actual chart mode explicitly and persist that value.
- if(family==='drums')return ['drums_4lane','pro_drums'];
- if(family==='keys')return ['keys','pro_keys'];
+ if(family==='drums')return ['drums_4lane','pro_drums'].filter(mode=>choices.includes(mode));
+ if(family==='keys')return ['keys','pro_keys'].filter(mode=>choices.includes(mode));
  return [instrument];
 }
-function openInstruments(r){
- if(!settings?.performance_requests_enabled||r.yarg_not_ready||!r.allow_band_fill||!["waiting","full"].includes(r.status))return [];
- const players=performerEntries(r);
- const occupied=new Set(players.map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=="vocals"));
- const singers=players.filter(m=>m.instrument==="vocals"||m.microphone).length;
+function freeInstrumentsForPlayers(r,players){
+ const occupied=new Set(players.map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=='vocals'&&i!=='flex'));
+ const singers=players.filter(m=>m.instrument==='vocals'||m.microphone).length;
  const capacity=Number(r.vocal_parts)>0?3:0;
- const guitarChoices=new Set(availableGuitarCharts(r.fillable_instruments,players));
- const maxGuitars=(r.available_guitar_roles||[]).length?3:0;
+ const guitarRoles=r.available_guitar_roles||[];
+ const maxGuitars=guitarRoles.length?3:0;
  const maxDrums=(r.available_parts||[]).includes('drums')?1:0;
  const maxKeys=(r.available_parts||[]).includes('keys')?1:0;
+ const eligibleGuitars=(r.fillable_instruments||[]).filter(i=>isGuitarChart(i)&&(!guitarRoles.length||guitarRoles.includes(i)));
+ const guitarChoices=new Set(availableGuitarCharts(eligibleGuitars,players));
  const usedGuitars=players.filter(m=>isGuitarChart(m.instrument)).length;
  const usedDrums=players.filter(m=>instrumentFamily(m.instrument)==='drums').length;
  const usedKeys=players.filter(m=>instrumentFamily(m.instrument)==='keys').length;
  const flexible=players.filter(m=>m.instrument==='flex').length;
  const remaining=maxGuitars-usedGuitars+maxDrums-usedDrums+maxKeys-usedKeys+capacity-singers-flexible;
  if(remaining<=0)return [];
- const choices=[...new Set(Array.isArray(r.fillable_instruments)?r.fillable_instruments:[])];
- if((r.available_parts||[]).length)choices.push('flex');
- return [...new Set(choices)]
-   .filter(i=>instruments[i]&&(i==='flex'?true:i==="vocals"?(capacity>0&&singers<capacity):isGuitarChart(i)?guitarChoices.has(i):!occupied.has(instrumentFamily(i))));
+ const choices=[...new Set([...(r.fillable_instruments||[]),...((r.available_parts||[]).length?['flex']:[])])];
+ return choices.filter(i=>instruments[i]&&(
+   i==='flex'?true:
+   i==='vocals'?(capacity>0&&singers<capacity):
+   isGuitarChart(i)?guitarChoices.has(i):
+   instrumentFamily(i)==='drums'?(maxDrums>0&&!occupied.has('drums')):
+   instrumentFamily(i)==='keys'?(maxKeys>0&&!occupied.has('keys')):
+   false
+ ));
+}
+function openInstruments(r){
+ if(!settings?.performance_requests_enabled||r.yarg_not_ready||!r.allow_band_fill||!['waiting','full'].includes(r.status))return [];
+ return freeInstrumentsForPlayers(r,performerEntries(r));
+}
+function editableInstruments(r,m){
+ if(!m||!['waiting','full'].includes(r.status))return [];
+ const others=performerEntries(r).filter(player=>{
+  if(m.id)return String(player.id||'')!==String(m.id);
+  return !!player.id||r.is_group_request;
+ });
+ const choices=freeInstrumentsForPlayers(r,others);
+ if(!choices.some(i=>instrumentFamily(i)===instrumentFamily(m.instrument)))choices.push(m.instrument);
+ return [...new Set(choices)];
 }
 function harmonyOptions(r){
  const count=Math.max(1,Math.min(3,Number(r.vocal_parts)||1));
@@ -900,7 +917,7 @@ function cardHtml(r, eta, mine=false, rank=null){
   const slots=(myActiveBand(r)?[]:available.filter((i,index,all)=>all.findIndex(j=>instrumentFamily(j)===instrumentFamily(i))===index)).map(i=>`<button type="button" class="slot" data-join-id="${esc(r.id)}" data-join-instrument="${esc(i)}">+ ${esc(instrumentFamily(i)==="drums"?"Batterie":instrumentFamily(i)==="keys"?"Clavier":instruments[i])}</button>`).join("");
   const isPlaying=r.status==="playing";
   const isMine=isOwnSong(r);
-  const isJoined=!isMine && (!!myBandMember(r)||(joinedRequestIds().has(String(r.id))&&!!myMemberToken(r)));
+  const isJoined=!isMine && !!myAccountMember(r);
   const kind=isMine?'mine':isJoined?'joined':(!isPlaying&&available.length>0?'open':'closed');
   const kindLabel=isMine?'Ma chanson':isJoined?'Je participe':kind==='open'?'Places disponibles':'Groupe complet / fermé';
   const bandEmphasis=r.band_name?'<span class="queue-band-highlight">'+esc(r.band_name)+'</span>':'';
@@ -1258,7 +1275,7 @@ document.addEventListener("change",e=>{
  const form=e.target.closest('.join-form');form.querySelector('.join-harmony').hidden=!e.target.checked;
 });
 document.addEventListener("submit",async e=>{
-  const form=e.target.closest(".join-form");if(!form)return;
+  const form=e.target.closest('.join-form:not(.band-change-form)');if(!form)return;
   e.preventDefault();
   const id=form.dataset.joinRequest, instrument=form.elements.instrument_mode?.value||form.dataset.instrument;
   const singing=instrument==="vocals"||!!form.elements.microphone?.checked;
@@ -1296,9 +1313,9 @@ document.addEventListener("submit",async e=>{
     const {data:rockstar,error:profileError}=await sb.from('rockstar_profiles').select('rockstar_name').eq('user_id',account.user.id).maybeSingle();
     if(profileError||!rockstar?.rockstar_name){message.textContent='Crée ton profil Rockstar avant de rejoindre une chanson.';return;}
     // Keep the per-song alias; the backend links the member by authenticated user ID.
-    const existingMe=membersFor(id).some(m=>String(m.rockstar_profile_id||'')===account.user.id || String(m.rockstar_name||'').trim().toLowerCase()===name.toLowerCase() || String(m.rockstar_name||'').trim().toLowerCase()===rockstar.rockstar_name.toLowerCase());
+    const existingMe=membersFor(id).some(m=>String(m.rockstar_profile_id||'')===account.user.id || myAccountMemberIds.has(String(m.id)));
     const reqNow=requests.find(r=>String(r.id)===String(id));
-    if(existingMe||reqNow?.rockstar_name?.trim().toLowerCase()===name.toLowerCase()){message.textContent="Tu participes déjà à cette chanson.";return;}
+    if(existingMe||(reqNow?.requester_profile_id===account.user.id&&!reqNow?.requester_withdrawn_at)){message.textContent="Tu participes déjà à cette chanson.";return;}
     const tokenBytes=crypto.getRandomValues(new Uint8Array(32));
     const token=[...tokenBytes].map(b=>b.toString(16).padStart(2,'0')).join('');
     const {error}=await sb.rpc('yarg_join_band_account',{p_request_id:id,p_token:token,p_name:name,p_instrument:instrument,p_difficulty:difficulty,p_microphone:instrument!=="vocals"&&singing,p_harmony:harmony,p_preferred_guitar:preferredGuitar});
