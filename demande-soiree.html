@@ -210,6 +210,20 @@ const options=[...(hasVocals?[['vocals','Voix / harmonies']]:[]),...(availableGu
 const drumModes=[...(song.parts.includes('D')?[['drums_4lane','Drums - 4-Lanes']]:[]),...(chartGroup(5)>0?[['pro_drums','Drums - Pro Drums']]:[])];
 const keyModes=[...(song.parts.includes('K')?[['keys','Keys - 5-Lanes']]:[]),...(chartGroup(7)>0?[['pro_keys','Keys - Pro Keys']]:[])];
 const diffOptions=[['beginner','Débutant'],['easy','Facile'],['medium','Moyen'],['hard','Difficile'],['expert','Expert']];
+const difficultyBits={beginner:2,easy:2,medium:4,hard:8,expert:16};
+const modeChartGroups={guitar:[0],bass:[1],rhythm_guitar:[2],drums_4lane:[3,4],pro_drums:[5,4],keys:[6],pro_keys:[7]};
+function availableDifficulties(mode){
+ if(mode==='vocals')return ['medium'];
+ if(mode==='flex')return ['any'];
+ const groups=modeChartGroups[mode]||[];
+ return diffOptions.filter(([level])=>groups.some(group=>(chartGroup(group)&difficultyBits[level])!==0)).map(([level])=>level);
+}
+function reconcileDifficulty(m){
+ if(m.mode==='vocals'){m.difficulty='medium';return}
+ if(m.mode==='flex'){m.difficulty='any';return}
+ const choices=availableDifficulties(m.mode);
+ if(!choices.includes(m.difficulty))m.difficulty=choices.length===1?choices[0]:'';
+}
 
 /* Repères rapides pour choisir sa difficulté. */
 const YARG_DIFFICULTY_GUIDE={
@@ -323,7 +337,8 @@ function applyLastPlayedAccountSetup(m){
  const mode=chooseMode(categoryOf(desired),desired);
  if(!allowed(m,mode))return;
  m.mode=mode;
- if(diffOptions.some(([v])=>v===last.difficulty))m.difficulty=last.difficulty;
+ if(availableDifficulties(mode).includes(last.difficulty))m.difficulty=last.difficulty;
+ reconcileDifficulty(m);
  if(instrumentFamily(mode)==='guitar'&&guitarNames.some(([v])=>v===last.preferred_guitar))m.guitarChoice=last.preferred_guitar;
  m.microphone=Boolean(last.microphone)&&hasVocals&&mode!=='vocals'&&counts().mics<limits.mics;
 }
@@ -331,7 +346,8 @@ function applyMemberPreferences(m){
  const prefs=memberPreferences(m),category=categoryOf(m.mode);
  if(category==='drums'||category==='keys')m.mode=chooseMode(category,prefs.modes?.[category]||m.mode);
  const diff=prefs.difficulties?.[category];
- if(diffOptions.some(([value])=>value===diff))m.difficulty=diff;
+ if(availableDifficulties(m.mode).includes(diff))m.difficulty=diff;
+ reconcileDifficulty(m);
  if(['guitar','bass','rhythm_guitar'].includes(category)&&guitarNames.some(([value])=>value===prefs.guitar))m.guitarChoice=prefs.guitar;
 }
 
@@ -491,7 +507,7 @@ function render(){
     const prefs=memberPreferences(m);
     m.mode=chooseMode(value,prefs.modes?.[value]||m.mode);
     const cat=categoryOf(m.mode);
-    m.difficulty=m.mode==='flex'?'any':(prefs.difficulties?.[cat]||'');
+    m.difficulty=m.mode==='flex'?'any':(prefs.difficulties?.[cat]||'');reconcileDifficulty(m);
     if(m.mode==='flex'){m.microphone=false;m.guitarChoice=''}
     if(m.mode==='vocals'){m.microphone=false;m.difficulty='medium'}
     if(['guitar','bass','rhythm_guitar'].includes(cat))m.guitarChoice=guitarNames.some(([k])=>k===prefs.guitar)?prefs.guitar:'';
@@ -529,7 +545,7 @@ function render(){
     const sub=document.createElement('select');
     for(const [value,label] of variants){const o=document.createElement('option');o.value=value;o.textContent=label;sub.append(o)}
     sub.value=m.mode;
-    sub.onchange=()=>{m.mode=sub.value;saveMemberPreferences(m);render()};
+    sub.onchange=()=>{m.mode=sub.value;reconcileDifficulty(m);saveMemberPreferences(m);render()};
     const wrap=field(category==='drums'?'Type de batterie *':'Type de clavier *',sub);
     wrap.classList.add('mode-field');
     const note=document.createElement('small');note.className='mode-note';note.textContent=MODE_DESCRIPTIONS[m.mode]||'';wrap.append(note);
@@ -538,7 +554,8 @@ function render(){
   if(m.mode==='flex')m.difficulty='any';
   const diff=document.createElement('select');
   const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choisir une difficulté';placeholder.disabled=true;diff.append(placeholder);
-  for(const [value,label] of diffOptions){const o=document.createElement('option');o.value=value;o.textContent=label;diff.append(o)}
+  reconcileDifficulty(m);
+   for(const [value,label] of diffOptions.filter(([value])=>availableDifficulties(m.mode).includes(value))){const o=document.createElement('option');o.value=value;o.textContent=label;diff.append(o)}
   diff.value=m.difficulty;diff.required=true;
    const guide=yargDifficultyCategory(m.mode)?document.createElement('small'):null;
    if(guide){guide.className='yarg-difficulty-guide';guide.setAttribute('aria-live','polite');guide.textContent=yargDifficultyDescription(m.mode,m.difficulty);}
@@ -595,7 +612,7 @@ function validate(){
  const used=new Set(),usedNames=new Set(),usedProfiles=new Set();for(const m of members){if(!m.name.trim())return 'Donne un nom à chaque rockstar.';
  const stageName=m.name.trim().toLocaleLowerCase('fr-CA');if(usedNames.has(stageName))return 'Chaque Rockstar doit avoir un nom de scène différent pour cette prestation.';usedNames.add(stageName);
  if(m.profileId){if(usedProfiles.has(m.profileId))return 'Le même compte Rockstar ne peut pas occuper deux places dans le groupe.';usedProfiles.add(m.profileId)}
- if(m.mode!=='vocals'&&m.mode!=='flex'&&!diffOptions.some(([value])=>value===m.difficulty))return 'Choisis une difficulté pour chaque rockstar.';
+ if(m.mode!=='vocals'&&m.mode!=='flex'&&!availableDifficulties(m.mode).includes(m.difficulty))return 'Cette difficulté n’existe pas pour cet instrument dans cette chanson.';
  if(instrumentFamily(m.mode)==='guitar'){
    if(members.some(other=>other!==m&&instrumentFamily(other.mode)==='guitar'&&m.guitarChoice&&other.guitarChoice===m.guitarChoice))return 'Cette guitare est déjà réservée par un autre membre de ton groupe.';
    if(used.has(m.mode)&&availableGuitarRoles.some(role=>!used.has(role)))return 'Toutes les parties Guitare / Rythmique / Basse disponibles doivent être remplies avant un doublon.';
@@ -664,7 +681,7 @@ const err=validate();if(err){status.className='status error';status.textContent=
   const guitarReservations=members.filter(m=>instrumentFamily(m.mode)==='guitar'&&m.guitarChoice).map(m=>({name:m.name.trim(),mode:m.mode,guitar:m.guitarChoice}));
   // One atomic transaction: band, guitar reservations and account invitations.
   const profileLinks=members.filter(m=>m.profileId).map(m=>({name:m.name.trim(),mode:m.mode,profile_id:m.profileId}));
-  const {data,error}=await sb.rpc('yarg_submit_group_request_with_guitars_and_invites',{...args,p_guitar_reservations:guitarReservations,p_profile_links:profileLinks});if(error)throw error;
+  const {data,error}=await sb.rpc('yarg_submit_group_request_with_guitars_and_invites',{...args,p_guitar_reservations:guitarReservations,p_profile_links:profileLinks,p_chart_mask:song.charts});if(error)throw error;
    // Mémoriser également le choix final de chaque Rockstar après confirmation.
    members.forEach(saveMemberPreferences);
   const key='yarg_owned_performance_requests';let owned=[];try{owned=JSON.parse(localStorage.getItem(key)||'[]')}catch{}if(!Array.isArray(owned))owned=[];if(!owned.includes(data))owned.push(data);localStorage.setItem(key,JSON.stringify(owned));
