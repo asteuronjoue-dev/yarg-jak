@@ -1154,6 +1154,26 @@ body>header{border-bottom:0!important}
  }
  .catalog-directory-accent{margin-top:13px}
 }
+/* Mobile: two balanced rows, with controls filling each of five columns. */
+@media (max-width:680px){
+  header .filters{gap:7px;margin-top:0}
+  header .filter-line{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;width:100%;align-items:stretch}
+  header .filter-line .chip{
+    box-sizing:border-box;width:100%;min-width:0;height:auto;aspect-ratio:1/1;
+    padding:5px;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;font-size:clamp(1.3rem,5vw,2rem);
+    flex:none;
+  }
+  header .filter-line .chip-icon,
+  header .filter-line .harmony-filter-icon{
+    display:block;width:82%;height:82%;max-width:none;max-height:none;object-fit:contain;
+  }
+  header .filter-line .rhythm-icon{width:82%;height:82%;display:grid;place-items:center}
+  header .filter-line .rhythm-icon img{width:100%;height:100%;object-fit:contain}
+  header .filter-line .band-builder-toggle{font-size:0}
+  header .filter-line .band-builder-toggle::before{font-size:clamp(23px,6vw,35px)}
+  header .filter-line .chip-clear-all{font-size:clamp(1.3rem,5vw,2rem)}
+}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -1221,6 +1241,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                 <button class="chip chip-v" data-part="V" aria-label="Voix / Harmonies" title="Voix/Harmonies - Au moins une partie vocale."><img class="chip-icon" data-rank-icon="vocals" src="assets/medals/vocals-fallback.png" alt=""> <span class="chip-long">Voix/Harmonies</span><span class="chip-short">V</span></button>
                 <button class="chip" data-extra="h2" title="Deux Harmonies - Au moins deux parties vocales." aria-label="Deux Harmonies"><img class="chip-icon harmony-filter-icon" id="harmony2-filter-icon" alt="" aria-hidden="true"> <span>Deux Harmonies</span></button>
                 <button class="chip" data-extra="h3" title="Trois Harmonies - Chacun a sa propre partie vocale!" aria-label="Trois Harmonies"><img class="chip-icon harmony-filter-icon" id="harmony3-filter-icon" alt="" aria-hidden="true"> <span>Trois Harmonies</span></button>
+                <button class="chip band-builder-toggle" id="band-builder-toggle" type="button" aria-expanded="false" aria-controls="band-builder" aria-label="Trouve une toune pour tout ton groupe" title="Trouve une toune pour tout ton groupe">🔍 Trouve une toune pour tout ton groupe <span id="band-filter-total"></span></button>
             <button id="clear-all-filters" class="chip chip-clear-all" type="button" title="Effacer tous les filtres" aria-label="Effacer tous les filtres">❌ <span class="chip-long">Tout effacer</span></button>
             <button id="favorites-only" class="chip chip-fav" type="button" aria-pressed="false" title="Mes favoris (connexion requise)" aria-label="Mes favoris"><span class="fav-heart">♥</span><span class="chip-long">Mes favoris</span></button>
             </div>
@@ -1230,7 +1251,6 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                 <button class="chip chip-b" data-part="B" aria-label="Basse B" title="Basse - La chanson aura une piste de basse."><img class="chip-icon" data-rank-icon="bass" src="assets/medals/bass-fallback.png" alt=""> <span class="chip-long">Basse</span><span class="chip-short">B</span></button>
                 <button class="chip chip-d" data-part="D" aria-label="Batterie D" title="Batterie - La chanson aura du drums, possiblement Pro Drums ou 4-Lane."><img class="chip-icon" data-rank-icon="drums" src="assets/medals/drums-fallback.png" alt=""> <span class="chip-long">Batterie</span><span class="chip-short">D</span></button>
                 <button class="chip chip-k" data-part="K" aria-label="Clavier K" title="Clavier - Cette chanson peut proposer Keys - 5-Lanes ou Keys - Pro Keys."><img class="chip-icon" data-rank-icon="keys" src="assets/medals/keys-fallback.png" alt=""> <span class="chip-long">Clavier</span><span class="chip-short">K</span></button>
-                <button class="chip band-builder-toggle" id="band-builder-toggle" type="button" aria-expanded="false" aria-controls="band-builder" aria-label="Trouve une toune pour tout ton groupe" title="Trouve une toune pour tout ton groupe">🔍 Trouve une toune pour tout ton groupe <span id="band-filter-total"></span></button>
             </div>
             
         </div>
