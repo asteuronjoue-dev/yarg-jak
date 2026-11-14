@@ -236,6 +236,21 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .queue-rules-body{padding:4px 20px 16px;color:#d1dcdf;line-height:1.55;font-size:14px}
 .queue-rules-body ul{padding-left:20px;margin:8px 0}
 .queue-rules-body li{margin:6px 0}
+.queue-rules-body h3{font-size:1.01rem;line-height:1.35;margin:19px 0 8px;color:#a9eee0}
+.queue-rules-body p{margin:9px 0 12px}
+.queue-rules-body li{margin:9px 0}
+.queue-rules-body strong{color:#f3fbfa}
+.queue-rules-intro{font-size:14px;color:#e6eff0}
+.queue-rule-formula{display:grid;gap:8px;border:1px solid #538379;border-radius:12px;background:#18332f;padding:14px 16px;margin:12px 0 14px}
+.queue-rule-formula>span{font-size:1.03rem;line-height:1.5;color:#d2f5ea}
+.queue-rule-formula small{font-size:12px;line-height:1.5;color:#bad2ce}
+.queue-rule-example{background:#222f38;border:1px solid #56717a;padding:14px 16px;border-radius:12px;margin:17px 0}
+.queue-rule-example>strong{color:#b3f2e2}
+.queue-rule-example p{margin:9px 0 0}
+.queue-rule-math{font-variant-numeric:tabular-nums;background:#14242b;padding:10px;border-radius:8px;text-align:center}
+.queue-rules-footnote{color:#b5c9d0;font-size:13px;border-top:1px solid #40575d;padding-top:13px;margin-top:18px!important}
+@media(max-width:520px){.queue-rules-body{padding:8px 14px 16px;font-size:13px}.queue-rules-body ul{padding-left:19px}.queue-rule-formula,.queue-rule-example{padding:12px}}
+
 .queue-notify-top{margin:0 0 20px;display:flex;justify-content:flex-end}
 .queue-notify-top[hidden]{display:none!important}
 .queue-notify-top .notify{width:100%;text-align:center;padding:13px 16px}
@@ -469,7 +484,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
   <div class="error" id="errorBox"></div>
   <div id="notifyTop" class="queue-notify-top" hidden><button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button></div>
   <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
-    <details><summary>Comment fonctionnent les points?</summary><p class="points-note">Le plus petit score passe en premier. Le demandeur reçoit +1 point par seconde de sa chanson (4 min = +240). Participer à une autre chanson ne modifie pas les points personnels. Chaque membre distinct apporte plutôt −30 points de priorité à la chanson rejointe (maximum −90). Les Initiés partent à −1. Une chanson passée sans être jouée ne donne ni coût ni récompense. La prochaine prestation annoncée reste protégée.</p></details></section>
+    <details><summary>Comment fonctionnent les points?</summary><p class="points-note">Les points personnels indiquent combien de temps de scène une Rockstar a déjà réservé en lançant ses propres chansons : +1 par seconde (4 min = +240), avec −1 au départ pour les Initiés. Rejoindre une autre chanson ne coûte aucun point personnel. Pour classer une demande, le système soustrait jusqu’à 90 points pour les coéquipiers et jusqu’à 900 points pour l’attente, après 30 minutes. Les chansons non lancées ne coûtent rien. Pour la formule complète, les exemples et les règles de variété, consulte « Comment l’ordre des chansons est-il décidé ? » au bas de la page.</p></details></section>
   <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
   <div class="yarg-global-presence" id="yargGlobalPresence" hidden>
@@ -499,16 +514,43 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
     <div class="history-fold-body"><div class="cards" id="currentHistory"></div></div>
   </details>
 
-  <details class="queue-rules">
-    <summary>⚖️ Comment fonctionne l'ordre des chansons ?</summary>
+  <details class="queue-rules" id="queueRules">
+    <summary>⚖️ Comment l’ordre des chansons est-il décidé ?</summary>
     <div class="queue-rules-body">
-      <p>La file suit le classement équitable : ceux qui ont moins joué passent plus tôt, tandis que rejoindre un autre groupe améliore la priorité de cette chanson sans changer tes points personnels.</p>
+      <p class="queue-rules-intro">La file n’est pas simplement « premier arrivé, premier servi ». Le but est de laisser tout le monde jouer : le système combine les <strong>points de la Rockstar qui a fait la demande</strong>, l’attente, le nombre de personnes dans son groupe et la variété des prestations.</p>
+
+      <h3>1. Tes points personnels : qui a déjà eu son tour ?</h3>
       <ul>
-        <li>Une seule chanson de suite par Rockstar initiatrice et par artiste : si une autre chanson admissible existe, elle passe entre les deux.</li>
-        <li>La chanson sur scène et la prochaine déjà annoncée sont protégées contre les changements de priorité.</li>
-        <li>Une chanson déjà demandée ou jouée durant cette soirée ne peut pas être redemandée. Tu peux cependant rejoindre son groupe si des places sont libres.</li>
-        <li>Les prestations « Pas prêt » restent en pause, sans heure de passage, jusqu'à ce que les musiciens soient disponibles.</li>
+        <li><strong>Au début de la soirée :</strong> chaque Rockstar commence à <strong>0 point</strong>, sauf les <strong>Initiés</strong>, qui commencent à <strong>−1 point</strong> pour avoir participé à une soirée précédente.</li>
+        <li><strong>Quand ta propre chanson commence :</strong> tu reçois <strong>+1 point par seconde</strong> de sa durée prévue. Une chanson de 2 min 30 s ajoute donc <strong>150 points</strong>; une de 4 min, <strong>240 points</strong>. Le coût est compté dès que le MC lance la prestation, pas quand elle se termine.</li>
+        <li><strong>Quand tu rejoins la chanson de quelqu’un d’autre :</strong> tu ne gagnes <strong>aucun point personnel</strong>. Tu peux donc accompagner d’autres Rockstars sans repousser tes propres demandes.</li>
+        <li><strong>Si une chanson est passée sans être lancée :</strong> elle n’ajoute aucun point. Si le MC remet une prestation jouée en file, ses points sont annulés ou recalculés selon la correction.</li>
       </ul>
+      <p>En général, <strong>moins tu as de points personnels, plus tes demandes sont favorisées</strong>. Mais le classement ne s’arrête pas là.</p>
+
+      <h3>2. Le score de priorité de chaque chanson</h3>
+      <div class="queue-rule-formula"><strong>Score de la demande</strong><span>Points personnels de l’initiateur <strong>−</strong> bonus de groupe <strong>−</strong> bonus d’attente</span><small>Le score <strong>le plus bas</strong> passe avant les autres, sous réserve des règles de variété et des places déjà annoncées.</small></div>
+      <ul>
+        <li><strong>Bonus de groupe :</strong> chaque autre personne distincte qui participe à la demande fait baisser son score de <strong>30 points</strong>. Cela donne <strong>−30</strong> à deux personnes au total, <strong>−60</strong> à trois et <strong>−90</strong> à quatre ou plus (bonus plafonné à trois coéquipiers). Il s’agit d’un bonus pour <em>cette chanson</em>, pas d’une réduction des points personnels.</li>
+        <li><strong>Bonus d’attente :</strong> pendant les <strong>30 premières minutes</strong>, aucun bonus. Ensuite, la demande retire <strong>6 points par minute supplémentaire</strong>, jusqu’à <strong>−900 points</strong> au maximum. Par exemple : 45 minutes d’attente = <strong>−90</strong>; 60 minutes = <strong>−180</strong>. Les longues attentes finissent donc par remonter dans la file.</li>
+        <li><strong>Points anticipés :</strong> pour prévoir les chansons suivantes, le système simule les points que chaque Rockstar recevra en jouant ses demandes placées plus tôt. Le classement peut donc changer quand de nouvelles personnes ou chansons arrivent. Ces points anticipés ne deviennent de <em>vrais</em> points qu’au lancement des chansons concernées.</li>
+      </ul>
+      <div class="queue-rule-example"><strong>Exemple concret</strong>
+        <p>Alex a déjà lancé une chanson de 4 minutes : <strong>240 points personnels</strong>. Sa prochaine demande compte deux autres membres (<strong>−60</strong>) et attend depuis 45 minutes (<strong>−90</strong>).</p>
+        <p class="queue-rule-math"><strong>240 − 60 − 90 = 90 points de priorité</strong></p>
+        <p>Sam, qui n’a encore rien demandé ni joué, est à <strong>0</strong> : sa demande a normalement la priorité sur celle d’Alex. Mais si Alex attend davantage ou rassemble un groupe plus nombreux, son score peut passer sous 0. <strong>Les 240 points personnels d’Alex, eux, ne changent pas.</strong></p>
+      </div>
+
+      <h3>3. Les règles qui peuvent modifier cet ordre</h3>
+      <ul>
+        <li><strong>Chanson en cours et prochaine annoncée :</strong> elles restent à leur place, même si les points ou les groupes changent.</li>
+        <li><strong>Variété avant tout :</strong> le système essaie d’éviter deux demandes consécutives de la même Rockstar ou deux chansons du même artiste lorsqu’il existe une autre demande admissible. C’est une <strong>préférence de classement</strong>, pas une interdiction absolue : si aucune bonne alternative n’est disponible, un enchaînement reste possible.</li>
+        <li><strong>Ordre de tes propres demandes :</strong> ta deuxième chanson ne passe pas devant ta première demande encore admissible.</li>
+        <li><strong>En cas d’égalité de score :</strong> la demande la plus ancienne est prioritaire, après application des autres règles.</li>
+        <li><strong>« Pas prêt » :</strong> une prestation en pause sort temporairement de l’ordre de passage et n’a plus d’heure prévue. Elle revient dans le classement dès qu’elle est remise en état « Prêt ».</li>
+        <li><strong>Pas de doublons :</strong> une chanson déjà demandée ou jouée durant la soirée ne peut pas être redemandée. Tu peux toutefois rejoindre son groupe si une place est libre.</li>
+      </ul>
+      <p class="queue-rules-footnote">La file est recalculée selon la situation du moment. Les heures affichées sont des estimations, pas des rendez-vous garantis : le MC conserve le contrôle du déroulement de la soirée.</p>
     </div>
   </details>
 </main>
