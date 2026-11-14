@@ -472,15 +472,11 @@ body.yarg-unified-page{
 </section>
 <section id="owner-tab" hidden>
  <details class="card owner-fold" id="owner-library-section"><summary><span class="owner-library-root-title">Demandes de chansons pour la bibliothèque</span><span id="owner-library-pending" class="owner-fold-count" hidden></span></summary><div class="owner-fold-body">
-   <p class="owner-library-intro">Associe les chansons du catalogue avant de confirmer un téléchargement. Les demandes introuvables restent 30 jours dans la Fosse aux zombies, puis reviennent ici.</p>
+   <p class="owner-library-intro">Associe d’abord la chanson au catalogue, puis marque la demande « Téléchargée / ajoutée » : les favoris et le courriel sont traités et la demande est automatiquement archivée. Les demandes introuvables passent 30 jours dans la Fosse aux zombies.</p>
    <div id="owner-library" class="owner-list"></div>
    <details class="owner-library-group owner-library-zombie-pit" id="owner-library-zombies">
      <summary><span class="owner-library-heading"><span class="owner-library-heading-icon" aria-hidden="true">🧟</span><span class="owner-library-heading-title">Fosse aux zombies</span></span><span class="owner-library-badge" id="owner-library-zombie-count">0</span></summary>
      <div class="owner-library-group-body"><p class="owner-library-group-note">Demandes introuvables en attente de leur retour. Tu peux les consulter, les modifier ou les archiver avant leur réveil.</p><div id="owner-library-zombie-list" class="owner-list"></div></div>
-   </details>
-   <details class="owner-library-group" id="owner-library-completed">
-     <summary><span class="owner-library-heading"><span class="owner-library-heading-icon" aria-hidden="true">✓</span><span class="owner-library-heading-title">Téléchargées / trouvées</span></span><span class="owner-library-badge" id="owner-library-downloaded-count">0</span></summary>
-     <div class="owner-library-group-body"><div id="owner-library-downloaded" class="owner-list"></div></div>
    </details>
    <details class="owner-library-group" id="owner-library-archived">
      <summary><span class="owner-library-heading"><span class="owner-library-heading-icon" aria-hidden="true">📦</span><span class="owner-library-heading-title">Demandes archivées</span></span><span class="owner-library-badge" id="owner-library-archived-count">0</span></summary>
@@ -1024,10 +1020,8 @@ function drawOwner(){
  badge.hidden=false;
  const visible=ownerData.library.filter(l=>!l.archived_at&&l.status!=='downloaded'&&libraryRequestVisible(l));
  const hiddenZombies=ownerData.library.filter(l=>!l.archived_at&&l.status==='unfindable'&&!libraryRequestVisible(l));
- const downloaded=ownerData.library.filter(l=>!l.archived_at&&l.status==='downloaded');
  const archived=ownerData.library.filter(l=>!!l.archived_at);
  $('owner-library-zombie-count').textContent=String(hiddenZombies.length);
- $('owner-library-downloaded-count').textContent=String(downloaded.length);
  $('owner-library-archived-count').textContent=String(archived.length);
  function libraryRow(l){
   const wake=libraryZombieWakeTime(l);
@@ -1044,7 +1038,6 @@ function drawOwner(){
       ?`<button type="button" class="quiet small" data-library-archive="${esc(l.id)}" data-archive-value="true">📦 Archiver cette demande</button>`:'';
   return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label>${countdown}${accountSelect}${libraryMatchEditor(l)}${archiveButton?'<div class="actions" style="margin-top:10px">'+archiveButton+'</div>':''}</div>`;
  }
- $('owner-library-downloaded').innerHTML=downloaded.length?downloaded.map(libraryRow).join(''):'<p class="muted">Aucune chanson téléchargée pour le moment.</p>';
  $('owner-library').innerHTML=visible.length?visible.map(libraryRow).join(''):'<p class="muted">Aucune demande à examiner pour le moment.</p>';
  $('owner-library-zombie-list').innerHTML=hiddenZombies.length?hiddenZombies.map(libraryRow).join(''):'<p class="muted">La fosse est vide. Aucun zombie en attente de réveil.</p>';
  $('owner-library-archived-list').innerHTML=archived.length?archived.map(libraryRow).join(''):'<p class="muted">Aucune demande archivée pour le moment.</p>';
