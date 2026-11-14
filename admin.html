@@ -222,6 +222,46 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .owner-library-completed{margin-top:18px;border:1px solid #355057;border-radius:12px;background:#17252b}
 .owner-library-completed>summary{cursor:pointer;padding:12px 15px;color:#9be7c8;font-weight:850}
 .owner-library-completed .owner-fold-body{padding:10px}
+/* Library request buckets: one compact chevron, tidy labels and aligned counts. */
+#owner-library-section>summary{gap:9px;min-width:0}
+#owner-library-section>summary .owner-library-root-title{flex:1 1 auto;min-width:0}
+#owner-library-section>summary .owner-fold-count{flex:0 0 auto;margin-left:auto;white-space:nowrap;font-size:.76rem;line-height:1.3;padding:6px 10px}
+.owner-library-intro{margin:0 0 14px;font-size:.87rem;line-height:1.45;color:#bacbd0}
+.owner-library-group{margin-top:12px;border:1px solid #3d5961;border-radius:12px;background:#18282e;overflow:hidden;min-width:0}
+.owner-library-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;min-width:0;padding:13px 15px;color:#9be7d6;font-weight:850;font-size:1rem;line-height:1.3}
+.owner-library-group>summary::-webkit-details-marker{display:none}
+.owner-library-group>summary::marker{content:''}
+.owner-library-group>summary::before{content:'▸';flex:0 0 14px;color:#35d5c6;font-size:1.12rem;text-align:center;line-height:1}
+.owner-library-group[open]>summary::before{content:'▾'}
+.owner-library-group>summary:hover{background:#22363d}
+.owner-library-group>summary:focus-visible{outline:2px solid #35d5c6;outline-offset:-3px}
+.owner-library-heading{display:flex;align-items:center;gap:9px;flex:1 1 auto;min-width:0}
+.owner-library-heading-icon{width:22px;flex:0 0 22px;text-align:center;font-size:1.05rem}
+.owner-library-heading-title{min-width:0;overflow-wrap:normal}
+.owner-library-badge{margin-left:auto;flex:0 0 auto;min-width:34px;display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;background:#293e45;color:#f4f9fa;border:1px solid #557078;border-radius:999px;font-size:.84rem;font-weight:900;font-variant-numeric:tabular-nums}
+.owner-library-group-body{padding:13px;border-top:1px solid #3d5961}
+.owner-library-group-body>.owner-list{margin-top:10px}
+.owner-library-group-note{font-size:.84rem;line-height:1.45;color:#afc2cb;margin:0}
+.owner-library-zombie-pit{border-color:#73568b;background:#241d2d}
+.owner-library-zombie-pit>summary{color:#e6ccfb}
+.owner-library-zombie-pit>summary::before{color:#d7a8ff}
+.owner-library-zombie-pit>summary:hover{background:#32273d}
+.owner-library-zombie-pit .owner-library-group-body{border-color:#614773}
+.owner-library-zombie-pit .owner-library-badge{border-color:#8e6ba6;background:#41304d;color:#fbeefe}
+.owner-library-zombie-countdown{display:inline-flex;margin:11px 0 1px;padding:6px 9px;border:1px solid #8e6ba6;background:#3a2c47;color:#f4ddff;font-size:.81rem;font-weight:800;line-height:1.35;border-radius:8px}
+@media(max-width:650px){
+ #owner-library-section>summary{padding:14px 10px;font-size:1rem;gap:7px}
+ #owner-library-section>summary::before{font-size:1rem;flex:0 0 12px}
+ #owner-library-section>summary .owner-fold-count{font-size:.71rem;padding:6px 8px}
+ #owner-library-section>.owner-fold-body{padding:12px 10px 16px}
+ .owner-library-group>summary{font-size:.88rem;padding:12px 9px;gap:7px}
+ .owner-library-heading{gap:6px}
+ .owner-library-heading-icon{width:19px;flex-basis:19px;font-size:.96rem}
+ .owner-library-badge{font-size:.8rem;min-width:30px;padding:4px 8px}
+ .owner-library-group-body{padding:10px 9px}
+ .owner-library-intro{font-size:.82rem}
+}
+
 .owner-library-match{margin-top:10px;border:1px solid #42616b;border-radius:9px;background:#16282d}
 .owner-library-match>summary{cursor:pointer;padding:10px;font-weight:800;color:#a8eed7}
 .owner-library-match-body{border-top:1px solid #42616b;padding:12px;display:grid;gap:10px}
@@ -431,16 +471,20 @@ body.yarg-unified-page{
  <section class="card"><h2>🔒 Gestion des ROCKSTARS</h2><p class="help">Réservé au propriétaire : privilège Initié, titres et crédits historiques. Les crédits ne modifient jamais la file de cette soirée.</p><div id="owner-players" class="owner-list"></div></section>
 </section>
 <section id="owner-tab" hidden>
- <details class="card owner-fold" id="owner-library-section"><summary>Demandes de chansons pour la bibliothèque <span id="owner-library-pending" class="owner-fold-count" hidden></span></summary><div class="owner-fold-body">
-  <p class="help">Les demandes « Introuvable » sont mises de côté pendant 30 jours, puis reviennent comme 🧟 Demandes zombies ! Avant « Téléchargée / ajoutée », associe la chanson exacte dans « Associer les chansons du catalogue » (ou au moins une chanson pour une discographie). Le courriel décrira les ajouts confirmés. Les archives restent modifiables.</p>
-  <div id="owner-library" class="owner-list"></div>
-   <details class="owner-fold owner-library-completed" id="owner-library-completed">
-     <summary>✅ Chansons téléchargées / trouvées (<span id="owner-library-downloaded-count">0</span>)</summary>
-     <div class="owner-fold-body"><div id="owner-library-downloaded" class="owner-list"></div></div>
+ <details class="card owner-fold" id="owner-library-section"><summary><span class="owner-library-root-title">Demandes de chansons pour la bibliothèque</span><span id="owner-library-pending" class="owner-fold-count" hidden></span></summary><div class="owner-fold-body">
+   <p class="owner-library-intro">Associe les chansons du catalogue avant de confirmer un téléchargement. Les demandes introuvables restent 30 jours dans la Fosse aux zombies, puis reviennent ici.</p>
+   <div id="owner-library" class="owner-list"></div>
+   <details class="owner-library-group owner-library-zombie-pit" id="owner-library-zombies">
+     <summary><span class="owner-library-heading"><span class="owner-library-heading-icon" aria-hidden="true">🧟</span><span class="owner-library-heading-title">Fosse aux zombies</span></span><span class="owner-library-badge" id="owner-library-zombie-count">0</span></summary>
+     <div class="owner-library-group-body"><p class="owner-library-group-note">Demandes introuvables en attente de leur retour. Tu peux les consulter, les modifier ou les archiver avant leur réveil.</p><div id="owner-library-zombie-list" class="owner-list"></div></div>
    </details>
-   <details class="owner-fold owner-library-completed" id="owner-library-archived" style="margin-top:12px">
-     <summary>📦 Demandes archivées (<span id="owner-library-archived-count">0</span>)</summary>
-     <div class="owner-fold-body"><p class="help">Ces demandes sont masquées du tableau actif. Tu peux les consulter, corriger leurs correspondances ou les restaurer à tout moment.</p><div id="owner-library-archived-list" class="owner-list"></div></div>
+   <details class="owner-library-group" id="owner-library-completed">
+     <summary><span class="owner-library-heading"><span class="owner-library-heading-icon" aria-hidden="true">✓</span><span class="owner-library-heading-title">Téléchargées / trouvées</span></span><span class="owner-library-badge" id="owner-library-downloaded-count">0</span></summary>
+     <div class="owner-library-group-body"><div id="owner-library-downloaded" class="owner-list"></div></div>
+   </details>
+   <details class="owner-library-group" id="owner-library-archived">
+     <summary><span class="owner-library-heading"><span class="owner-library-heading-icon" aria-hidden="true">📦</span><span class="owner-library-heading-title">Demandes archivées</span></span><span class="owner-library-badge" id="owner-library-archived-count">0</span></summary>
+     <div class="owner-library-group-body"><p class="owner-library-group-note">Hors du tableau actif, mais toujours modifiables et restaurables.</p><div id="owner-library-archived-list" class="owner-list"></div></div>
    </details>
  </div></details>
  <details class="card owner-fold" id="owner-session-management"><summary>📃 Soirées archivées</summary><div class="owner-fold-body">
