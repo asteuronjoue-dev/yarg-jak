@@ -913,13 +913,17 @@ async function loadZombieMetadata(){
  zombieFeatureReady=true;
  zombieMetadata=new Map((data||[]).map(x=>[String(x.id),x.unfindable_at]));
 }
+function libraryZombieWakeTime(item){
+ if(item.status!=='unfindable')return NaN;
+ // unfindable_at is also available from the owner snapshot if the dates RPC fails.
+ const date=zombieMetadata.get(String(item.id))||item.unfindable_at;
+ const time=Date.parse(date||'');
+ return Number.isFinite(time)?time+ZOMBIE_WAIT_MS:NaN;
+}
 function libraryRequestVisible(item){
  if(item.status!=='unfindable')return true;
- if(!zombieFeatureReady)return true; // Garder les demandes visibles si le suivi n'est pas installé.
- const date=zombieMetadata.get(String(item.id));
- if(!date)return true; // Éviter de cacher une demande inconnue par erreur.
- const time=Date.parse(date);
- return !Number.isFinite(time)||Date.now()-time>=ZOMBIE_WAIT_MS;
+ const wake=libraryZombieWakeTime(item);
+ return !Number.isFinite(wake)||Date.now()>=wake;
 }
 const creditMetrics=[
  ["parties","Soirées antérieures","Titres de présence"],
@@ -1016,26 +1020,33 @@ function drawOwner(){
  }).join(''):'<p class="muted">Aucun profil Rockstar inscrit.</p>';
  const pending=ownerData.library.filter(l=>!l.archived_at&&l.status==='pending').length;
  const badge=$('owner-library-pending');
- badge.textContent=pending+' demande'+(pending>1?'s':'')+' à examiner';
+ badge.textContent=pending+' à examiner';
  badge.hidden=false;
  const visible=ownerData.library.filter(l=>!l.archived_at&&l.status!=='downloaded'&&libraryRequestVisible(l));
+ const hiddenZombies=ownerData.library.filter(l=>!l.archived_at&&l.status==='unfindable'&&!libraryRequestVisible(l));
  const downloaded=ownerData.library.filter(l=>!l.archived_at&&l.status==='downloaded');
  const archived=ownerData.library.filter(l=>!!l.archived_at);
+ $('owner-library-zombie-count').textContent=String(hiddenZombies.length);
  $('owner-library-downloaded-count').textContent=String(downloaded.length);
  $('owner-library-archived-count').textContent=String(archived.length);
  function libraryRow(l){
-  const zombie=l.status==='unfindable'&&zombieFeatureReady&&zombieMetadata.has(String(l.id));
+  const wake=libraryZombieWakeTime(l);
+  const zombie=l.status==='unfindable'&&Number.isFinite(wake)&&Date.now()>=wake;
+  const daysLeft=l.status==='unfindable'&&Number.isFinite(wake)&&Date.now()<wake
+    ?Math.max(1,Math.ceil((wake-Date.now())/ZOMBIE_WAIT_MS*30)):0;
   const flag=zombie?'<span class="owner-zombie-flag">🧟 DEMANDE ZOMBIE — BACK FROM THE DEAD !</span>':'';
+  const countdown=daysLeft?'<div class="owner-library-zombie-countdown">Réveil dans '+daysLeft+' jour'+(daysLeft>1?'s':'')+' · '+esc(new Date(wake).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}))+'</div>':'';
   const accountOptions=[['','— Aucun compte associé —'],...ownerData.players.map(p=>[p.user_id,p.rockstar_name])];
   const accountSelect=`<label style="margin-top:10px">Compte Rockstar<select data-library-profile="${esc(l.id)}">${ownerSelect(accountOptions,l.requester_profile_id||'')}</select></label>`;
   const archiveButton=l.archived_at
     ?`<button type="button" class="quiet small" data-library-archive="${esc(l.id)}" data-archive-value="false">↩ Restaurer au tableau</button>`
     :l.status==='downloaded'||l.status==='unfindable'
       ?`<button type="button" class="quiet small" data-library-archive="${esc(l.id)}" data-archive-value="true">📦 Archiver cette demande</button>`:'';
-  return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label>${accountSelect}${libraryMatchEditor(l)}${archiveButton?'<div class="actions" style="margin-top:10px">'+archiveButton+'</div>':''}</div>`;
+  return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label>${countdown}${accountSelect}${libraryMatchEditor(l)}${archiveButton?'<div class="actions" style="margin-top:10px">'+archiveButton+'</div>':''}</div>`;
  }
  $('owner-library-downloaded').innerHTML=downloaded.length?downloaded.map(libraryRow).join(''):'<p class="muted">Aucune chanson téléchargée pour le moment.</p>';
- $('owner-library').innerHTML=visible.length?visible.map(libraryRow).join(''):'<p class="muted">Aucune demande à examiner pour le moment. Les chansons introuvables reviendront après 30 jours ! 🧟</p>';
+ $('owner-library').innerHTML=visible.length?visible.map(libraryRow).join(''):'<p class="muted">Aucune demande à examiner pour le moment.</p>';
+ $('owner-library-zombie-list').innerHTML=hiddenZombies.length?hiddenZombies.map(libraryRow).join(''):'<p class="muted">La fosse est vide. Aucun zombie en attente de réveil.</p>';
  $('owner-library-archived-list').innerHTML=archived.length?archived.map(libraryRow).join(''):'<p class="muted">Aucune demande archivée pour le moment.</p>';
 }
 document.addEventListener('click',async e=>{
