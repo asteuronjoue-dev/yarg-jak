@@ -222,6 +222,19 @@ body.party-mode #admin-party-heading{background:linear-gradient(90deg,#ff355e,#f
 .owner-library-completed{margin-top:18px;border:1px solid #355057;border-radius:12px;background:#17252b}
 .owner-library-completed>summary{cursor:pointer;padding:12px 15px;color:#9be7c8;font-weight:850}
 .owner-library-completed .owner-fold-body{padding:10px}
+.owner-library-match{margin-top:10px;border:1px solid #42616b;border-radius:9px;background:#16282d}
+.owner-library-match>summary{cursor:pointer;padding:10px;font-weight:800;color:#a8eed7}
+.owner-library-match-body{border-top:1px solid #42616b;padding:12px;display:grid;gap:10px}
+.owner-library-match input[type=search]{width:100%;padding:10px;background:#101b20;color:#fff;border:1px solid #52707a;border-radius:8px}
+.owner-library-results{display:grid;gap:5px;max-height:270px;overflow:auto}
+.owner-library-result{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px;border:1px solid #405862;background:#26363c;border-radius:8px}
+.owner-library-result>span{flex:1 1 210px;min-width:0;overflow-wrap:anywhere;font-size:.85rem}
+.owner-library-result button,.owner-library-match button{font-size:.8rem;padding:7px 9px;border:1px solid #52717a;background:#253942;color:white;border-radius:8px;cursor:pointer}
+.owner-library-match button:hover{border-color:#1fc8bd}
+.owner-library-selection{display:flex;gap:7px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid #435c64;border-radius:8px;padding:7px 10px;font-size:.84rem}
+.owner-library-match .owner-library-save{background:#ff8a24;color:#131313;border-color:#ff8a24;font-weight:900}
+.owner-library-match-note{font-size:.83rem;color:#bfd1d5;line-height:1.4}
+
  .mc-history-tools,.mc-song-tools{margin-top:12px;border:1px solid #405b62;border-radius:10px;background:#16252b;padding:10px}
 .mc-history-tools summary,.mc-song-tools summary{cursor:pointer;color:#9beddc;font-weight:850}
 .mc-history-guest,.mc-song-edit{display:grid;gap:9px;padding:11px 3px}
@@ -805,6 +818,43 @@ $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {er
 
 
 const ownerData={players:[],library:[],titles:[],credits:[],oldGuard:[]};
+const libraryMatchingOpen=new Set(),libraryMatchingDrafts=new Map();
+function findLibraryRequest(id){return ownerData.library.find(r=>String(r.id)===String(id))}
+function libraryDraft(request){
+ const id=String(request.id);
+ if(!libraryMatchingDrafts.has(id)){
+  libraryMatchingDrafts.set(id,{
+   primary:request.original_song_id||'',
+   extras:new Set(request.extra_song_ids||[]),
+   labels:new Map([[request.original_song_id||'',request.original_song_label||''],...(request.extra_song_ids||[]).map((sid,i)=>[sid,(request.extra_song_labels||[])[i]||sid])]),
+   query:request.song_title&&request.song_title!=='Discographie de l’artiste'?request.song_title+' '+request.artist:request.artist,
+   message:'',loading:false
+  });
+ }
+ return libraryMatchingDrafts.get(id);
+}
+function libraryChoiceName(song){return song.t+' — '+song.a+(song.al?' ('+song.al+')':'')+(song.ch?' · '+song.ch:'')}
+function libraryMatchingHtml(r){
+ const d=libraryDraft(r),id=esc(r.id),label=sid=>esc(d.labels.get(sid)||sid);
+ const extras=[...d.extras].filter(sid=>sid!==d.primary);
+ return `<div class="owner-library-match-body">
+ <p class="owner-library-match-note">Recherche les chansons dans le catalogue et confirme chaque version. Les anciennes demandes peuvent être reprises ici.</p>
+ <label>Rechercher une chanson<input type="search" data-library-match-search="${id}" value="${esc(d.query)}" autocomplete="off" placeholder="Titre, artiste ou album"></label>
+ <div class="owner-library-results" data-library-results="${id}">Recherche en cours…</div>
+ <strong>Chanson demandée</strong>
+ <div class="owner-library-selection"><span>${d.primary?label(d.primary):'Aucune chanson associée'}</span><button data-library-clear="${id}" ${d.primary?'':'disabled'} type="button">Effacer</button></div>
+ <strong>Autres chansons trouvées</strong>
+ ${extras.length?extras.map(sid=>`<div class="owner-library-selection"><span>${label(sid)}</span><button type="button" data-library-remove="${id}" data-song-id="${esc(sid)}">Retirer</button></div>`).join(''):'<span class="owner-library-match-note">Aucune.</span>'}
+ <p class="owner-library-match-note">${r.favorite_artist_extras?'✓ La Rockstar souhaite ajouter aussi les autres chansons trouvées de cet artiste.':'Les autres chansons ne seront pas ajoutées aux favoris (option non cochée par la Rockstar).'}</p>
+ <p class="owner-library-match-note">${!r.requester_profile_id?'Aucun compte Rockstar associé : les correspondances sont conservées sans ajout de favoris.':r.status==='downloaded'?'Demande téléchargée : les favoris seront synchronisés dès l’enregistrement.':'Les favoris seront ajoutés une fois la demande marquée Téléchargée / ajoutée.'}</p>
+ <div><button type="button" class="owner-library-save" data-library-save="${id}">Enregistrer les correspondances</button> <span class="owner-library-match-note" data-library-message="${id}" role="status">${esc(d.message)}</span></div>
+ </div>`;
+}
+function libraryMatchEditor(r){
+ const id=String(r.id),count=Number(!!r.original_song_id)+(r.extra_song_ids||[]).length;
+ return `<details class="owner-library-match" data-library-editor="${esc(id)}" ${libraryMatchingOpen.has(id)?'open':''}><summary>Associer les chansons du catalogue${count?' ('+count+' enregistrée'+(count>1?'s':'')+')':''}</summary>${libraryMatchingOpen.has(id)?libraryMatchingHtml(r):''}</details>`;
+}
+
 const expandedOwnerRockstars=new Set();
 let zombieMetadata=new Map();
 let zombieFeatureReady=false;
@@ -926,7 +976,7 @@ function drawOwner(){
  function libraryRow(l){
   const zombie=l.status==='unfindable'&&zombieFeatureReady&&zombieMetadata.has(String(l.id));
   const flag=zombie?'<span class="owner-zombie-flag">🧟 DEMANDE ZOMBIE — BACK FROM THE DEAD !</span>':'';
-  return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label></div>`;
+  return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label>${libraryMatchEditor(l)}</div>`;
  }
  $('owner-library-downloaded').innerHTML=downloaded.length?downloaded.map(libraryRow).join(''):'<p class="muted">Aucune chanson téléchargée pour le moment.</p>';
  $('owner-library').innerHTML=visible.length?visible.map(libraryRow).join(''):'<p class="muted">Aucune demande à examiner pour le moment. Les chansons introuvables reviendront après 30 jours ! 🧟</p>';
