@@ -1079,6 +1079,119 @@ $('playlist-create').onsubmit=async e=>{
  if(error){notice('Création impossible : '+error.message,true);return;}
  $('playlist-name').value='';$('playlist-description').value='';notice('Playlist créée. Ajoute des chansons depuis le catalogue.');await loadMcPlaylists();
 };
+
+// Owner-only library matching tools. Reuse the exact IDs built by the public
+// catalogue loader; selection is explicit and never based on an automatic guess.
+function normalizeLibrarySearch(value){
+ return String(value||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+}
+async function searchLibraryMatches(id){
+ const editor=document.querySelector('[data-library-editor="'+id+'"]');
+ if(!editor?.open)return;
+ const field=editor.querySelector('[data-library-match-search]');
+ const results=editor.querySelector('[data-library-results]');
+ if(!field||!results)return;
+ const query=field.value.trim(),normalized=normalizeLibrarySearch(query);
+ libraryDraft(findLibraryRequest(id)).query=query;
+ if(normalized.length<2){results.textContent='Entre au moins deux caractères.';return}
+ results.textContent='Recherche dans le catalogue…';
+ try{
+  const songs=await loadMcCatalogue();
+  const current=document.querySelector('[data-library-editor="'+id+'"]');
+  if(!current?.open||current.querySelector('[data-library-match-search]')?.value!==query)return;
+  const found=[];
+  for(let i=0;i<songs.length;i++){
+   const song=songs[i];
+   const s=normalizeLibrarySearch(song.t+' '+song.a+' '+song.al);
+   if(s.includes(normalized)||normalized.split(' ').every(word=>s.includes(word))){
+    const exact=normalizeLibrarySearch(song.t+' '+song.a)===normalized?0:
+      normalizeLibrarySearch(song.t)===normalized?1:
+      normalizeLibrarySearch(song.a)===normalized?2:3;
+    found.push({song,index:i,rank:exact});
+   }
+  }
+  found.sort((a,b)=>a.rank-b.rank||a.song.t.localeCompare(b.song.t,'fr'));
+  results.innerHTML=found.length?found.slice(0,16).map(({song,index})=>
+   `<div class="owner-library-result"><span>${esc(song.t)} — ${esc(song.a)} <small>${esc(song.al||'')}${song.ch?' · '+esc(song.ch):''} · ${song.l}s</small></span><button type="button" data-library-pick="${esc(id)}" data-library-song-index="${index}" data-library-kind="primary">Demandée</button><button type="button" data-library-pick="${esc(id)}" data-library-song-index="${index}" data-library-kind="extra">Autre</button></div>`).join(''):'Aucune correspondance. Essaie seulement le titre ou l’artiste.';
+ }catch(error){results.textContent='Catalogue indisponible : '+error.message}
+}
+function redrawLibraryMatch(id){
+ const request=findLibraryRequest(id),editor=document.querySelector('[data-library-editor="'+id+'"]');
+ if(!request||!editor?.open)return;
+ editor.innerHTML='<summary>'+esc('Associer les chansons du catalogue')+'</summary>'+libraryMatchingHtml(request);
+ void searchLibraryMatches(id);
+}
+document.addEventListener('toggle',event=>{
+ const details=event.target;
+ if(!(details instanceof HTMLDetailsElement)||!details.matches('[data-library-editor]'))return;
+ const id=details.dataset.libraryEditor;
+ if(details.open){
+  libraryMatchingOpen.add(id);
+  const request=findLibraryRequest(id);
+  if(request){details.innerHTML='<summary>Associer les chansons du catalogue</summary>'+libraryMatchingHtml(request);void searchLibraryMatches(id)}
+ }else libraryMatchingOpen.delete(id);
+},true);
+document.addEventListener('input',event=>{
+ const field=event.target.closest('[data-library-match-search]');
+ if(!field)return;
+ const id=field.dataset.libraryMatchSearch,request=findLibraryRequest(id);
+ if(!request)return;
+ libraryDraft(request).query=field.value;
+ void searchLibraryMatches(id);
+});
+document.addEventListener('click',async event=>{
+ const pick=event.target.closest('[data-library-pick]');
+ const clear=event.target.closest('[data-library-clear]');
+ const remove=event.target.closest('[data-library-remove]');
+ const save=event.target.closest('[data-library-save]');
+ if(!pick&&!clear&&!remove&&!save)return;
+ const id=String(pick?.dataset.libraryPick||clear?.dataset.libraryClear||remove?.dataset.libraryRemove||save?.dataset.librarySave);
+ const request=findLibraryRequest(id);if(!request)return;
+ const draft=libraryDraft(request);
+ if(pick){
+  const songs=await loadMcCatalogue();
+  const song=songs[Number(pick.dataset.librarySongIndex)];if(!song)return;
+  draft.labels.set(song.id,libraryChoiceName(song));
+  if(pick.dataset.libraryKind==='primary'){draft.primary=song.id;draft.extras.delete(song.id)}
+  else if(song.id!==draft.primary)draft.extras.add(song.id);
+  draft.message='Sélection modifiée. Enregistre pour confirmer.';
+  redrawLibraryMatch(id);
+  return;
+ }
+ if(clear){draft.primary='';draft.message='Sélection modifiée. Enregistre pour confirmer.';redrawLibraryMatch(id);return}
+ if(remove){draft.extras.delete(remove.dataset.songId);draft.message='Sélection modifiée. Enregistre pour confirmer.';redrawLibraryMatch(id);return}
+ if(save){
+  if(!request.requester_profile_id && !draft.primary && !draft.extras.size &&
+    !confirm('Enregistrer cette demande sans aucune correspondance ?'))return;
+  const songs=await loadMcCatalogue();
+  const byId=new Map(songs.map(song=>[song.id,song]));
+  const extras=[...draft.extras].filter(sid=>sid!==draft.primary);
+  if((draft.primary&&!byId.has(draft.primary))||extras.some(sid=>!byId.has(sid))){
+   const status=document.querySelector('[data-library-message="'+id+'"]');
+   if(status)status.textContent='Une chanson sélectionnée ne figure plus au catalogue. Recharge et réassocie-la.';
+   return;
+  }
+  const count=Number(!!draft.primary)+extras.length;
+  if(!confirm('Enregistrer '+count+' correspondance(s) pour cette demande ?'+(request.status==='downloaded'&&request.requester_profile_id?' Les favoris seront ajoutés au compte Rockstar.':'')))return;
+  save.disabled=true;
+  const status=document.querySelector('[data-library-message="'+id+'"]');if(status)status.textContent='Enregistrement…';
+  try{
+   const {error}=await sb.rpc('yarg_owner_set_library_matches',{
+     p_id:id,p_original_id:draft.primary||'',p_original_label:draft.primary?libraryChoiceName(byId.get(draft.primary)):'',
+     p_extra_ids:extras,p_extra_labels:extras.map(sid=>libraryChoiceName(byId.get(sid)))
+   });
+   if(error)throw error;
+   draft.message='Correspondances enregistrées'+(request.status==='downloaded'&&request.requester_profile_id?' et favoris synchronisés.':'.');
+   notice(draft.message);
+   await loadOwner();
+  }catch(e){
+   if(status)status.textContent='Échec : '+e.message;
+   notice('Association impossible : '+e.message,true);
+  }finally{save.disabled=false}
+ }
+});
+// End owner library matching tools.
+
 // Optional catalogue search: loaded only when the MC wants to correct a song.
 let mcCataloguePromise=null;
 function loadMcCatalogue(){
