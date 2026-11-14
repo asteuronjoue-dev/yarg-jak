@@ -438,6 +438,10 @@ body.yarg-unified-page{
      <summary>✅ Chansons téléchargées / trouvées (<span id="owner-library-downloaded-count">0</span>)</summary>
      <div class="owner-fold-body"><div id="owner-library-downloaded" class="owner-list"></div></div>
    </details>
+   <details class="owner-fold owner-library-completed" id="owner-library-archived" style="margin-top:12px">
+     <summary>📦 Demandes archivées (<span id="owner-library-archived-count">0</span>)</summary>
+     <div class="owner-fold-body"><p class="help">Ces demandes sont masquées du tableau actif. Tu peux les consulter, corriger leurs correspondances ou les restaurer à tout moment.</p><div id="owner-library-archived-list" class="owner-list"></div></div>
+   </details>
  </div></details>
  <details class="card owner-fold" id="owner-session-management"><summary>📃 Soirées archivées</summary><div class="owner-fold-body">
    <div class="flex"><p class="help">Réservé au propriétaire. Supprimer une soirée archivée efface ses demandes, prestations, participations et crédits de progression calculés à partir de ces données. Les autres soirées et les crédits historiques attribués manuellement sont conservés. Action irréversible.</p><button type="button" class="quiet small" id="owner-session-refresh">↻ Actualiser</button></div>
@@ -966,21 +970,61 @@ function drawOwner(){
   const titleChoices=ownerData.titles.filter(t=>t.code!=='vieille_garde'||oldGuard);
   return `<details class="owner-item owner-rockstar-details" data-rockstar-id="${esc(p.user_id)}" ${expandedOwnerRockstars.has(String(p.user_id))?'open':''}><summary><strong>${esc(p.rockstar_name)}</strong></summary><div class="owner-rockstar-body"><div class="owner-item-fields"><label>Privilège Initié<select data-initie-for="${esc(p.user_id)}">${ownerSelect([['auto','Automatique'],['yes','Accorder'],['no','Retirer']],p.manual_initie===true?'yes':p.manual_initie===false?'no':'auto')}</select></label><label>Titre affiché<select data-title-for="${esc(p.user_id)}">${ownerSelect([['','Aucun'],...titleChoices.map(t=>[t.code,t.label])],p.equipped_title||'')}</select></label></div><label class="old-guard-choice"><input type="checkbox" data-old-guard-for="${esc(p.user_id)}" ${oldGuard?'checked':''}> 🏅 La Vieille Garde — titre secret (ancien du setup)</label><details class="legacy-details"><summary>Crédits historiques d’exploits</summary><p class="help">Ajoute les participations de soirées antérieures non comptées automatiquement (y compris la dernière soirée si aucune performance n’a été enregistrée). Ne crédite pas deux fois une même présence. Chaque valeur est un supplément aux statistiques réelles, pas leur total. Les crédits de demandes soumises et de chansons terminées changent les statistiques, pas les titres. Les titres se débloquent à la prochaine visite du profil.</p><div class="legacy-grid">${metrics}</div></details></div></details>`;
  }).join(''):'<p class="muted">Aucun profil Rockstar inscrit.</p>';
- const pending=ownerData.library.filter(l=>l.status==='pending').length;
+ const pending=ownerData.library.filter(l=>!l.archived_at&&l.status==='pending').length;
  const badge=$('owner-library-pending');
  badge.textContent=pending+' demande'+(pending>1?'s':'')+' à examiner';
  badge.hidden=false;
- const visible=ownerData.library.filter(l=>l.status!=='downloaded'&&libraryRequestVisible(l));
- const downloaded=ownerData.library.filter(l=>l.status==='downloaded');
+ const visible=ownerData.library.filter(l=>!l.archived_at&&l.status!=='downloaded'&&libraryRequestVisible(l));
+ const downloaded=ownerData.library.filter(l=>!l.archived_at&&l.status==='downloaded');
+ const archived=ownerData.library.filter(l=>!!l.archived_at);
  $('owner-library-downloaded-count').textContent=String(downloaded.length);
+ $('owner-library-archived-count').textContent=String(archived.length);
  function libraryRow(l){
   const zombie=l.status==='unfindable'&&zombieFeatureReady&&zombieMetadata.has(String(l.id));
   const flag=zombie?'<span class="owner-zombie-flag">🧟 DEMANDE ZOMBIE — BACK FROM THE DEAD !</span>':'';
-  return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label>${libraryMatchEditor(l)}</div>`;
+  const accountOptions=[['','— Aucun compte associé —'],...ownerData.players.map(p=>[p.user_id,p.rockstar_name])];
+  const accountSelect=`<label style="margin-top:10px">Compte Rockstar<select data-library-profile="${esc(l.id)}">${ownerSelect(accountOptions,l.requester_profile_id||'')}</select></label>`;
+  const archiveButton=l.archived_at
+    ?`<button type="button" class="quiet small" data-library-archive="${esc(l.id)}" data-archive-value="false">↩ Restaurer au tableau</button>`
+    :l.status==='downloaded'||l.status==='unfindable'
+      ?`<button type="button" class="quiet small" data-library-archive="${esc(l.id)}" data-archive-value="true">📦 Archiver cette demande</button>`:'';
+  return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label>${accountSelect}${libraryMatchEditor(l)}${archiveButton?'<div class="actions" style="margin-top:10px">'+archiveButton+'</div>':''}</div>`;
  }
  $('owner-library-downloaded').innerHTML=downloaded.length?downloaded.map(libraryRow).join(''):'<p class="muted">Aucune chanson téléchargée pour le moment.</p>';
  $('owner-library').innerHTML=visible.length?visible.map(libraryRow).join(''):'<p class="muted">Aucune demande à examiner pour le moment. Les chansons introuvables reviendront après 30 jours ! 🧟</p>';
+ $('owner-library-archived-list').innerHTML=archived.length?archived.map(libraryRow).join(''):'<p class="muted">Aucune demande archivée pour le moment.</p>';
 }
+document.addEventListener('click',async e=>{
+ const btn=e.target.closest('[data-library-archive]');if(!btn)return;
+ const id=btn.dataset.libraryArchive,archive=btn.dataset.archiveValue==='true';
+ const request=findLibraryRequest(id);if(!request)return;
+ if(!confirm(archive?'Archiver cette demande terminée ? Elle restera consultable et pourra être restaurée.':'Restaurer cette demande au tableau actif ?'))return;
+ btn.disabled=true;
+ try{
+  const {error}=await sb.rpc('yarg_owner_archive_library_request',{p_id:id,p_archived:archive});
+  if(error)throw error;
+  libraryMatchingOpen.delete(id);
+  notice(archive?'Demande archivée. Tu peux la retrouver dans « Demandes archivées ».':'Demande restaurée.');
+  await loadOwner();
+ }catch(error){notice('Archivage impossible : '+error.message,true);btn.disabled=false;}
+});
+document.addEventListener('change',async e=>{
+ const select=e.target.closest('[data-library-profile]');if(!select)return;
+ const request=findLibraryRequest(select.dataset.libraryProfile);if(!request)return;
+ const selected=select.value||null;
+ const name=selected?ownerData.players.find(p=>p.user_id===selected)?.rockstar_name||'le compte choisi':'aucun compte';
+ if(!confirm('Associer la demande « '+request.song_title+' » à '+name+' ?'+
+   (selected&&request.status==='downloaded'?' Les chansons déjà associées seront ajoutées à ses favoris.':''))){
+   select.value=request.requester_profile_id||'';return;
+ }
+ select.disabled=true;
+ try{
+  const {data,error}=await sb.rpc('yarg_owner_set_library_profile',{p_id:request.id,p_profile_id:selected});
+  if(error)throw error;
+  notice('Compte Rockstar associé.'+(data>0?' '+data+' chanson(s) synchronisée(s) aux favoris.':''));
+  await loadOwner();
+ }catch(error){notice('Association impossible : '+error.message,true);select.value=request.requester_profile_id||'';select.disabled=false;}
+});
 document.addEventListener('submit',async e=>{
  const form=e.target.closest('.legacy-form');if(!form)return;
  e.preventDefault();const amount=Number(form.elements.amount.value);
