@@ -1033,7 +1033,7 @@ function drawOwner(){
   const accountOptions=[['','— Aucun compte associé —'],...ownerData.players.map(p=>[p.user_id,p.rockstar_name])];
   const accountSelect=`<label style="margin-top:10px">Compte Rockstar<select data-library-profile="${esc(l.id)}">${ownerSelect(accountOptions,l.requester_profile_id||'')}</select></label>`;
   const archiveButton=l.archived_at
-    ?`<button type="button" class="quiet small" data-library-archive="${esc(l.id)}" data-archive-value="false">↩ Restaurer au tableau</button>`
+    ?`<button type="button" class="quiet small" data-library-archive="${esc(l.id)}" data-archive-value="false">↩ ${l.status==='downloaded'?'Rouvrir la demande':'Restaurer au tableau'}</button>`
     :l.status==='downloaded'||l.status==='unfindable'
       ?`<button type="button" class="quiet small" data-library-archive="${esc(l.id)}" data-archive-value="true">📦 Archiver cette demande</button>`:'';
   return `<div class="owner-item${zombie?' owner-zombie':''}">${flag}<strong>${esc(l.song_title)} — ${esc(l.artist)}</strong><div class="muted">Demandé par ${esc(l.name||'—')}${l.email?' · '+esc(l.email):''}</div><label>Statut<select data-library-for="${esc(l.id)}">${ownerSelect([['pending','En attente'],['downloaded','Téléchargée / ajoutée'],['unfindable','Introuvable']],l.status)}</select></label>${countdown}${accountSelect}${libraryMatchEditor(l)}${archiveButton?'<div class="actions" style="margin-top:10px">'+archiveButton+'</div>':''}</div>`;
@@ -1046,13 +1046,13 @@ document.addEventListener('click',async e=>{
  const btn=e.target.closest('[data-library-archive]');if(!btn)return;
  const id=btn.dataset.libraryArchive,archive=btn.dataset.archiveValue==='true';
  const request=findLibraryRequest(id);if(!request)return;
- if(!confirm(archive?'Archiver cette demande terminée ? Elle restera consultable et pourra être restaurée.':'Restaurer cette demande au tableau actif ?'))return;
+ if(!confirm(archive?'Archiver cette demande terminée ? Elle restera consultable et pourra être restaurée.':request.status==='downloaded'?'Rouvrir cette demande dans « En attente » ? Ses correspondances et favoris seront conservés.':'Restaurer cette demande au tableau actif ?'))return;
  btn.disabled=true;
  try{
   const {error}=await sb.rpc('yarg_owner_archive_library_request',{p_id:id,p_archived:archive});
   if(error)throw error;
   libraryMatchingOpen.delete(id);
-  notice(archive?'Demande archivée. Tu peux la retrouver dans « Demandes archivées ».':'Demande restaurée.');
+  notice(archive?'Demande archivée. Tu peux la retrouver dans « Demandes archivées ».':request.status==='downloaded'?'Demande rouverte dans « En attente ». Les correspondances et favoris sont conservés.':'Demande restaurée.');
   await loadOwner();
  }catch(error){notice('Archivage impossible : '+error.message,true);btn.disabled=false;}
 });
@@ -1104,7 +1104,7 @@ document.addEventListener('change',async e=>{
  }
  if(!confirm('Enregistrer cette modification ?')){await loadOwner();return;}
  target.disabled=true;
- try{const {error}=await sb.rpc(action,args);if(error)throw error;notice('Modification enregistrée.');await loadOwner();}
+ try{const {error}=await sb.rpc(action,args);if(error)throw error;notice(action==='yarg_owner_library_status'&&target.value==='downloaded'?'Demande terminée et archivée automatiquement.':'Modification enregistrée.');await loadOwner();}
  catch(err){notice('Modification refusée : '+err.message,true);await loadOwner()}
  finally{target.disabled=false}
 });
