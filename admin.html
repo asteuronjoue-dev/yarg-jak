@@ -432,7 +432,7 @@ body.yarg-unified-page{
 </section>
 <section id="owner-tab" hidden>
  <details class="card owner-fold" id="owner-library-section"><summary>Demandes de chansons pour la bibliothèque <span id="owner-library-pending" class="owner-fold-count" hidden></span></summary><div class="owner-fold-body">
-  <p class="help">Les demandes « Introuvable » sont mises de côté pendant 30 jours. Elles reviennent ensuite comme 🧟 Demandes zombies ! « Téléchargée » signifie que la chanson a été ajoutée à la bibliothèque.</p>
+  <p class="help">Les demandes « Introuvable » sont mises de côté pendant 30 jours, puis reviennent comme 🧟 Demandes zombies ! Avant « Téléchargée / ajoutée », associe la chanson exacte dans « Associer les chansons du catalogue » (ou au moins une chanson pour une discographie). Le courriel décrira les ajouts confirmés. Les archives restent modifiables.</p>
   <div id="owner-library" class="owner-list"></div>
    <details class="owner-fold owner-library-completed" id="owner-library-completed">
      <summary>✅ Chansons téléchargées / trouvées (<span id="owner-library-downloaded-count">0</span>)</summary>
@@ -1047,6 +1047,13 @@ document.addEventListener('change',async e=>{
  const action=target.hasAttribute('data-initie-for')?'yarg_owner_set_initie':target.hasAttribute('data-title-for')?'yarg_owner_set_title':'yarg_owner_library_status';
  const args=action==='yarg_owner_set_initie'?{p_user_id:target.dataset.initieFor,p_status:target.value}:
  action==='yarg_owner_set_title'?{p_user_id:target.dataset.titleFor,p_title_code:target.value||null}:{p_id:target.dataset.libraryFor,p_status:target.value};
+ if(action==='yarg_owner_library_status' && target.value==='downloaded'){
+   const request=findLibraryRequest(target.dataset.libraryFor);
+   const matched=request?.song_title==='Discographie de l’artiste'
+     ? !!request.original_song_id || (request.extra_song_ids||[]).length>0
+     : !!request?.original_song_id;
+   if(!matched){notice('Associe d’abord la chanson dans le catalogue et enregistre la correspondance avant de la marquer téléchargée. Aucun courriel ne sera envoyé.',true);await loadOwner();return;}
+ }
  if(!confirm('Enregistrer cette modification ?')){await loadOwner();return;}
  target.disabled=true;
  try{const {error}=await sb.rpc(action,args);if(error)throw error;notice('Modification enregistrée.');await loadOwner();}
