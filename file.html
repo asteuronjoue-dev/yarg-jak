@@ -101,7 +101,7 @@
     .join-form input:not([type="checkbox"]),.join-form select{display:block;width:100%;margin-top:4px;padding:9px;background:#101214;color:white;border:1px solid #455158;border-radius:8px;font:inherit}
     .join-form .join-mic-choice{display:flex;align-items:center;gap:8px}.join-form .join-mic-choice input{width:auto;margin:0}.join-form [hidden]{display:none!important}.join-form .join-submit{margin-top:10px;padding:10px 14px;border:0;border-radius:9px;background:var(--teal);color:#071016;font-weight:900;cursor:pointer}
     .join-form .join-cancel{margin-left:8px;background:transparent;color:var(--muted);border:0;cursor:pointer}
-    .join-form .join-message{color:#ffb2b2;margin-top:8px;font-size:13px}
+    .join-form .join-message,.join-slot-notice{color:#ffb2b2;margin-top:8px;font-size:13px}
     .join-guitar-photo{display:block;width:min(100%,240px);height:110px;object-fit:contain;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:8px;margin:10px auto 4px}
     .join-guitar-photo[hidden]{display:none!important}
     .join-guitar-note{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-top:5px}
@@ -482,6 +482,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
     <div class="display-footer"><span>Les heures sont approximatives · 2 min prévues entre les chansons</span><span id="displayUpdated">Actualisation automatique toutes les 30 secondes</span></div>
   </section>
   <div class="error" id="errorBox"></div>
+  <div class="join-slot-notice" id="joinSlotNotice" role="status" hidden></div>
   <div id="notifyTop" class="queue-notify-top" hidden><button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button></div>
   <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
     <details><summary>Comment fonctionnent les points?</summary><p class="points-note">Les points personnels indiquent combien de temps de scène une Rockstar a déjà réservé en lançant ses propres chansons : +1 par seconde (4 min = +240), avec −1 au départ pour les Initiés. Rejoindre une autre chanson ne coûte aucun point personnel. Pour classer une demande, le système soustrait jusqu’à 90 points pour les coéquipiers et jusqu’à 900 points pour l’attente, après 30 minutes. Les chansons non lancées ne coûtent rien. Pour la formule complète, les exemples et les règles de variété, consulte « Comment l’ordre des chansons est-il décidé ? » au bas de la page.</p></details></section>
@@ -596,7 +597,11 @@ function pausedMember(requestId,name){
 function readyMember(requestId,memberId,legacyRequester=false){
  return (!!memberId && confirmedReadyMembers.has(String(requestId)+'|'+String(memberId))) || (!!legacyRequester && confirmedReadyRequesters.has(String(requestId)));
 }
-let joining = null; // {requestId, instrument} — garder le formulaire ouvert pendant les rafraîchissements
+let joining = null; // {requestId, instrument}
+let joinSlotNotice=null;
+const pendingJoins=new Set();
+const slotTakenMessage='Cette place vient d’être prise. Choisis une autre place.';
+const songClosedMessage='Cette chanson n’est plus ouverte aux inscriptions.';
 const JOINED_REQUESTS_KEY="yarg_joined_performance_requests";
 const BAND_TOKEN_KEY='yarg_band_secret_v1';
 function myBandToken(){let t=localStorage.getItem(BAND_TOKEN_KEY);if(!t){t=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem(BAND_TOKEN_KEY,t)}return t}
@@ -1067,7 +1072,7 @@ function joinFormHtml(r){
  ${["guitar","bass","rhythm_guitar"].includes(instrument)?joinGuitarChoices(r):""}
  ${vocals||instrument==="flex"?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${canSing?"":"disabled"}> Je veux aussi chanter au micro</label>`}
  <label class="join-harmony" ${vocals?"":"hidden"}>Partie vocale (difficulté Moyen)<select name="harmony">${harmonyOptions(r)}</select></label>
- <button class="join-submit" type="submit">Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
+ <button class="join-submit" type="submit" ${pendingJoins.has(String(r.id))?"disabled":""}>Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
  <div class="join-message" role="status"></div></form>`;
 }
 function cardHtml(r, eta, mine=false, rank=null){
@@ -1111,6 +1116,7 @@ function cardHtml(r, eta, mine=false, rank=null){
       ${r.yarg_not_ready?'<div class="yarg-held-note">Cette chanson est temporairement en pause et ne sera pas appelée pour le moment.</div>':''}
       ${slots?`<div class="open-slots">${slots}</div>`:''}
       ${!isPlaying && (accountEditKind(r)|| (myBandMember(r)&&myMemberToken(r))) ? `<div class="member-editor member-editor--compact"><div class="member-editor-tools"><button type="button" data-band-edit="${esc(r.id)}" aria-expanded="${managing===String(r.id)}" aria-controls="band-edit-${esc(r.id)}">✎ Modifier ma participation</button><button type="button" data-band-leave="${esc(r.id)}">Quitter</button></div>${managing===String(r.id)?bandEditFormHtml(r):''}</div>` : (!isPlaying && myBandMember(r) ? `<div class="member-editor">Cette participation n'est pas reliée à ton compte : demande au MC de la rattacher.</div>` : '')}
+      ${joinSlotNotice?.requestId===String(r.id)?`<div class="join-slot-notice" role="status">${esc(joinSlotNotice.message)}</div>`:''}
       ${joinFormHtml(r)}
     </div>
   </article>`;
@@ -1177,6 +1183,17 @@ function render(){
   if(!active){const banner=$('#yarg-my-next-banner');banner.hidden=true;banner.textContent='';return;}
 
   const queue=sortedActive();
+  if(joining&&!pendingJoins.has(joining.requestId)){
+    const request=queue.find(r=>String(r.id)===joining.requestId);
+    if(!request||!openInstruments(request).includes(joining.instrument)){
+      joinSlotNotice={requestId:joining.requestId,message:request?.allow_band_fill&&['waiting','full'].includes(request.status)&&!request.yarg_not_ready?slotTakenMessage:songClosedMessage};
+      joining=null;
+    }
+  }
+  const notice=$('#joinSlotNotice');
+  const detachedNotice=joinSlotNotice&&!queue.some(r=>String(r.id)===joinSlotNotice.requestId);
+  notice.hidden=!detachedNotice;
+  notice.textContent=detachedNotice?joinSlotNotice.message:'';
   const playable=queue.filter(r=>r.status==='playing'||(r._fairEligible!==false&&!r.yarg_not_ready));
   const etas=calculateEtas(playable);
   const ranks=new Map(playable.map((r,i)=>[String(r.id),i+1]));
@@ -1463,6 +1480,8 @@ document.addEventListener("click",e=>{
   const btn=e.target.closest("[data-join-id]");
   if(!btn)return;
   if(myActiveBand(requests.find(r=>String(r.id)===btn.dataset.joinId)||{})){alert("Tu participes déjà à cette chanson.");return}
+  if(pendingJoins.has(btn.dataset.joinId))return;
+  joinSlotNotice=null;
   joining={requestId:btn.dataset.joinId,instrument:btn.dataset.joinInstrument};
   render();
   const form=[...document.querySelectorAll(".join-form")].find(f=>f.dataset.joinRequest===joining.requestId);
@@ -1486,21 +1505,37 @@ document.addEventListener("change",e=>{
  if(!e.target.matches('.join-form:not(.band-change-form) input[name="microphone"]'))return;
  const form=e.target.closest('.join-form');form.querySelector('.join-harmony').hidden=!e.target.checked;
 });
+async function refreshAfterJoinConflict(attempt,message){
+ if(joining!==attempt)return;
+ joinSlotNotice={requestId:attempt.requestId,message};
+ joining=null;
+ render();
+ try{await loadQueue();}
+ catch(error){console.warn("Impossible de rafraîchir la file après un conflit :",error);}
+}
+function joinConflictMessage(error){
+ const text=String(error?.message||'');
+ if(error?.code==='PGRST116'||/chanson introuvable|ne peut plus être rejointe|inscriptions fermées/i.test(text))return songClosedMessage;
+ if(/groupe complet|instrument déjà (pris|occupé)|trois (guitares|microphones)|partie de guitare ou basse encore libre|guitare réservée/i.test(text))return slotTakenMessage;
+ return '';
+}
 document.addEventListener("submit",async e=>{
   const form=e.target.closest('.join-form:not(.band-change-form)');if(!form)return;
   e.preventDefault();
   const id=form.dataset.joinRequest, instrument=form.elements.instrument_mode?.value||form.dataset.instrument;
+  const attempt=joining;
+  if(attempt?.requestId!==id||pendingJoins.has(id))return;
   const singing=instrument==="vocals"||!!form.elements.microphone?.checked;
   const harmony=singing?Number(form.elements.harmony.value):null;
   let name=form.elements.rockstar.value.trim();
   const preferredGuitar=form.elements.preferred_guitar?.value||null;
   const message=form.querySelector(".join-message"),submit=form.querySelector(".join-submit");
   if(!name){message.textContent="Entre ton nom de ROCKSTAR.";return}
-  submit.disabled=true;message.textContent="Vérification de la place…";
+  pendingJoins.add(id);submit.disabled=true;message.textContent="Vérification de la place…";
   try{
     // Relire l'état juste avant l'insertion pour éviter les places déjà prises.
     const {data:request,error:re}=await sb.from("performance_requests")
-      .select("id,status,allow_band_fill,fillable_instruments,available_parts,available_guitar_roles,chart_mask,rockstar_name,is_group_request,requester_instrument,requester_instrument_mode,requester_withdrawn_at,requester_microphone,vocal_parts")
+      .select("id,status,allow_band_fill,fillable_instruments,available_parts,available_guitar_roles,chart_mask,rockstar_name,is_group_request,requester_instrument,requester_instrument_mode,requester_withdrawn_at,requester_microphone,vocal_parts,yarg_not_ready")
       .eq("id",id).single();
     if(re)throw re;
     const {data:existing,error:me}=await sb.from("performance_members")
@@ -1509,15 +1544,21 @@ document.addEventListener("submit",async e=>{
     const currentPlayers=[...(existing||[])];
     if(!request.is_group_request && !request.requester_withdrawn_at && request.requester_instrument &&
        !currentPlayers.some(m=>String(m.rockstar_name||'').trim().toLowerCase()===String(request.rockstar_name||'').trim().toLowerCase())){
-      currentPlayers.push({instrument:request.requester_instrument,instrument_mode:request.requester_instrument_mode});
+      currentPlayers.push({instrument:request.requester_instrument,instrument_mode:request.requester_instrument_mode,microphone:request.requester_microphone});
     }
-    const occupied=new Set(currentPlayers.map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=="vocals"));
-    const guitarChoiceAllowed=!isGuitarChart(instrument)||availableGuitarCharts(request,[...(request.fillable_instruments||[]),...(request.available_guitar_roles||[])],currentPlayers).includes(instrument);
-    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(instrument==='flex'?(request.available_parts||[]).length>0:(isGuitarChart(instrument)?guitarChoiceAllowed:(request.fillable_instruments||[]).some(v=>instrumentFamily(v)===instrumentFamily(instrument)))) || !guitarChoiceAllowed || (!isGuitarChart(instrument)&&instrument!=="vocals"&&occupied.has(instrumentFamily(instrument))) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
-      message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
+    const closed=!settings?.performance_requests_enabled||!request.allow_band_fill||!['waiting','full'].includes(request.status)||request.yarg_not_ready;
+    if(closed){
+      await refreshAfterJoinConflict(attempt,songClosedMessage);return;
     }
-    if(preferredGuitar&&(!joinGuitarPhotos[preferredGuitar]||existing.some(m=>m.preferred_guitar===preferredGuitar))){
-      message.textContent="Cette guitare vient d’être réservée. Choisis-en une autre ou « Peu importe ».";return;
+    const microphonesUsed=currentPlayers.filter(m=>m.instrument==='vocals'||m.microphone).length;
+    if(!freeInstrumentsForPlayers(request,currentPlayers).includes(instrument)||(singing&&microphonesUsed>=3)){
+      await refreshAfterJoinConflict(attempt,slotTakenMessage);return;
+    }
+    if(singing&&(harmony<1||harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1)))){
+      message.textContent="Cette harmonie n’est pas disponible.";return;
+    }
+    if(preferredGuitar&&(!joinGuitarPhotos[preferredGuitar]||currentPlayers.some(m=>m.preferred_guitar===preferredGuitar))){
+      await refreshAfterJoinConflict(attempt,'Cette guitare vient d’être réservée. Choisis-en une autre ou « Peu importe ».');return;
     }
     const difficulty=instrument==="vocals"?"medium":instrument==="flex"?"any":form.elements.difficulty.value;
     if(!chartDifficulties(request,instrument).includes(difficulty)){message.textContent="Difficulté absente de cette partition.";return;}
@@ -1535,13 +1576,25 @@ document.addEventListener("submit",async e=>{
     if(!error){const saved=JSON.parse(localStorage.getItem('yarg_band_tokens')||'{}');saved[String(id)]=token;localStorage.setItem('yarg_band_tokens',JSON.stringify(saved));}
     if(error){
       console.error("Supabase refused the band member insert:",error);
-      message.textContent=window.yargErrorMessage(error,'Impossible de rejoindre ce groupe. Actualise la file, puis réessaie; si le problème persiste, préviens le MC.');
-      return;
+      throw error;
     }
     rememberJoinPrefs(form);
-    rememberJoined(id);joining=null;await loadQueue();
-  }catch(err){console.error("Erreur pour rejoindre le groupe",err);message.textContent=window.yargErrorMessage(err,'Impossible de rejoindre ce groupe. Actualise la file, puis réessaie.');}
-  finally{submit.disabled=false}
+    rememberJoined(id);
+    if(joining===attempt)joining=null;
+    await loadQueue();
+  }catch(error){
+    const conflict=joinConflictMessage(error);
+    if(conflict)await refreshAfterJoinConflict(attempt,conflict);
+    else if(joining===attempt){
+      const currentForm=document.querySelector(`.join-form[data-join-request="${CSS.escape(id)}"]`);
+      if(currentForm)currentForm.querySelector('.join-message').textContent=window.yargErrorMessage(error,'Impossible de rejoindre ce groupe. Actualise la file, puis réessaie.');
+    }
+  }finally{
+    pendingJoins.delete(id);
+    submit.disabled=false;
+    const currentSubmit=document.querySelector(`.join-form[data-join-request="${CSS.escape(id)}"] .join-submit`);
+    if(currentSubmit)currentSubmit.disabled=false;
+  }
 });
 
 /* Real background Web Push replaces page-bound notification polling. */
@@ -1587,6 +1640,8 @@ setInterval(async()=>{
   try { await refresh(); }
   finally { yargPeriodicRefreshRunning=false; }
 },30000);
+
+window.addEventListener('online',()=>{void refresh();});
 
 /* Refresh relative countdown text even if no database event occurs. */
 setInterval(()=>render(),30000);
