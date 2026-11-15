@@ -371,6 +371,12 @@ body.yarg-unified-page{
 .mc-performer-summary{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:8px 0 10px}
 .mc-performer-summary-item{display:inline-flex;align-items:center;gap:5px;color:#c9d8de;background:#1b272d;border:1px solid #374c56;border-radius:8px;padding:3px 8px;font-weight:850;font-size:.76rem}
 .mc-performer-summary-item img{width:24px;height:24px;object-fit:contain}
+.mc-performer-summary-item.is-conditional{border-style:dashed}
+.mc-performer-slot-cycle{display:inline-grid}
+.mc-performer-slot-cycle img{grid-area:1/1;animation:mc-slot-swap 3.2s steps(1,end) infinite}
+.mc-performer-slot-cycle img+img{animation-delay:-1.6s}
+@keyframes mc-slot-swap{0%,100%{opacity:1}50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.mc-performer-slot-cycle{display:inline-flex;gap:3px}.mc-performer-slot-cycle img{animation:none}}
 .mc-performer-availability-label{color:#c6d5dc;font-size:.76rem;font-weight:900}
 .mc-performer-availability-note{font-size:.76rem;color:#a8bbc4;padding:4px 0}
 .mc-performer-summary-item{border-color:#466b65;background:#1b302f}
@@ -588,35 +594,47 @@ function mcPerformerMarkup(r,m){
  return `<div class="mc-performer"><span class="mc-performer-icons">${instrumentImage}${vocalImage}</span><span class="mc-performer-name">${esc(m.rockstar_name)}</span><span class="mc-performer-info">${tags.join('')}</span>${photoHtml}<span class="mc-performer-state">${yargReplyFor(r,m.rockstar_name,m.rockstar_profile_id)}</span></div>`;
 }
 
+function mcBandSlotMarkup(slot){
+ const label=`${slot.count} · ${slot.label}`;
+ const images=slot.icons.map(icon=>`<img src="${esc(icon)}" alt="">`).join('');
+ const icon=slot.icons.length>1?`<span class="mc-performer-slot-cycle">${images}</span>`:images;
+ return `<span class="mc-performer-summary-item${slot.conditional?' is-conditional':''}" role="img" aria-label="${esc(label)}" title="${esc(label)}">${icon}<span>${slot.count}</span>${slot.caption?`<span>${esc(slot.caption)}</span>`:''}</span>`;
+}
+
 function mcBandSummary(r,entries){
  if(!['waiting','full'].includes(r.status))return '';
  if(!r.allow_band_fill)return '<div class="mc-performer-availability-note">Groupe fermé — aucune place ouverte</div>';
  const parts=Array.isArray(r.available_parts)?r.available_parts:[];
- const roles=Array.isArray(r.available_guitar_roles)?r.available_guitar_roles.filter(x=>['guitar','rhythm_guitar','bass'].includes(x)):[];
- const vocals=Math.max(0,Math.min(3,Number(r.vocal_parts)||0));
+ const roles=Array.isArray(r.available_guitar_roles)?[...new Set(r.available_guitar_roles.filter(x=>['guitar','rhythm_guitar','bass'].includes(x)))]:[];
+ const micCapacity=Number(r.vocal_parts)>0?3:0;
  const micCount=entries.filter(m=>m.instrument==='vocals'||m.instrument_mode==='vocals'||m.microphone).length;
  const guitarCount=entries.filter(m=>['guitar','rhythm_guitar','bass'].includes(m.instrument_mode||m.instrument)).length;
  const drumCount=entries.filter(m=>['drums','drums_4lane','pro_drums'].includes(m.instrument_mode||m.instrument)).length;
  const keyCount=entries.filter(m=>['keys','pro_keys'].includes(m.instrument_mode||m.instrument)).length;
  const flexCount=entries.filter(m=>(m.instrument_mode||m.instrument)==='flex').length;
- let freeMic=Math.max(0,vocals-micCount),freeGuitar=Math.max(0,(roles.length?3:0)-guitarCount);
+ const freeMic=Math.max(0,micCapacity-micCount),freeGuitar=Math.max(0,(roles.length?3:0)-guitarCount);
  let freeDrums=parts.includes('drums')?Math.max(0,1-drumCount):0;
  let freeKeys=parts.includes('keys')?Math.max(0,1-keyCount):0;
  // A Flex player reserves one slot without choosing its instrument. Do not guess which type it will use.
  const slots=[];
- const add=(icon,label,count)=>{if(count>0)slots.push({icon,label,count});};
- add(mcFallbackIcons.vocals,'Micro',freeMic);
+ const add=(icon,label,count)=>{if(count>0)slots.push({icons:[icon],label,count});};
+ add(mcVocalIcon(freeMic),freeMic===1?'Micro libre':'Micros libres',freeMic);
  if(freeGuitar>0){
   const filled=new Set(entries.map(m=>m.instrument_mode||m.instrument).filter(mode=>roles.includes(mode)));
   const missing=roles.filter(role=>!filled.has(role));
   for(const role of missing.slice(0,freeGuitar))add(mcFallbackIcons[role],part(role),1);
-  if(freeGuitar>missing.length)add(mcFallbackIcons.guitar,'Guitare supplémentaire (partie au choix)',freeGuitar-missing.length);
+  if(freeGuitar>missing.length){
+   const choices=roles.map(part).join(' / ');
+   const requirement=missing.length?' après avoir rempli les pistes libres ('+missing.map(part).join(', ')+')':'';
+   slots.push({icons:roles.map(role=>mcFallbackIcons[role]),label:'Doublon '+choices+requirement,
+    count:freeGuitar-missing.length,caption:missing.length?'Après les pistes libres':'Doublon au choix',conditional:missing.length>0});
+  }
  }
  add(mcFallbackIcons.drums,'Batterie',freeDrums);
  add(mcFallbackIcons.keys,'Clavier',freeKeys);
  const remainingTotal=slots.reduce((sum,item)=>sum+item.count,0)-flexCount;
  if(remainingTotal<=0)return '<div class="mc-performer-availability-note">Groupe complet — aucune place restante</div>';
- return `<div class="mc-performer-summary" aria-label="Places encore disponibles"><span class="mc-performer-availability-label">Places potentiellement disponibles${flexCount?` · ${flexCount} Flex à attribuer`:``}</span>${slots.map(x=>`<span class="mc-performer-summary-item" title="${esc(x.label)}"><img src="${esc(x.icon)}" alt="${esc(x.label)}"><span>${x.count}</span></span>`).join('')}</div>`;
+ return `<div class="mc-performer-summary" aria-label="Places encore disponibles"><span class="mc-performer-availability-label">Places potentiellement disponibles${flexCount?` · ${flexCount} Flex à attribuer`:``}</span>${slots.map(mcBandSlotMarkup).join('')}</div>`;
 }
 
 function people(r){const entries=membersFor(r);return `<div class="mc-performers">${mcBandSummary(r,entries)}${entries.length?entries.map(m=>mcPerformerMarkup(r,m)).join(''):'<span class="muted">Aucun participant actif</span>'}</div>`;}
