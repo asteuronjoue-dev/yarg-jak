@@ -915,11 +915,13 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
 function instrumentFamily(i){return ['drums','drums_4lane','pro_drums'].includes(i)?'drums':['keys','pro_keys'].includes(i)?'keys':i;}
 function isGuitarChart(i){return ['guitar','bass','rhythm_guitar'].includes(i)}
 // Three plastic guitars; every free chart must be filled before duplicating a chart.
-function availableGuitarCharts(choices,players){
- const charts=[...new Set((choices||[]).filter(isGuitarChart))];
- const participants=(players||[]).filter(m=>isGuitarChart(m.instrument));
- if(participants.length>=3)return [];
- const free=charts.filter(i=>!participants.some(m=>m.instrument===i));
+function availableGuitarCharts(r,choices,players){
+ const roles=r.available_guitar_roles;
+ const charts=[...new Set((choices||[]).filter(i=>isGuitarChart(i)&&
+   (!Array.isArray(roles)||roles.includes(i))&&chartDifficulties(r,i).length>0))];
+ const occupied=(players||[]).map(activeChartMode).filter(isGuitarChart);
+ if(occupied.length>=3)return [];
+ const free=charts.filter(i=>!occupied.includes(i));
  return free.length?free:charts;
 }
 function joinModes(choices,instrument){
@@ -931,7 +933,7 @@ function joinModes(choices,instrument){
 }
 // Do not confuse public joining permissions with an existing member's edit rights.
 function editInstrumentOptions(r){
- if(r.allow_band_fill)return [...new Set(r.fillable_instruments||[])];
+ if(r.allow_band_fill)return [...new Set([...(r.fillable_instruments||[]),...(r.available_guitar_roles||[])])];
  const parts=r.available_parts||[],roles=r.available_guitar_roles||[];
  const choices=[
   ...roles.filter(i=>isGuitarChart(i)&&((i==='bass'&&parts.includes('bass'))||(i!=='bass'&&parts.includes('guitar')))),
@@ -957,9 +959,8 @@ function freeInstrumentsForPlayers(r,players,editableChoices=null){
  const maxGuitars=guitarRoles.length?3:0;
  const maxDrums=(r.available_parts||[]).includes('drums')?1:0;
  const maxKeys=(r.available_parts||[]).includes('keys')?1:0;
- const offered=editableChoices===null?(r.fillable_instruments||[]):editableChoices;
- const eligibleGuitars=offered.filter(i=>isGuitarChart(i)&&(!guitarRoles.length||guitarRoles.includes(i)));
- const guitarChoices=new Set(availableGuitarCharts(eligibleGuitars,players));
+ const offered=editableChoices===null?[...(r.fillable_instruments||[]),...guitarRoles]:editableChoices;
+ const guitarChoices=new Set(availableGuitarCharts(r,offered,players));
  const usedGuitars=players.filter(m=>isGuitarChart(m.instrument)).length;
  const usedDrums=players.filter(m=>instrumentFamily(m.instrument)==='drums').length;
  const usedKeys=players.filter(m=>instrumentFamily(m.instrument)==='keys').length;
@@ -1018,7 +1019,7 @@ function editableInstruments(r,m){
  }).map(player=>({...player,instrument:activeChartMode(player)}));
  const choices=freeInstrumentsForPlayers(r,others,editInstrumentOptions(r));
  const current=activeChartMode(m);
- if(!choices.some(i=>instrumentFamily(i)===instrumentFamily(current)))choices.push(current);
+ if(!choices.some(i=>isGuitarChart(current)?i===current:instrumentFamily(i)===instrumentFamily(current)))choices.push(current);
  return [...new Set(choices)];
 }
 function harmonyOptions(r){
@@ -1410,8 +1411,9 @@ function bandEditFormHtml(r){
  if(!m)return '';
  const current=activeChartMode(m);
  const choices=editableInstruments(r,m);
- const families=[...new Set(choices.map(instrumentFamily))];
- const family=instrumentFamily(current);
+ const editChoice=i=>isGuitarChart(i)?i:instrumentFamily(i);
+ const families=[...new Set(choices.map(editChoice))];
+ const family=editChoice(current);
  if(!families.includes(family))families.unshift(family);
  const familyLabels={drums:'Batterie',keys:'Clavier'};
  const instrumentsHtml=families.map(i=>`<option value="${esc(i)}" ${i===family?'selected':''}>${esc(familyLabels[i]||instruments[i]||i)}</option>`).join('');
@@ -1498,20 +1500,20 @@ document.addEventListener("submit",async e=>{
   try{
     // Relire l'état juste avant l'insertion pour éviter les places déjà prises.
     const {data:request,error:re}=await sb.from("performance_requests")
-      .select("id,status,allow_band_fill,fillable_instruments,available_parts,chart_mask,rockstar_name,requester_instrument,requester_withdrawn_at,requester_microphone,vocal_parts")
+      .select("id,status,allow_band_fill,fillable_instruments,available_parts,available_guitar_roles,chart_mask,rockstar_name,is_group_request,requester_instrument,requester_instrument_mode,requester_withdrawn_at,requester_microphone,vocal_parts")
       .eq("id",id).single();
     if(re)throw re;
     const {data:existing,error:me}=await sb.from("performance_members")
-      .select("rockstar_name,instrument,microphone,preferred_guitar").eq("performance_request_id",id).is("withdrawn_at",null);
+      .select("rockstar_name,instrument,instrument_mode,microphone,preferred_guitar").eq("performance_request_id",id).is("withdrawn_at",null);
     if(me)throw me;
     const currentPlayers=[...(existing||[])];
-    if(!request.requester_withdrawn_at && request.requester_instrument &&
+    if(!request.is_group_request && !request.requester_withdrawn_at && request.requester_instrument &&
        !currentPlayers.some(m=>String(m.rockstar_name||'').trim().toLowerCase()===String(request.rockstar_name||'').trim().toLowerCase())){
-      currentPlayers.push({instrument:request.requester_instrument});
+      currentPlayers.push({instrument:request.requester_instrument,instrument_mode:request.requester_instrument_mode});
     }
     const occupied=new Set(currentPlayers.map(m=>instrumentFamily(m.instrument)).filter(i=>i&&i!=="vocals"));
-    const guitarChoiceAllowed=!isGuitarChart(instrument)||availableGuitarCharts(request.fillable_instruments,currentPlayers).includes(instrument);
-    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(instrument==='flex'?(request.available_parts||[]).length>0:(request.fillable_instruments||[]).some(v=>instrumentFamily(v)===instrumentFamily(instrument))) || !guitarChoiceAllowed || (!isGuitarChart(instrument)&&instrument!=="vocals"&&occupied.has(instrumentFamily(instrument))) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
+    const guitarChoiceAllowed=!isGuitarChart(instrument)||availableGuitarCharts(request,[...(request.fillable_instruments||[]),...(request.available_guitar_roles||[])],currentPlayers).includes(instrument);
+    if(!settings?.performance_requests_enabled || !request.allow_band_fill || !["waiting","full"].includes(request.status) || !(instrument==='flex'?(request.available_parts||[]).length>0:(isGuitarChart(instrument)?guitarChoiceAllowed:(request.fillable_instruments||[]).some(v=>instrumentFamily(v)===instrumentFamily(instrument)))) || !guitarChoiceAllowed || (!isGuitarChart(instrument)&&instrument!=="vocals"&&occupied.has(instrumentFamily(instrument))) || (singing && (harmony<1 || harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1))))){
       message.textContent="Cette place n'est plus disponible. Actualise la file.";await loadQueue();return;
     }
     if(preferredGuitar&&(!joinGuitarPhotos[preferredGuitar]||existing.some(m=>m.preferred_guitar===preferredGuitar))){
