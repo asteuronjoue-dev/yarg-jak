@@ -47,13 +47,13 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 .yarg-tier-card h3{margin:2px 0 5px;font-size:.96rem;line-height:1.3}
 .yarg-tier-card p{margin:4px 0;color:#afc0c5;font-size:.79rem}
 .yarg-tier-card .small{margin-top:7px;padding:6px 10px}
-.yarg-tier-ring{--value:0;--ring:#24c5b6;width:79px;height:79px;flex-shrink:0;border-radius:50%;background:conic-gradient(var(--ring) calc(var(--value)*1%),#39474f 0);padding:7px;display:grid;place-items:center}
+ .yarg-tier-ring{--value:0;--ring:#24c5b6;width:92px;height:92px;flex:0 0 92px;box-sizing:border-box;border-radius:50%;background:conic-gradient(var(--ring) calc(var(--value)*1%),#39474f 0);padding:7px;display:grid;place-items:center}
 .yarg-tier-inner{width:100%;height:100%;border-radius:50%;background:#151c21;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.yarg-tier-icon{font-size:25px;line-height:1.1;display:flex;align-items:center;justify-content:center}
-.yarg-tier-icon img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 1px 3px #000a)}
-.yarg-tier-ring.has-medal{background:conic-gradient(var(--ring) calc(var(--value)*1%),#39474f 0);padding:7px;width:92px;height:92px;position:relative}
+.yarg-tier-icon{width:52px;height:52px;flex:0 0 52px;font-size:36px;line-height:1;display:flex;align-items:center;justify-content:center}
+.yarg-tier-icon img{display:block;width:52px;height:52px;max-width:100%;object-fit:contain;filter:drop-shadow(0 1px 3px #000a)}
+.yarg-tier-ring.has-medal{position:relative}
 .yarg-tier-ring.has-medal .yarg-tier-inner{background:#151c21}
-.yarg-tier-ring.has-medal .yarg-tier-icon{width:100%;height:auto;min-height:0}
+.yarg-tier-ring.has-medal .yarg-tier-icon{width:52px;height:52px;min-height:52px}
 .yarg-tier-ring.has-medal .yarg-tier-icon img.yarg-rank-medal{width:52px;height:52px;max-width:100%;object-fit:contain;filter:drop-shadow(0 1px 3px #0009)}
 /* Alternate lead/rhythm medal designs while retaining a single shared guitar rank. */
 .yarg-tier-ring.has-medal .yarg-tier-icon .yarg-guitar-medal-duo{display:block;position:relative;width:52px;height:52px;flex:0 0 52px}
@@ -92,7 +92,7 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 .yarg-unlock-modal{width:min(100%,480px);padding:25px;text-align:center;background:#1b242a;border:1px solid #e9ad5a;border-radius:20px;box-shadow:0 20px 90px #000b}
 .yarg-unlock-modal .unlock-sparkle{font-size:42px}.yarg-unlock-modal h2{font-size:1.5rem;margin:8px 0;color:#ffcb78}
 .yarg-unlock-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px}
-@media(max-width:520px){.yarg-title-grid{grid-template-columns:1fr}.yarg-tier-ring{width:68px;height:68px}.yarg-unlock-actions button{flex:1 1 100%}}
+@media(max-width:520px){.yarg-title-grid{grid-template-columns:1fr}.yarg-unlock-actions button{flex:1 1 100%}}
 .fav-profile-list{display:grid;gap:9px;margin-top:12px}.fav-profile-song{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#222a2f;border:1px solid #37474f;border-radius:10px;padding:11px 13px}.fav-profile-song strong{display:block}.fav-profile-song small{color:var(--muted)}.fav-profile-song .remove-favorite{flex-shrink:0;background:#3d2930;border-color:#80515b;color:#ffe2e6;font-size:.83rem;padding:9px 12px}.fav-profile-song .remove-favorite:hover:not(:disabled){background:#63333c;border-color:#ff9aa8}@media(max-width:510px){.fav-profile-song{align-items:flex-start;flex-direction:column}.fav-profile-song .remove-favorite{align-self:flex-end}}
 @media(max-width:670px){.profile-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.profile-tab{min-width:0;width:100%;padding:11px 6px;font-size:.85rem;flex:none}}
 /* Rockstar identity: one aligned header, compact status and shared actions */
