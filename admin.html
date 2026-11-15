@@ -598,7 +598,7 @@ function mcBandSlotMarkup(slot){
  const label=`${slot.count} · ${slot.label}`;
  const images=slot.icons.map(icon=>`<img src="${esc(icon)}" alt="">`).join('');
  const icon=slot.icons.length>1?`<span class="mc-performer-slot-cycle">${images}</span>`:images;
- return `<span class="mc-performer-summary-item${slot.conditional?' is-conditional':''}" role="img" aria-label="${esc(label)}" title="${esc(label)}">${icon}<span>${slot.count}</span>${slot.caption?`<span>${esc(slot.caption)}</span>`:''}</span>`;
+ return `<span class="mc-performer-summary-item${slot.conditional?' is-conditional':''}" role="img" aria-label="${esc(label)}" title="${esc(label)}">${icon.repeat(slot.repeatIcons?slot.count:1)}${slot.caption?`<span>${esc(slot.caption)}</span>`:''}</span>`;
 }
 
 function mcBandSummary(r,entries){
@@ -627,7 +627,7 @@ function mcBandSummary(r,entries){
    const choices=roles.map(part).join(' / ');
    const requirement=missing.length?' après avoir rempli les pistes libres ('+missing.map(part).join(', ')+')':'';
    slots.push({icons:roles.map(role=>mcFallbackIcons[role]),label:'Doublon '+choices+requirement,
-    count:freeGuitar-missing.length,caption:missing.length?'Après les pistes libres':'Doublon au choix',conditional:missing.length>0});
+    count:freeGuitar-missing.length,repeatIcons:true,caption:missing.length?'Après les pistes libres':'Doublon au choix',conditional:missing.length>0});
   }
  }
  add(mcFallbackIcons.drums,'Batterie',freeDrums);
