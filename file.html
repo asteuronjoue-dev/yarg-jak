@@ -114,8 +114,10 @@
       linear-gradient(90deg,#ff355e,#ff9f1c,#ffe66d,#2ec4b6,#3a86ff,#8338ec,#ff355e) border-box;
       animation:skittlePulse .7s ease-in-out infinite alternate}
     .skittles::before{width:0}
-    .skittle-banner{font-family:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;font-size:clamp(21px,5vw,34px);font-weight:800;letter-spacing:.02em;text-align:center;padding:8px 4px 13px;
-      background:linear-gradient(90deg,#ff5577,#ffad42,#ffe66d,#54e0a2,#54c7ff,#b889ff,#ff5577);
+    .skittle-banner{display:flex;justify-content:center;align-items:center;gap:.35em;margin:-17px -17px 0;padding:12px 17px;
+      font-family:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;font-size:clamp(21px,5vw,34px);font-weight:800;letter-spacing:.02em;line-height:1.15;text-align:center}
+    .skittle-banner+.queue-card-top{margin-top:0}
+    .skittle-banner-text{background:linear-gradient(90deg,#ff5577,#ffad42,#ffe66d,#54e0a2,#54c7ff,#b889ff,#ff5577);
       background-size:250% auto;color:transparent;background-clip:text;-webkit-background-clip:text;animation:rainbow 1.5s linear infinite}
     @keyframes rainbow{to{background-position:250% center}}
     @keyframes skittlePulse{from{transform:scale(1);box-shadow:0 0 15px rgba(255,138,36,.16)}to{transform:scale(1.008);box-shadow:0 0 35px rgba(31,200,189,.23)}}
@@ -1099,11 +1101,11 @@ function cardHtml(r, eta, mine=false, rank=null){
       : `<div class="eta"><strong>⏱ —</strong><span>Estimation à venir</span></div>`;
   const statusLabel=isPlaying?'En cours':r.yarg_not_ready?'Pas prêt':available.length>0?'En attente':
     (!r.allow_band_fill?'Groupe fermé':'Groupe complet');
-  const skittles=mine&&isPlaying?`<div class="skittle-banner">🎶EN COURS — C'EST À TOI!🎶</div>`:'';
+  const stageBanner=isPlaying?`<div class="skittle-banner"><span aria-hidden="true">🎵</span><span class="skittle-banner-text">Sur scène en ce moment!</span><span aria-hidden="true">🎵</span></div>`:'';
   // Readiness is controlled once per Rockstar above "Mes prestations".
   const readyControl='';
   return `<article class="${classes}" data-request-id="${esc(r.id)}" id="demande-${esc(r.id)}">
-    ${skittles}
+    ${stageBanner}
     <div class="queue-card-top"><span class="queue-state queue-state--${kind}">${kindLabel}</span>${bandEmphasis}</div>
     <div class="songline"><div>
       <div class="song">${esc(r.song_title||"Chanson")}</div>
