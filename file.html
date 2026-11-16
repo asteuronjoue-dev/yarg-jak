@@ -201,6 +201,11 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-available-instruments{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;max-width:100%;padding:2px 5px;border:1px solid #41616a;border-radius:9px;background:#152b30;vertical-align:middle}
 .display-available-slot{display:inline-flex;align-items:center;justify-content:center;gap:1px;flex:0 0 auto;min-height:27px}
 .display-guitar-choices{gap:4px;flex-wrap:wrap;flex:0 1 auto;padding:2px 5px;border:1px solid #527174;border-radius:6px;color:#d8e9eb;font-size:.85em;font-weight:800}
+.display-guitar-cycle{display:inline-grid}
+.display-guitar-cycle img{grid-area:1/1;animation:displayGuitarSwap 3.2s steps(1,end) infinite}
+.display-guitar-cycle img+img{animation-delay:-1.6s}
+@keyframes displayGuitarSwap{0%,100%{opacity:1}50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.display-guitar-cycle{display:inline-flex;gap:2px}.display-guitar-cycle img{animation:none}}
 .display-available-slot img{display:block;width:clamp(22px,2vw,29px);height:clamp(22px,2vw,29px);object-fit:contain}
 @media(max-width:680px){.display-available-slot img{width:22px;height:22px}.display-available-instruments{gap:2px;padding:2px 4px}}
 .display-time{text-align:right;justify-self:end;white-space:nowrap}
@@ -1084,7 +1089,8 @@ function publicDisplayAvailableInstruments(r,slots){
   const label=count===1?'1 place':count+' places';
   const choices=options.filter(([mode])=>guitarChoices.includes(mode));
   const caption=label+' · '+choices.map(([, ,name])=>name).join(' ou ');
-  const artwork=choices.map(([,asset])=>`<img src="assets/medals/${asset}-fallback.png" alt="" loading="lazy">`).join('<span>/</span>');
+  const images=choices.map(([,asset])=>`<img src="assets/medals/${asset}-fallback.png" alt="" loading="lazy">`).join('');
+  const artwork=choices.length===2?`<span class="display-guitar-cycle">${images}</span>`:images;
   labels.push(caption);
   icons.push(`<span class="display-available-slot display-guitar-choices" title="${esc(caption)}" aria-hidden="true">${artwork}<span>${label}</span></span>`);
  }
