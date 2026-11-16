@@ -98,12 +98,21 @@
     .slot{cursor:pointer;font:inherit;font-weight:800}.slot:hover{background:rgba(31,200,189,.22)}
     .join-form{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
     .join-form label{display:block;margin:8px 0;color:var(--muted);font-size:13px;font-weight:750}
-    .join-form input:not([type="checkbox"]),.join-form select{display:block;width:100%;margin-top:4px;padding:9px;background:#101214;color:white;border:1px solid #455158;border-radius:8px;font:inherit}
+    .join-form input:not([type="checkbox"]):not([type="radio"]),.join-form select{display:block;width:100%;margin-top:4px;padding:9px;background:#101214;color:white;border:1px solid #455158;border-radius:8px;font:inherit}
     .join-form .join-mic-choice{display:flex;align-items:center;gap:8px}.join-form .join-mic-choice input{width:auto;margin:0}.join-form [hidden]{display:none!important}.join-form .join-submit{margin-top:10px;padding:10px 14px;border:0;border-radius:9px;background:var(--teal);color:#071016;font-weight:900;cursor:pointer}
     .join-form .join-cancel{margin-left:8px;background:transparent;color:var(--muted);border:0;cursor:pointer}
     .join-form .join-message,.join-slot-notice{color:#ffb2b2;margin-top:8px;font-size:13px}
-    .join-guitar-photo{display:block;width:min(100%,240px);height:110px;object-fit:contain;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:8px;margin:10px auto 4px}
-    .join-guitar-photo[hidden]{display:none!important}
+    .join-guitar-chooser{min-width:0;margin:12px 0;padding:0;border:0}
+    .join-guitar-chooser legend{padding:0;color:var(--muted);font-size:13px;font-weight:750}
+    .join-guitar-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:5px}
+    .join-form .join-guitar-tile{position:relative;min-width:0;margin:0}
+    .join-guitar-tile input{position:absolute;opacity:0}
+    .join-guitar-tile-content{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:88px;height:100%;padding:5px;border:2px solid var(--line);border-radius:8px;background:#101214;text-align:center;cursor:pointer}
+    .join-guitar-tile-content img{width:100%;height:42px;object-fit:contain}
+    .join-guitar-tile input:checked + .join-guitar-tile-content{border-color:#55ded6;background:#143038;color:#f2ffff}
+    .join-guitar-tile input:focus-visible + .join-guitar-tile-content{outline:2px solid white;outline-offset:2px}
+    .join-guitar-tile input:disabled + .join-guitar-tile-content{filter:grayscale(1);cursor:not-allowed}
+    @media(max-width:600px){.join-guitar-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
     .join-guitar-note{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-top:5px}
     .slot{padding:5px 8px;border-radius:999px;background:rgba(31,200,189,.1);color:var(--teal2);border:1px dashed rgba(31,200,189,.42);font-size:12px;font-weight:800}
     .empty{border:1px dashed var(--line);border-radius:18px;padding:28px;text-align:center;color:var(--muted);background:rgba(255,255,255,.015)}
@@ -615,6 +624,13 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM
 const IS_PUBLIC_DISPLAY = new URLSearchParams(location.search).get('affichage') === '1';
 if(IS_PUBLIC_DISPLAY){
   const display=document.getElementById('displaySection');
+  const exitLink=display.querySelector('.display-exit');
+  exitLink.addEventListener('click',event=>{
+    if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+    event.preventDefault();
+    window.close();
+    setTimeout(()=>{if(!window.closed)location.replace(exitLink.href);},0);
+  });
   const controls=display.querySelectorAll('[data-display-orientation]');
   const list=document.getElementById('displayList');
   const preferenceKey='yarg-public-display-orientation';
@@ -827,10 +843,13 @@ function yargDifficultyCategory(mode){
  if(mode==='drums'||mode==='drums_4lane'||mode==='pro_drums')return 'drums';
  return '';
 }
+function yargInstrumentDescription(mode){
+ return YARG_DIFFICULTY_GUIDE[yargDifficultyCategory(mode)]?.intro||'';
+}
 function yargDifficultyDescription(mode,level){
  const entry=YARG_DIFFICULTY_GUIDE[yargDifficultyCategory(mode)];
  if(!entry)return '';
- return entry.intro+' '+(entry[level]||'Choisis un niveau pour savoir à quoi t’attendre.');
+ return entry[level]||'Choisis un niveau pour savoir à quoi t’attendre.';
 }
 
 // Personal defaults per logged-in Rockstar, stored only on this browser.
@@ -1121,24 +1140,25 @@ function harmonyOptions(r){
 }
 const joinGuitars=[['','Peu importe — je prendrai une guitare restante'],['osp uze','OSPUZE - Rockband'],['crkd','Blue Guitar - CRKD'],['sunburst','Sunburst - Guitar Hero']];
 const joinGuitarPhotos={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png'};
-function updateJoinGuitarPhoto(form){
- const select=form?.querySelector('select[name="preferred_guitar"]');
- const img=form?.querySelector('.join-guitar-photo');
- if(!select||!img)return;
- const path=joinGuitarPhotos[select.value];
- img.hidden=true;
- img.onload=null;img.onerror=null;
- if(!path){img.removeAttribute('src');return}
- img.onload=()=>{if(joinGuitarPhotos[select.value]===path)img.hidden=false};
- img.onerror=()=>{img.hidden=true};
- img.src=path;
- if(img.complete&&img.naturalWidth>0)img.hidden=false;
-}
 function joinGuitarChoices(r){
  const taken=new Set(membersFor(r.id).map(m=>m.preferred_guitar).filter(Boolean));
  const saved=joinPrefs().guitar||'';
  const preferred=!taken.has(saved)&&joinGuitars.some(([id])=>id===saved)?saved:'';
- return `<label>Choix de guitare (facultatif)<select name="preferred_guitar">${joinGuitars.map(([id,name])=>`<option value="${esc(id)}" ${taken.has(id)?'disabled':''} ${id===preferred?'selected':''}>${esc(name)}${taken.has(id)?' — déjà réservée':''}</option>`).join('')}</select><img class="join-guitar-photo" alt="Aperçu de la guitare choisie" hidden><small class="join-guitar-note">« Peu importe » ne réserve aucune guitare précise. Tu prendras celle qui reste.</small></label>`;
+ const tiles=joinGuitars.map(([id,name])=>{
+  const reserved=taken.has(id);
+  return `<label class="join-guitar-tile">
+   <input type="radio" name="preferred_guitar" value="${esc(id)}" ${id===preferred?'checked':''} ${reserved?'disabled':''}>
+   <span class="join-guitar-tile-content">
+    ${id?`<img src="${joinGuitarPhotos[id]}" alt="" loading="lazy">`:''}
+    <span>${id?esc(name):'Peu importe'}</span>
+    ${reserved?'<small>Déjà réservée</small>':''}
+   </span>
+  </label>`;
+ }).join('');
+ return `<fieldset class="join-guitar-chooser"><legend>Choix de guitare (facultatif)</legend>
+ <div class="join-guitar-tiles">${tiles}</div>
+ <small class="join-guitar-note">« Peu importe » ne réserve aucune guitare précise. Tu prendras celle qui reste.</small>
+ </fieldset>`;
 }
 function joinFormHtml(r){
  if(!joining||joining.requestId!==String(r.id))return "";
@@ -1149,11 +1169,13 @@ function joinFormHtml(r){
  const savedMode=joinPrefs().modes?.[instrumentFamily(instrument)];
  const defaultMode=modes.includes(savedMode)?savedMode:(instrument==="drums"?"drums_4lane":instrument);
  const savedDifficulty=joinPrefs().difficulties?.[defaultMode]||'beginner';
-  const chosenDifficulty=chartDifficulties(r,defaultMode).includes(savedDifficulty)?savedDifficulty:chartDifficulties(r,defaultMode)[0];
+ const chosenDifficulty=chartDifficulties(r,defaultMode).includes(savedDifficulty)?savedDifficulty:chartDifficulties(r,defaultMode)[0];
+ const description=yargInstrumentDescription(defaultMode);
  const modeChoice=(instrumentFamily(instrument)==="drums"||instrumentFamily(instrument)==="keys")?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===defaultMode?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select></label>`:"";
  const canSing=instrument!=='flex'&&(Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone);
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instrumentFamily(instrument)==="drums"?"Batterie":instrumentFamily(instrument)==="keys"?"Clavier":instruments[instrument])}</strong>
+ ${description?`<small class="yarg-difficulty-guide" data-instrument-guide>${esc(description)}</small>`:""}
  <label>Nom pour cette prestation <input name="rockstar" maxlength="60" required value="${esc(myRockstarName)}" placeholder="Nom de scène" autocomplete="off"><small>Ton compte, tes points et tes statistiques restent associés à ton profil Rockstar.</small></label>
  ${modeChoice}
  ${vocals||instrument==="flex"?"":`<label>Difficulté <select name="difficulty">${chartOptions(r,defaultMode,chosenDifficulty)}</select>${yargDifficultyCategory(defaultMode)?`<small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite">${esc(yargDifficultyDescription(defaultMode,chosenDifficulty))}</small>`:''} </label>`}
@@ -1486,7 +1508,11 @@ document.addEventListener('click',async event=>{
 function syncBandDifficultyGuide(form){
  const note=form?.querySelector('[data-difficulty-guide]');if(!note)return;
  const instrument=form.classList.contains('band-change-form')?selectedEditInstrument(form):(form.elements.instrument_mode?.value||form.elements.instrument?.value||form.dataset.instrument||'');
- const text=yargDifficultyDescription(instrument,form.elements.difficulty?.value||'');
+ const description=yargInstrumentDescription(instrument);
+ const intro=form.querySelector('[data-instrument-guide]');
+ if(intro){intro.textContent=description;intro.hidden=!description;}
+ const difficulty=yargDifficultyDescription(instrument,form.elements.difficulty?.value||'');
+ const text=form.classList.contains('band-change-form')?`${description} ${difficulty}`.trim():difficulty;
  note.textContent=text;note.hidden=!text;
 }
 function selectedEditInstrument(form){
@@ -1537,7 +1563,7 @@ function bandEditFormHtml(r){
  return `<form id="band-edit-${esc(r.id)}" class="join-form band-change-form" data-band-change="${esc(r.id)}" data-original-instrument="${esc(current)}">
  <label>Instrument<select name="instrument">${instrumentsHtml}</select></label>
  <label data-mode-field ${family==='drums'||family==='keys'?'':'hidden'}>Mode de jeu<select name="instrument_mode">${variantHtml}</select></label>
- <label data-edit-difficulty>Difficulté<select name="difficulty">${chartOptions(r,current,difficulty)}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${yargDifficultyCategory(current)?'':'hidden'}>${esc(yargDifficultyDescription(current,difficulty))}</small></label>
+ <label data-edit-difficulty>Difficulté<select name="difficulty">${chartOptions(r,current,difficulty)}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${yargDifficultyCategory(current)?'':'hidden'}>${esc([yargInstrumentDescription(current),yargDifficultyDescription(current,difficulty)].filter(Boolean).join(' '))}</small></label>
  <label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
  <label data-edit-mic><input type="checkbox" name="microphone" ${m.microphone?'checked':''}> Chanter aussi</label>
  <label data-edit-harmony>Harmonie<select name="harmony">${harmonyOptions(r).replace(`value="${m.vocal_harmony}"`,`value="${m.vocal_harmony}" selected`)}</select></label>
@@ -1583,17 +1609,15 @@ document.addEventListener("click",e=>{
   render();
   const form=[...document.querySelectorAll(".join-form")].find(f=>f.dataset.joinRequest===joining.requestId);
   form?.querySelector("input[name=rockstar]")?.focus();
-  if(form?.elements.preferred_guitar)updateJoinGuitarPhoto(form);
 });
 document.addEventListener("change",e=>{
- if(e.target.matches('.join-form:not(.band-change-form) select[name="preferred_guitar"], .join-form:not(.band-change-form) select[name="difficulty"], .join-form:not(.band-change-form) select[name="instrument_mode"]')){
+ if(e.target.matches('.join-form:not(.band-change-form) input[name="preferred_guitar"], .join-form:not(.band-change-form) select[name="difficulty"], .join-form:not(.band-change-form) select[name="instrument_mode"]')){
   const form=e.target.closest('.join-form');
   if(e.target.matches('select[name="instrument_mode"]')){
    const previous=joinPrefs().difficulties?.[e.target.value];
    if(form.elements.difficulty){const request=requests.find(r=>String(r.id)===form.dataset.joinRequest);syncChartSelect(form,request,e.target.value,previous)}
   }
   rememberJoinPrefs(form);
-  if(e.target.matches('select[name="preferred_guitar"]'))updateJoinGuitarPhoto(form);
   syncBandDifficultyGuide(form);
   return;
  }
