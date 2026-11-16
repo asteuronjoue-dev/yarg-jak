@@ -835,12 +835,21 @@ const YARG_DIFFICULTY_GUIDE={
   medium:'Moyen : grosse caisse, caisse claire et ride simplifiées, quelques accents et très peu de notes entre les temps (parfois aucune).',
   hard:'Difficile : une version simplifiée d’Expert qui garde plusieurs passages difficiles.',
   expert:'Expert : accroche tes bas, ça risque de faire mal!'
+ },
+ pro_keys:{
+  intro:'Pro Keys : joue directement les notes sur le clavier.',
+  beginner:'Débutant : pour découvrir le clavier avant de passer à Facile.',
+  easy:'Facile : On commence ici.',
+  medium:"Moyen : Tu te dis que c'est comme la guitare à medium mais non. Joue à facile.",
+  hard:'Difficile : Deathwish level.',
+  expert:'Expert : Bruh.'
  }
 };
 function yargDifficultyCategory(mode){
  if(mode==='guitar'||mode==='rhythm_guitar')return 'guitar';
  if(mode==='bass')return 'bass';
  if(mode==='drums'||mode==='drums_4lane'||mode==='pro_drums')return 'drums';
+ if(mode==='pro_keys')return 'pro_keys';
  return '';
 }
 function yargInstrumentDescription(mode){
@@ -1180,6 +1189,7 @@ function joinFormHtml(r){
  const savedDifficulty=joinPrefs().difficulties?.[defaultMode]||'beginner';
  const chosenDifficulty=chartDifficulties(r,defaultMode).includes(savedDifficulty)?savedDifficulty:chartDifficulties(r,defaultMode)[0];
  const description=joinInstrumentDescription(defaultMode);
+ const difficultyDescription=yargDifficultyDescription(defaultMode,chosenDifficulty);
  const guide=description?`<small class="yarg-difficulty-guide" data-instrument-guide aria-live="polite">${esc(description)}</small>`:"";
  const family=instrumentFamily(instrument);
  const hasModeChoice=family==="drums"||family==="keys";
@@ -1190,7 +1200,7 @@ function joinFormHtml(r){
  ${hasModeChoice?"":guide}
  <label>Nom pour cette prestation <input name="rockstar" maxlength="60" required value="${esc(myRockstarName)}" placeholder="Nom de scène" autocomplete="off"><small>Ton compte, tes points et tes statistiques restent associés à ton profil Rockstar.</small></label>
  ${modeChoice}
- ${vocals||instrument==="flex"?"":`<label>Difficulté <select name="difficulty">${chartOptions(r,defaultMode,chosenDifficulty)}</select>${yargDifficultyCategory(defaultMode)?`<small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite">${esc(yargDifficultyDescription(defaultMode,chosenDifficulty))}</small>`:''} </label>`}
+ ${vocals||instrument==="flex"?"":`<label>Difficulté <select name="difficulty">${chartOptions(r,defaultMode,chosenDifficulty)}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${difficultyDescription?"":"hidden"}>${esc(difficultyDescription)}</small> </label>`}
  ${["guitar","bass","rhythm_guitar"].includes(instrument)?joinGuitarChoices(r):""}
  ${vocals||instrument==="flex"?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${canSing?"":"disabled"}> Je veux aussi chanter au micro</label>`}
  <label class="join-harmony" ${vocals?"":"hidden"}>Partie vocale (difficulté Moyen)<select name="harmony">${harmonyOptions(r)}</select></label>
