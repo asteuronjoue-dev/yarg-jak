@@ -163,6 +163,17 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-right{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .display-live{padding:7px 11px;border-radius:9px;background:#153b31;color:#9bf5d5;font-weight:900;font-size:clamp(12px,1.3vw,18px)}
 .display-exit{padding:7px 11px;color:#b6c9d2;text-decoration:none;border:1px solid #48555e;border-radius:9px;font-size:12px}
+.display-orientation{display:inline-flex;gap:2px;padding:2px;border:1px solid #48555e;border-radius:9px}
+.display-orientation button{padding:7px 10px;border:0;border-radius:6px;background:transparent;color:#b6c9d2;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.display-orientation button[aria-pressed="true"]{background:#1fc8bd;color:#071a1c}
+.display-orientation button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+#displaySection[data-orientation="portrait"]{max-width:1080px;margin-inline:auto}
+#displaySection[data-orientation="portrait"] .display-top{align-items:flex-start;flex-wrap:wrap}
+#displaySection[data-orientation="portrait"] .display-performance{grid-template-columns:clamp(28px,5vw,55px) minmax(0,1fr);row-gap:8px}
+#displaySection[data-orientation="portrait"] .display-time{grid-column:2;justify-self:start;text-align:left;white-space:normal}
+#displaySection[data-orientation="portrait"] .display-time strong{font-size:clamp(16px,2.2vw,28px)}
+@media(max-width:680px){.display-top{flex-wrap:wrap}.display-right{justify-content:flex-start}}
+
 .display-list{display:grid;gap:clamp(5px,.8vh,12px)}
 .display-performance{display:grid;grid-template-columns:minmax(45px,5vw) minmax(0,1fr) minmax(105px,16vw);gap:clamp(12px,1.8vw,25px);align-items:center;padding:clamp(10px,1.25vh,20px) clamp(12px,1.8vw,25px);background:#1b2228;border:1px solid #34424b;border-radius:13px;min-height:clamp(82px,10vh,130px)}
 .display-performance.is-playing{border-color:#ff8a24;background:linear-gradient(180deg,#ff5577,#ffad42,#ffe66d,#54e0a2,#54c7ff,#b889ff) left / 5px 100% no-repeat,#29221b}
@@ -476,10 +487,17 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 </header>
 
 <main class="wrap">
-  <section id="displaySection" hidden aria-label="Écran public de la file">
+  <section id="displaySection" data-orientation="portrait" hidden aria-label="Écran public de la file">
     <div class="display-top">
       <div><h2 id="displayParty">File de la soirée</h2><div class="display-mc" id="displayMc" hidden>🎤 MC <strong id="displayMcName"></strong></div></div>
-      <div class="display-right"><span class="display-live" id="displayLive">● EN DIRECT</span><a class="display-exit" href="file.html">Quitter l'écran</a></div>
+      <div class="display-right">
+        <span class="display-live" id="displayLive">● EN DIRECT</span>
+        <div class="display-orientation" role="group" aria-label="Orientation de l’affichage">
+          <button type="button" data-display-orientation="portrait" aria-pressed="true">Portrait</button>
+          <button type="button" data-display-orientation="landscape" aria-pressed="false">Paysage</button>
+        </div>
+        <a class="display-exit" href="file.html">Quitter l'écran</a>
+      </div>
     </div>
     <div id="displayError" class="display-error" hidden></div>
     <div id="displayList" class="display-list"><div class="display-empty">Chargement des prestations…</div></div>
@@ -573,7 +591,27 @@ const SUPABASE_URL = "https://xbhfjzurytdknbqvksjq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM";
 
 const IS_PUBLIC_DISPLAY = new URLSearchParams(location.search).get('affichage') === '1';
-if(IS_PUBLIC_DISPLAY){document.body.classList.add('yarg-display-mode');document.getElementById('displaySection').hidden=false;}
+if(IS_PUBLIC_DISPLAY){
+  const display=document.getElementById('displaySection');
+  const controls=display.querySelectorAll('[data-display-orientation]');
+  const preferenceKey='yarg-public-display-orientation';
+  function applyOrientation(orientation){
+    display.dataset.orientation=orientation;
+    for(const button of controls){
+      button.setAttribute('aria-pressed',String(button.dataset.displayOrientation===orientation));
+    }
+  }
+  let orientation='portrait';
+  try{if(localStorage.getItem(preferenceKey)==='landscape')orientation='landscape';}catch{}
+  applyOrientation(orientation);
+  for(const button of controls)button.addEventListener('click',()=>{
+    const selected=button.dataset.displayOrientation;
+    applyOrientation(selected);
+    try{localStorage.setItem(preferenceKey,selected);}catch{}
+  });
+  document.body.classList.add('yarg-display-mode');
+  display.hidden=false;
+}
 const TURNOVER_SECONDS = 120;
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
