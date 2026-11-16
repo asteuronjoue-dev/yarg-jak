@@ -208,7 +208,6 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-performance.is-playing .display-time strong{font-size:clamp(16px,2.2vw,30px)}
 .display-side{min-width:0;display:grid;gap:5px;justify-items:end;text-align:right;overflow-wrap:anywhere}
 .display-side .display-time{white-space:normal}
-.display-side .display-band{margin:0;font-size:clamp(12px,1.2vw,18px);line-height:1.2}
 .display-slot-group{min-width:0;display:grid;gap:3px;justify-items:end;font-size:clamp(11px,1vw,16px)}
 .display-side .display-available-instruments{flex-wrap:wrap;justify-content:flex-end}
 
@@ -1233,9 +1232,9 @@ function renderPublicDisplay(){
     const sideSlots=joinable?`<div class="display-slot-group">${status}${slotIcons}</div>`:'';
     return `<article class="display-performance ${playing?'is-playing':i===(hasPlaying?1:0)?'is-next':''}">
       <div class="display-rank">${playing?'♫':hasPlaying?i:i+1}</div>
-      <div class="display-info"><div class="display-song">${esc(r.song_title||'Chanson')}</div><div class="display-artist">${esc(r.song_artist||'Artiste inconnu')}</div>${landscape?'':band}
+      <div class="display-info"><div class="display-song">${esc(r.song_title||'Chanson')}</div><div class="display-artist">${esc(r.song_artist||'Artiste inconnu')}</div>${band}
       <div class="display-detail">${landscape&&joinable?'':status}${landscape?'':slotIcons}<span>${esc(formatDuration(r.song_duration_seconds))}</span>${performers}</div></div>
-      ${landscape?`<div class="display-side">${timing}${band}${sideSlots}</div>`:timing}
+      ${landscape?`<div class="display-side">${timing}${sideSlots}</div>`:timing}
     </article>`;
   }).join(''):'<div class="display-empty">Aucune prestation à venir pour le moment. 🤘</div>';
   document.getElementById('displayUpdated').textContent='Mis à jour à '+formatClock(new Date())+' · Données actualisées toutes les 30 s';
