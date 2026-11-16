@@ -160,6 +160,7 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-top>div:first-child{min-width:0;overflow-wrap:anywhere}
 .display-mc{color:#aebcc5;font-size:clamp(15px,1.75vw,25px);margin-top:7px;font-weight:800}
 .display-mc strong{color:#fff;font-size:1.15em}
+.display-slot-legend{margin:7px 0 0;color:#b8c9d1;font-size:clamp(12px,1.2vw,17px)}
 .display-right{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .display-live{padding:7px 11px;border-radius:9px;background:#153b31;color:#9bf5d5;font-weight:900;font-size:clamp(12px,1.3vw,18px)}
 .display-exit{padding:7px 11px;color:#b6c9d2;text-decoration:none;border:1px solid #48555e;border-radius:9px;font-size:12px}
@@ -208,6 +209,7 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-side{min-width:0;display:grid;gap:5px;justify-items:end;text-align:right;overflow-wrap:anywhere}
 .display-side .display-time{white-space:normal}
 .display-side .display-band{margin:0;font-size:clamp(12px,1.2vw,18px);line-height:1.2}
+.display-slot-group{min-width:0;display:grid;gap:3px;justify-items:end;font-size:clamp(11px,1vw,16px)}
 .display-side .display-available-instruments{flex-wrap:wrap;justify-content:flex-end}
 
 .display-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#94a7b1;font-size:clamp(11px,1.1vw,17px);padding:14px 3px 2px}
@@ -503,7 +505,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 <main class="wrap">
   <section id="displaySection" data-orientation="portrait" hidden aria-label="Écran public de la file">
     <div class="display-top">
-      <div><h2 id="displayParty">File de la soirée</h2><div class="display-mc" id="displayMc" hidden>🎤 MC <strong id="displayMcName"></strong></div></div>
+      <div><h2 id="displayParty">File de la soirée</h2><div class="display-mc" id="displayMc" hidden>🎤 MC <strong id="displayMcName"></strong></div><p class="display-slot-legend" id="displaySlotLegend" hidden>Les icônes indiquent les instruments encore libres pour rejoindre une chanson.</p></div>
       <div class="display-right">
         <span class="display-live" id="displayLive">● EN DIRECT</span>
         <div class="display-orientation" role="group" aria-label="Orientation de l’affichage">
@@ -1206,6 +1208,7 @@ function renderPublicDisplay(){
   heading.textContent=settings?.party_name||'File de la soirée';
   const active=!!settings?.performance_requests_enabled;
   document.getElementById('displayLive').textContent=active?'● EN DIRECT':'● SOIRÉE FERMÉE';
+  document.getElementById('displaySlotLegend').hidden=!active;
   const list=document.getElementById('displayList');
   const landscape=document.getElementById('displaySection').dataset.orientation==='landscape';
   if(!active){list.innerHTML='<div class="display-empty">La soirée n’est pas ouverte pour le moment.</div>';return;}
@@ -1226,11 +1229,13 @@ function renderPublicDisplay(){
     const performers=names.length?`<span>${esc([...new Set(names)].join(', '))}</span>`:'';
     const band=r.band_name?`<div class="display-band">🤘 ${esc(r.band_name)}</div>`:'';
     const timing=`<div class="display-time"><strong>${esc(when)}</strong><span>${esc(until)}</span></div>`;
+    const status=`<span class="${joinable?'display-joinable':'display-closed'}">${joinable?'● Places libres':playing?'● En cours':'● Complet'}</span>`;
+    const sideSlots=joinable?`<div class="display-slot-group">${status}${slotIcons}</div>`:'';
     return `<article class="display-performance ${playing?'is-playing':i===(hasPlaying?1:0)?'is-next':''}">
       <div class="display-rank">${playing?'♫':hasPlaying?i:i+1}</div>
       <div class="display-info"><div class="display-song">${esc(r.song_title||'Chanson')}</div><div class="display-artist">${esc(r.song_artist||'Artiste inconnu')}</div>${landscape?'':band}
-      <div class="display-detail"><span class="${joinable?'display-joinable':'display-closed'}">${joinable?'● Places libres':playing?'● En cours':'● Complet'}</span>${landscape?'':slotIcons}<span>${esc(formatDuration(r.song_duration_seconds))}</span>${performers}</div></div>
-      ${landscape?`<div class="display-side">${timing}${band}${slotIcons}</div>`:timing}
+      <div class="display-detail">${landscape&&joinable?'':status}${landscape?'':slotIcons}<span>${esc(formatDuration(r.song_duration_seconds))}</span>${performers}</div></div>
+      ${landscape?`<div class="display-side">${timing}${band}${sideSlots}</div>`:timing}
     </article>`;
   }).join(''):'<div class="display-empty">Aucune prestation à venir pour le moment. 🤘</div>';
   document.getElementById('displayUpdated').textContent='Mis à jour à '+formatClock(new Date())+' · Données actualisées toutes les 30 s';
