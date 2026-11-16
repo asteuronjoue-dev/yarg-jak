@@ -511,7 +511,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 <main class="wrap">
   <section id="displaySection" data-orientation="portrait" hidden aria-label="Écran public de la file">
     <div class="display-top">
-      <div><h2 id="displayParty">File de la soirée</h2><div class="display-mc" id="displayMc" hidden>🎤 MC <strong id="displayMcName"></strong></div><p class="display-slot-legend" id="displaySlotLegend" hidden>Les icônes indiquent les instruments encore libres pour rejoindre une chanson.</p></div>
+      <div><h2 id="displayParty">File de la soirée</h2><div class="display-mc" id="displayMc" hidden>🎤 MC <strong id="displayMcName"></strong></div><p class="display-slot-legend" id="displaySlotLegend" hidden>Les icônes indiquent les instruments encore libres pour rejoindre une chanson. Les places en pointillé s’ouvrent quand toutes les pistes de guitare et de basse sont occupées.</p></div>
       <div class="display-right">
         <span class="display-live" id="displayLive">● EN DIRECT</span>
         <div class="display-orientation" role="group" aria-label="Orientation de l’affichage">
@@ -1100,7 +1100,7 @@ function publicDisplayAvailableInstruments(r,slots){
   const images=choices.map(([,asset])=>`<img src="assets/medals/${asset}-fallback.png" alt="" loading="lazy">`).join('');
   const artwork=choices.length===2?`<span class="display-guitar-cycle">${images}</span>`:images;
   labels.push(caption);
-  icons.push(`<span class="display-available-slot display-guitar-choices${conditional?' is-conditional':''}" title="${esc(caption)}" aria-hidden="true">${artwork}<span>${label}</span></span>`);
+  icons.push(`<span class="display-available-slot display-guitar-choices${conditional?' is-conditional':''}" title="${esc(caption)}" aria-hidden="true">${artwork}${!conditional||count>1?`<span>${conditional?count+' places':label}</span>`:''}</span>`);
  }
  return icons.length?`<span class="display-available-instruments" role="group" aria-label="Places disponibles : ${esc(labels.join(', '))}">${icons.join('')}</span>`:'';
 }
