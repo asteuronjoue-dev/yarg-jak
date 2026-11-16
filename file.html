@@ -201,6 +201,7 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-available-instruments{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;max-width:100%;padding:2px 5px;border:1px solid #41616a;border-radius:9px;background:#152b30;vertical-align:middle}
 .display-available-slot{display:inline-flex;align-items:center;justify-content:center;gap:1px;flex:0 0 auto;min-height:27px}
 .display-guitar-choices{gap:4px;flex-wrap:wrap;flex:0 1 auto;padding:2px 5px;border:1px solid #527174;border-radius:6px;color:#d8e9eb;font-size:.85em;font-weight:800}
+.display-guitar-choices.is-conditional{border-style:dashed}
 .display-guitar-cycle{display:inline-grid}
 .display-guitar-cycle img{grid-area:1/1;animation:displayGuitarSwap 3.2s steps(1,end) infinite}
 .display-guitar-cycle img+img{animation-delay:-1.6s}
@@ -1060,7 +1061,8 @@ function publicDisplayAvailableInstruments(r,slots){
  const players=performerEntries(r);
  const occupiedGuitars=players.map(activeChartMode).filter(isGuitarChart);
  const guitarChoices=slots.filter(isGuitarChart);
- const sharedGuitarChoices=guitarChoices.length>0&&guitarChoices.every(mode=>occupiedGuitars.includes(mode));
+ const openGuitarCharts=guitarChoices.filter(mode=>!occupiedGuitars.includes(mode));
+ const sharedGuitarSpots=guitarChoices.length?3-occupiedGuitars.length-openGuitarCharts.length:0;
  const singers=players.filter(m=>m.instrument==='vocals'||m.microphone).length;
  const voiceCount=Math.max(0,3-singers); // Même limite de micros que freeInstrumentsForPlayers().
  const options=[
@@ -1076,7 +1078,7 @@ function publicDisplayAvailableInstruments(r,slots){
  for(const [mode,artwork,label] of options){
   const isAvailable=mode==='drums'?['drums','drums_4lane','pro_drums'].some(x=>available.has(x)):
    mode==='keys'?['keys','pro_keys'].some(x=>available.has(x)):available.has(mode);
-  if(!isAvailable||(sharedGuitarChoices&&isGuitarChart(mode)))continue;
+  if(!isAvailable||(sharedGuitarSpots>0&&openGuitarCharts.length===0&&isGuitarChart(mode)))continue;
   const count=mode==='vocals'?voiceCount:1;
   if(count<=0)continue;
   const caption=mode==='vocals'?label+' : '+count+' micro'+(count>1?'s':'')+' libre'+(count>1?'s':''):label+' disponible';
@@ -1084,15 +1086,21 @@ function publicDisplayAvailableInstruments(r,slots){
   labels.push(caption);
   icons.push(`<span class="display-available-slot" title="${esc(caption)}"><img src="${iconSource}" alt="" aria-hidden="true" loading="lazy"></span>`);
  }
- if(sharedGuitarChoices){
-  const count=3-occupiedGuitars.length;
-  const label=count===1?'1 place':count+' places';
-  const choices=options.filter(([mode])=>guitarChoices.includes(mode));
+ if(sharedGuitarSpots>0){
+  const count=sharedGuitarSpots;
+  const conditional=openGuitarCharts.length>0;
+  const unlockLabel=openGuitarCharts.length===1?
+   ' après '+({guitar:'la guitare',rhythm_guitar:'la guitare rythmique',bass:'la basse'})[openGuitarCharts[0]]:
+   ' après les pistes libres';
+  const label=(count===1?'1 place':count+' places')+(conditional?unlockLabel:'');
+  const choices=options.filter(([mode])=>guitarChoices.includes(mode)||
+   (conditional&&occupiedGuitars.includes(mode)&&(!Array.isArray(r.available_guitar_roles)||r.available_guitar_roles.includes(mode))
+    &&chartDifficulties(r,mode).length>0));
   const caption=label+' · '+choices.map(([, ,name])=>name).join(' ou ');
   const images=choices.map(([,asset])=>`<img src="assets/medals/${asset}-fallback.png" alt="" loading="lazy">`).join('');
   const artwork=choices.length===2?`<span class="display-guitar-cycle">${images}</span>`:images;
   labels.push(caption);
-  icons.push(`<span class="display-available-slot display-guitar-choices" title="${esc(caption)}" aria-hidden="true">${artwork}<span>${label}</span></span>`);
+  icons.push(`<span class="display-available-slot display-guitar-choices${conditional?' is-conditional':''}" title="${esc(caption)}" aria-hidden="true">${artwork}<span>${label}</span></span>`);
  }
  return icons.length?`<span class="display-available-instruments" role="group" aria-label="Places disponibles : ${esc(labels.join(', '))}">${icons.join('')}</span>`:'';
 }
