@@ -205,6 +205,11 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-time strong{display:block;font-size:clamp(21px,3vw,44px);font-variant-numeric:tabular-nums;color:#ffae62;line-height:1.1}
 .display-time span{display:block;color:#b3c0c7;font-size:clamp(11px,1.15vw,18px);margin-top:4px}
 .display-performance.is-playing .display-time strong{font-size:clamp(16px,2.2vw,30px)}
+.display-side{min-width:0;display:grid;gap:5px;justify-items:end;text-align:right;overflow-wrap:anywhere}
+.display-side .display-time{white-space:normal}
+.display-side .display-band{margin:0;font-size:clamp(12px,1.2vw,18px);line-height:1.2}
+.display-side .display-available-instruments{flex-wrap:wrap;justify-content:flex-end}
+
 .display-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#94a7b1;font-size:clamp(11px,1.1vw,17px);padding:14px 3px 2px}
 .display-empty{padding:45px 12px;text-align:center;font-size:clamp(18px,3vw,34px);color:#bdcbd1}
 .display-error{margin:12px 0;padding:12px;background:#552727;border:1px solid #d76b6b;border-radius:10px;color:white}
@@ -619,6 +624,7 @@ if(IS_PUBLIC_DISPLAY){
   for(const button of controls)button.addEventListener('click',()=>{
     const selected=button.dataset.displayOrientation;
     applyOrientation(selected);
+    renderPublicDisplay();
     try{localStorage.setItem(preferenceKey,selected);}catch{}
   });
   document.body.classList.add('yarg-display-mode');
@@ -1201,6 +1207,7 @@ function renderPublicDisplay(){
   const active=!!settings?.performance_requests_enabled;
   document.getElementById('displayLive').textContent=active?'● EN DIRECT':'● SOIRÉE FERMÉE';
   const list=document.getElementById('displayList');
+  const landscape=document.getElementById('displaySection').dataset.orientation==='landscape';
   if(!active){list.innerHTML='<div class="display-empty">La soirée n’est pas ouverte pour le moment.</div>';return;}
   // Ne pas afficher une demande « Pas prêt » comme si elle avait une heure de passage.
   const queue=sortedActive().filter(r=>r.status==='playing'||r._fairEligible!==false);
@@ -1217,11 +1224,13 @@ function renderPublicDisplay(){
     const until=playing?'Sur scène maintenant':eta?.at?relativeMinutes(eta.at):'Horaire inconnu';
     const names=performerEntries(r).map(m=>m.rockstar_name).filter(Boolean);
     const performers=names.length?`<span>${esc([...new Set(names)].join(', '))}</span>`:'';
+    const band=r.band_name?`<div class="display-band">🤘 ${esc(r.band_name)}</div>`:'';
+    const timing=`<div class="display-time"><strong>${esc(when)}</strong><span>${esc(until)}</span></div>`;
     return `<article class="display-performance ${playing?'is-playing':i===(hasPlaying?1:0)?'is-next':''}">
       <div class="display-rank">${playing?'♫':hasPlaying?i:i+1}</div>
-      <div class="display-info"><div class="display-song">${esc(r.song_title||'Chanson')}</div><div class="display-artist">${esc(r.song_artist||'Artiste inconnu')}</div>${r.band_name?`<div class="display-band">🤘 ${esc(r.band_name)}</div>`:''}
-      <div class="display-detail"><span class="${joinable?'display-joinable':'display-closed'}">${joinable?'● Places libres':playing?'● En cours':'● Complet'}</span>${slotIcons}<span>${esc(formatDuration(r.song_duration_seconds))}</span>${performers}</div></div>
-      <div class="display-time"><strong>${esc(when)}</strong><span>${esc(until)}</span></div>
+      <div class="display-info"><div class="display-song">${esc(r.song_title||'Chanson')}</div><div class="display-artist">${esc(r.song_artist||'Artiste inconnu')}</div>${landscape?'':band}
+      <div class="display-detail"><span class="${joinable?'display-joinable':'display-closed'}">${joinable?'● Places libres':playing?'● En cours':'● Complet'}</span>${landscape?'':slotIcons}<span>${esc(formatDuration(r.song_duration_seconds))}</span>${performers}</div></div>
+      ${landscape?`<div class="display-side">${timing}${band}${slotIcons}</div>`:timing}
     </article>`;
   }).join(''):'<div class="display-empty">Aucune prestation à venir pour le moment. 🤘</div>';
   document.getElementById('displayUpdated').textContent='Mis à jour à '+formatClock(new Date())+' · Données actualisées toutes les 30 s';
