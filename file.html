@@ -1180,11 +1180,14 @@ function joinFormHtml(r){
  const savedDifficulty=joinPrefs().difficulties?.[defaultMode]||'beginner';
  const chosenDifficulty=chartDifficulties(r,defaultMode).includes(savedDifficulty)?savedDifficulty:chartDifficulties(r,defaultMode)[0];
  const description=joinInstrumentDescription(defaultMode);
- const modeChoice=(instrumentFamily(instrument)==="drums"||instrumentFamily(instrument)==="keys")?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===defaultMode?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select></label>`:"";
+ const guide=description?`<small class="yarg-difficulty-guide" data-instrument-guide aria-live="polite">${esc(description)}</small>`:"";
+ const family=instrumentFamily(instrument);
+ const hasModeChoice=family==="drums"||family==="keys";
+ const modeChoice=hasModeChoice?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===defaultMode?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select>${guide}</label>`:"";
  const canSing=instrument!=='flex'&&(Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone);
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
- <strong>Rejoindre : ${esc(instrumentFamily(instrument)==="drums"?"Batterie":instrumentFamily(instrument)==="keys"?"Clavier":instruments[instrument])}</strong>
- ${description?`<small class="yarg-difficulty-guide" data-instrument-guide aria-live="polite">${esc(description)}</small>`:""}
+ <strong>Rejoindre : ${esc(family==="drums"?"Batterie":family==="keys"?"Clavier":instruments[instrument])}</strong>
+ ${hasModeChoice?"":guide}
  <label>Nom pour cette prestation <input name="rockstar" maxlength="60" required value="${esc(myRockstarName)}" placeholder="Nom de scène" autocomplete="off"><small>Ton compte, tes points et tes statistiques restent associés à ton profil Rockstar.</small></label>
  ${modeChoice}
  ${vocals||instrument==="flex"?"":`<label>Difficulté <select name="difficulty">${chartOptions(r,defaultMode,chosenDifficulty)}</select>${yargDifficultyCategory(defaultMode)?`<small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite">${esc(yargDifficultyDescription(defaultMode,chosenDifficulty))}</small>`:''} </label>`}
