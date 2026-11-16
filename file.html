@@ -167,14 +167,23 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
 .display-orientation button{padding:7px 10px;border:0;border-radius:6px;background:transparent;color:#b6c9d2;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
 .display-orientation button[aria-pressed="true"]{background:#1fc8bd;color:#071a1c}
 .display-orientation button:focus-visible{outline:2px solid #fff;outline-offset:2px}
-#displaySection[data-orientation="portrait"]{max-width:1080px;margin-inline:auto}
-#displaySection[data-orientation="portrait"] .display-top{align-items:flex-start;flex-wrap:wrap}
-#displaySection[data-orientation="portrait"] .display-performance{grid-template-columns:clamp(28px,5vw,55px) minmax(0,1fr);row-gap:8px}
-#displaySection[data-orientation="portrait"] .display-time{grid-column:2;justify-self:start;text-align:left;white-space:normal}
-#displaySection[data-orientation="portrait"] .display-time strong{font-size:clamp(16px,2.2vw,28px)}
-@media(max-width:680px){.display-top{flex-wrap:wrap}.display-right{justify-content:flex-start}}
-
 .display-list{display:grid;gap:clamp(5px,.8vh,12px)}
+#displaySection[data-orientation="landscape"]{display:flex;flex-direction:column;height:100vh;height:100dvh;min-height:0}
+#displaySection[data-orientation="landscape"] .display-list{
+  display:block;flex:1 1 0;min-height:0;overflow:auto;
+  column-count:2;column-fill:auto;column-gap:clamp(12px,1.8vw,25px)
+}
+#displaySection[data-orientation="landscape"] .display-performance{
+  break-inside:avoid;margin-bottom:clamp(5px,.8vh,12px)
+}
+#displaySection[data-orientation="landscape"] .display-empty{column-span:all}
+#displaySection[data-orientation="landscape"] .display-list:focus-visible{outline:2px solid #1fc8bd;outline-offset:2px}
+@media(max-width:680px){
+  .display-top{flex-wrap:wrap}
+  .display-right{justify-content:flex-start}
+  #displaySection[data-orientation="landscape"] .display-list{column-count:1}
+}
+
 .display-performance{display:grid;grid-template-columns:minmax(45px,5vw) minmax(0,1fr) minmax(105px,16vw);gap:clamp(12px,1.8vw,25px);align-items:center;padding:clamp(10px,1.25vh,20px) clamp(12px,1.8vw,25px);background:#1b2228;border:1px solid #34424b;border-radius:13px;min-height:clamp(82px,10vh,130px)}
 .display-performance.is-playing{border-color:#ff8a24;background:linear-gradient(180deg,#ff5577,#ffad42,#ffe66d,#54e0a2,#54c7ff,#b889ff) left / 5px 100% no-repeat,#29221b}
 .display-performance.is-next{border-color:#1fc8bd}
@@ -500,7 +509,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
       </div>
     </div>
     <div id="displayError" class="display-error" hidden></div>
-    <div id="displayList" class="display-list"><div class="display-empty">Chargement des prestations…</div></div>
+    <div id="displayList" class="display-list" role="region" aria-label="File des prestations"><div class="display-empty">Chargement des prestations…</div></div>
     <div class="display-footer"><span>Les heures sont approximatives · 2 min prévues entre les chansons</span><span id="displayUpdated">Actualisation automatique toutes les 30 secondes</span></div>
   </section>
   <div class="error" id="errorBox"></div>
@@ -594,9 +603,12 @@ const IS_PUBLIC_DISPLAY = new URLSearchParams(location.search).get('affichage') 
 if(IS_PUBLIC_DISPLAY){
   const display=document.getElementById('displaySection');
   const controls=display.querySelectorAll('[data-display-orientation]');
+  const list=document.getElementById('displayList');
   const preferenceKey='yarg-public-display-orientation';
   function applyOrientation(orientation){
     display.dataset.orientation=orientation;
+    list.tabIndex=orientation==='landscape'?0:-1;
+    if(orientation==='portrait')list.scrollLeft=0;
     for(const button of controls){
       button.setAttribute('aria-pressed',String(button.dataset.displayOrientation===orientation));
     }
