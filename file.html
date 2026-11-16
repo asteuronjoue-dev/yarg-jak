@@ -200,6 +200,7 @@ body.yarg-display-mode main.wrap{width:100%;max-width:none;padding:0;margin:0}
    Toujours utiliser les icônes colorées de base, jamais les médailles acquises. */
 .display-available-instruments{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;max-width:100%;padding:2px 5px;border:1px solid #41616a;border-radius:9px;background:#152b30;vertical-align:middle}
 .display-available-slot{display:inline-flex;align-items:center;justify-content:center;gap:1px;flex:0 0 auto;min-height:27px}
+.display-guitar-choices{gap:4px;flex-wrap:wrap;flex:0 1 auto;padding:2px 5px;border:1px solid #527174;border-radius:6px;color:#d8e9eb;font-size:.85em;font-weight:800}
 .display-available-slot img{display:block;width:clamp(22px,2vw,29px);height:clamp(22px,2vw,29px);object-fit:contain}
 @media(max-width:680px){.display-available-slot img{width:22px;height:22px}.display-available-instruments{gap:2px;padding:2px 4px}}
 .display-time{text-align:right;justify-self:end;white-space:nowrap}
@@ -1052,6 +1053,9 @@ function openInstruments(r){
 function publicDisplayAvailableInstruments(r,slots){
  const available=new Set(slots);
  const players=performerEntries(r);
+ const occupiedGuitars=players.map(activeChartMode).filter(isGuitarChart);
+ const guitarChoices=slots.filter(isGuitarChart);
+ const sharedGuitarChoices=guitarChoices.length>0&&guitarChoices.every(mode=>occupiedGuitars.includes(mode));
  const singers=players.filter(m=>m.instrument==='vocals'||m.microphone).length;
  const voiceCount=Math.max(0,3-singers); // Même limite de micros que freeInstrumentsForPlayers().
  const options=[
@@ -1067,13 +1071,22 @@ function publicDisplayAvailableInstruments(r,slots){
  for(const [mode,artwork,label] of options){
   const isAvailable=mode==='drums'?['drums','drums_4lane','pro_drums'].some(x=>available.has(x)):
    mode==='keys'?['keys','pro_keys'].some(x=>available.has(x)):available.has(mode);
-  if(!isAvailable)continue;
+  if(!isAvailable||(sharedGuitarChoices&&isGuitarChart(mode)))continue;
   const count=mode==='vocals'?voiceCount:1;
   if(count<=0)continue;
   const caption=mode==='vocals'?label+' : '+count+' micro'+(count>1?'s':'')+' libre'+(count>1?'s':''):label+' disponible';
   const iconSource=mode==='vocals'?(count===3?'assets/medals/vocals-harmony-3.png':count===2?'assets/medals/vocals-harmony-2.png':'assets/medals/vocals-fallback.png'):'assets/medals/'+artwork+'-fallback.png';
   labels.push(caption);
   icons.push(`<span class="display-available-slot" title="${esc(caption)}"><img src="${iconSource}" alt="" aria-hidden="true" loading="lazy"></span>`);
+ }
+ if(sharedGuitarChoices){
+  const count=3-occupiedGuitars.length;
+  const label=count===1?'1 place':count+' places';
+  const choices=options.filter(([mode])=>guitarChoices.includes(mode));
+  const caption=label+' · '+choices.map(([, ,name])=>name).join(' ou ');
+  const artwork=choices.map(([,asset])=>`<img src="assets/medals/${asset}-fallback.png" alt="" loading="lazy">`).join('<span>/</span>');
+  labels.push(caption);
+  icons.push(`<span class="display-available-slot display-guitar-choices" title="${esc(caption)}" aria-hidden="true">${artwork}<span>${label}</span></span>`);
  }
  return icons.length?`<span class="display-available-instruments" role="group" aria-label="Places disponibles : ${esc(labels.join(', '))}">${icons.join('')}</span>`:'';
 }
