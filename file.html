@@ -846,6 +846,15 @@ function yargDifficultyCategory(mode){
 function yargInstrumentDescription(mode){
  return YARG_DIFFICULTY_GUIDE[yargDifficultyCategory(mode)]?.intro||'';
 }
+const JOIN_MODE_DESCRIPTIONS={
+ drums_4lane:'4-Lanes : frappe les quatre pads de couleur et utilise la pédale de grosse caisse. Les cymbales sont facultatives.',
+ pro_drums:'Pro Drums : les notes distinguent les pads des cymbales. Frappe la bonne surface selon le symbole affiché.',
+ keys:'5-Lanes : joue les cinq pistes de couleur avec les cinq touches les plus à gauche du clavier.',
+ pro_keys:'Pro Keys : joue les notes indiquées sur le clavier, avec les touches blanches et noires, parfois plusieurs à la fois.'
+};
+function joinInstrumentDescription(mode){
+ return JOIN_MODE_DESCRIPTIONS[mode]||yargInstrumentDescription(mode);
+}
 function yargDifficultyDescription(mode,level){
  const entry=YARG_DIFFICULTY_GUIDE[yargDifficultyCategory(mode)];
  if(!entry)return '';
@@ -1167,15 +1176,15 @@ function joinFormHtml(r){
  const vocals=instrument==="vocals";
  const modes=joinModes(openInstruments(r),instrument);
  const savedMode=joinPrefs().modes?.[instrumentFamily(instrument)];
- const defaultMode=modes.includes(savedMode)?savedMode:(instrument==="drums"?"drums_4lane":instrument);
+ const defaultMode=modes.includes(savedMode)?savedMode:modes.includes(instrument)?instrument:modes[0];
  const savedDifficulty=joinPrefs().difficulties?.[defaultMode]||'beginner';
  const chosenDifficulty=chartDifficulties(r,defaultMode).includes(savedDifficulty)?savedDifficulty:chartDifficulties(r,defaultMode)[0];
- const description=yargInstrumentDescription(defaultMode);
+ const description=joinInstrumentDescription(defaultMode);
  const modeChoice=(instrumentFamily(instrument)==="drums"||instrumentFamily(instrument)==="keys")?`<label>Mode de jeu<select name="instrument_mode">${modes.map(mode=>`<option value="${esc(mode)}" ${mode===defaultMode?"selected":""}>${esc(instruments[mode])}</option>`).join("")}</select></label>`:"";
  const canSing=instrument!=='flex'&&(Number(r.vocal_parts)>0 || (r.fillable_instruments||[]).includes("vocals") || r.requester_instrument==="vocals" || !!r.requester_microphone);
  return `<form class="join-form" data-join-request="${esc(r.id)}" data-instrument="${esc(instrument)}">
  <strong>Rejoindre : ${esc(instrumentFamily(instrument)==="drums"?"Batterie":instrumentFamily(instrument)==="keys"?"Clavier":instruments[instrument])}</strong>
- ${description?`<small class="yarg-difficulty-guide" data-instrument-guide>${esc(description)}</small>`:""}
+ ${description?`<small class="yarg-difficulty-guide" data-instrument-guide aria-live="polite">${esc(description)}</small>`:""}
  <label>Nom pour cette prestation <input name="rockstar" maxlength="60" required value="${esc(myRockstarName)}" placeholder="Nom de scène" autocomplete="off"><small>Ton compte, tes points et tes statistiques restent associés à ton profil Rockstar.</small></label>
  ${modeChoice}
  ${vocals||instrument==="flex"?"":`<label>Difficulté <select name="difficulty">${chartOptions(r,defaultMode,chosenDifficulty)}</select>${yargDifficultyCategory(defaultMode)?`<small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite">${esc(yargDifficultyDescription(defaultMode,chosenDifficulty))}</small>`:''} </label>`}
@@ -1506,13 +1515,15 @@ document.addEventListener('click',async event=>{
 });
 
 function syncBandDifficultyGuide(form){
- const note=form?.querySelector('[data-difficulty-guide]');if(!note)return;
- const instrument=form.classList.contains('band-change-form')?selectedEditInstrument(form):(form.elements.instrument_mode?.value||form.elements.instrument?.value||form.dataset.instrument||'');
- const description=yargInstrumentDescription(instrument);
+ if(!form)return;
+ const editing=form.classList.contains('band-change-form');
+ const instrument=editing?selectedEditInstrument(form):(form.elements.instrument_mode?.value||form.elements.instrument?.value||form.dataset.instrument||'');
  const intro=form.querySelector('[data-instrument-guide]');
- if(intro){intro.textContent=description;intro.hidden=!description;}
+ if(intro)intro.textContent=joinInstrumentDescription(instrument);
+ const note=form.querySelector('[data-difficulty-guide]');
+ if(!note)return;
  const difficulty=yargDifficultyDescription(instrument,form.elements.difficulty?.value||'');
- const text=form.classList.contains('band-change-form')?`${description} ${difficulty}`.trim():difficulty;
+ const text=editing?`${yargInstrumentDescription(instrument)} ${difficulty}`.trim():difficulty;
  note.textContent=text;note.hidden=!text;
 }
 function selectedEditInstrument(form){
