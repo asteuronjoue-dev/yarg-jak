@@ -2107,7 +2107,12 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
               const title=document.createElement('strong');title.textContent=game.name;
               const sub=document.createElement('small');sub.textContent=count.toLocaleString('fr-CA')+' chansons · '+game.year;
               copy.append(title,sub);btn.append(emblem,copy);
-              btn.addEventListener('click',()=>{state.playlist=state.playlist===game.id?'':game.id;updateGameSelection();filter();});
+              btn.addEventListener('click',()=>{
+                state.playlist=state.playlist===game.id?'':game.id;
+                updateGameSelection();
+                filter();
+                if(state.playlist)goToResults();
+              });
               cards.appendChild(btn);
             }
             section.append(heading,cards);gameGrid.appendChild(section);
@@ -2308,15 +2313,19 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
           state.favoritesOnly=!state.favoritesOnly;
           if(state.favoritesOnly){state.publicPlaylistId='';curatedPicker.value='';publicPlaylistSongIds.clear();}
           favFilterButton.setAttribute('aria-pressed',String(state.favoritesOnly));drawPlaylistCards();filter();
+          if(state.favoritesOnly)goToResults();
         };
         curatedPicker.onchange=async()=>{
-          state.publicPlaylistId=curatedPicker.value;publicPlaylistSongIds=new Set();refreshResolvedPublicPlaylist();
+          const playlistId=curatedPicker.value;
+          state.publicPlaylistId=playlistId;publicPlaylistSongIds=new Set();refreshResolvedPublicPlaylist();
           if(state.publicPlaylistId){state.favoritesOnly=false;favFilterButton.setAttribute('aria-pressed','false');}
           if(state.publicPlaylistId){
-            const {data,error}=await collectionsSb.from('yarg_public_playlist_songs').select('song_id').eq('playlist_id',state.publicPlaylistId);
+            const {data,error}=await collectionsSb.from('yarg_public_playlist_songs').select('song_id').eq('playlist_id',playlistId);
+            if(state.publicPlaylistId!==playlistId)return;
             if(error){alert(window.yargErrorMessage(error,'Impossible de charger cette playlist. Réessaie dans un instant.'));return;}
             publicPlaylistSongIds=new Set((data||[]).map(x=>String(x.song_id)));refreshResolvedPublicPlaylist();
           }drawPlaylistCards();filter();
+          if(playlistId)goToResults();
         };
         document.getElementById('collection-clear').onclick=()=>{
           state.favoritesOnly=false;state.publicPlaylistId='';publicPlaylistSongIds.clear();
@@ -2483,6 +2492,13 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             render(true);
         }
 
+        function goToResults(){
+            const bannerHeight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--yarg-next-banner-height'))||0;
+            const y=window.pageYOffset+scrollEl.getBoundingClientRect().top-bannerHeight-12;
+            const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            window.scrollTo({top:Math.max(0,y),behavior:reducedMotion?'auto':'smooth'});
+        }
+
         // Debounced search
         let searchTimeout;
         searchInput.addEventListener('input', (e) => {
@@ -2504,12 +2520,6 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             state.q=query ? query.toLowerCase().split(/\s+/) : [];
             filter();
             searchInput.blur();
-            const goToResults=()=>{
-                const bannerHeight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--yarg-next-banner-height'))||0;
-                const y=window.pageYOffset+scrollEl.getBoundingClientRect().top-bannerHeight-12;
-                const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                window.scrollTo({top:Math.max(0,y),behavior:reducedMotion?'auto':'smooth'});
-            };
             // Let the viewport settle as the mobile software keyboard disappears.
             requestAnimationFrame(()=>requestAnimationFrame(goToResults));
             if(window.visualViewport && window.visualViewport.height < window.innerHeight*0.8){
