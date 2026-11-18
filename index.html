@@ -1147,13 +1147,14 @@ body>header{border-bottom:0!important}
   background:linear-gradient(90deg,#1fc8bd,#ff8a24,transparent);
 }
 .catalog-directory-topline{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:nowrap}
+.catalog-directory-topline #results-count{margin-left:auto;flex:0 0 auto;white-space:nowrap}
 .catalog-directory-label{color:#e7f2f2;font-size:clamp(.84rem,2.9vw,1.13rem);font-weight:900;white-space:nowrap;flex:0 0 auto}
 .catalog-directory-counts{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:7px;min-width:0;margin:7px 0 10px}
 .catalog-directory-count{display:inline-flex;align-items:center;gap:6px;border:1px solid #36434a;background:#1b2429;color:#bacbd0;padding:7px 11px;border-radius:999px;font-size:.78rem;font-weight:800;white-space:nowrap}
 .catalog-directory-count-dot{width:6px;height:6px;border-radius:50%;background:#1fc8bd}
 .catalog-directory-count-shown{color:#ffca8d;background:#2c251f;border-color:#695036}
 .catalog-results-summary{padding:8px 12px}
-.catalog-directory-accent{height:3px;margin-top:16px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,#1fc8bd 0%,#2ab9c1 38%,#ff8a24 82%,transparent 100%);opacity:.95}
+.catalog-directory-accent{height:3px;margin-top:12px;margin-left:calc(-1 * clamp(12px,2.5vw,24px));margin-right:calc(-1 * clamp(12px,2.5vw,24px));border-radius:0;background:linear-gradient(90deg,#1fc8bd 0%,#2ab9c1 38%,#ff8a24 82%,#ff8a24 100%);opacity:.95}
 @media(max-width:680px){
  .catalog-directory-heading{margin-top:7px;padding:11px 11px 0}
  .catalog-directory-topline{align-items:center;gap:5px}
@@ -1166,7 +1167,8 @@ body>header{border-bottom:0!important}
    .catalog-directory-count{padding:5px 5px;font-size:.63rem}
    .catalog-directory-label{font-size:.76rem}
  }
- .catalog-directory-accent{margin-top:13px}
+ .catalog-directory-accent{margin-top:10px;margin-left:-11px;margin-right:-11px}
+ @media(max-width:365px){.catalog-directory-accent{margin-left:-7px;margin-right:-7px}}
 }
 /* Mobile: two balanced rows, with controls filling each of five columns. */
 @media (max-width:680px){
@@ -1448,12 +1450,10 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
     <section class="catalog-directory-heading" aria-label="Nombre de chansons du catalogue">
         <div class="catalog-directory-topline">
             <strong class="catalog-directory-label">🎼 Catalogue</strong>
+            <span class="catalog-directory-count catalog-directory-count-shown" id="results-count" aria-live="polite">Affichées : 0</span>
         </div>
         <div class="catalog-directory-accent" aria-hidden="true"></div>
     </section>
-    <div class="catalog-results-summary" id="catalog-results">
-        <span class="catalog-directory-count catalog-directory-count-shown" id="results-count">Affichées : 0</span>
-    </div>
     <div class="col-header">
         <div class="col-header-cell" data-sort="a">Artiste <span class="sort-indicator"></span></div>
         <div class="col-header-cell" data-sort="t">Titre <span class="sort-indicator"></span></div>
