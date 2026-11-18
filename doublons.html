@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nettoyage des doublons — YARG</title>
+<link rel="icon" href="assets/favicon.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#101214;--panel:#1b2227;--panel2:#243039;--border:#41535d;--text:#f2f6f7;--muted:#bdcbd0;--teal:#1fc8bd;--orange:#ffad60;--red:#ff929d;--green:#a5ebc7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}
+[hidden]{display:none!important}a{color:var(--teal)}.wrap{max-width:1260px;margin:auto;padding:24px clamp(12px,3vw,38px) 80px}
+nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:27px}nav a{background:#253137;color:#e5f0f2;text-decoration:none;border:1px solid #475860;border-radius:10px;padding:9px 14px;font-weight:800}
+nav a:hover{border-color:var(--teal)}h1{font-size:clamp(1.65rem,4vw,2.6rem);line-height:1.15;margin:0 0 9px;letter-spacing:-.025em}h2{font-size:1.12rem;margin:0}p{margin:8px 0;line-height:1.55}.muted{color:var(--muted)}.intro{max-width:990px;color:#d4e0e5}.notice{padding:14px 17px;border:1px solid var(--border);border-radius:12px;background:#202930;margin:15px 0}.notice strong{color:#fff}
+.toolbar{display:grid;grid-template-columns:minmax(230px,1fr) minmax(130px,175px) minmax(140px,190px) auto;gap:9px;margin-top:20px;align-items:end}.field{display:flex;flex-direction:column;gap:5px;font-size:.83rem;font-weight:800;color:#d2e3e8}
+.field input,.field select,.field textarea{background:#10191e;color:white;border:1px solid #61717b;border-radius:9px;padding:10px;min-width:0;min-height:44px}.field input:focus-visible,.field select:focus-visible,.field textarea:focus-visible,button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+button{background:#2c3d44;color:white;border:1px solid #637783;border-radius:9px;padding:10px 12px;font-weight:800;min-height:42px}button:hover{border-color:var(--teal);background:#344c53}button.primary{background:var(--teal);border-color:var(--teal);color:#061d1c}button.primary:hover{background:#70ece2}button:disabled{opacity:.45;cursor:not-allowed}
+.actionbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:17px 0}.actionbar small{flex:1 1 200px;color:var(--muted)}.stats{display:flex;flex-wrap:wrap;gap:9px;margin-top:19px}.stat{padding:10px 14px;background:var(--panel);border:1px solid var(--border);border-radius:11px;min-width:125px}.stat strong{font-size:1.3rem;display:block;font-variant-numeric:tabular-nums}.stat span{font-size:.77rem;color:#c1d0d5;font-weight:700}
+#result-summary{margin:17px 0 12px;font-weight:780;color:#d8e3e7}#group-list{display:grid;gap:18px}.match-group{border:1px solid #445d67;border-radius:16px;background:var(--panel);padding:16px}.match-group--ignored{opacity:.75}.match-header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.match-header h2{font-size:1.15rem;overflow-wrap:anywhere}.match-header .artist{color:#c2d4d9;font-weight:650}.match-heading{min-width:0;flex:1 1 260px}.match-meta{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}.match-flag{border:1px solid #77716a;border-radius:99px;padding:3px 9px;font-size:.73rem;font-weight:900;background:#30333a}.match-flag.strong{border-color:#60c9ac;color:#b9ffe0}.match-flag.variant{border-color:#dda45e;color:#ffddb1}.match-flag.likely{border-color:#7ba5d0;color:#d4ebff}.match-tip{font-size:.82rem;color:#b6cdd3}.match-actions{display:flex;gap:7px;flex-wrap:wrap}.match-actions button{font-size:.77rem;padding:7px 9px;min-height:35px}.match-actions .danger{color:#ffd5d8;border-color:#9e646c}.match-actions .quiet{color:#d4e2e6}.song-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;margin-top:15px}.song-card{min-width:0;background:#162127;border:1px solid #405560;border-radius:12px;padding:13px;display:flex;flex-direction:column;gap:10px}.song-card--keep{border:2px solid #62d7a4;background:#17312d}.song-card--delete{border:2px dashed #dc8792;background:#302328}.song-card h3{font-size:1.01rem;line-height:1.25;margin:0;overflow-wrap:anywhere}.song-artist{font-size:.84rem;color:#d3e0e4}.song-indicator{font-size:.75rem;color:#cddde2;font-weight:850}.song-indicator.better{color:#a3f1d7}.song-indicator.warn{color:#ffdaa9}
+.metadata{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px 11px;margin:0}.metadata div{min-width:0}.metadata dt{font-size:.7rem;text-transform:uppercase;letter-spacing:.035em;font-weight:850;color:#a8c1ca}.metadata dd{font-size:.86rem;line-height:1.35;margin:2px 0 0;overflow-wrap:anywhere;white-space:pre-wrap}.metadata .span2{grid-column:1/-1}.track-strip{display:flex;flex-wrap:wrap;gap:5px}.track{font-size:.7rem;background:#263e42;border:1px solid #517a7c;border-radius:7px;padding:3px 6px;font-weight:800}.song-card details{background:#202e34;border:1px solid #405560;border-radius:9px;padding:7px 9px}.song-card summary{cursor:pointer;font-weight:800;font-size:.82rem}.part-list{font-size:.77rem;margin:7px 0;padding-left:19px}.part-list li{margin:3px 0}.song-choices{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:10px;border-top:1px solid #344851}.song-choices button{font-size:.79rem;padding:8px 11px}.keep-selected{background:#22684e;border-color:#4fd89d}.delete-toggle{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid #a46d75;border-radius:9px;font-size:.8rem;color:#ffdee1;font-weight:850;cursor:pointer}.delete-toggle input{width:18px;height:18px;accent-color:#eb8893}.song-note textarea{width:100%;resize:vertical;min-height:57px}.song-note{margin-top:3px}.song-note small{color:#b5c8d0;font-weight:650;font-size:.75rem}
+#more{display:block;margin:20px auto}#loading{font-weight:800;color:#d4f5ee}.empty{padding:25px;text-align:center;border:1px dashed #54707c;border-radius:12px;color:#d2e0e5}
+@media(max-width:850px){.toolbar{grid-template-columns:1fr 1fr}.toolbar .search-field{grid-column:1/-1}.toolbar .scan-button{align-self:end}}@media(max-width:530px){.wrap{padding:16px 12px 70px}.toolbar{grid-template-columns:1fr 1fr}.toolbar .sort-field{grid-column:1/-1}.toolbar .scan-button{grid-column:1/-1}.match-group{padding:12px}.song-grid{grid-template-columns:1fr}.metadata{grid-template-columns:1fr 1fr}.match-actions{width:100%}.match-actions button{flex:1 1 auto}}
+</style>
+</head>
+<body><main class="wrap">
+<nav aria-label="Navigation"><a href="admin.html">← Régie MC</a><a href="index.html">Catalogue</a></nav>
+<section id="checking" class="notice">Vérification de l’accès propriétaire…</section>
+<section id="blocked" class="notice" hidden><h2>Accès réservé au propriétaire</h2><p id="blocked-message">Connecte-toi à ton compte propriétaire dans la Régie MC pour accéder à cet outil.</p><a href="admin.html">Retour à la Régie MC</a></section>
+<section id="app" hidden>
+<h1>🧹 Détecteur de doublons</h1>
+<p class="intro">Repère les chansons identiques, les titres très proches et les versions différentes. Compare <strong>toutes les informations disponibles dans songs.json</strong>, choisis lesquelles garder et prépare une liste de suppression pour nettoyer ta bibliothèque toi-même.</p>
+<div class="notice"><strong>Aucune suppression automatique.</strong> Les décisions sont enregistrées uniquement dans ce navigateur. Le rapport texte ne supprime aucun fichier et ne modifie pas songs.json. Le catalogue <strong>ne contient pas les chemins de tes fichiers</strong> : utilise le titre, l’artiste, l’album, le charter, la playlist et la durée pour retrouver chaque chanson.</div>
+<div id="loading" role="status" aria-live="polite">Chargement du catalogue…</div>
+<div id="workspace" hidden>
+<div class="stats" id="stats" aria-live="polite"></div>
+<div class="toolbar">
+<label class="field search-field">Rechercher un titre, un artiste ou une playlist<input type="search" id="search" placeholder="Ex. Nirvana, Lithium…" autocomplete="off"></label>
+<label class="field">Afficher<select id="filter"><option value="all">Tous les groupes</option><option value="unreviewed">À examiner</option><option value="marked">Avec suppression marquée</option><option value="exact">Doublons très probables</option><option value="variant">Versions / éditions différentes</option><option value="likely">Autres ressemblances</option><option value="ignored">Groupes ignorés</option></select></label>
+<label class="field sort-field">Trier<select id="sort"><option value="confidence">Correspondance la plus forte</option><option value="artist">Artiste A → Z</option><option value="size">Plus de versions</option><option value="review">Non examinés d’abord</option></select></label>
+<button type="button" id="rescan" class="scan-button">↻ Recharger le catalogue</button>
+</div>
+<div class="actionbar">
+<button type="button" id="export" class="primary">⬇ Exporter les chansons à supprimer (.txt)</button>
+<button type="button" id="reset">Réinitialiser mes décisions</button>
+<small>Pour éviter les suppressions accidentelles, seul ce que tu coches « À supprimer » sera exporté.</small>
+</div>
+<div id="result-summary" role="status" aria-live="polite"></div>
+<div id="group-list"></div>
+<button type="button" id="more" hidden>Afficher 15 autres groupes</button>
+</div>
+</section>
+</main>
+<script src="doublons.js" defer></script>
+</body></html>
