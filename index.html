@@ -1087,6 +1087,10 @@ header {max-height:none!important;overflow:visible!important}
   .col-header>.col-header-cell.cell-instruments{
     justify-content:flex-start;padding-right:3px;box-sizing:border-box;
   }
+  /* Same left offset as the instruments in each song row; playlist badges sit before it. */
+  @media(min-width:901px){
+    .col-header>.col-header-cell.cell-instruments{padding-left:35px}
+  }
   .col-header::after{justify-self:center}
 }
 @media(min-width:1101px){
