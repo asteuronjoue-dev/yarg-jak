@@ -38,7 +38,7 @@
   return loader;
  }
  async function connectRockstar(){
-  if(connecting||!currentUid||Notification.permission!=='granted')return;
+  if(connecting||!currentUid||Notification.permission!=='granted')return false;
   connecting=true;
   try{
    const push=await loadPush();
@@ -48,11 +48,13 @@
     openDialog.status.textContent='Notifications activées pour ton compte Rockstar !';
     closeOffer();
    }
+   return true;
   }catch(error){
    console.warn('Abonnement YARG après connexion :',error);
    if(openDialog?.kind==='login'){
     openDialog.status.textContent='Autorisation accordée, mais inscription au compte impossible pour le moment. Réessaie depuis Profil → Notifications.';
    }
+   return false;
   }finally{connecting=false}
  }
  function closeOffer(){
@@ -125,10 +127,10 @@
     setStored(KEY,'granted');
     if(kind==='login'&&currentUid)setStored(SECOND,currentUid);
     status.textContent=currentUid?'Connexion des notifications à ton compte…':'Permission accordée ! Les alertes personnalisées seront activées après connexion à ton compte Rockstar.';
-    if(currentUid)await connectRockstar();
+    const connected=currentUid?await connectRockstar():false;
     if(!openDialog||openDialog.overlay!==overlay)return;
-    if(!currentUid)closeOffer();
-    else if(openDialog)later.disabled=false;
+    if(!currentUid||connected)closeOffer();
+    else {yes.disabled=false;later.disabled=false;}
    }catch(error){
     console.warn('Autorisation des notifications YARG :',error);
     status.textContent='Impossible d’activer les notifications : '+(error?.message||'réessaie dans Profil → Notifications.');
