@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/png" href="assets/favicon.png?v=3">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Librairie de chansons à Jak</title>
+    <title>Asteur On Jam</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -1324,7 +1324,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             <div class="site-identity">
                 <img class="site-logo" src="assets/favicon.png" alt="" aria-hidden="true" width="68" height="68">
                 <div class="site-title-stack">
-                    <div class="yarg-heading-line yarg-catalog-heading"><h1 id="catalog-title">La bibliothèque musicale à Jak</h1><span class="yarg-beta-badge" title="Version bêta · site en développement">BÊTA</span></div>
+                    <div class="yarg-heading-line yarg-catalog-heading"><h1 id="catalog-title">Asteur On Jam</h1><span class="yarg-beta-badge" title="Version bêta · site en développement">BÊTA</span></div>
                     <div class="party-info" id="party-info" aria-live="polite">
                         <div class="yarg-heading-line"><div class="party-title" id="party-title"></div><span class="yarg-beta-badge" title="Version bêta · site en développement">BÊTA</span></div>
                         <div class="party-mc">Votre MC pour la soirée : <strong id="party-mc"></strong></div>
@@ -1430,7 +1430,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                 <label>Playlist / jeu
                   <select id="playlist-filter"><option value="">Toutes les playlists</option></select>
                 </label>
-                <label>Playlists publiques · Asteur On Joue
+                <label>Playlists publiques · Asteur On Jam
                   <select id="mc-playlist-picker"><option value="">Toutes les chansons</option></select>
                 </label>
                 <button id="collection-clear" type="button">Effacer les playlists publiques</button>
@@ -1612,7 +1612,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                     partyTitle.textContent = (data.party_name || 'Party YARG').trim();
                     partyMc.textContent = (data.mc_name || 'À déterminer').trim();
                     partyInfo.classList.add('active');
-                    document.title = `${partyTitle.textContent} — YARG`;
+                    document.title = `${partyTitle.textContent} — Asteur On Jam`;
                 } else {
                     PARTY_REQUESTS_ENABLED = false;
                     document.body.classList.remove('party-mode');

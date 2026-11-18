@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <link rel="icon" type="image/png" href="assets/favicon.png?v=2">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>File de la soirée — Party YARG</title>
+  <title>File de la soirée — Asteur On Jam</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root{
@@ -507,7 +507,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
         <div class="queue-brand">
           <img id="queueSiteLogo" src="assets/favicon.png" alt="" width="68" height="68">
           <div>
-            <div class="yarg-heading-line"><h1 id="partyTitle">La bibliothèque musicale à Jak</h1><span class="yarg-beta-badge" title="Version bêta · site en développement">BÊTA</span></div>
+            <div class="yarg-heading-line"><h1 id="partyTitle">Asteur On Jam</h1><span class="yarg-beta-badge" title="Version bêta · site en développement">BÊTA</span></div>
             <div class="mc" id="queueMcLine" hidden>🎤 Votre MC pour la soirée : <strong id="mcName">—</strong></div>
           </div>
         </div>
@@ -1401,7 +1401,7 @@ async function loadSettings(){
   if(error) throw error;
   settings=data;
   const partyActive=!!data.performance_requests_enabled;
-  $("#partyTitle").textContent=partyActive?(data.party_name||"Party YARG"):"La bibliothèque musicale à Jak";
+  $("#partyTitle").textContent=partyActive?(data.party_name||"Party YARG"):"Asteur On Jam";
   $("#partyTitle").classList.toggle("party-rainbow",partyActive);
   $("#queueSiteLogo").hidden=partyActive;
   $("#queueMcLine").hidden=!partyActive;

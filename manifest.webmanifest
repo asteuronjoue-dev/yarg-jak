@@ -1,7 +1,7 @@
 {
   "id": "/yarg-jak/",
-  "name": "Asteur On Joue — ROCKSTAR",
-  "short_name": "Asteur On Joue",
+  "name": "Asteur On Jam",
+  "short_name": "Asteur On Jam",
   "description": "Catalogue, file de soirée et notifications YARG.",
   "start_url": "./index.html",
   "scope": "./",

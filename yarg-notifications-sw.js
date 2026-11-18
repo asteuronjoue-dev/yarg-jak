@@ -39,7 +39,7 @@ self.addEventListener('push', event => {
    await recordPushDiagnostics({receivedAt:recordedAt,outcome:'ignored_type',kind:kind.slice(0,50)});
    return;
   }
-  const title=String(data.title||'Asteur On Joue');
+  const title=String(data.title||'Asteur On Jam');
   const body=String(data.body||'');
   const tag=String(data.tag||'yarg-'+kind);
   const target=new URL('./file.html',self.registration.scope).href;
