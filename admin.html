@@ -391,6 +391,12 @@ body.yarg-unified-page{
 .mc-preflight-list label{display:flex;align-items:flex-start;gap:10px;line-height:1.5;cursor:pointer}
 .mc-preflight-list input{width:20px;height:20px;flex-shrink:0;margin:2px 0;accent-color:var(--teal,#1fc8bd)}
 .mc-preflight-list input:checked+span{color:#acbbc2}
+ .mc-push-diagnostics{margin-top:15px;border:1px solid #3b5964;border-radius:11px;background:#17272d;overflow:hidden}
+.mc-push-diagnostics>summary{cursor:pointer;padding:13px 15px;font-weight:800;color:#a9e9df;line-height:1.4}
+.mc-push-diagnostics>summary:focus-visible{outline:2px solid #4ddac9;outline-offset:-3px}
+.mc-push-diagnostics-body{padding:12px 15px 16px;border-top:1px solid #3b5964}
+.mc-push-diagnostics-body .actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.mc-push-diagnostics-body .help{margin:7px 0;line-height:1.5}
 </style></head><body class="yarg-unified-page">
 <header class="yarg-page-header">
   <div class="yarg-page-header-inner">
@@ -462,7 +468,16 @@ body.yarg-unified-page{
 <button type="button" id="mc-preflight-reset" class="quiet small">Décocher les vérifications</button>
 </details>
 <section class="card"><h2>Configuration de la soirée</h2><form id="settings-form"><div class="grid"><label>Nom de la soirée<input id="party-name" maxlength="100" required></label><label>Nom du MC<input id="mc-name" maxlength="60" required></label></div><div class="mode"><input id="party-mode" type="checkbox"><label for="party-mode">Mode soirée actif : accepter les nouvelles demandes</label></div><button class="primary" type="submit">Enregistrer les réglages</button></form><p class="help">Désactiver le Mode soirée ferme les demandes, mais n’archive pas la soirée. Pour la faire apparaître au Hall of Fame, utilise « Terminer et archiver la soirée » ci-dessous.</p></section>
-<section class="card" id="push-health-section"><div class="flex"><h2>Notifications Web Push des Rockstars</h2><button type="button" id="push-health-refresh">Actualiser</button></div><p class="help">Appareils abonnés aux alertes d'invitation, de passage imminent et de prochain passage. Un compte peut avoir plusieurs appareils. Il faut activer les notifications dans Mon profil.</p><div id="push-health-summary" class="muted">Chargement…</div><div id="push-health-list" class="owner-list"></div></section>
+<section class="card" id="push-health-section"><div class="flex"><h2>Notifications Web Push des Rockstars</h2><button type="button" id="push-health-refresh">Actualiser</button></div><p class="help">Appareils abonnés aux alertes d'invitation, de passage imminent et de prochain passage. Un compte peut avoir plusieurs appareils. Il faut activer les notifications dans Mon profil.</p><div id="push-health-summary" class="muted">Chargement…</div><div id="push-health-list" class="owner-list"></div>
+<details class="mc-push-diagnostics">
+ <summary>🛠 Tests et diagnostics des notifications</summary>
+ <div class="mc-push-diagnostics-body">
+  <p class="help">Ces contrôles testent <strong>l’appareil où la Régie MC est ouverte</strong>. Le test local vérifie l’affichage par le navigateur, mais ne prouve pas la livraison des notifications depuis Supabase.</p>
+  <div class="actions"><button type="button" id="mc-push-local-test" class="quiet">Tester sur cet appareil</button><button type="button" id="mc-push-receipt-check" class="quiet">Vérifier la réception Web Push</button></div>
+  <p class="help" id="mc-push-diagnostic-status" role="status" aria-live="polite"></p>
+ </div>
+</details>
+</section>
 <section class="card" id="band-visibility-section"><h2>Comptes Rockstar visibles dans les invitations</h2><p class="help">Décoche les Rockstars absentes de cette soirée. Leurs comptes, invitations déjà envoyées et performances restent intacts. Les choix se réinitialisent à la prochaine soirée.</p><div class="actions" id="band-visibility-bulk" style="margin:0 0 16px"><button type="button" id="band-show-all" class="success">Tout afficher</button><button type="button" id="band-hide-all" class="danger">Tout masquer</button></div><div id="band-visibility-list" class="band-visibility-list"><p class="muted">Chargement des comptes…</p></div><div id="band-visibility-status" class="help" role="status" aria-live="polite"></div></section>
 <section class="card"><h2>Terminer et archiver la soirée</h2><p>Clôture la soirée en cours, conserve son historique et prépare une nouvelle session fermée. Termine ou passe d’abord toute chanson encore sur scène.</p><button type="button" id="archive-party-button" class="danger">⏹ Terminer et archiver la soirée</button><p class="help">Le nom de la soirée se modifie dans « Configuration de la soirée », juste au-dessus.</p></section></div>
 <section id="playlists-tab" hidden>
@@ -825,6 +840,60 @@ async function loadPushHealth(){
  }
 }
 $('push-health-refresh').addEventListener('click',loadPushHealth);
+
+/* Diagnostics reserved for authorized MCs. They run on the current browser only. */
+const mcPushDiagStatus=$('mc-push-diagnostic-status');
+const mcPushLocalTest=$('mc-push-local-test');
+const mcPushReceiptCheck=$('mc-push-receipt-check');
+mcPushLocalTest.addEventListener('click',async()=>{
+ mcPushLocalTest.disabled=true;
+ mcPushDiagStatus.textContent='Vérification du navigateur et du service worker…';
+ try{
+  if(!('Notification' in window)||!('serviceWorker' in navigator))throw Error('Ce navigateur ne permet pas ces notifications.');
+  if(Notification.permission!=='granted')throw Error('Notifications non autorisées sur cet appareil. Active-les dans les paramètres du site, puis réessaie.');
+  const registration=await navigator.serviceWorker.getRegistration('./yarg-notifications-sw.js');
+  if(!registration)throw Error('Service worker non enregistré sur cet appareil. Active les notifications dans Mon profil, puis réessaie.');
+  await registration.update();
+  if(!registration.active)throw Error('Service worker inactif. Recharge la page, puis réessaie.');
+  await registration.showNotification('Test local YARG',{
+   body:'Test direct sur cet appareil : aucun serveur Web Push nécessaire.',
+   icon:'./assets/favicon.png?v=3',
+   tag:'yarg-local-diagnostic-'+Date.now(),
+   requireInteraction:true
+  });
+  mcPushDiagStatus.textContent='Test local demandé au navigateur. Vérifie les notifications de cet appareil. Ce test ne confirme pas la livraison distante.';
+ }catch(error){
+  mcPushDiagStatus.textContent='Test local échoué : '+(error?.message||error);
+ }finally{mcPushLocalTest.disabled=false;}
+});
+mcPushReceiptCheck.addEventListener('click',async()=>{
+ mcPushReceiptCheck.disabled=true;
+ mcPushDiagStatus.textContent='Lecture du journal local du service worker…';
+ try{
+  if(!('serviceWorker' in navigator))throw Error('Service worker indisponible.');
+  const registration=await navigator.serviceWorker.getRegistration('./yarg-notifications-sw.js');
+  if(!registration)throw Error('Service worker non enregistré sur cet appareil.');
+  await registration.update();
+  const active=registration.active;
+  if(!active)throw Error('Service worker inactif. Recharge la page.');
+  const details=await new Promise((resolve,reject)=>{
+   const channel=new MessageChannel();
+   const timeout=setTimeout(()=>{channel.port1.close();reject(Error('Le service worker ne répond pas. Recharge la page et réessaie.'));},5000);
+   channel.port1.onmessage=event=>{clearTimeout(timeout);resolve(event.data?.details||null);channel.port1.close();};
+   active.postMessage({type:'YARG_PUSH_DIAGNOSTICS'},[channel.port2]);
+  });
+  if(!details){
+   mcPushDiagStatus.textContent='Aucun push distant enregistré sur cet appareil par ce service worker. Réessaie après une livraison depuis Supabase.';
+  }else{
+   const when=new Date(details.receivedAt).toLocaleString('fr-CA');
+   const outcomes={display_requested:'Notification demandée au navigateur',display_error:'Erreur pendant l’affichage',invalid_json:'Message reçu mais format invalide',ignored_type:'Message reçu mais type inconnu'};
+   mcPushDiagStatus.textContent='Dernier push reçu ici : '+when+' · '+(outcomes[details.outcome]||details.outcome)+' · Type : '+(details.kind||'inconnu')+(details.error?' · '+details.error:'');
+  }
+ }catch(error){
+  mcPushDiagStatus.textContent='Diagnostic : '+(error?.message||error);
+ }finally{mcPushReceiptCheck.disabled=false;}
+});
+
 async function loadBandVisibility(){
  const host=$('band-visibility-list');if(!host)return;
  const {data,error}=await sb.rpc('yarg_mc_band_visibility');
