@@ -239,3 +239,14 @@
  refresh();setInterval(()=>{if(!document.hidden)refresh()},5000);
 
 })();
+
+/* Load the installed-app notification welcome on all party pages (including index). */
+(() => {
+ if(window.__yargPwaWelcomeScriptRequested)return;
+ window.__yargPwaWelcomeScriptRequested=true;
+ if(!(window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true))return;
+ const script=document.createElement('script');
+ script.src='./yarg-pwa-onboarding.js?v=2';
+ script.defer=true;
+ document.head.append(script);
+})();
