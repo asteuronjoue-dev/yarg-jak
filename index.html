@@ -1682,34 +1682,9 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         // A timestamp also prevents the GitHub Pages CDN from reusing an old URL.
         const catalogueResponse = await fetch(CATALOGUE_URL + '?fresh=' + Date.now(), { cache:'no-store' });
         if (!catalogueResponse.ok) throw new Error('Impossible de charger songs.json (HTTP ' + catalogueResponse.status + ')');
-        const catalogueRevision = catalogueResponse.headers.get('etag') ||
-            catalogueResponse.headers.get('last-modified') ||
-            catalogueResponse.headers.get('content-length') || '';
+        // The catalogue is loaded once per page visit or manual refresh.
+        // No background polling or automatic reloads while someone is using the site.
         const rawCatalogueText = await catalogueResponse.text();
-        // A tab that has been left open can recognize new exports too. Use a
-        // cheap HEAD recheck on return / every five minutes; never interrupt
-        // someone while they have a song's detail sheet open.
-        let lastCatalogueCheck = Date.now();
-        async function checkCatalogueUpdates() {
-            if (document.hidden || !catalogueRevision || Date.now()-lastCatalogueCheck < 180000) return;
-            if (document.getElementById('sheet')?.classList.contains('open')) return;
-            lastCatalogueCheck = Date.now();
-            try {
-                const latest = await fetch(CATALOGUE_URL + '?version=' + Date.now(), {
-                    method:'HEAD', cache:'no-store'
-                });
-                if (!latest.ok) return;
-                const revision = latest.headers.get('etag') ||
-                    latest.headers.get('last-modified') ||
-                    latest.headers.get('content-length') || '';
-                if (revision && revision !== catalogueRevision) location.reload();
-            } catch (error) { console.warn('Vérification des chansons indisponible :', error); }
-        }
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) void checkCatalogueUpdates();
-        });
-        window.addEventListener('focus', () => { void checkCatalogueUpdates(); });
-        setInterval(() => { void checkCatalogueUpdates(); }, 5*60*1000);
         const exactMaskText = rawCatalogueText.replace(/("chartsAvailable"\s*:\s*)(-?\d+)(?=\s*[,}])/g, '$1"$2"');
         const rawCatalogue = JSON.parse(exactMaskText);
         if (!Array.isArray(rawCatalogue) || !rawCatalogue.length ||
