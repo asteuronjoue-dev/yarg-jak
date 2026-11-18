@@ -81,8 +81,9 @@ body.party-mode #profile-heading{background:linear-gradient(90deg,#ff355e,#ff9f1
 }
 .yarg-tier-ring.has-medal.is-unearned .yarg-guitar-medal-duo{opacity:.48;filter:grayscale(1)}
 .yarg-tier-ring.has-medal.is-unearned .yarg-guitar-medal-duo .yarg-rank-medal{opacity:1;filter:none!important}
-.yarg-tier-ring.has-medal .yarg-tier-count{position:static;border-radius:5px;background:#111c24e8;padding:1px 4px;border:1px solid #45565f;white-space:nowrap;line-height:1.1;margin-top:1px;font-size:.6rem}
-.yarg-tier-ring.has-medal.is-unearned .yarg-rank-medal{opacity:.48;filter:grayscale(1) !important}.yarg-tier-count{font-size:.65rem;color:#c7d6dc;font-weight:850;margin-top:2px}
+/* Use the same compact counter badge for medal and non-medal progress rings. */
+.yarg-tier-count{position:static;display:inline-block;border-radius:5px;background:#111c24e8;padding:1px 4px;border:1px solid #45565f;white-space:nowrap;line-height:1.1;margin-top:1px;font-size:.6rem;color:#c7d6dc;font-weight:850}
+.yarg-tier-ring.has-medal.is-unearned .yarg-rank-medal{opacity:.48;filter:grayscale(1) !important}
 .yarg-special-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0 23px}
 .yarg-special{background:#222a30;border:1px solid #3e535d;border-radius:13px;padding:13px;display:flex;flex-direction:column;gap:7px}
 .yarg-special strong{font-size:1rem}.yarg-special p{margin:0;font-size:.8rem}
