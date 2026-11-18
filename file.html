@@ -818,9 +818,20 @@ async function loadPerformerMedals(){
   if(medals.error)throw medals.error;
   if(achievements.error)console.warn('Progression Rockstar indisponible',achievements.error);
   for(const row of achievements.data||[]){
-   performerAchievements.set(String(row.user_id),{
-    progress:row.progress||{},special_titles:row.special_titles||[],equipped_title:row.equipped_title||null
+   const userId=String(row.user_id);
+   const progress=row.progress||{};
+   performerAchievements.set(userId,{
+    progress,special_titles:row.special_titles||[],equipped_title:row.equipped_title||null
    });
+   // Preserve the collection button for historical performers without a
+   // currently waiting/playing song.
+   const categories=new Map();
+   for(const [category] of medalCategories){
+    const performances=Math.max(0,Number(progress[category])||0);
+    const tier=medalThresholds.filter(threshold=>performances>=threshold).length;
+    categories.set(category,{tier,performances});
+   }
+   performerMedals.set(userId,categories);
   }
   for(const row of medals.data||[]){
    const userId=String(row.user_id||'');
