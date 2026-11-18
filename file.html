@@ -297,6 +297,14 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .queue-rules-footnote{color:#b5c9d0;font-size:13px;border-top:1px solid #40575d;padding-top:13px;margin-top:18px!important}
 @media(max-width:520px){.queue-rules-body{padding:8px 14px 16px;font-size:13px}.queue-rules-body ul{padding-left:19px}.queue-rule-formula,.queue-rule-example{padding:12px}}
 
+/* Personal controls: one horizontal line on desktop; stack on mobile. */
+.queue-user-actions{display:flex;flex-direction:column;gap:10px;margin:12px 0 18px}
+.queue-user-actions .queue-notify-top,.queue-user-actions .yarg-global-presence{margin:0;min-width:0}
+@media(min-width:700px){
+ .queue-user-actions{flex-direction:row;align-items:stretch;justify-content:flex-end;gap:10px}
+ .queue-user-actions .queue-notify-top,.queue-user-actions .yarg-global-presence{flex:1 1 0;align-items:stretch}
+ .queue-user-actions .queue-notify-top .notify,.queue-user-actions .yarg-global-presence .yarg-pause-all{width:100%;height:100%}
+}
 .queue-notify-top{margin:0 0 20px;display:flex;justify-content:flex-end}
 .queue-notify-top[hidden]{display:none!important}
 .queue-notify-top .notify{width:100%;text-align:center;padding:13px 16px}
@@ -545,13 +553,16 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
   </section>
   <div class="error" id="errorBox"></div>
   <div class="join-slot-notice" id="joinSlotNotice" role="status" hidden></div>
-  <div id="notifyTop" class="queue-notify-top" hidden><button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button></div>
+
   <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
     <details><summary>Comment fonctionnent les points?</summary><p class="points-note">Les points personnels indiquent combien de temps de scène une Rockstar a déjà réservé en lançant ses propres chansons : +1 par seconde (4 min = +240), avec −1 au départ pour les Initiés. Rejoindre une autre chanson ne coûte aucun point personnel. Pour classer une demande, le système soustrait jusqu’à 90 points pour les coéquipiers et jusqu’à 900 points pour l’attente, après 30 minutes. Les chansons non lancées ne coûtent rien. Pour la formule complète, les exemples et les règles de variété, consulte « Comment l’ordre des chansons est-il décidé ? » au bas de la page.</p></details></section>
   <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
+  <div class="queue-user-actions" id="queueUserActions">
+  <div id="notifyTop" class="queue-notify-top" hidden><button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button></div>
   <div class="yarg-global-presence" id="yargGlobalPresence" hidden>
     <button type="button" id="yargPauseAll" class="yarg-pause-all">⏸️ Pas prêt — Mettre toutes mes prestations à venir en pause</button>
+  </div>
   </div>
 
   <section id="queueSection" hidden>
@@ -1389,12 +1400,26 @@ function renderPublicDisplay(){
   }).join(''):'<div class="display-empty">Aucune prestation à venir pour le moment. 🤘</div>';
   document.getElementById('displayUpdated').textContent='Mis à jour à '+formatClock(new Date())+' · Données actualisées toutes les 30 s';
 }
+let pushNotificationsSubscribed=false;
+let pushStatusCheckInFlight=false;
+async function refreshPushNotificationButton(){
+  if(pushStatusCheckInFlight||!window.YargPush?.status)return;
+  pushStatusCheckInFlight=true;
+  try{
+    const state=await window.YargPush.status();
+    pushNotificationsSubscribed=!!(state.subscribed&&state.permission==='granted');
+    const element=document.getElementById('notifyTop');
+    if(element)element.hidden=!settings?.performance_requests_enabled||pushNotificationsSubscribed;
+  }catch(error){console.warn('Statut Web Push indisponible :',error);}
+  finally{pushStatusCheckInFlight=false;}
+}
 function render(){
   if(IS_PUBLIC_DISPLAY){renderPublicDisplay();return;}
   const active=!!settings?.performance_requests_enabled;
   $('#yargGlobalPresence').hidden=!active||!myAuthId;
   $('#queueSection').hidden=!active;
-  $('#notifyTop').hidden=!active;
+  $('#notifyTop').hidden=!active||pushNotificationsSubscribed;
+  if(active&&!pushNotificationsSubscribed)refreshPushNotificationButton();
   $('#historySection').hidden=!active;
   $('#closedSection').hidden=active;
   if(!active){const banner=$('#yarg-my-next-banner');banner.hidden=true;banner.textContent='';return;}
@@ -1828,7 +1853,8 @@ document.getElementById('notifyBtn').addEventListener('click',async()=>{
  try{
   if(!window.YargPush)throw Error('Le module de notification n’est pas encore chargé.');
   await window.YargPush.enable();
-  button.textContent='Notifications activées';
+  pushNotificationsSubscribed=true;
+   document.getElementById('notifyTop').hidden=true;
  }catch(error){alert(window.yargErrorMessage(error,'Impossible d’activer les notifications. Réessaie; si le problème persiste, préviens le MC.'));}
  finally{button.disabled=false;}
 });
