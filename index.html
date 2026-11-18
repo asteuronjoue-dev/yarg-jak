@@ -1141,18 +1141,18 @@ header {max-height:none!important;overflow:visible!important}
 /* Playlist emojis float in a fixed overlay: songs without emojis keep the same instrument alignment. */
 #scroll .row>.cell.cell-instruments{position:relative!important;justify-content:flex-end!important}
 #scroll .row .song-playlist-stack{position:absolute!important;left:5px;top:50%;transform:translateY(-50%);pointer-events:none;z-index:1}
-/* Desktop: instruments start at the left edge below their heading.
-   Playlist badges occupy a reserved area on the right, not an instrument slot. */
+/* Desktop: playlist badges sit to the left of the instrument icons.
+   Reserve the same left gutter for every song to keep instruments aligned. */
 @media(min-width:901px){
   #scroll .row>.cell.cell-instruments{
     justify-content:flex-start!important;
-    padding-left:0!important;
-    padding-right:35px!important;
+    padding-left:35px!important;
+    padding-right:3px!important;
     box-sizing:border-box!important;
     gap:2px!important;
     min-width:0!important;
   }
-  #scroll .row .song-playlist-stack{left:auto!important;right:4px!important}
+  #scroll .row .song-playlist-stack{left:5px!important;right:auto!important}
 }
 @media(min-width:681px){#scroll .row .song-row-actions{justify-content:center!important}}
 #scroll .row .song-playlist-stack>span{height:12px;line-height:12px;display:block}
