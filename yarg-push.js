@@ -38,7 +38,9 @@
  async function enable(){
   if(!supports())throw Error('Web Push n’est pas disponible dans ce navigateur. Sur iPhone, ajoute le site à l’écran d’accueil et ouvre-le depuis son icône.');
   await auth();
-  const permission=await Notification.requestPermission();
+  // A guest may have granted browser permission before logging in. Reuse it
+  // without triggering another permission prompt outside a user gesture.
+  const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
   if(permission!=='granted')throw Error('Notifications non autorisées dans les réglages du navigateur.');
   const {data:key,error:keyError}=await client.rpc('yarg_push_public_key');
   if(keyError||!key)throw Error('Clé de notification indisponible.');
