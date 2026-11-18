@@ -8,7 +8,7 @@ const STORAGE_KEY='yarg_duplicate_review_v1';
 const FIELD_NAMES={Name:'Titre',Artist:'Artiste',Album:'Album',Playlist:'Playlist / collection',Genre:'Genre',Charter:'Charter',Year:'Année',songlength:'Durée (ms)',chartsAvailable:'Masque des partitions'};
 const CHARTS=[['Guitare',0],['Basse',1],['Guitare rythmique',2],['Batterie 4 voies',3],['Batterie 5 voies (source)',4],['Pro Drums',5],['Clavier 5 voies',6],['Pro Keys',7],['Chant',8]];
 const DIFFICULTIES=[[1n,'Débutant'],[2n,'Facile'],[4n,'Moyen'],[8n,'Difficile'],[16n,'Expert'],[32n,'Expert+']];
-let songs=[],groups=[],decisions={},notes={},ignored={},shown=15,renderTimer=0;
+let songs=[],groups=[],decisions={},ignored={},shown=15,renderTimer=0;
 function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fold(text){return String(text||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');}
 function titleBase(text){
@@ -122,11 +122,11 @@ function analyse(){
  }).sort((a,b)=>({exact:0,likely:1,variant:2}[a.kind]-{exact:0,likely:1,variant:2}[b.kind])||a.artist.localeCompare(b.artist,'fr'));
 }
 function loadSaved(){
- try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');decisions=x.decisions&&typeof x.decisions==='object'?x.decisions:{};notes=x.notes&&typeof x.notes==='object'?x.notes:{};ignored=x.ignored&&typeof x.ignored==='object'?x.ignored:{};}
- catch{decisions={};notes={};ignored={};}
+ try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');decisions=x.decisions&&typeof x.decisions==='object'?x.decisions:{};ignored=x.ignored&&typeof x.ignored==='object'?x.ignored:{};}
+ catch{decisions={};ignored={};}
 }
 function save(){
- try{localStorage.setItem(STORAGE_KEY,JSON.stringify({decisions,notes,ignored}));}
+ try{localStorage.setItem(STORAGE_KEY,JSON.stringify({decisions,ignored}));}
  catch(e){$('result-summary').textContent='Impossible d’enregistrer les décisions dans le navigateur : '+e.message;}
 }
 function groupedDeleteCount(g){return ignored[g.id]?0:g.items.filter(x=>decisions[x.id]==='delete').length;}
@@ -158,12 +158,11 @@ function songCard(g,s){
  const score=chartScore(s),suggestion=g.suggested===s.id?'Suggestion : plus de partitions jouables':'';
  const tracks=supportedTracks(s);
  return '<section class="song-card'+(selectedKeep?' song-card--keep':'')+(selectedDelete?' song-card--delete':'')+'">'+
- '<div class="song-indicator'+(suggestion?' better':'')+'">Entrée n° '+(s.index+1)+(suggestion?' · '+esc(suggestion):'')+'</div>'+
+ '<div class="song-indicator'+(suggestion?' better':'')+'">Position dans songs.json · '+(s.index+1)+(suggestion?' · '+esc(suggestion):'')+'</div>'+
  '<h3>'+esc(s.Name)+'</h3><div class="song-artist">'+esc(s.Artist)+'</div>'+
  '<div class="track-strip">'+tracks.map(([name])=>'<span class="track">'+esc(name)+'</span>').join('')+(tracks.length?'':'<span class="track">Aucune partition identifiée</span>')+'</div>'+
  metadata(s)+
  '<details><summary>Voir les difficultés et harmonies ('+tracks.length+' pistes)</summary>'+trackDetails(s)+'</details>'+
- '<label class="field song-note"><small>Note personnelle (ex. dossier où trouver ce fichier)</small><textarea data-note="'+esc(s.id)+'" rows="2" placeholder="Note facultative pour retrouver le bon fichier">'+esc(notes[s.id]||'')+'</textarea></label>'+
  '<div class="song-choices"><button type="button" class="'+(selectedKeep?'keep-selected':'')+'" data-action="keep" data-group="'+esc(g.id)+'" data-id="'+esc(s.id)+'" aria-pressed="'+selectedKeep+'">'+(selectedKeep?'✓ À garder':'Garder celle-ci')+'</button>'+
  '<label class="delete-toggle"><input type="checkbox" data-action="delete" data-id="'+esc(s.id)+'" data-group="'+esc(g.id)+'" '+(selectedDelete?'checked':'')+'> À supprimer</label></div></section>';
 }
@@ -175,7 +174,7 @@ function groupCard(g){
  '<div class="match-meta"><span class="match-flag '+(g.kind==='exact'?'strong':g.kind)+'">'+esc(title)+'</span><span class="match-flag">'+g.items.length+' versions</span></div>'+
  '<div class="match-tip">'+esc(g.warning)+'</div></div>'+
  '<div class="match-actions"><button type="button" class="quiet" data-action="ignore" data-group="'+esc(g.id)+'">'+(ignored[g.id]?'↩ Réexaminer':'Ignorer ce groupe')+'</button>'+
- '<button type="button" class="danger" data-action="batch" data-group="'+esc(g.id)+'" '+(!actionKeep||ignored[g.id]?'disabled':'')+'>Marquer les autres à supprimer</button></div></div>'+
+ (g.items.length>2?'<button type="button" class="danger" data-action="batch" data-group="'+esc(g.id)+'" '+(!actionKeep||ignored[g.id]?'disabled':'')+'>Marquer les autres à supprimer</button>':'')+'</div></div>'+
  '<div class="song-grid">'+g.items.map(s=>songCard(g,s)).join('')+'</div></article>';
 }
 function render(){
@@ -196,17 +195,30 @@ function render(){
  $('export').disabled=toDelete===0;
 }
 function findGroup(id){return groups.find(g=>g.id===id);}
-function chooseKeep(g,id){
- for(const s of g.items)if(decisions[s.id]==='keep')delete decisions[s.id];
- if(id)decisions[id]='keep';
+function oppositeDecision(choice){return choice==='keep'?'delete':'keep';}
+function chooseVersion(g,id,choice){
+ if(g.items.length===2){
+  const other=g.items.find(s=>s.id!==id);
+  if(choice)decisions[other.id]=oppositeDecision(choice);
+  else delete decisions[other.id];
+ }else if(choice==='keep'){
+  for(const s of g.items)if(decisions[s.id]==='keep')delete decisions[s.id];
+ }
+ if(choice)decisions[id]=choice;
+ else delete decisions[id];
  delete ignored[g.id];save();render();
 }
-function chooseDelete(g,id,checked){
- if(checked){
-  if(decisions[id]==='keep')delete decisions[id];
-  decisions[id]='delete';
- }else if(decisions[id]==='delete')delete decisions[id];
- delete ignored[g.id];save();render();
+function completeSavedPairs(){
+ let changed=false;
+ for(const g of groups){
+  if(g.items.length!==2||ignored[g.id])continue;
+  const marked=g.items.filter(s=>decisions[s.id]);
+  if(marked.length!==1)continue;
+  const other=g.items.find(s=>s!==marked[0]);
+  decisions[other.id]=oppositeDecision(decisions[marked[0].id]);
+  changed=true;
+ }
+ if(changed)save();
 }
 function exportReport(){
  const marked=groups.map(g=>({g,items:g.items.filter(s=>!ignored[g.id]&&decisions[s.id]==='delete')})).filter(x=>x.items.length);
@@ -233,7 +245,6 @@ function exportReport(){
    const bits=trackBits(s,i);
    out.push('  '+name+' : '+(DIFFICULTIES.filter(([bit])=>(bits&bit)!==0n).map(([,name])=>name).join(', ')||'Inconnue'));
   }
-  if(notes[s.id])out.push('NOTE PERSONNELLE : '+notes[s.id]);
   return out;
  };
  for(let i=0;i<marked.length;i++){
@@ -269,7 +280,7 @@ async function loadCatalogue(){
    song.searchText=fold([song.Name,song.Artist,song.Album,song.Playlist,song.Charter,song.Genre,song.Year].join(' '));
    return song;
   });
-  analyse();shown=15;render();
+  analyse();completeSavedPairs();shown=15;render();
   $('loading').textContent='Catalogue analysé. Les suggestions ne sont pas des décisions de suppression.';
   $('workspace').hidden=false;
  }catch(e){$('loading').textContent='Erreur de lecture du catalogue : '+e.message;}
@@ -281,28 +292,23 @@ function bindUI(){
  $('rescan').addEventListener('click',loadCatalogue);
  $('export').addEventListener('click',exportReport);
  $('reset').addEventListener('click',()=>{
-  if(!confirm('Effacer toutes les décisions, notes et groupes ignorés enregistrés sur cet appareil ?'))return;
-  decisions={};notes={};ignored={};save();render();
- });
- $('group-list').addEventListener('input',e=>{
-  const input=e.target.closest('[data-note]');if(!input)return;
-  const value=input.value; if(value.trim())notes[input.dataset.note]=value;else delete notes[input.dataset.note];
-  save();
+  if(!confirm('Effacer toutes tes décisions sur cet appareil, y compris les groupes ignorés ?'))return;
+  decisions={};ignored={};save();render();
  });
  $('group-list').addEventListener('change',e=>{
   const input=e.target.closest('input[data-action="delete"]');if(!input)return;
-  const g=findGroup(input.dataset.group);if(g)chooseDelete(g,input.dataset.id,input.checked);
+  const g=findGroup(input.dataset.group);if(g)chooseVersion(g,input.dataset.id,input.checked?'delete':null);
  });
  $('group-list').addEventListener('click',e=>{
   const button=e.target.closest('button[data-action]');if(!button)return;
   const action=button.dataset.action,g=findGroup(button.dataset.group);if(!g)return;
   if(action==='keep'){
-   const next=decisions[button.dataset.id]==='keep'?null:button.dataset.id;
-   chooseKeep(g,next);
+   const id=button.dataset.id;
+   chooseVersion(g,id,decisions[id]==='keep'?null:'keep');
   }
   if(action==='ignore'){
    if(!ignored[g.id]){
-    if(g.items.some(s=>decisions[s.id]||notes[s.id])&&!confirm('Ignorer ce groupe ? Les décisions de garder/supprimer seront effacées, mais pas tes notes.'))return;
+    if(g.items.some(s=>decisions[s.id])&&!confirm('Ignorer ce groupe et effacer tes décisions pour ces versions ?'))return;
     for(const s of g.items)delete decisions[s.id];
     ignored[g.id]=true;
    }else delete ignored[g.id];
