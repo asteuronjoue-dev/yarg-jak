@@ -1152,6 +1152,7 @@ body>header{border-bottom:0!important}
 .catalog-directory-count{display:inline-flex;align-items:center;gap:6px;border:1px solid #36434a;background:#1b2429;color:#bacbd0;padding:7px 11px;border-radius:999px;font-size:.78rem;font-weight:800;white-space:nowrap}
 .catalog-directory-count-dot{width:6px;height:6px;border-radius:50%;background:#1fc8bd}
 .catalog-directory-count-shown{color:#ffca8d;background:#2c251f;border-color:#695036}
+.catalog-results-summary{padding:8px 12px}
 .catalog-directory-accent{height:3px;margin-top:16px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,#1fc8bd 0%,#2ab9c1 38%,#ff8a24 82%,transparent 100%);opacity:.95}
 @media(max-width:680px){
  .catalog-directory-heading{margin-top:7px;padding:11px 11px 0}
@@ -1450,6 +1451,9 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         </div>
         <div class="catalog-directory-accent" aria-hidden="true"></div>
     </section>
+    <div class="catalog-results-summary" id="catalog-results">
+        <span class="catalog-directory-count catalog-directory-count-shown" id="results-count">Affichées : 0</span>
+    </div>
     <div class="col-header">
         <div class="col-header-cell" data-sort="a">Artiste <span class="sort-indicator"></span></div>
         <div class="col-header-cell" data-sort="t">Titre <span class="sort-indicator"></span></div>
@@ -2403,6 +2407,8 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         const searchInput = document.getElementById('search');
         const totalCountEl = document.getElementById('total-count');
         const countEl = document.getElementById('count');
+        const resultsCountEl = document.getElementById('results-count');
+        const resultsSummary = document.getElementById('catalog-results');
         const scrollEl = document.getElementById('scroll');
         const spacerEl = document.getElementById('spacer');
 
@@ -2487,14 +2493,14 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         function filter() {
             filtered = DATA.filter(matches);
             sortFiltered();
-            countEl.textContent = `Affichées : ${filtered.length}`;
+            countEl.textContent = resultsCountEl.textContent = `Affichées : ${filtered.length}`;
             refreshSuggestions();
             render(true);
         }
 
         function goToResults(){
             const bannerHeight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--yarg-next-banner-height'))||0;
-            const y=window.pageYOffset+scrollEl.getBoundingClientRect().top-bannerHeight-12;
+            const y=window.pageYOffset+resultsSummary.getBoundingClientRect().top-bannerHeight-12;
             const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             window.scrollTo({top:Math.max(0,y),behavior:reducedMotion?'auto':'smooth'});
         }
@@ -2852,7 +2858,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             return `<span class="sheet-diff-icon"><img src="${ICON_SRC[key]}" alt="${esc(label)}"></span>`;
         }
 
-        function openSheet(r) {
+        function openSheet(r, fromHistory = false) {
             CURRENT_SHEET_SONG = r;
             updateFavoriteButton();
             const requestZone = document.getElementById('performance-request-zone');
@@ -2911,6 +2917,14 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
 
             document.getElementById('sheet-diffs').innerHTML = diffHtml;
             setPartyFlavor();
+            if (!fromHistory) {
+                const state = {...history.state, yargCatalogueSongId: String(r.id)};
+                if (history.state?.yargCatalogueSongId) {
+                    history.replaceState(state, '');
+                } else {
+                    history.pushState(state, '');
+                }
+            }
             sheetBackdrop.classList.add('open');
             sheet.classList.add('open');
         }
@@ -2932,10 +2946,25 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             window.location.href = `demande-soiree.html?${params.toString()}`;
         });
 
-        function closeSheet() {
+        function hideSheet() {
             sheetBackdrop.classList.remove('open');
             sheet.classList.remove('open');
         }
+
+        function closeSheet() {
+            if (!sheet.classList.contains('open')) return;
+            hideSheet();
+            if (history.state?.yargCatalogueSongId) history.back();
+        }
+
+        function syncSheetFromHistory(state) {
+            const songId = state?.yargCatalogueSongId;
+            const song = songId && DATA.find(r => String(r.id) === songId);
+            if (song) openSheet(song, true);
+            else hideSheet();
+        }
+
+        window.addEventListener('popstate', event => syncSheetFromHistory(event.state));
 
         sheetBackdrop.addEventListener('click', (e) => {
             if (e.target === sheetBackdrop) {
@@ -2984,6 +3013,7 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
         // Initial render
         updateSortIndicators();
         filter();
+        syncSheetFromHistory(history.state);
     })().catch(error=>{
         console.error('Erreur lors du chargement du catalogue YARG :',error);
         const parent=document.querySelector('header')||document.body;
