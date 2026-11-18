@@ -61,7 +61,20 @@ function similarity(a,b){
  }
  return 1-previous[m]/Math.max(n,m);
 }
+function distinctSongParts(a,b){
+ // « Part I » and « Part II », « Synchronicity I » and « II », etc. are different songs.
+ const read=value=>{
+  const title=titleBase(value);
+  const explicit=title.match(/^(.*?)\s+(?:part|pt|chapter|vol|volume|movement|mvt)\s+([0-9]+|[ivxlcdm]+)$/i);
+  if(explicit)return {base:explicit[1],number:explicit[2]};
+  const roman=title.match(/^(.*?)\s+(i|ii|iii|iv|v|vi|vii|viii|ix|x)$/i);
+  return roman?{base:roman[1],number:roman[2]}:null;
+ };
+ const x=read(a.Name),y=read(b.Name);
+ return !!(x&&y&&x.base===y.base&&x.number!==y.number);
+}
 function potentialMatch(a,b){
+ if(distinctSongParts(a,b))return 0;
  if(a.artistKey===b.artistKey&&a.titleKey===b.titleKey)return 100;
  if(a.titleKey===b.titleKey&&a.artistKey.length>3&&b.artistKey.length>3&&similarity(a.artistKey,b.artistKey)>=.87)return 87;
  if(a.artistKey===b.artistKey&&Math.min(a.titleKey.length,b.titleKey.length)>=7){
