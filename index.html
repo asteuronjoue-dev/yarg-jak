@@ -388,6 +388,9 @@
         .sheet-diff-tier {
             color: var(--subtle-text);
         }
+        .sheet-diff-levels{min-width:0;display:grid;gap:5px}
+        .sheet-diff-availability{font-size:.72rem;line-height:1.35;color:#a7e7d9;overflow-wrap:break-word}
+        @media(max-width:650px){.sheet-diff-availability{font-size:.68rem}}
 
         footer {
             flex: 0 0 auto;
@@ -2944,48 +2947,52 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
             document.getElementById('sheet-charter').textContent = r.ch || '—';
             document.getElementById('sheet-playlist').textContent = r.pl || '—';
             document.getElementById('sheet-game-appearances').textContent = (r.games||[]).filter(g=>g!==r.pl).join(' · ') || '—';
-// Decode per-part difficulties (V/G/D/K/B).
+// Decode each instrument's actual playable difficulty charts straight
+            // from songs.json. Historic star/intensity ratings are separate
+            // metadata and must not hide newly added YARG charts.
             let diffHtml = '';
             const rhythmBits = chartGroup(r,2);
+            const difficultyNames=[['Facile',2n],['Moyen',4n],['Difficile',8n],['Expert',16n]];
+            const partChartGroups={V:[8],G:[0],D:[3,4,5],K:[6,7],B:[1]};
+            function availableFor(groups){
+                return difficultyNames.filter(([,flag])=>groups.some(group=>(chartGroup(r,group)&flag)!==0n)).map(([name])=>name);
+            }
+            function chartSummary(groups){
+                const names=availableFor(groups);
+                const label=names.length?names.join(' · '):'Aucun niveau précisé';
+                return '<div class="sheet-diff-availability" title="'+esc('Difficultés jouables : '+label)+'">'+esc(label)+'</div>';
+            }
             for (let i = 0; i < PART_ORDER.length; i++) {
                 const part = PART_ORDER[i];
                 const ch = r.d ? r.d['VGDKB'.indexOf(part)] : '.';
-                // A playable guitar chart can exist even if YARG exports no intensity rating.
-                // Keep it in the combined guitar/rhythm row in that case.
-                const hasGuitarChart = part === 'G' && (r.p?.includes('G') || hasChartGroup(r,0));
-                if (ch === '.' && !hasGuitarChart) continue;
-
-                const n = decodeTier(ch);
-                let partLabel = PART_LABELS[part];
-                if (part === 'V') {
-                    partLabel = r.vp >= 2 ? `Harmonies (${r.vp})` : 'Voix solo';
-                }
-
-                if (part === 'G' && rhythmBits !== 0n) {
-                    diffHtml += `<div class="sheet-diff-row">`;
-                    diffHtml += `<div class="sheet-diff-part"><span class="sheet-diff-icon sheet-dual-guitar" title="Guitare et guitare rythmique"><img class="sheet-lead-alternate" src="${ICON_SRC.guitar}" alt=""><img class="sheet-rhythm-alternate" src="${RHYTHM_ICON}" alt=""></span><span class="sheet-diff-name">Guitares</span></div>`;
-                    diffHtml += `<div class="sheet-diff-tier">${esc(diffLabel(n))}</div>`;
-                    diffHtml += `<div>${diffMeterHtml(n)}</div>`;
-                    diffHtml += `</div>`;
-                    continue;
-                }
-
-                diffHtml += `<div class="sheet-diff-row">`;
-                diffHtml += `<div class="sheet-diff-part">${partIconHtml(part,r)}<span class="sheet-diff-name">${esc(partLabel)}</span></div>`;
-                diffHtml += `<div class="sheet-diff-tier">${esc(diffLabel(n))}</div>`;
-                diffHtml += `<div>${diffMeterHtml(n)}</div>`;
-                diffHtml += `</div>`;
+                const groups=partChartGroups[part]||[];
+                const active=groups.some(group=>hasChartGroup(r,group));
+                if(ch==='.'&&!active)continue;
+                const n=decodeTier(ch);
+                let partLabel=PART_LABELS[part];
+                if(part==='V')partLabel=r.vp>=2?'Harmonies ('+r.vp+')':'Voix solo';
+                const dualGuitars=part==='G'&&rhythmBits!==0n;
+                const icon=dualGuitars
+                    ? '<span class="sheet-diff-icon sheet-dual-guitar" title="Guitare et guitare rythmique"><img class="sheet-lead-alternate" src="'+ICON_SRC.guitar+'" alt=""><img class="sheet-rhythm-alternate" src="'+RHYTHM_ICON+'" alt=""></span>'
+                    : partIconHtml(part,r);
+                if(dualGuitars)partLabel='Guitares';
+                diffHtml+='<div class="sheet-diff-row">';
+                diffHtml+='<div class="sheet-diff-part">'+icon+'<span class="sheet-diff-name">'+esc(partLabel)+'</span></div>';
+                diffHtml+='<div class="sheet-diff-tier">'+esc(ch==='.'?'—':diffLabel(n))+'</div>';
+                const levels=dualGuitars?[0,2]:groups;
+                diffHtml+='<div class="sheet-diff-levels">'+(ch==='.'?'':diffMeterHtml(n))+chartSummary(levels)+'</div>';
+                diffHtml+='</div>';
+            }
+            // Rhythm-only charts have no regular guitar track, so list them
+            // separately (they previously displayed a blank difficulty).
+            if(!hasChartGroup(r,0)&&rhythmBits!==0n){
+                diffHtml+='<div class="sheet-diff-row sheet-rhythm-diff-row">';
+                diffHtml+='<div class="sheet-diff-part"><span class="sheet-diff-icon"><img src="'+RHYTHM_ICON+'" alt="Guitare rythmique"></span><span class="sheet-diff-name">Guitare rythmique</span></div>';
+                diffHtml+='<div class="sheet-diff-tier">—</div>';
+                diffHtml+='<div class="sheet-diff-levels">'+chartSummary([2])+'</div></div>';
             }
 
-            // Only add a standalone rhythm row if the normal guitar chart is absent.
-            if (!(r.p?.includes('G') || hasChartGroup(r,0)) && rhythmBits!==0n) {
-                diffHtml += `<div class="sheet-diff-row sheet-rhythm-diff-row">`;
-                diffHtml += `<div class="sheet-diff-part"><span class="sheet-diff-icon"><img src="${RHYTHM_ICON}" alt="Guitare rythmique"></span><span class="sheet-diff-name">Guitare Rythmique</span></div>`;
-                diffHtml += `<div class="sheet-diff-tier" style="grid-column:span 2">—</div>`;
-                diffHtml += `</div>`;
-            }
-
-            document.getElementById('sheet-diffs').innerHTML = diffHtml;
+                        document.getElementById('sheet-diffs').innerHTML = diffHtml;
             setPartyFlavor();
             if (!fromHistory) {
                 const state = {...history.state, yargCatalogueSongId: String(r.id)};
