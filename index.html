@@ -1138,7 +1138,19 @@ header {max-height:none!important;overflow:visible!important}
 /* Playlist emojis float in a fixed overlay: songs without emojis keep the same instrument alignment. */
 #scroll .row>.cell.cell-instruments{position:relative!important;justify-content:flex-end!important}
 #scroll .row .song-playlist-stack{position:absolute!important;left:5px;top:50%;transform:translateY(-50%);pointer-events:none;z-index:1}
-@media(min-width:901px){#scroll .row>.cell.cell-instruments{padding-left:35px!important;padding-right:3px!important;box-sizing:border-box!important;gap:2px!important;min-width:0!important}}
+/* Desktop: instruments start at the left edge below their heading.
+   Playlist badges occupy a reserved area on the right, not an instrument slot. */
+@media(min-width:901px){
+  #scroll .row>.cell.cell-instruments{
+    justify-content:flex-start!important;
+    padding-left:0!important;
+    padding-right:35px!important;
+    box-sizing:border-box!important;
+    gap:2px!important;
+    min-width:0!important;
+  }
+  #scroll .row .song-playlist-stack{left:auto!important;right:4px!important}
+}
 @media(min-width:681px){#scroll .row .song-row-actions{justify-content:center!important}}
 #scroll .row .song-playlist-stack>span{height:12px;line-height:12px;display:block}
 #scroll .row .song-row-fav{flex:0 0 auto;width:31px;height:31px;display:inline-grid;place-items:center;padding:0;border:1px solid #42555c;border-radius:9px;background:#1d2b31;color:#b7c6cf;font-size:22px;line-height:1;cursor:pointer}
