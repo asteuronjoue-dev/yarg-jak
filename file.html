@@ -386,6 +386,15 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-collection-bar{height:6px;background:#364951;border-radius:20px;margin-top:11px;overflow:hidden}
 .yarg-collection-bar>span{height:100%;background:#65e0bd;display:block}
 .yarg-collection-count{color:#c5d5da;font-size:12px;margin-top:8px}
+.yarg-collection-section-label{font-size:1rem;font-weight:850;margin:20px 0 0;color:#b7ecdf}
+.yarg-collection-special-list{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px}
+.yarg-collection-special-title{border-radius:10px;border:1px solid #b78f4a;background:#342c21;color:#ffdc9d;padding:9px 12px;font-weight:850;font-size:.88rem}
+.yarg-collection-special-title.is-equipped{border-color:#63d6c3;background:#193833;color:#c5fff0}
+.yarg-collection-stat-symbol{display:grid;place-items:center;width:55px;height:55px;flex:0 0 55px;font-size:35px;line-height:1}
+.yarg-collection-other .yarg-collection-item{background:#1c2b33}
+.yarg-collection-stat-value{margin-top:9px;font-weight:900;font-size:.91rem;color:#f5f9fb}
+.yarg-collection-stat-note{font-size:.76rem;line-height:1.45;color:#b5cbd1;margin-top:5px}
+@media(max-width:550px){.yarg-collection-stat-symbol{width:39px;height:39px;flex-basis:39px;font-size:29px}.yarg-collection-special-title{font-size:.8rem;padding:8px 10px}}
 @media(max-width:550px){.yarg-collection-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.yarg-collection-item{padding:8px}.yarg-collection-identity img{height:39px;width:39px}.yarg-collection-identity .yarg-guitar-medal-duo{width:39px;height:39px;flex-basis:39px}.yarg-collection-dialog{padding:12px}}
 
 /* Compact, medal-first queue performer rows; other people's difficulty is not shown. */
@@ -611,8 +620,12 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 
 <div id="yarg-collection-overlay" class="yarg-collection-overlay" hidden>
  <section class="yarg-collection-dialog" role="dialog" aria-modal="true" aria-labelledby="yarg-collection-name" tabindex="-1">
-  <div class="yarg-collection-top"><div><h2 id="yarg-collection-name">Collection Rockstar</h2><p class="hint">Médailles et prestations par instrument</p></div><button type="button" id="yarg-collection-close" aria-label="Fermer la collection">Fermer</button></div>
+  <div class="yarg-collection-top"><div><h2 id="yarg-collection-name">Collection Rockstar</h2><p class="hint">Titres et progression à vie</p></div><button type="button" id="yarg-collection-close" aria-label="Fermer la collection">Fermer</button></div>
+  <div id="yarg-collection-special" hidden></div>
+  <h3 class="yarg-collection-section-label">Médailles d’instruments</h3>
   <div id="yarg-collection-grid" class="yarg-collection-grid"></div>
+  <h3 class="yarg-collection-section-label">Autres succès et statistiques</h3>
+  <div id="yarg-collection-other" class="yarg-collection-grid"></div>
  </section>
 </div>
 
@@ -691,7 +704,7 @@ const BAND_TOKEN_KEY='yarg_band_secret_v1';
 function myBandToken(){let t=localStorage.getItem(BAND_TOKEN_KEY);if(!t){t=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem(BAND_TOKEN_KEY,t)}return t}
 let scoreRows=[];let managing=null;let myAccountMemberIds=new Set();let myRockstarName='';let myAuthId='';let equippedTitles=new Map();
 
-let performerMedals=new Map();
+let performerMedals=new Map();let performerAchievements=new Map();
 let collectionTrigger=null;
 const medalNames=['En bois','Bronze','Argent','Or','Platine','Émeraude','Diamant','Maître','Grand Maître','Champion'];
 const medalSlugs=['wood','bronze','silver','gold','platinum','emerald','diamond','master','grand-master','champion'];
@@ -738,6 +751,51 @@ function openMedalCollection(userId,name,button){
   count.textContent=performances+' prestation'+(performances===1?'':'s')+(next?' · Prochain rang : '+next:' · Champion atteint');
   item.append(identity,bar,count);grid.append(item);
  }
+ const achievement=performerAchievements.get(String(userId));
+ const specialHost=document.getElementById('yarg-collection-special');specialHost.replaceChildren();
+ const specials=Array.isArray(achievement?.special_titles)?achievement.special_titles:[];
+ specialHost.hidden=!specials.length;
+ if(specials.length){
+  const label=document.createElement('h3');label.className='yarg-collection-section-label';label.textContent='Titres spéciaux débloqués';specialHost.append(label);
+  const list=document.createElement('div');list.className='yarg-collection-special-list';
+  for(const title of specials){
+   const badge=document.createElement('span');badge.className='yarg-collection-special-title'+(title.code===achievement.equipped_title?' is-equipped':'');
+   badge.textContent=String(title.label||'')+(title.code===achievement.equipped_title?' ✓ Équipé':'');list.append(badge);
+  }
+  specialHost.append(list);
+ }
+ const other=document.getElementById('yarg-collection-other');other.replaceChildren();
+ const values=achievement?.progress||{};
+ const extra=[
+  ['parties','Présence aux soirées','🌟','soirée',[3,10,25,40,64,103,165],['Vétéran','Pilier de la scène','Légende vivante','Diamant','Maître','Grand maître','Champion']],
+  ['stage_minutes','Temps sur scène','⏱️','minute',[15,60,300,900,3000,4800,7680,12288],['Échauffement','Habitué des planches','Bête de scène','Monstre de scène','Immortel du rock','Maître','Grand maître','Champion']],
+  ['confirmed_additions','Ajouts à la bibliothèque','🎵','ajout confirmé',[1,3,5,10,20,35,60,100],['Défricheur musical','Argent','Or','Platine','Diamant','Maître','Grand maître','Champion']],
+  ['library_requests','Chansons demandées au catalogue','📩','demande',[],[]]
+ ];
+ for(const [key,label,symbol,unit,thresholds,titles] of extra){
+  const value=Math.max(0,Number(values[key])||0);
+  const completed=thresholds.filter(goal=>value>=goal).length;
+  const next=thresholds[completed];
+  const card=document.createElement('div');card.className='yarg-collection-item';
+  const identity=document.createElement('div');identity.className='yarg-collection-identity';
+  const image=document.createElement('span');image.className='yarg-collection-stat-symbol';image.textContent=symbol;
+  const heading=document.createElement('div');const strong=document.createElement('b');strong.textContent=label;
+  const subtitle=document.createElement('small');subtitle.textContent=thresholds.length?(completed?titles[completed-1]:'Aucun palier débloqué'):'Nombre total';
+  heading.append(strong,subtitle);identity.append(image,heading);card.append(identity);
+  const count=document.createElement('div');count.className='yarg-collection-stat-value';
+  count.textContent=value+' '+unit+(value===1?'':'s');card.append(count);
+  if(next){
+   const previous=completed?thresholds[completed-1]:0;
+   const bar=document.createElement('div');bar.className='yarg-collection-bar';
+   const fill=document.createElement('span');fill.style.width=Math.min(100,Math.max(0,(value-previous)*100/(next-previous)))+'%';
+   bar.append(fill);card.append(bar);
+   const caption=document.createElement('div');caption.className='yarg-collection-stat-note';
+   caption.textContent=value+'/'+next+' · Prochain : '+titles[completed];card.append(caption);
+  }else if(thresholds.length){
+   const caption=document.createElement('div');caption.className='yarg-collection-stat-note';caption.textContent='Tous les paliers débloqués !';card.append(caption);
+  }
+  other.append(card);
+ }
  document.getElementById('yarg-collection-overlay').hidden=false;document.getElementById('yarg-collection-close').focus();
 }
 function closeMedalCollection(){
@@ -750,12 +808,21 @@ document.getElementById('yarg-collection-overlay').addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('yarg-collection-overlay').hidden)closeMedalCollection()});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-collection-user]');if(b)openMedalCollection(b.dataset.collectionUser,b.dataset.collectionName||'Rockstar',b)});
 async function loadPerformerMedals(){
- performerMedals=new Map();
+ performerMedals=new Map();performerAchievements=new Map();
  if(!settings?.current_session_id)return;
  try{
-  const {data,error}=await sb.rpc('yarg_public_performer_medals',{p_session_id:settings.current_session_id});
-  if(error)throw error;
-  for(const row of data||[]){
+  const [medals,achievements]=await Promise.all([
+   sb.rpc('yarg_public_performer_medals',{p_session_id:settings.current_session_id}),
+   sb.rpc('yarg_public_rockstar_achievements',{p_session_id:settings.current_session_id})
+  ]);
+  if(medals.error)throw medals.error;
+  if(achievements.error)console.warn('Progression Rockstar indisponible',achievements.error);
+  for(const row of achievements.data||[]){
+   performerAchievements.set(String(row.user_id),{
+    progress:row.progress||{},special_titles:row.special_titles||[],equipped_title:row.equipped_title||null
+   });
+  }
+  for(const row of medals.data||[]){
    const userId=String(row.user_id||'');
    if(!userId||!medalCategories.some(x=>x[0]===row.category))continue;
    if(!performerMedals.has(userId))performerMedals.set(userId,new Map());
