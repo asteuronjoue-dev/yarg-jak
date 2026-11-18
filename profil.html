@@ -224,16 +224,14 @@ body.yarg-unified-page{
  </div>
 </section>
 <section class="card" id="push-settings">
-<h2>Notifications sur mon téléphone</h2>
+<div class="topline"><h2>Notifications</h2><span class="tag" id="push-connection-tag" aria-live="polite">Vérification…</span></div>
 <p class="hint">Reçois les invitations de groupe et un rappel quand ton tour approche, même si le site est fermé.</p>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
 <button type="button" id="push-enable" class="primary">Activer les notifications</button>
 <button type="button" id="push-disable" class="ghost" hidden>Désactiver sur cet appareil</button>
-<button type="button" id="push-local-test" class="ghost">Tester sur cet appareil</button>
-<button type="button" id="push-receipt-check" class="ghost">Vérifier la réception Web Push</button>
 </div>
 <p class="hint" id="push-status" role="status" aria-live="polite"></p>
-<p class="hint">iPhone : ajoute d'abord le site à ton écran d'accueil via Safari, puis ouvre-le depuis son icône pour activer les notifications.</p>
+<p class="hint">Sur iPhone, les notifications nécessitent l’application ajoutée à l’écran d’accueil depuis Safari.</p>
 </section></div>
 <div class="profile-panel" id="statistics-panel" hidden><div class="card"><h2>Statistiques à vie</h2><div class="statgrid" id="stats"></div></div></div>
 <div class="profile-panel" id="achievements-panel"><div class="card"><div class="topline"><h2>Collection de titres</h2></div><p class="hint">Équipe un titre pour l'afficher dans la file. Le privilège Initié reste actif, quel que soit ton titre.</p><div id="titles"></div></div></div>
@@ -661,7 +659,8 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
  let installEvent=null;
  const button=document.getElementById('install-app-button');
  const status=document.getElementById('install-app-status');
- if(!button||!status)return;
+ const panel=document.getElementById('app-install-panel');
+ if(!button||!status||!panel)return;
  const standalone=()=>Boolean(window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true);
  const onIOS=()=>/iPad|iPhone|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  function instructions(){
@@ -670,6 +669,7 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
   return 'Ouvre le menu de ton navigateur et cherche « Installer Asteur On Jam » ou « Installer la page en tant qu’application ». L’option dépend du navigateur.';
  }
  function refresh(){
+  panel.hidden=standalone();
   if(standalone()){
    button.hidden=true;
    status.textContent='L’application est déjà installée sur cet appareil.';
@@ -685,6 +685,7 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
  });
  window.addEventListener('appinstalled',()=>{
   installEvent=null;
+  panel.hidden=true;
   button.hidden=true;
   status.textContent='Application installée ! Ouvre-la depuis ton écran d’accueil.';
  });
@@ -716,70 +717,24 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
 <script src="yarg-push.js" defer></script>
 <script>
 (function(){
- const activate=document.getElementById('push-enable'),deactivate=document.getElementById('push-disable'),status=document.getElementById('push-status');
+ const activate=document.getElementById('push-enable'),deactivate=document.getElementById('push-disable'),status=document.getElementById('push-status'),tag=document.getElementById('push-connection-tag');
  async function sync(){
   if(!window.YargPush)return;
   try{
    const result=await window.YargPush.status();
    activate.hidden=result.subscribed;
    deactivate.hidden=!result.subscribed;
+   tag.textContent=!result.supported?'Indisponibles':result.subscribed?'Activées':'Désactivées';
+   tag.classList.toggle('yes',!!result.subscribed);
+   tag.classList.toggle('no',!result.subscribed);
    status.textContent=!result.supported?'Web Push non disponible. Sur iPhone, installe le site à l’écran d’accueil et ouvre-le depuis là.':result.subscribed?'Notifications activées sur cet appareil.':'Notifications non activées sur cet appareil.';
-  }catch(e){status.textContent=window.yargErrorMessage(e,'Impossible de vérifier tes notifications. Recharge la page, puis réessaie.');}
+  }catch(e){tag.textContent='À vérifier';tag.classList.remove('yes');tag.classList.add('no');status.textContent=window.yargErrorMessage(e,'Impossible de vérifier tes notifications. Recharge la page, puis réessaie.');}
  }
  activate.addEventListener('click',async()=>{
   activate.disabled=true;status.textContent='Activation des notifications…';
   try{await window.YargPush.enable();await sync();}
   catch(e){status.textContent=window.yargErrorMessage(e,'Impossible d’activer les notifications. Réessaie; si le problème persiste, préviens le MC.');}
   finally{activate.disabled=false;}
- });
- const localTest=document.getElementById('push-local-test');
- localTest.addEventListener('click',async()=>{
-  localTest.disabled=true;
-  status.textContent='Vérification du navigateur et du service worker…';
-  try{
-   if(!('Notification' in window)||!('serviceWorker' in navigator))throw Error('Ce navigateur ne permet pas ces notifications.');
-   if(Notification.permission!=='granted')throw Error('Autorisation de notifications : '+Notification.permission+'. Vérifie les permissions du site.');
-   const registration=await navigator.serviceWorker.getRegistration('./yarg-notifications-sw.js');
-   if(!registration)throw Error('Aucun service worker enregistré. Réactive les notifications puis réessaie.');
-   await registration.update();
-   const active=registration.active;
-   if(!active)throw Error('Le service worker n’est pas actif. Ferme les autres onglets YARG et recharge la page.');
-   await registration.showNotification('Test local YARG',{
-    body:'Test direct Android : aucun serveur Web Push nécessaire.',
-    icon:'./assets/favicon.png?v=3',
-    tag:'yarg-local-diagnostic-'+Date.now(),
-    requireInteraction:true
-   });
-   status.textContent='Le navigateur a accepté le test local. Vérifie tes notifications Android (volet de notifications). Si rien n’apparaît, vérifie les notifications de Chrome et du site dans Android.';
-  }catch(e){status.textContent='Test local échoué : '+(e.message||e);}
-  finally{localTest.disabled=false;}
- });
- const receiptCheck=document.getElementById('push-receipt-check');
- receiptCheck.addEventListener('click',async()=>{
-  receiptCheck.disabled=true;
-  status.textContent='Lecture du journal local du service worker…';
-  try{
-   if(!('serviceWorker' in navigator))throw Error('Service worker indisponible.');
-   const registration=await navigator.serviceWorker.getRegistration('./yarg-notifications-sw.js');
-   if(!registration)throw Error('Service worker non enregistré.');
-   await registration.update();
-   const active=registration.active;
-   if(!active)throw Error('Service worker non actif. Recharge la page.');
-   const details=await new Promise((resolve,reject)=>{
-    const channel=new MessageChannel();
-    const timeout=setTimeout(()=>reject(Error('Le service worker ne répond pas. Recharge la page et réessaie.')),5000);
-    channel.port1.onmessage=event=>{clearTimeout(timeout);resolve(event.data?.details||null);channel.port1.close();};
-    active.postMessage({type:'YARG_PUSH_DIAGNOSTICS'},[channel.port2]);
-   });
-   if(!details){
-    status.textContent='Aucun push distant enregistré par ce service worker. Le journal commence avec cette nouvelle version. Réessaie après le prochain test serveur.';
-   }else{
-    const when=new Date(details.receivedAt).toLocaleString('fr-CA');
-    const map={display_requested:'Notification demandée au système Android',display_error:'Erreur pendant l’affichage',invalid_json:'Message reçu mais format invalide',ignored_type:'Message reçu mais type inconnu'};
-    status.textContent='Dernier push reçu : '+when+' · '+(map[details.outcome]||details.outcome)+' · Type : '+(details.kind||'inconnu')+(details.error?' · '+details.error:'');
-   }
-  }catch(error){status.textContent='Diagnostic : '+(error.message||error);}
-  finally{receiptCheck.disabled=false;}
  });
  deactivate.addEventListener('click',async()=>{
   deactivate.disabled=true;status.textContent='Désactivation…';
