@@ -66,3 +66,12 @@
  }
  window.YargPush={enable,disable,status};
 })();
+/* The PWA welcome also runs on pages that include push but not stage controls. */
+(() => {
+ if(window.__yargPwaWelcomeScriptRequested)return;
+ if(!(window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true))return;
+ window.__yargPwaWelcomeScriptRequested=true;
+ const script=document.createElement('script');
+ script.src='./yarg-pwa-onboarding.js?v=2';
+ document.head.append(script);
+})();
