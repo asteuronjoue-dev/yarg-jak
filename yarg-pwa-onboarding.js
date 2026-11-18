@@ -100,7 +100,7 @@
   openDialog={overlay,kind,status};
   // Save the first decision immediately so a reload does not show this dialog forever.
   later.addEventListener('click',()=>{
-   if(kind==='first')setStored(KEY,'declined');
+   if(kind==='first'){setStored(KEY,'declined');firstOfferShown=false;}
    if(kind==='login'&&currentUid)setStored(SECOND,currentUid);
    closeOffer();
   });
@@ -110,14 +110,14 @@
     if(Notification.permission==='denied'){
      status.textContent='Les notifications sont bloquées dans ce navigateur. Autorise-les dans les paramètres du site ou de l’application, puis reviens ici.';
      yes.disabled=false;later.disabled=false;
-     if(kind==='first')setStored(KEY,'declined');
+     if(kind==='first'){setStored(KEY,'declined');firstOfferShown=false;}
      if(kind==='login'&&currentUid)setStored(SECOND,currentUid);
      return;
     }
     const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
     if(permission!=='granted'){
      status.textContent='Notifications refusées. Tu pourras les activer plus tard dans les réglages du navigateur.';
-     if(kind==='first')setStored(KEY,'declined');
+     if(kind==='first'){setStored(KEY,'declined');firstOfferShown=false;}
      if(kind==='login'&&currentUid)setStored(SECOND,currentUid);
      yes.disabled=false;later.disabled=false;
      return;
