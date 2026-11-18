@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mon Profil de ROCKSTAR · Asteur On Jam</title>
-<link rel="icon" type="image/png" href="assets/favicon.png?v=2">
+<link rel="icon" type="image/png" href="assets/favicon-32.png?v=3">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{color-scheme:dark;--bg:#071016;--panel:#101b23;--panel2:#14232d;--stroke:#304550;--muted:#acc0ca;--text:#f5f8fa;--pink:#ff5477;--teal:#35d8c8;--gold:#f7c967}
@@ -159,9 +159,19 @@ body.yarg-unified-page{
    padding:9px 6px;font-size:.8rem;white-space:normal;
  }
 }
+
+/* Installer l'application depuis les paramètres de notifications. */
+.yarg-app-install-card{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:#14272e;border-color:#3b6875}
+.yarg-app-install-logo{width:80px;height:80px;flex:none;object-fit:contain}
+.yarg-app-install-copy{flex:1 1 215px;min-width:0}
+.yarg-app-install-copy h2{margin:0 0 6px;font-size:1.2rem}
+.yarg-app-install-copy p{margin:0 0 10px}
+.yarg-app-install-copy button{min-height:43px}
+.yarg-app-install-status{font-size:.84rem;color:#b9ced6;line-height:1.5;max-width:680px;margin:10px 0 0!important}
+@media(max-width:520px){.yarg-app-install-card{gap:12px}.yarg-app-install-logo{width:64px;height:64px}.yarg-app-install-copy{flex-basis:170px}.yarg-app-install-copy button{width:100%}}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="assets/favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=3">
 <meta name="theme-color" content="#101214">
 <script src="yarg-errors.js?v=1"></script>
 </head>
@@ -203,7 +213,17 @@ body.yarg-unified-page{
 <button type="button" class="profile-tab" data-profile-tab="statistics" aria-selected="false">Statistiques</button>
 
 </div>
-<div class="profile-panel" id="notifications-panel" hidden><section class="card" id="push-settings">
+<div class="profile-panel" id="notifications-panel" hidden>
+<section class="card yarg-app-install-card" id="app-install-panel">
+ <img class="yarg-app-install-logo" src="assets/favicon.png?v=3" alt="Logo Asteur On Jam" width="80" height="80">
+ <div class="yarg-app-install-copy">
+  <h2>Installer Asteur On Jam</h2>
+  <p class="hint">Accède au catalogue, à la file et aux notifications depuis ton écran d’accueil, comme une application. Aucune boutique ni téléchargement séparé.</p>
+  <button type="button" class="primary" id="install-app-button">Installer l’application</button>
+  <p id="install-app-status" class="yarg-app-install-status" role="status" aria-live="polite">Les notifications sont optionnelles.</p>
+ </div>
+</section>
+<section class="card" id="push-settings">
 <h2>Notifications sur mon téléphone</h2>
 <p class="hint">Reçois les invitations de groupe et un rappel quand ton tour approche, même si le site est fermé.</p>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -633,6 +653,66 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
 });
 
 </script>
+
+<script>
+/* Install without asking for push permission or downloading an APK. */
+(() => {
+ 'use strict';
+ let installEvent=null;
+ const button=document.getElementById('install-app-button');
+ const status=document.getElementById('install-app-status');
+ if(!button||!status)return;
+ const standalone=()=>Boolean(window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true);
+ const onIOS=()=>/iPad|iPhone|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ function instructions(){
+  if(onIOS())return 'Sur iPhone ou iPad : ouvre le site dans Safari, touche Partager, puis « Sur l’écran d’accueil » et « Ajouter ». Ouvre ensuite l’application depuis son icône pour activer les notifications.';
+  if(/Android/i.test(navigator.userAgent))return 'Dans Chrome sur Android, ouvre le menu ⋮ puis « Installer l’application » ou « Ajouter à l’écran d’accueil ». L’option dépend du navigateur.';
+  return 'Ouvre le menu de ton navigateur et cherche « Installer Asteur On Jam » ou « Installer la page en tant qu’application ». L’option dépend du navigateur.';
+ }
+ function refresh(){
+  if(standalone()){
+   button.hidden=true;
+   status.textContent='L’application est déjà installée sur cet appareil.';
+  }else{
+   button.hidden=false;
+   status.textContent=installEvent?'Prêt à installer l’application sur cet appareil.':instructions();
+  }
+ }
+ window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();
+  installEvent=event;
+  refresh();
+ });
+ window.addEventListener('appinstalled',()=>{
+  installEvent=null;
+  button.hidden=true;
+  status.textContent='Application installée ! Ouvre-la depuis ton écran d’accueil.';
+ });
+ button.addEventListener('click',async()=>{
+  if(standalone()){refresh();return;}
+  const prompt=installEvent;
+  if(!prompt){status.textContent=instructions();return;}
+  installEvent=null;
+  button.disabled=true;
+  try{
+   await prompt.prompt();
+   const result=await prompt.userChoice;
+   status.textContent=result?.outcome==='accepted'
+    ?'Installation demandée au navigateur. Vérifie ton écran d’accueil.'
+    :instructions();
+  }catch(error){
+   status.textContent=instructions();
+   console.warn('Installation PWA indisponible :',error);
+  }finally{button.disabled=false;}
+ });
+ // Reuse the existing push worker; registration does not subscribe or request permission.
+ if('serviceWorker' in navigator&&window.isSecureContext){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./yarg-notifications-sw.js')
+   .catch(error=>console.warn('Service worker YARG :',error)));
+ }
+ refresh();
+})();
+</script>
 <script src="yarg-push.js" defer></script>
 <script>
 (function(){
@@ -666,7 +746,7 @@ document.addEventListener('yarg-band-invitation-responded',async()=>{
    if(!active)throw Error('Le service worker n’est pas actif. Ferme les autres onglets YARG et recharge la page.');
    await registration.showNotification('Test local YARG',{
     body:'Test direct Android : aucun serveur Web Push nécessaire.',
-    icon:'./assets/favicon.png',
+    icon:'./assets/favicon.png?v=3',
     tag:'yarg-local-diagnostic-'+Date.now(),
     requireInteraction:true
    });

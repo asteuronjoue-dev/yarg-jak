@@ -45,7 +45,7 @@ self.addEventListener('push', event => {
   const target=new URL('./file.html',self.registration.scope).href;
   try{
    await self.registration.showNotification(title,{
-    body,tag,icon:'./assets/favicon.png',badge:'./assets/favicon.png',
+    body,tag,icon:'./assets/favicon.png?v=3',badge:'./assets/favicon.png?v=3',
     data:{url:target,kind},renotify:kind==='next',
     requireInteraction:kind==='next'
    });
