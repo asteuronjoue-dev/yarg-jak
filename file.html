@@ -513,6 +513,26 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
 .yarg-beta-badge{display:inline-flex;flex:none;align-items:center;border:1px solid #8d6837;background:#2d251b;color:#ffd493;padding:.16rem .45rem;border-radius:6px;font:850 .65rem/1.35 system-ui,sans-serif;letter-spacing:.08em;white-space:nowrap}
 .queue-brand>div{min-width:0}.queue-brand .yarg-heading-line{margin-bottom:10px}
 </style>
+<style>
+.queue-feedback-action{display:flex;min-width:0}
+.queue-feedback-button{width:100%;min-height:45px;padding:12px 14px;border:1px solid #52898d;background:#193337;color:#c4f6f1;border-radius:12px;font-weight:850;cursor:pointer}
+.queue-feedback-button:hover,.queue-feedback-button:focus-visible{background:#24484d;border-color:#7ce7de}
+@media(min-width:700px){.queue-user-actions .queue-feedback-action{flex:1 1 0;align-items:stretch}.queue-feedback-button{height:100%}}
+#yarg-feedback-dialog{width:min(520px,calc(100vw - 28px));max-height:min(90vh,760px);overflow-y:auto;padding:24px;border:1px solid #537078;border-radius:16px;background:#1b252b;color:#eef5f6;box-shadow:0 20px 75px #0009}
+#yarg-feedback-dialog::backdrop{background:#000b}
+.yarg-feedback-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.yarg-feedback-heading h2{margin:0;font-size:1.45rem}
+.yarg-feedback-heading button{border:1px solid #596b72;background:#243238;border-radius:8px;color:#fff;padding:7px 12px;cursor:pointer}
+#yarg-feedback-form{display:grid;gap:14px;margin-top:18px}
+#yarg-feedback-form label{display:grid;gap:6px;color:#d7e5e9;font-weight:750}
+#yarg-feedback-form input,#yarg-feedback-form textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #60777d;border-radius:9px;background:#10181c;color:white;padding:11px;font:inherit}
+#yarg-feedback-form textarea{min-height:148px;resize:vertical}
+#yarg-feedback-form button{background:#1fc8bd;color:#081b19;border:0;border-radius:10px;padding:12px 16px;font-weight:900;cursor:pointer}
+#yarg-feedback-form button:disabled{opacity:.65;cursor:wait}
+#yarg-feedback-message{margin:12px 0 0;line-height:1.4}
+#yarg-feedback-message[data-error="true"]{color:#ffb3b7}
+#yarg-feedback-message[data-error="false"]{color:#adf1d7}
+</style>
 </head>
 </head>
 <body>
@@ -559,6 +579,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
   <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
   <div class="queue-user-actions" id="queueUserActions">
+  <div class="queue-feedback-action"><button class="queue-feedback-button" id="yargFeedbackOpen" type="button">💬 Suggestions / Commentaires / Bugs</button></div>
   <div id="notifyTop" class="queue-notify-top" hidden><button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button></div>
   <div class="yarg-global-presence" id="yargGlobalPresence" hidden>
     <button type="button" id="yargPauseAll" class="yarg-pause-all">⏸️ Pas prêt — Mettre toutes mes prestations à venir en pause</button>
@@ -633,6 +654,16 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
   </details>
 </main>
 
+<dialog id="yarg-feedback-dialog" aria-labelledby="yarg-feedback-title">
+ <div class="yarg-feedback-heading"><h2 id="yarg-feedback-title">💬 Tes idées et commentaires</h2><button type="button" id="yargFeedbackClose" aria-label="Fermer le formulaire">✕</button></div>
+ <p>Une suggestion, un commentaire ou un bug à signaler? Laisse-nous un mot! Aucun compte Rockstar nécessaire.</p>
+ <form id="yarg-feedback-form">
+  <label>Ton nom<input name="name" type="text" maxlength="80" minlength="2" placeholder="Comment on t'appelle?" autocomplete="name" required></label>
+  <label>Ton message<textarea name="comment" minlength="5" maxlength="3000" placeholder="Décris ton idée ou le problème rencontré…" required></textarea></label>
+  <button type="submit" id="yargFeedbackSubmit">Envoyer mon commentaire</button>
+ </form>
+ <p id="yarg-feedback-message" role="status" aria-live="polite"></p>
+</dialog>
 <div id="yarg-collection-overlay" class="yarg-collection-overlay" hidden>
  <section class="yarg-collection-dialog" role="dialog" aria-modal="true" aria-labelledby="yarg-collection-name" tabindex="-1">
   <div class="yarg-collection-top"><div><h2 id="yarg-collection-name">Collection Rockstar</h2><p class="hint">Titres et progression à vie</p></div><button type="button" id="yarg-collection-close" aria-label="Fermer la collection">Fermer</button></div>
@@ -684,6 +715,37 @@ if(IS_PUBLIC_DISPLAY){
 }
 const TURNOVER_SECONDS = 120;
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+/* Feedback sans compte Rockstar — accessible aux invités de la file. */
+(()=>{
+ const dialog=document.getElementById('yarg-feedback-dialog');
+ const form=document.getElementById('yarg-feedback-form');
+ const message=document.getElementById('yarg-feedback-message');
+ const submit=document.getElementById('yargFeedbackSubmit');
+ document.getElementById('yargFeedbackOpen').addEventListener('click',()=>{
+  message.textContent='';message.removeAttribute('data-error');
+  dialog.showModal();form.elements.name.focus();
+ });
+ document.getElementById('yargFeedbackClose').addEventListener('click',()=>dialog.close());
+ dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const name=form.elements.name.value.trim(),comment=form.elements.comment.value.trim();
+  if(name.length<2||name.length>80||comment.length<5||comment.length>3000){
+   message.dataset.error='true';message.textContent='Vérifie ton nom (2 à 80 caractères) et ton message (5 à 3 000 caractères).';return;
+  }
+  submit.disabled=true;message.textContent='Envoi en cours…';message.removeAttribute('data-error');
+  try{
+   const {error}=await sb.from('yarg_site_feedback').insert({name,comment});
+   if(error)throw error;
+   form.reset();message.dataset.error='false';message.textContent='Merci! Ton message a été envoyé aux MC.';
+  }catch(error){
+   message.dataset.error='true';message.textContent='Impossible d’envoyer le message. Réessaie dans un instant.';
+   console.warn('YARG feedback submission failed:',error);
+  }finally{submit.disabled=false;}
+ });
+})();
+
 
 const OWNED_REQUESTS_KEY = "yarg_owned_performance_requests";
 function ownedRequestIds(){
