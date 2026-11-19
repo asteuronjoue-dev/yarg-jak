@@ -293,42 +293,71 @@ function completeSavedPairs(){
  if(changed)save();
 }
 function exportReport(){
- const marked=groups.map(g=>({g,items:g.items.filter(s=>!ignored[g.id]&&decisions[s.id]==='delete')})).filter(x=>x.items.length);
- if(!marked.length)return;
+ const marked=groups.filter(g=>!isArchived(g))
+  .map(g=>({g,items:g.items.filter(song=>decisions[song.id]==='delete')}))
+  .filter(x=>x.items.length);
+ const toInspect=groups.filter(g=>inspection[g.id]);
+ if(!marked.length&&!toInspect.length)return;
  const lines=[
- 'YARG — LISTE DES CHANSONS MARQUÉES À SUPPRIMER',
- 'Généré le '+new Date().toLocaleString('fr-CA'),
- 'Catalogue consulté : songs.json — '+songs.length+' entrées',
- 'Chansons marquées à supprimer : '+marked.reduce((n,x)=>n+x.items.length,0),
- '',
- 'ATTENTION : Cette liste est une aide pour supprimer MANUELLEMENT des fichiers.',
- 'Le fichier songs.json ne contient pas les chemins de fichiers sur le disque.',
- 'Vérifier les versions live, acoustiques, remix, reprises et la qualité des chartes avant de supprimer.',
- 'Aucun fichier ni entrée de songs.json n’a été modifié par cet outil.',
- '',
- '============================================================'
+  'YARG — RAPPORT DE TRI DES DOUBLONS',
+  'Généré le '+new Date().toLocaleString('fr-CA'),
+  'Catalogue consulté : songs.json — '+songs.length+' entrées',
+  'Chansons marquées à supprimer : '+marked.reduce((n,x)=>n+x.items.length,0),
+  'Groupes à vérifier en jeu (NE PAS SUPPRIMER) : '+toInspect.length,
+  '',
+  'ATTENTION : Ce rapport ne supprime aucun fichier.',
+  'PARTIE A = fichiers explicitement marqués pour suppression manuelle.',
+  'PARTIE B = inspection en jeu seulement. NE SUPPRIMER AUCUNE VERSION DE LA PARTIE B.',
+  'Le fichier songs.json ne contient pas les chemins de fichiers sur le disque.',
+  'En cas de doute, conserver les fichiers et vérifier dans YARG.',
+  '',
+  '============================================================',
+  'PARTIE A — CHANSONS À SUPPRIMER MANUELLEMENT',
+  '============================================================'
  ];
- const dump=(s)=>{
-  const out=metadataFields(s).map(([,label,value])=>label+' : '+value);
-  out.push('Pistes disponibles : '+(supportedTracks(s).map(([name])=>name).join(', ')||'Aucune'));
-  out.push('Harmonies possibles : '+vocalParts(s));
-  for(const [name,i] of supportedTracks(s)){
-   const bits=trackBits(s,i);
-   out.push('  '+name+' : '+(DIFFICULTIES.filter(([bit])=>(bits&bit)!==0n).map(([,name])=>name).join(', ')||'Inconnue'));
+ const dump=(song)=>{
+  const out=metadataFields(song).map(([,label,value])=>label+' : '+value);
+  out.push('Pistes disponibles : '+(supportedTracks(song).map(([name])=>name).join(', ')||'Aucune'));
+  out.push('Harmonies possibles : '+vocalParts(song));
+  for(const [name,i] of supportedTracks(song)){
+   const bits=trackBits(song,i);
+   out.push('  '+name+' : '+(DIFFICULTIES.filter(([bit])=>(bits&bit)!==0n).map(([,label])=>label).join(', ')||'Inconnue'));
   }
   return out;
  };
+ if(!marked.length)lines.push('AUCUNE CHANSON À SUPPRIMER.');
  for(let i=0;i<marked.length;i++){
   const {g,items}=marked[i];
-  lines.push('',(i+1)+'. '+g.artist+' — '+g.title,'Type de correspondance : '+({exact:'Doublon très probable',variant:'Versions potentiellement différentes',likely:'Correspondance à vérifier'}[g.kind]));
-  const keep=g.items.find(s=>decisions[s.id]==='keep');
-  if(keep){lines.push('VERSION À GARDER :',...dump(keep));}else lines.push('VERSION À GARDER : Non choisie — vérifier avant toute suppression.');
-  for(const s of items){lines.push('','*** À SUPPRIMER MANUELLEMENT ***',...dump(s));}
+  lines.push('',(i+1)+'. '+g.artist+' — '+g.title,
+   'Type de correspondance : '+({exact:'Doublon très probable',variant:'Versions potentiellement différentes',likely:'Correspondance à vérifier'}[g.kind]));
+  const keep=g.items.find(song=>decisions[song.id]==='keep');
+  if(keep)lines.push('VERSION À GARDER :',...dump(keep));
+  else lines.push('VERSION À GARDER : Non choisie — vérifier avant toute suppression.');
+  for(const song of items)lines.push('','*** À SUPPRIMER MANUELLEMENT ***',...dump(song));
+  lines.push('------------------------------------------------------------');
+ }
+ lines.push('',
+  '============================================================',
+  'PARTIE B — INSPECTION EN JEU — NE RIEN SUPPRIMER',
+  '============================================================',
+  '!!! CETTE SECTION N’EST PAS UNE LISTE DE SUPPRESSION !!!',
+  'TOUTES LES VERSIONS LISTÉES ICI SONT À CONSERVER JUSQU’À INSPECTION DANS YARG.',
+  'Comparer ces chansons en jeu avant de prendre une décision.',
+  '');
+ if(!toInspect.length)lines.push('AUCUN GROUPE À VÉRIFIER EN JEU.');
+ for(let i=0;i<toInspect.length;i++){
+  const g=toInspect[i];
+  lines.push((i+1)+'. '+g.artist+' — '+g.title,
+   '*** VÉRIFICATION EN JEU REQUISE — NE SUPPRIMER AUCUNE DE CES CHANSONS ***',
+   'Les playlists et les hash aident à retrouver ces versions.');
+  for(let j=0;j<g.items.length;j++){
+   lines.push('', 'VERSION '+(j+1)+' — À INSPECTER, NE PAS SUPPRIMER',...dump(g.items[j]));
+  }
   lines.push('------------------------------------------------------------');
  }
  const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/plain;charset=utf-8'});
  const url=URL.createObjectURL(blob),a=document.createElement('a');
- a.href=url;a.download='YARG_doublons_a_supprimer_'+new Date().toISOString().slice(0,10)+'.txt';
+ a.href=url;a.download='YARG_doublons_suppressions_et_verifications_'+new Date().toISOString().slice(0,10)+'.txt';
  document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
@@ -454,11 +483,12 @@ function bindUI(){
  $('hash-csv').addEventListener('change',importHashes);
  $('search').addEventListener('input',()=>{clearTimeout(renderTimer);renderTimer=setTimeout(()=>{shown=15;render();},120)});
  for(const id of ['filter','sort'])$(id).addEventListener('change',()=>{
-  if(id==='filter'&&$('filter').value==='ignored'){
-   $('filter').value='all';
-   $('ignored-section').open=true;
-   render();
-   $('ignored-section').scrollIntoView({behavior:'smooth',block:'start'});
+  if(id==='filter'&&['ignored','inspection'].includes($('filter').value)){
+   const section=$('filter').value==='ignored'?'ignored-section':'inspection-section';
+   $('filter').value='all';shown=15;render();
+   $(section).open=true;
+   $(section).scrollIntoView({behavior:'smooth',block:'start'});
+   return;
   }
   shown=15;render();
  });
@@ -466,8 +496,8 @@ function bindUI(){
  $('rescan').addEventListener('click',loadCatalogue);
  $('export').addEventListener('click',exportReport);
  $('reset').addEventListener('click',()=>{
-  if(!confirm('Effacer toutes tes décisions enregistrées dans Supabase, y compris les groupes ignorés ?'))return;
-  decisions={};ignored={};save();render();
+  if(!confirm('Effacer toutes tes décisions enregistrées dans Supabase, y compris les dilemmes conservés et les vérifications en jeu ?'))return;
+  decisions={};ignored={};inspection={};save();render();
  });
  $('group-list').addEventListener('change',e=>{
   const input=e.target.closest('input[data-action="delete"]');if(!input)return;
@@ -480,12 +510,16 @@ function bindUI(){
    const id=button.dataset.id;
    chooseVersion(g,id,decisions[id]==='keep'?null:'keep');
   }
-  if(action==='ignore'){
-   if(!ignored[g.id]){
-    if(g.items.some(s=>decisions[s.id])&&!confirm('Ignorer ce groupe et effacer tes décisions pour ces versions ?'))return;
-    for(const s of g.items)delete decisions[s.id];
-    ignored[g.id]=true;
-   }else delete ignored[g.id];
+  if(action==='keep-all'||action==='inspect'){
+   if(g.items.some(song=>decisions[song.id])&&!confirm('Ce choix remplace les décisions Garder / Supprimer déjà faites pour ce groupe. Continuer ?'))return;
+   for(const song of g.items)delete decisions[song.id];
+   delete ignored[g.id];delete inspection[g.id];
+   if(action==='keep-all')ignored[g.id]=true;
+   else inspection[g.id]=true;
+   save();render();
+  }
+  if(action==='restore'){
+   delete ignored[g.id];delete inspection[g.id];
    save();render();
   }
   if(action==='batch'){
@@ -499,6 +533,7 @@ function bindUI(){
  };
  $('group-list').addEventListener('click',handleReviewClick);
  $('ignored-list').addEventListener('click',handleReviewClick);
+ $('inspection-list').addEventListener('click',handleReviewClick);
 }
 async function init(){
  try{
