@@ -39,6 +39,11 @@ button{background:#2c3d44;color:white;border:1px solid #637783;border-radius:9px
 <label class="field sort-field">Trier<select id="sort"><option value="confidence">Correspondance la plus forte</option><option value="artist">Artiste A → Z</option><option value="size">Plus de versions</option><option value="review">Non examinés d’abord</option></select></label>
 <button type="button" id="rescan" class="scan-button">↻ Recharger le catalogue</button>
 </div>
+<details class="notice">
+<summary>Hash YARG</summary>
+<label class="field">Ajouter les hash depuis l’export CSV du même catalogue YARG<input type="file" id="hash-csv" accept=".csv,text/csv"></label>
+<p id="hash-status" role="status" aria-live="polite"></p>
+</details>
 <div class="actionbar">
 <button type="button" id="export" class="primary">⬇ Exporter les chansons à supprimer (.txt)</button>
 <button type="button" id="reset">Réinitialiser mes décisions</button>

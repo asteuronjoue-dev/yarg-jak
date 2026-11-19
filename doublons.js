@@ -5,10 +5,12 @@ const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const $=id=>document.getElementById(id);
 const STORAGE_KEY='yarg_duplicate_review_v1';
+const HASH_STORAGE_KEY='yarg_duplicate_chart_hashes_v1';
 const FIELD_NAMES={Name:'Titre',Artist:'Artiste',Album:'Album',Playlist:'Playlist / collection',Genre:'Genre',Charter:'Charter',Year:'Année',songlength:'Durée (ms)',chartsAvailable:'Masque des partitions'};
 const CHARTS=[['Guitare',0],['Basse',1],['Guitare rythmique',2],['Batterie 4 voies',3],['Batterie 5 voies (source)',4],['Pro Drums',5],['Clavier 5 voies',6],['Pro Keys',7],['Chant',8]];
 const DIFFICULTIES=[[1n,'Débutant'],[2n,'Facile'],[4n,'Moyen'],[8n,'Difficile'],[16n,'Expert'],[32n,'Expert+']];
 let songs=[],groups=[],decisions={},ignored={},shown=15,renderTimer=0;
+let catalogueDigest='', importedHashes={};
 function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fold(text){return String(text||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');}
 function titleBase(text){
@@ -146,19 +148,24 @@ function visibleGroups(){
  if(sort==='review')result.sort((a,b)=>Number(!!ignored[a.id]||a.items.some(s=>decisions[s.id]))-Number(!!ignored[b.id]||b.items.some(s=>decisions[s.id])));
  return result;
 }
+function metadataFields(s){
+ const fields=Object.entries(FIELD_NAMES).map(([key,label])=>[key,label,key==='songlength'?duration(s.songlength)+' ('+s.songlength+' ms)':String(s[key]??'—')]);
+ const chartHash=songHash(s);
+ if(chartHash)fields.push(['Hash','Hash YARG',chartHash]);
+ return fields;
+}
 function metadata(s){
- return '<dl class="metadata">'+Object.entries(FIELD_NAMES).map(([key,label])=>{
-  const value=key==='songlength'?duration(s.songlength)+' ('+s.songlength+' ms)':String(s[key]??'—');
-  const wide=key==='Name'||key==='Artist'||key==='chartsAvailable'?' span2':'';
+ return '<dl class="metadata">'+metadataFields(s).map(([key,label,value])=>{
+  const wide=['Name','Artist','chartsAvailable','Hash'].includes(key)?' span2':'';
   return '<div class="'+wide+'"><dt>'+esc(label)+'</dt><dd>'+esc(value||'—')+'</dd></div>';
  }).join('')+'</dl>';
 }
 function songCard(g,s){
  const choice=decisions[s.id]||'',selectedKeep=choice==='keep',selectedDelete=choice==='delete';
- const score=chartScore(s),suggestion=g.suggested===s.id?'Suggestion : plus de partitions jouables':'';
+ const suggested=g.suggested===s.id;
  const tracks=supportedTracks(s);
  return '<section class="song-card'+(selectedKeep?' song-card--keep':'')+(selectedDelete?' song-card--delete':'')+'">'+
- '<div class="song-indicator'+(suggestion?' better':'')+'">Position dans songs.json · '+(s.index+1)+(suggestion?' · '+esc(suggestion):'')+'</div>'+
+ (suggested?'<div class="song-indicator better">Suggestion · plus de partitions jouables</div>':'')+
  '<h3>'+esc(s.Name)+'</h3><div class="song-artist">'+esc(s.Artist)+'</div>'+
  '<div class="track-strip">'+tracks.map(([name])=>'<span class="track">'+esc(name)+'</span>').join('')+(tracks.length?'':'<span class="track">Aucune partition identifiée</span>')+'</div>'+
  metadata(s)+
@@ -237,8 +244,7 @@ function exportReport(){
  '============================================================'
  ];
  const dump=(s)=>{
-  const out=['Entrée n° '+(s.index+1)+' dans le catalogue actuel'];
-  for(const [key,label] of Object.entries(FIELD_NAMES))out.push(label+' : '+(key==='songlength'?duration(s.songlength)+' ('+s.songlength+' ms)':String(s[key]??'—')));
+  const out=metadataFields(s).map(([,label,value])=>label+' : '+value);
   out.push('Pistes disponibles : '+(supportedTracks(s).map(([name])=>name).join(', ')||'Aucune'));
   out.push('Harmonies possibles : '+vocalParts(s));
   for(const [name,i] of supportedTracks(s)){
@@ -261,6 +267,90 @@ function exportReport(){
  document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+const csvIdentityFields=['Name','Artist','Album','Genre','Year','Charter','Playlist'];
+function csvSongKey(song,seconds){
+ const values=csvIdentityFields.map(field=>{
+  const value=String(song[field]??'');
+  return field==='Playlist'&&value==='Unknown Playlist'?'':value;
+ });
+ return JSON.stringify([...values,seconds]);
+}
+function validChartHash(value){
+ return typeof value==='string'&&/^[0-9a-f]{40}$/i.test(value.trim())?value.trim().toUpperCase():'';
+}
+function songHash(song){
+ return validChartHash(song.Hash)||validChartHash(song.hash)||validChartHash(importedHashes[song.csvKey]);
+}
+function csvRows(text){
+ const rows=[],source=text.replace(/^\uFEFF/,'');
+ let row=[],value='',quoted=false;
+ for(let i=0;i<source.length;i++){
+  const c=source[i];
+  if(c==='"'){
+   if(quoted&&source[i+1]==='"'){value+='"';i++;}
+   else quoted=!quoted;
+  }else if(!quoted&&c===','){row.push(value);value='';}
+  else if(!quoted&&(c==='\n'||c==='\r')){
+   if(c==='\r'&&source[i+1]==='\n')i++;
+   if(row.length||value)rows.push([...row,value]);
+   row=[];value='';
+  }else value+=c;
+ }
+ if(quoted)throw new Error('Le CSV contient un champ entre guillemets incomplet.');
+ if(row.length||value)rows.push([...row,value]);
+ return rows;
+}
+function matchCsvHashes(text){
+ const [header=[],...rows]=csvRows(text);
+ const columns=Object.fromEntries(header.map((field,i)=>[field.trim(),i]));
+ for(const field of [...csvIdentityFields,'Length','Hash']){
+  if(!(field in columns))throw new Error('Colonne manquante dans le CSV de YARG : '+field);
+ }
+ const candidates=new Map();
+ for(const row of rows){
+  if(row.length!==header.length)throw new Error('Le nombre de colonnes varie dans le CSV.');
+  const length=/^(\d+):([0-5]\d)$/.exec(row[columns.Length]);
+  if(!length)continue;
+  const metadata=Object.fromEntries(csvIdentityFields.map(field=>[field,row[columns[field]]]));
+  const key=csvSongKey(metadata,Number(length[1])*60+Number(length[2]));
+  const hash=validChartHash(row[columns.Hash]);
+  const entry=candidates.get(key);
+  if(entry){
+   entry.count++;
+   if(entry.hash!==hash)entry.hash='';
+  }else candidates.set(key,{count:1,hash});
+ }
+ // Le CSV arrondit la durée à la seconde inférieure. Des versions peuvent donc
+ // partager cette clé. On exige le même nombre de copies et un seul hash connu.
+ const counts=new Map();
+ for(const song of songs)counts.set(song.csvKey,(counts.get(song.csvKey)||0)+1);
+ const hashes={};
+ for(const group of groups)for(const song of group.items){
+  const entry=candidates.get(song.csvKey);
+  if(entry?.hash&&entry.count===counts.get(song.csvKey))hashes[song.csvKey]=entry.hash;
+ }
+ return hashes;
+}
+function updateHashStatus(){
+ const versions=groups.flatMap(group=>group.items);
+ const known=versions.filter(songHash).length;
+ $('hash-status').textContent=known+' / '+versions.length+' versions avec un hash dans les groupes à examiner.';
+}
+async function importHashes(event){
+ const input=event.target,file=input.files[0];
+ if(!file)return;
+ input.disabled=true;$('rescan').disabled=true;
+ try{
+  const hashes=matchCsvHashes(await file.text());
+  importedHashes=hashes;
+  render();updateHashStatus();
+  if(catalogueDigest){
+   try{localStorage.setItem(HASH_STORAGE_KEY,JSON.stringify({catalogueDigest,hashes}));}
+   catch{$('hash-status').textContent+=' Les hash sont disponibles pour cette session seulement.';}
+  }
+ }catch(error){$('hash-status').textContent='Import impossible. '+error.message;}
+ finally{input.value='';input.disabled=false;$('rescan').disabled=false;}
+}
 async function loadCatalogue(){
  $('loading').hidden=false;$('loading').textContent='Chargement de songs.json et comparaison des chansons…';
  $('workspace').hidden=true;
@@ -268,6 +358,15 @@ async function loadCatalogue(){
   const response=await fetch('songs.json?nettoyage='+Date.now(),{cache:'no-store'});
   if(!response.ok)throw new Error('songs.json : HTTP '+response.status);
   const raw=await response.text();
+  catalogueDigest='';importedHashes={};
+  if(window.crypto?.subtle){
+   const digest=await window.crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));
+   catalogueDigest=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+   try{
+    const saved=JSON.parse(localStorage.getItem(HASH_STORAGE_KEY));
+    if(saved?.catalogueDigest===catalogueDigest&&saved.hashes)importedHashes=saved.hashes;
+   }catch{}
+  }
   const safelyParsed=raw.replace(/("chartsAvailable"\s*:\s*)(-?\d+)(?=\s*[,}])/g,'$1"$2"');
   const parsed=JSON.parse(safelyParsed);
   if(!Array.isArray(parsed))throw new Error('Le catalogue n’est pas un tableau JSON.');
@@ -277,15 +376,17 @@ async function loadCatalogue(){
    const ordinal=(repeated.get(signature)||0)+1;repeated.set(signature,ordinal);
    const id=hash(signature)+'-'+ordinal;
    const song={...rawSong,index,id,titleKey:titleBase(rawSong.Name),artistKey:artistBase(rawSong.Artist)};
+   song.csvKey=csvSongKey(song,Math.floor(Number(song.songlength)/1000));
    song.searchText=fold([song.Name,song.Artist,song.Album,song.Playlist,song.Charter,song.Genre,song.Year].join(' '));
    return song;
   });
-  analyse();completeSavedPairs();shown=15;render();
+  analyse();completeSavedPairs();shown=15;render();updateHashStatus();
   $('loading').textContent='Catalogue analysé. Les suggestions ne sont pas des décisions de suppression.';
   $('workspace').hidden=false;
  }catch(e){$('loading').textContent='Erreur de lecture du catalogue : '+e.message;}
 }
 function bindUI(){
+ $('hash-csv').addEventListener('change',importHashes);
  $('search').addEventListener('input',()=>{clearTimeout(renderTimer);renderTimer=setTimeout(()=>{shown=15;render();},120)});
  for(const id of ['filter','sort'])$(id).addEventListener('change',()=>{shown=15;render();});
  $('more').addEventListener('click',()=>{shown+=15;render();});
