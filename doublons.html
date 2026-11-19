@@ -21,6 +21,19 @@ button{background:#2c3d44;color:white;border:1px solid #637783;border-radius:9px
 #more{display:block;margin:20px auto}#loading{font-weight:800;color:#d4f5ee}.empty{padding:25px;text-align:center;border:1px dashed #54707c;border-radius:12px;color:#d2e0e5}
 @media(max-width:850px){.toolbar{grid-template-columns:1fr 1fr}.toolbar .search-field{grid-column:1/-1}.toolbar .scan-button{align-self:end}}@media(max-width:530px){.wrap{padding:16px 12px 70px}.toolbar{grid-template-columns:1fr 1fr}.toolbar .sort-field{grid-column:1/-1}.toolbar .scan-button{grid-column:1/-1}.match-group{padding:12px}.song-grid{grid-template-columns:1fr}.metadata{grid-template-columns:1fr 1fr}.match-actions{width:100%}.match-actions button{flex:1 1 auto}}
 </style>
+<style>
+/* Distinct outcomes: both visible side by side, never relying on color alone. */
+.match-actions .review-action{flex:1 1 190px;white-space:normal;line-height:1.25}
+.match-actions .review-action[data-action="keep-all"]{border-color:#65bfa7;background:#203c34;color:#d6fff0}
+.match-actions .review-action[data-action="inspect"]{border-color:#d8ad6f;background:#433622;color:#ffe6ba}
+.match-actions .review-action:hover,.match-actions .review-action:focus-visible{filter:brightness(1.17)}
+#inspection-list{display:grid;gap:9px;margin-top:12px}
+#inspection-section{border-color:#a78d57}
+#inspection-summary,#ignored-summary{cursor:pointer;font-weight:850}
+@media(max-width:530px){
+ .match-actions .review-action{flex:1 1 calc(50% - 4px);min-width:0;font-size:.72rem;padding:9px 6px}
+}
+</style>
 </head>
 <body><main class="wrap">
 <nav aria-label="Navigation"><a href="admin.html">← Régie MC</a><a href="index.html">Catalogue</a></nav>
@@ -36,7 +49,7 @@ button{background:#2c3d44;color:white;border:1px solid #637783;border-radius:9px
 <div class="stats" id="stats" aria-live="polite"></div>
 <div class="toolbar">
 <label class="field search-field">Rechercher un titre, un artiste ou une playlist<input type="search" id="search" placeholder="Ex. Nirvana, Lithium…" autocomplete="off"></label>
-<label class="field">Afficher<select id="filter"><option value="all">Tous les groupes</option><option value="unreviewed">À examiner</option><option value="marked">Avec suppression marquée</option><option value="exact">Doublons très probables</option><option value="variant">Versions / éditions différentes</option><option value="likely">Autres ressemblances</option><option value="ignored">Groupes ignorés</option></select></label>
+<label class="field">Afficher<select id="filter"><option value="all">Tous les groupes</option><option value="unreviewed">À examiner</option><option value="marked">Avec suppression marquée</option><option value="exact">Doublons très probables</option><option value="variant">Versions / éditions différentes</option><option value="likely">Autres ressemblances</option><option value="ignored">Dilemmes conservés</option><option value="inspection">À vérifier en jeu</option></select></label>
 <label class="field sort-field">Trier<select id="sort"><option value="confidence">Correspondance la plus forte</option><option value="artist">Artiste A → Z</option><option value="size">Plus de versions</option><option value="review">Non examinés d’abord</option></select></label>
 <button type="button" id="rescan" class="scan-button">↻ Recharger le catalogue</button>
 </div>
@@ -46,13 +59,14 @@ button{background:#2c3d44;color:white;border:1px solid #637783;border-radius:9px
 <p id="hash-status" role="status" aria-live="polite"></p>
 </details>
 <div class="actionbar">
-<button type="button" id="export" class="primary">⬇ Exporter les chansons à supprimer (.txt)</button>
+<button type="button" id="export" class="primary">⬇ Exporter le rapport (.txt)</button>
 <button type="button" id="reset">Réinitialiser mes décisions</button>
-<small>Avec deux versions, garder l’une marque l’autre « À supprimer », et inversement. Annuler le choix efface les deux marques.</small>
+<small>Avec deux versions, garder l’une marque l’autre « À supprimer ». « Garder toutes » et « À vérifier en jeu » retirent le groupe des suppressions. Le TXT sépare clairement les suppressions et les inspections.</small>
 </div>
 <div id="result-summary" role="status" aria-live="polite"></div>
 <div id="group-list"></div>
-<details class="notice" id="ignored-section"><summary id="ignored-summary">Ignorés (0)</summary><p class="muted">Ces groupes ont été retirés des comparaisons actives. Tu peux les réexaminer à tout moment.</p><div id="ignored-list"></div></details>
+<details class="notice" id="ignored-section"><summary id="ignored-summary">Dilemmes conservés (0)</summary><p class="muted">Toutes les versions de ces groupes sont conservées. Tu peux les remettre dans les comparaisons à tout moment.</p><div id="ignored-list"></div></details>
+<details class="notice" id="inspection-section"><summary id="inspection-summary">À vérifier en jeu (0)</summary><p class="muted"><strong>Ne supprime aucune de ces chansons pour le moment.</strong> Ces groupes figurent dans une section distincte du rapport TXT pour une inspection dans YARG.</p><div id="inspection-list" class="archive-list"></div></details>
 <button type="button" id="more" hidden>Afficher 15 autres groupes</button>
 </div>
 </section>
