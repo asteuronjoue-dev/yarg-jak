@@ -9,7 +9,7 @@ const HASH_STORAGE_KEY='yarg_duplicate_chart_hashes_v1';
 const FIELD_NAMES={Name:'Titre',Artist:'Artiste',Album:'Album',Playlist:'Playlist / collection',Genre:'Genre',Charter:'Charter',Year:'Année',songlength:'Durée (ms)',chartsAvailable:'Masque des partitions'};
 const CHARTS=[['Guitare',0],['Basse',1],['Guitare rythmique',2],['Batterie 4 voies',3],['Batterie 5 voies (source)',4],['Pro Drums',5],['Clavier 5 voies',6],['Pro Keys',7],['Chant',8]];
 const DIFFICULTIES=[[1n,'Débutant'],[2n,'Facile'],[4n,'Moyen'],[8n,'Difficile'],[16n,'Expert'],[32n,'Expert+']];
-let songs=[],groups=[],decisions={},ignored={},shown=15,renderTimer=0;
+let songs=[],groups=[],decisions={},ignored={},inspection={},shown=15,renderTimer=0;
 let catalogueDigest='', importedHashes={};
 let reviewOwnerId='', saveQueue=Promise.resolve();
 function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -138,30 +138,31 @@ function analyse(){
  }).sort((a,b)=>({exact:0,likely:1,variant:2}[a.kind]-{exact:0,likely:1,variant:2}[b.kind])||a.artist.localeCompare(b.artist,'fr'));
 }
 function loadSaved(){
- try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');decisions=x.decisions&&typeof x.decisions==='object'?x.decisions:{};ignored=x.ignored&&typeof x.ignored==='object'?x.ignored:{};}
- catch{decisions={};ignored={};}
+ try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');decisions=x.decisions&&typeof x.decisions==='object'?x.decisions:{};ignored=x.ignored&&typeof x.ignored==='object'?x.ignored:{};inspection=x.inspection&&typeof x.inspection==='object'?x.inspection:{};}
+ catch{decisions={};ignored={};inspection={};}
 }
 function writeLocal(){
- try{localStorage.setItem(STORAGE_KEY,JSON.stringify({decisions,ignored}));}
+ try{localStorage.setItem(STORAGE_KEY,JSON.stringify({decisions,ignored,inspection}));}
  catch(e){$('sync-status').textContent='Sauvegarde locale impossible : '+e.message;}
 }
 async function loadCloudReviews(){
- const {data,error}=await sb.from('yarg_duplicate_reviews').select('decisions,ignored').eq('owner_id',reviewOwnerId).maybeSingle();
+ const {data,error}=await sb.from('yarg_duplicate_reviews').select('decisions,ignored,inspection').eq('owner_id',reviewOwnerId).maybeSingle();
  if(error)throw error;
  if(data){
   decisions=data.decisions&&typeof data.decisions==='object'?data.decisions:{};
   ignored=data.ignored&&typeof data.ignored==='object'?data.ignored:{};
+  inspection=data.inspection&&typeof data.inspection==='object'?data.inspection:{};
   writeLocal();
   $('sync-status').textContent='✓ Décisions chargées de Supabase et synchronisées entre appareils.';
  }else{
   // First opening on this account: import saved choices from this browser once.
-  await persistReview({decisions:{...decisions},ignored:{...ignored}});
+  await persistReview({decisions:{...decisions},ignored:{...ignored},inspection:{...inspection}});
   $('sync-status').textContent='✓ Décisions initiales enregistrées dans Supabase.';
  }
 }
 async function persistReview(snapshot){
  const {error}=await sb.from('yarg_duplicate_reviews').upsert({
-  owner_id:reviewOwnerId,decisions:snapshot.decisions,ignored:snapshot.ignored,
+  owner_id:reviewOwnerId,decisions:snapshot.decisions,ignored:snapshot.ignored,inspection:snapshot.inspection,
   updated_at:new Date().toISOString()
  },{onConflict:'owner_id'});
  if(error)throw error;
@@ -169,7 +170,7 @@ async function persistReview(snapshot){
 function save(){
  writeLocal();
  if(!reviewOwnerId)return;
- const snapshot={decisions:{...decisions},ignored:{...ignored}};
+ const snapshot={decisions:{...decisions},ignored:{...ignored},inspection:{...inspection}};
  $('sync-status').textContent='Enregistrement dans Supabase…';
  saveQueue=saveQueue.catch(()=>{}).then(()=>persistReview(snapshot)).then(()=>{
   $('sync-status').textContent='✓ Décisions enregistrées dans Supabase.';
@@ -178,21 +179,21 @@ function save(){
   throw e;
  });
 }
-function groupedDeleteCount(g){return ignored[g.id]?0:g.items.filter(x=>decisions[x.id]==='delete').length;}
+function isArchived(g){return !!(ignored[g.id]||inspection[g.id]);}
+function groupedDeleteCount(g){return isArchived(g)?0:g.items.filter(x=>decisions[x.id]==='delete').length;}
 function visibleGroups(){
  const filter=$('filter').value,query=fold($('search').value),sort=$('sort').value;
  const result=groups.filter(g=>{
   if(query&&!g.items.some(s=>s.searchText.includes(query)))return false;
-  if(filter==='unreviewed'&&(ignored[g.id]||g.items.some(s=>decisions[s.id])))return false;
+  if(isArchived(g))return false;
+  if(filter==='unreviewed'&&g.items.some(s=>decisions[s.id]))return false;
   if(filter==='marked'&&!groupedDeleteCount(g))return false;
-  if(filter==='ignored')return false;
   if(['exact','variant','likely'].includes(filter)&&g.kind!==filter)return false;
-  if(filter!=='ignored'&&ignored[g.id])return false;
   return true;
  });
  if(sort==='artist')result.sort((a,b)=>a.artist.localeCompare(b.artist,'fr')||a.title.localeCompare(b.title,'fr'));
  if(sort==='size')result.sort((a,b)=>b.items.length-a.items.length);
- if(sort==='review')result.sort((a,b)=>Number(!!ignored[a.id]||a.items.some(s=>decisions[s.id]))-Number(!!ignored[b.id]||b.items.some(s=>decisions[s.id])));
+ if(sort==='review')result.sort((a,b)=>Number(a.items.some(s=>decisions[s.id]))-Number(b.items.some(s=>decisions[s.id])));
  return result;
 }
 function metadataFields(s){
@@ -227,34 +228,43 @@ function groupCard(g){
  '<div class="match-header"><div class="match-heading"><h2>'+esc(g.title)+'</h2><div class="artist">'+esc(g.artist)+'</div>'+
  '<div class="match-meta"><span class="match-flag '+(g.kind==='exact'?'strong':g.kind)+'">'+esc(title)+'</span><span class="match-flag">'+g.items.length+' versions</span></div>'+
  '<div class="match-tip">'+esc(g.warning)+'</div></div>'+
- '<div class="match-actions"><button type="button" class="quiet" data-action="ignore" data-group="'+esc(g.id)+'">'+(ignored[g.id]?'↩ Réexaminer':'Ignorer ce groupe')+'</button>'+
- (g.items.length>2?'<button type="button" class="danger" data-action="batch" data-group="'+esc(g.id)+'" '+(!actionKeep||ignored[g.id]?'disabled':'')+'>Marquer les autres à supprimer</button>':'')+'</div></div>'+
+ '<div class="match-actions"><button type="button" class="quiet review-action" data-action="keep-all" data-group="'+esc(g.id)+'">✓ Garder toutes ces chansons</button>'+
+ '<button type="button" class="quiet review-action inspect-action" data-action="inspect" data-group="'+esc(g.id)+'">🎮 À vérifier en jeu</button>'+
+ (g.items.length>2?'<button type="button" class="danger" data-action="batch" data-group="'+esc(g.id)+'" '+(!actionKeep||isArchived(g)?'disabled':'')+'>Marquer les autres à supprimer</button>':'')+'</div></div>'+
  '<div class="song-grid">'+g.items.map(s=>songCard(g,s)).join('')+'</div></article>';
 }
 function render(){
  const all=visibleGroups(),current=all.slice(0,shown);
- const ignoredGroups=groups.filter(g=>ignored[g.id]);
- $('ignored-summary').textContent='Ignorés ('+ignoredGroups.length+')';
- $('ignored-section').hidden=ignoredGroups.length===0;
- $('ignored-list').innerHTML=ignoredGroups.map(g=>
+ const keptGroups=groups.filter(g=>ignored[g.id]);
+ const inspectGroups=groups.filter(g=>inspection[g.id]);
+ $('ignored-summary').textContent='Dilemmes conservés ('+keptGroups.length+')';
+ $('ignored-section').hidden=keptGroups.length===0;
+ $('ignored-list').innerHTML=keptGroups.map(g=>
   '<div class="ignored-item"><strong>'+esc(g.artist)+' — '+esc(g.title)+' ('+g.items.length+' versions)</strong>'+
-  '<button type="button" data-action="ignore" data-group="'+esc(g.id)+'">↩ Réexaminer</button></div>'
+  '<button type="button" data-action="restore" data-group="'+esc(g.id)+'">↩ Réexaminer</button></div>'
+ ).join('');
+ $('inspection-summary').textContent='À vérifier en jeu ('+inspectGroups.length+')';
+ $('inspection-section').hidden=inspectGroups.length===0;
+ $('inspection-list').innerHTML=inspectGroups.map(g=>
+  '<div class="ignored-item"><strong>'+esc(g.artist)+' — '+esc(g.title)+' ('+g.items.length+' versions)</strong>'+
+  '<button type="button" data-action="restore" data-group="'+esc(g.id)+'">↩ Réexaminer</button></div>'
  ).join('');
  const toDelete=groups.reduce((sum,g)=>sum+groupedDeleteCount(g),0);
- const reviewed=groups.filter(g=>ignored[g.id]||g.items.some(s=>decisions[s.id])).length;
+ const reviewed=groups.filter(g=>isArchived(g)||g.items.some(s=>decisions[s.id])).length;
  const exact=groups.filter(g=>g.kind==='exact').length;
  $('stats').innerHTML=[
   [songs.length.toLocaleString('fr-CA'),'chansons analysées'],
   [groups.length.toLocaleString('fr-CA'),'groupes suspects'],
   [exact.toLocaleString('fr-CA'),'groupes très probables'],
   [reviewed.toLocaleString('fr-CA'),'groupes examinés'],
-   [Object.keys(ignored).filter(id=>ignored[id]&&groups.some(g=>g.id===id)).length.toLocaleString('fr-CA'),'groupes ignorés'],
+   [keptGroups.length.toLocaleString('fr-CA'),'dilemmes conservés'],
+   [inspectGroups.length.toLocaleString('fr-CA'),'à vérifier en jeu'],
   [toDelete.toLocaleString('fr-CA'),'chansons à supprimer']
  ].map(([n,label])=>'<div class="stat"><strong>'+n+'</strong><span>'+label+'</span></div>').join('');
  $('result-summary').textContent=all.length+' groupe(s) correspondant aux filtres · '+Math.min(shown,all.length)+' affiché(s)';
  $('group-list').innerHTML=current.length?current.map(groupCard).join(''):'<div class="empty">Aucun groupe ne correspond à cette recherche.</div>';
  $('more').hidden=shown>=all.length;
- $('export').disabled=toDelete===0;
+ $('export').disabled=toDelete===0&&inspectGroups.length===0;
 }
 function findGroup(id){return groups.find(g=>g.id===id);}
 function oppositeDecision(choice){return choice==='keep'?'delete':'keep';}
@@ -268,12 +278,12 @@ function chooseVersion(g,id,choice){
  }
  if(choice)decisions[id]=choice;
  else delete decisions[id];
- delete ignored[g.id];save();render();
+ delete ignored[g.id];delete inspection[g.id];save();render();
 }
 function completeSavedPairs(){
  let changed=false;
  for(const g of groups){
-  if(g.items.length!==2||ignored[g.id])continue;
+  if(g.items.length!==2||isArchived(g))continue;
   const marked=g.items.filter(s=>decisions[s.id]);
   if(marked.length!==1)continue;
   const other=g.items.find(s=>s!==marked[0]);
