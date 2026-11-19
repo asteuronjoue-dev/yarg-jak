@@ -397,7 +397,18 @@ body.yarg-unified-page{
 .mc-push-diagnostics-body{padding:12px 15px 16px;border-top:1px solid #3b5964}
 .mc-push-diagnostics-body .actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
 .mc-push-diagnostics-body .help{margin:7px 0;line-height:1.5}
-</style></head><body class="yarg-unified-page">
+</style>
+<style>
+/* MC-only feedback inbox, readable on desktop and mobile. */
+.mc-feedback-list{display:grid;gap:12px;margin-top:14px}
+.mc-feedback-item{padding:15px 17px;border:1px solid #40575f;border-radius:12px;background:#1b272c}
+.mc-feedback-item-head{display:flex;gap:9px;flex-wrap:wrap;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+.mc-feedback-item-head strong{font-size:1rem;color:#f0fafb;overflow-wrap:anywhere}
+.mc-feedback-item time{color:#abbfc6;font-size:.79rem}
+.mc-feedback-item p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;color:#e0e9ed}
+@media(max-width:700px){.tabs{grid-template-columns:repeat(3,minmax(0,1fr))}.mc-feedback-item{padding:13px 12px}}
+</style>
+</head><body class="yarg-unified-page">
 <header class="yarg-page-header">
   <div class="yarg-page-header-inner">
     <h1 id="admin-party-heading">Régie de la soirée</h1>
@@ -411,7 +422,7 @@ body.yarg-unified-page{
 <section id="forbidden" class="card" hidden><h2>Accès réservé</h2><p>Ce compte n'est pas autorisé à gérer la soirée. Connecte-toi avec l'adresse du MC.</p><button id="sign-out-forbidden">Changer de compte</button></section>
 <section id="app" hidden>
 <div id="session-line" class="yarg-party-mode-line" role="status">Mode soirée inactif : demandes fermées</div>
-<div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">🎉 Soirée</button><button class="tab" data-tab="playlists" aria-selected="false">🎶 Playlists</button><button class="tab" id="rockstars-tab-button" data-tab="rockstars" aria-selected="false" hidden>⭐ Gestion des ROCKSTARS</button><button class="tab" id="owner-tab-button" data-tab="owner" aria-selected="false" hidden>🔒 Propriétaire</button></div>
+<div class="tabs" role="tablist" aria-label="Sections de la régie"><button class="tab" data-tab="scene" aria-selected="true">🎤 Scène</button><button class="tab" data-tab="history" aria-selected="false">📜 Historique</button><button class="tab" data-tab="settings" aria-selected="false">🎉 Soirée</button><button class="tab" data-tab="playlists" aria-selected="false">🎶 Playlists</button><button class="tab" data-tab="feedback" aria-selected="false">💬 Commentaires</button><button class="tab" id="rockstars-tab-button" data-tab="rockstars" aria-selected="false" hidden>⭐ Gestion des ROCKSTARS</button><button class="tab" id="owner-tab-button" data-tab="owner" aria-selected="false" hidden>🔒 Propriétaire</button></div>
 <div id="scene-tab"><div class="stats"><div class="stat"><b id="total-done">0</b><small>Chansons terminées</small></div><div class="stat"><b id="total-waiting">0</b><small>Demandes en attente</small></div><div class="stat"><b id="mc-active-players">—/—</b><small>Joueurs actifs</small></div></div>
 <details id="mc-score-details" class="history-score-details"><summary>🏆 Classement des Rockstars · points de la soirée</summary>
 <div class="history-score-body">
@@ -455,6 +466,13 @@ body.yarg-unified-page{
 <section class="card history-section"><h2>Chansons sautées</h2><p class="help">Ces chansons n’ont pas été créditées et peuvent retourner dans la file.</p><div id="history-skipped"></div></section>
 <section class="card history-section"><h2>Chansons terminées</h2><p class="help">Les prestations terminées sont conservées dans l’historique de cette soirée.</p><div id="history-completed"></div></section>
 </div>
+<section id="feedback-tab" hidden>
+ <section class="card">
+  <div class="flex"><div><h2>💬 Suggestions, commentaires et bugs</h2><p class="help">Messages envoyés depuis la File de la soirée. Tous les MC peuvent les consulter, même s’ils ont été envoyés par des invités.</p></div><button id="mc-feedback-refresh" type="button" class="quiet small">↻ Actualiser</button></div>
+  <div id="mc-feedback-status" class="help" role="status" aria-live="polite"></div>
+  <div id="mc-feedback-list" class="mc-feedback-list"><p class="muted">Ouvre cet onglet pour voir les commentaires.</p></div>
+ </section>
+</section>
 <div id="settings-tab" hidden>
 <details class="card mc-preflight"><summary>Avant de commencer · <span id="mc-preflight-count">0/5 vérifications</span></summary>
 <p class="help">Coche chaque point après l’avoir vérifié. Tes coches sont conservées sur cet appareil pour cette soirée.</p>
@@ -948,7 +966,37 @@ async function action(id,name){
  busy=true;try{const {error}=await sb.rpc('yarg_admin_performance_action',{p_request_id:id,p_action:name});if(error)throw error;notice('Action enregistrée.');busy=false;await load();}catch(e){busy=false;notice(e.message,true)}
 }
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(b&&!busy)action(b.dataset.id,b.dataset.action)});
-document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));for(const id of ['scene','history','settings','playlists','rockstars','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;if(b.dataset.tab==='settings'){void loadBandVisibility();void loadPushHealth();}});
+let mcFeedbackBusy=false;
+async function loadMcFeedback(){
+ if(mcFeedbackBusy)return;
+ mcFeedbackBusy=true;
+ const refresh=$('mc-feedback-refresh'),status=$('mc-feedback-status'),host=$('mc-feedback-list');
+ refresh.disabled=true;status.textContent='Chargement des commentaires…';
+ try{
+  const {data,error}=await sb.from('yarg_site_feedback')
+   .select('id,name,comment,created_at')
+   .order('created_at',{ascending:false})
+   .limit(250);
+  if(error)throw error;
+  const entries=Array.isArray(data)?data:[];
+  status.textContent=entries.length+' commentaire(s) reçu(s)'+(entries.length===250?' · 250 plus récents affichés':'');
+  host.innerHTML=entries.length?entries.map(item=>{
+   const date=item.created_at?new Date(item.created_at):null;
+   const label=date&&!isNaN(date.valueOf())?date.toLocaleString('fr-CA',{dateStyle:'medium',timeStyle:'short'}):'';
+   return '<article class="mc-feedback-item"><div class="mc-feedback-item-head"><strong>'+esc(item.name)+'</strong><time datetime="'+esc(item.created_at||'')+'">'+esc(label)+'</time></div><p>'+esc(item.comment)+'</p></article>';
+  }).join(''):'<div class="empty">Aucun commentaire pour le moment.</div>';
+ }catch(error){
+  status.textContent='Impossible de charger les commentaires : '+(error.message||String(error));
+  host.replaceChildren();
+ }finally{refresh.disabled=false;mcFeedbackBusy=false;}
+}
+$('mc-feedback-refresh').addEventListener('click',loadMcFeedback);
+document.querySelectorAll('button[data-tab]').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('button[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
+ for(const id of ['scene','history','settings','playlists','feedback','rockstars','owner'])$(id+'-tab').hidden=id!==b.dataset.tab;
+ if(b.dataset.tab==='settings'){void loadBandVisibility();void loadPushHealth();}
+ if(b.dataset.tab==='feedback')void loadMcFeedback();
+});
 
 $('settings-form').onsubmit=async e=>{e.preventDefault();busy=true;try{const {error}=await sb.rpc('yarg_admin_save_settings',{p_name:$('party-name').value.trim(),p_mc:$('mc-name').value.trim(),p_party_mode:$('party-mode').checked});if(error)throw error;notice('Réglages enregistrés.');hasLoadedSettings=false;busy=false;await load();}catch(e){busy=false;notice(e.message,true)}};
 
