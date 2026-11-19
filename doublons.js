@@ -1,5 +1,5 @@
 'use strict';
-/* Détecteur de doublons YARG : analyse locale, aucune écriture dans le catalogue. */
+/* Détecteur de doublons YARG : catalogue en lecture seule, décisions synchronisées via Supabase. */
 const SUPABASE_URL='https://xbhfjzurytdknbqvksjq.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
@@ -11,6 +11,7 @@ const CHARTS=[['Guitare',0],['Basse',1],['Guitare rythmique',2],['Batterie 4 voi
 const DIFFICULTIES=[[1n,'Débutant'],[2n,'Facile'],[4n,'Moyen'],[8n,'Difficile'],[16n,'Expert'],[32n,'Expert+']];
 let songs=[],groups=[],decisions={},ignored={},shown=15,renderTimer=0;
 let catalogueDigest='', importedHashes={};
+let reviewOwnerId='', saveQueue=Promise.resolve();
 function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fold(text){return String(text||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');}
 function titleBase(text){
@@ -29,6 +30,19 @@ function variant(s){
  if(/\b(?:re[- ]recorded|cover)\b/i.test(title))return 'Réenregistrement / reprise';
  if(/\b(?:remaster(?:ed)?)\b/i.test(title))return 'Remaster';
  return 'Version non précisée';
+}
+// Live/studio and instrumental/vocal recordings are separate keep-worthy editions.
+function isLiveEdition(s){
+ const title=String(s.Name||''),album=String(s.Album||'');
+ return /(?:[([]\s*live\b|\s[-–:]\s*live\b|\s[([]\s*(?:unplugged|concert)\b)/i.test(title)
+  || /\b(?:live|unplugged|in concert)\b/i.test(album);
+}
+function isInstrumentalEdition(s){
+ const title=String(s.Name||'');
+ return /(?:[([]\s*(?:instrumental|karaoke|no vocals)\b|\s[-–:]\s*(?:instrumental|karaoke|no vocals)\b)/i.test(title);
+}
+function distinctKeepEditions(a,b){
+ return isLiveEdition(a)!==isLiveEdition(b) || isInstrumentalEdition(a)!==isInstrumentalEdition(b);
 }
 function hash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);}
 function duration(ms){const n=Number(ms);if(!Number.isFinite(n)||n<=0)return 'Inconnue';const total=Math.round(n/1000);return Math.floor(total/60)+':'+String(total%60).padStart(2,'0');}
@@ -76,7 +90,7 @@ function distinctSongParts(a,b){
  return !!(x&&y&&x.base===y.base&&x.number!==y.number);
 }
 function potentialMatch(a,b){
- if(distinctSongParts(a,b))return 0;
+ if(distinctSongParts(a,b)||distinctKeepEditions(a,b))return 0;
  if(a.artistKey===b.artistKey&&a.titleKey===b.titleKey)return 100;
  if(a.titleKey===b.titleKey&&a.artistKey.length>3&&b.artistKey.length>3&&similarity(a.artistKey,b.artistKey)>=.87)return 87;
  if(a.artistKey===b.artistKey&&Math.min(a.titleKey.length,b.titleKey.length)>=7){
@@ -127,9 +141,42 @@ function loadSaved(){
  try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');decisions=x.decisions&&typeof x.decisions==='object'?x.decisions:{};ignored=x.ignored&&typeof x.ignored==='object'?x.ignored:{};}
  catch{decisions={};ignored={};}
 }
-function save(){
+function writeLocal(){
  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({decisions,ignored}));}
- catch(e){$('result-summary').textContent='Impossible d’enregistrer les décisions dans le navigateur : '+e.message;}
+ catch(e){$('sync-status').textContent='Sauvegarde locale impossible : '+e.message;}
+}
+async function loadCloudReviews(){
+ const {data,error}=await sb.from('yarg_duplicate_reviews').select('decisions,ignored').eq('owner_id',reviewOwnerId).maybeSingle();
+ if(error)throw error;
+ if(data){
+  decisions=data.decisions&&typeof data.decisions==='object'?data.decisions:{};
+  ignored=data.ignored&&typeof data.ignored==='object'?data.ignored:{};
+  writeLocal();
+  $('sync-status').textContent='✓ Décisions chargées de Supabase et synchronisées entre appareils.';
+ }else{
+  // First opening on this account: import saved choices from this browser once.
+  await persistReview({decisions:{...decisions},ignored:{...ignored}});
+  $('sync-status').textContent='✓ Décisions initiales enregistrées dans Supabase.';
+ }
+}
+async function persistReview(snapshot){
+ const {error}=await sb.from('yarg_duplicate_reviews').upsert({
+  owner_id:reviewOwnerId,decisions:snapshot.decisions,ignored:snapshot.ignored,
+  updated_at:new Date().toISOString()
+ },{onConflict:'owner_id'});
+ if(error)throw error;
+}
+function save(){
+ writeLocal();
+ if(!reviewOwnerId)return;
+ const snapshot={decisions:{...decisions},ignored:{...ignored}};
+ $('sync-status').textContent='Enregistrement dans Supabase…';
+ saveQueue=saveQueue.catch(()=>{}).then(()=>persistReview(snapshot)).then(()=>{
+  $('sync-status').textContent='✓ Décisions enregistrées dans Supabase.';
+ }).catch(e=>{
+  $('sync-status').textContent='⚠ Synchronisation échouée : '+e.message+' — Les décisions sont conservées dans ce navigateur.';
+  throw e;
+ });
 }
 function groupedDeleteCount(g){return ignored[g.id]?0:g.items.filter(x=>decisions[x.id]==='delete').length;}
 function visibleGroups(){
@@ -140,7 +187,7 @@ function visibleGroups(){
   if(filter==='marked'&&!groupedDeleteCount(g))return false;
   if(filter==='ignored'&&!ignored[g.id])return false;
   if(['exact','variant','likely'].includes(filter)&&g.kind!==filter)return false;
-  if(filter!=='ignored'&&ignored[g.id]&&filter!=='all')return false;
+  if(filter!=='ignored'&&ignored[g.id])return false;
   return true;
  });
  if(sort==='artist')result.sort((a,b)=>a.artist.localeCompare(b.artist,'fr')||a.title.localeCompare(b.title,'fr'));
@@ -194,6 +241,7 @@ function render(){
   [groups.length.toLocaleString('fr-CA'),'groupes suspects'],
   [exact.toLocaleString('fr-CA'),'groupes très probables'],
   [reviewed.toLocaleString('fr-CA'),'groupes examinés'],
+   [Object.keys(ignored).filter(id=>ignored[id]&&groups.some(g=>g.id===id)).length.toLocaleString('fr-CA'),'groupes ignorés'],
   [toDelete.toLocaleString('fr-CA'),'chansons à supprimer']
  ].map(([n,label])=>'<div class="stat"><strong>'+n+'</strong><span>'+label+'</span></div>').join('');
  $('result-summary').textContent=all.length+' groupe(s) correspondant aux filtres · '+Math.min(shown,all.length)+' affiché(s)';
@@ -393,7 +441,7 @@ function bindUI(){
  $('rescan').addEventListener('click',loadCatalogue);
  $('export').addEventListener('click',exportReport);
  $('reset').addEventListener('click',()=>{
-  if(!confirm('Effacer toutes tes décisions sur cet appareil, y compris les groupes ignorés ?'))return;
+  if(!confirm('Effacer toutes tes décisions enregistrées dans Supabase, y compris les groupes ignorés ?'))return;
   decisions={};ignored={};save();render();
  });
  $('group-list').addEventListener('change',e=>{
@@ -433,7 +481,8 @@ async function init(){
   if(owner.error)throw owner.error;
   if(owner.data!==true)throw new Error('Ce compte ne possède pas les autorisations Propriétaire.');
   $('checking').hidden=true;$('app').hidden=false;
-  loadSaved();bindUI();await loadCatalogue();
+  reviewOwnerId=data.user.id;
+   loadSaved();await loadCloudReviews();bindUI();await loadCatalogue();
  }catch(error){
   $('checking').hidden=true;$('blocked').hidden=false;$('blocked-message').textContent=error.message||'Accès indisponible.';
  }
