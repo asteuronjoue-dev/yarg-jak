@@ -185,7 +185,7 @@ function visibleGroups(){
   if(query&&!g.items.some(s=>s.searchText.includes(query)))return false;
   if(filter==='unreviewed'&&(ignored[g.id]||g.items.some(s=>decisions[s.id])))return false;
   if(filter==='marked'&&!groupedDeleteCount(g))return false;
-  if(filter==='ignored'&&!ignored[g.id])return false;
+  if(filter==='ignored')return false;
   if(['exact','variant','likely'].includes(filter)&&g.kind!==filter)return false;
   if(filter!=='ignored'&&ignored[g.id])return false;
   return true;
@@ -233,6 +233,13 @@ function groupCard(g){
 }
 function render(){
  const all=visibleGroups(),current=all.slice(0,shown);
+ const ignoredGroups=groups.filter(g=>ignored[g.id]);
+ $('ignored-summary').textContent='Ignorés ('+ignoredGroups.length+')';
+ $('ignored-section').hidden=ignoredGroups.length===0;
+ $('ignored-list').innerHTML=ignoredGroups.map(g=>
+  '<div class="ignored-item"><strong>'+esc(g.artist)+' — '+esc(g.title)+' ('+g.items.length+' versions)</strong>'+
+  '<button type="button" data-action="ignore" data-group="'+esc(g.id)+'">↩ Réexaminer</button></div>'
+ ).join('');
  const toDelete=groups.reduce((sum,g)=>sum+groupedDeleteCount(g),0);
  const reviewed=groups.filter(g=>ignored[g.id]||g.items.some(s=>decisions[s.id])).length;
  const exact=groups.filter(g=>g.kind==='exact').length;
@@ -436,7 +443,15 @@ async function loadCatalogue(){
 function bindUI(){
  $('hash-csv').addEventListener('change',importHashes);
  $('search').addEventListener('input',()=>{clearTimeout(renderTimer);renderTimer=setTimeout(()=>{shown=15;render();},120)});
- for(const id of ['filter','sort'])$(id).addEventListener('change',()=>{shown=15;render();});
+ for(const id of ['filter','sort'])$(id).addEventListener('change',()=>{
+  if(id==='filter'&&$('filter').value==='ignored'){
+   $('filter').value='all';
+   $('ignored-section').open=true;
+   render();
+   $('ignored-section').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  shown=15;render();
+ });
  $('more').addEventListener('click',()=>{shown+=15;render();});
  $('rescan').addEventListener('click',loadCatalogue);
  $('export').addEventListener('click',exportReport);
@@ -448,7 +463,7 @@ function bindUI(){
   const input=e.target.closest('input[data-action="delete"]');if(!input)return;
   const g=findGroup(input.dataset.group);if(g)chooseVersion(g,input.dataset.id,input.checked?'delete':null);
  });
- $('group-list').addEventListener('click',e=>{
+ const handleReviewClick=e=>{
   const button=e.target.closest('button[data-action]');if(!button)return;
   const action=button.dataset.action,g=findGroup(button.dataset.group);if(!g)return;
   if(action==='keep'){
@@ -471,7 +486,9 @@ function bindUI(){
    for(const s of g.items)if(s.id!==keep.id)decisions[s.id]='delete';
    save();render();
   }
- });
+ };
+ $('group-list').addEventListener('click',handleReviewClick);
+ $('ignored-list').addEventListener('click',handleReviewClick);
 }
 async function init(){
  try{
