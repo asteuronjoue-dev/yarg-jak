@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>À Propos — Asteur On Jam</title>
+<link rel="icon" type="image/png" href="assets/favicon-32.png?v=3">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#101214;--panel:#181e22;--panel2:#20292e;--text:#f5f7f8;--muted:#aeb8bd;--line:#3e5058;--orange:#ff8a24;--orange2:#ffad42;--teal:#1fc8bd;--teal2:#78eee5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea{font:inherit}a{color:inherit}.wrap{width:min(1100px,calc(100% - 32px));margin:0 auto}
+header{border-bottom:1px solid #36434a;background:#151a1e}header .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:20px 0}
+.site-brand{display:flex;gap:12px;align-items:center;min-width:0}.site-brand img{height:50px;width:50px;object-fit:contain}
+.site-brand strong{font-size:clamp(1.1rem,2vw,1.4rem);font-weight:950}.site-brand small{display:block;color:var(--muted);margin-top:3px}
+.yarg-navigation{display:flex;align-items:center;justify-content:flex-end;gap:.4rem;flex-wrap:wrap}
+.yarg-navigation a{color:#eaf1f3;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #3b4b53;border-radius:10px;padding:.48rem .7rem;background:#1b2429;font-size:.85rem;font-weight:800;white-space:nowrap}
+.yarg-navigation a:hover,.yarg-navigation a:focus-visible{border-color:#1fc8bd;background:#263338;color:#fff}
+.yarg-navigation a[aria-current="page"]{background:#ff8a24;color:#111;border-color:#ff8a24}
+.yarg-navigation a[hidden]{display:none!important}
+@media(max-width:670px){header .wrap{display:block}.yarg-navigation{width:100%;justify-content:stretch;margin-top:16px}.yarg-navigation a{flex:1 1 calc(50% - .4rem);white-space:normal;min-width:0;text-align:center;padding:.65rem .35rem;font-size:.8rem}}
+main.wrap{padding:27px 0 70px}h1{font-size:clamp(1.8rem,4vw,2.6rem);margin:0 0 8px}p{line-height:1.55}
+.intro{color:#c1cdd2;margin:0 0 24px;max-width:800px}
+.about-fold{margin:0 0 13px;border:1px solid #46575d;background:#192329;border-radius:14px;overflow:hidden}
+.about-fold>summary{cursor:pointer;font-weight:900;padding:18px 20px;list-style-position:inside;color:#c0f4e7;font-size:1.08rem}
+.about-fold[open]>summary{border-bottom:1px solid #46575d}
+.about-fold>summary:hover,.about-fold>summary:focus-visible{background:#24363b;outline-offset:-3px}
+.about-fold .about-body{padding:15px 21px 22px;color:#d9e3e6;line-height:1.55}
+.about-body h3{font-size:1.02rem;color:#adf0e4;margin:16px 0 7px}.about-body li{margin:11px 0}.about-body a{color:#9fece3;text-underline-offset:3px}
+.queue-rules-body{padding:6px 20px 20px;color:#d1dcdf;line-height:1.55;font-size:14px}
+.queue-rules-body h3{font-size:1.01rem;line-height:1.35;margin:19px 0 8px;color:#a9eee0}
+.queue-rules-body p{margin:9px 0 12px}.queue-rules-body ul{padding-left:22px}.queue-rules-body li{margin:9px 0}
+.queue-rules-body strong{color:#f3fbfa}.queue-rules-intro{color:#e6eff0}
+.points-note{padding:12px 15px;background:#172e33;border:1px solid #42656b;border-radius:10px;color:#c9e9e7}
+.queue-rule-formula{display:grid;gap:8px;border:1px solid #538379;border-radius:12px;background:#18332f;padding:14px 16px;margin:12px 0}
+.queue-rule-formula>span{font-size:1.03rem;line-height:1.5;color:#d2f5ea}.queue-rule-formula small{font-size:12px;line-height:1.5;color:#bad2ce}
+.queue-rule-example{background:#222f38;border:1px solid #56717a;padding:14px 16px;border-radius:12px;margin:17px 0}
+.queue-rule-example>strong{color:#b3f2e2}.queue-rule-example p{margin:9px 0 0}.queue-rule-math{font-variant-numeric:tabular-nums;background:#14242b;padding:10px;border-radius:8px;text-align:center}
+.queue-rules-footnote{color:#b5c9d0;font-size:13px;border-top:1px solid #40575d;padding-top:13px;margin-top:18px!important}
+@media(max-width:520px){.queue-rules-body,.about-fold .about-body{padding:12px 14px 16px;font-size:13.5px}.queue-rule-formula,.queue-rule-example{padding:12px}.about-fold>summary{padding:15px}}
+.hall-list{display:grid;gap:10px}.hall-party{background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.hall-party summary{padding:15px 17px;cursor:pointer;font-weight:850;list-style-position:inside}
+.hall-party[open] summary{border-bottom:1px solid var(--line);color:var(--teal2)}
+.hall-sub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin:7px 0 0 20px}
+.hall-content{padding:8px 22px 18px;overflow-wrap:anywhere}.hall-content h3{font-size:15px;color:var(--orange2);margin:18px 0 8px}.hall-content li{padding:4px 0;line-height:1.5}
+.empty{padding:17px 12px;color:#c2d0d5;text-align:center;border:1px dashed #52676e;border-radius:11px}
+.about-actions{display:grid;gap:12px;margin:17px 0 35px}
+.about-action{display:flex;align-items:center;justify-content:center;min-height:57px;padding:15px 17px;border:1px solid #4e656c;border-radius:13px;text-decoration:none;background:#253239;color:#e5f6f7;font-weight:850;cursor:pointer;text-align:center;font-size:1rem}
+.about-action:hover,.about-action:focus-visible{background:#31434a;border-color:#8fe5d7}
+.about-action.song-add{border-color:#ad8556;color:#ffdda8;background:#30271e}
+.about-action.song-add:hover{background:#453628}
+.host-info{border-top:1px solid #415059;margin-top:46px;padding-top:22px}.host-info h2{font-size:1.23rem;margin:0 0 6px}
+.host-info>p{color:#b8c9ce;margin:0 0 17px}
+.contact-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.contact-item{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:#1c262b;border:1px solid #42535b;border-radius:12px;padding:13px 15px}
+.contact-item strong{color:#f3f8f9}.contact-item a{overflow-wrap:anywhere;color:#a4eee7;text-underline-offset:3px}.contact-item span{color:#acbdc4;font-size:.86rem}
+@media(max-width:630px){.contact-grid{grid-template-columns:1fr}}
+#yarg-feedback-dialog{width:min(520px,calc(100vw - 28px));max-height:min(90vh,760px);overflow-y:auto;padding:24px;border:1px solid #537078;border-radius:16px;background:#1b252b;color:#eef5f6;box-shadow:0 20px 75px #0009}
+#yarg-feedback-dialog::backdrop{background:#000b}
+.yarg-feedback-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.yarg-feedback-heading h2{margin:0;font-size:1.45rem}
+.yarg-feedback-heading button{border:1px solid #596b72;background:#243238;border-radius:8px;color:#fff;padding:7px 12px;cursor:pointer}
+#yarg-feedback-form{display:grid;gap:14px;margin-top:18px}
+#yarg-feedback-form label{display:grid;gap:6px;color:#d7e5e9;font-weight:750}
+#yarg-feedback-form input,#yarg-feedback-form textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #60777d;border-radius:9px;background:#10181c;color:white;padding:11px;font:inherit}
+#yarg-feedback-form textarea{min-height:148px;resize:vertical}
+#yarg-feedback-form button{background:#1fc8bd;color:#081b19;border:0;border-radius:10px;padding:12px 16px;font-weight:900;cursor:pointer}
+#yarg-feedback-form button:disabled{opacity:.65;cursor:wait}
+#yarg-feedback-message{margin:12px 0 0;line-height:1.4}
+#yarg-feedback-message[data-error="true"]{color:#ffb3b7}
+#yarg-feedback-message[data-error="false"]{color:#adf1d7}
+</style>
+</head>
+<body>
+<header>
+<div class="wrap">
+ <div class="site-brand"><img src="assets/favicon.png" alt="" width="50" height="50"><div><strong>Asteur On Jam</strong><small>À Propos</small></div></div>
+ <nav class="yarg-navigation" aria-label="Navigation principale">
+  <a href="index.html">Catalogue</a>
+  <a href="file.html">File de la soirée</a>
+  <a href="profil.html">Mon profil</a>
+  <a href="a-propos.html" aria-current="page">À Propos</a>
+  <a href="admin.html" hidden>Régie MC</a>
+ </nav>
+</div>
+</header>
+<main class="wrap">
+<h1>À Propos</h1>
+<p class="intro">Des infos pour découvrir Asteur On Jam, comprendre comment la file fonctionne et retrouver les souvenirs de nos soirées.</p>
+<details class="about-fold" id="guide">
+ <summary>🧭 Tutoriel — Premiers pas sur le site (version brouillon)</summary>
+ <div class="about-body">
+  <p>Bienvenue! Pas besoin d’être une Rockstar de niveau expert pour participer, et <strong>créer un compte est facultatif</strong>.</p>
+  <ol>
+   <li><strong>Découvre le <a href="index.html">Catalogue</a>.</strong> Utilise la recherche pour trouver une chanson, puis les boutons de filtres pour choisir le jeu, la playlist, les instruments ou la difficulté. Appuie sur une chanson pour voir ce qui est jouable.</li>
+   <li><strong>Demande une chanson pendant la soirée.</strong> Quand le MC a ouvert les demandes, ouvre la fiche de la chanson et choisis l’option pour la demander. Indique ton nom, ton instrument, ta difficulté et les autres personnes qui participent, si nécessaire.</li>
+   <li><strong>Rejoins une chanson déjà demandée.</strong> Consulte la <a href="file.html">File de la soirée</a>. Si une prestation a des places libres, tu peux rejoindre le groupe à l’instrument qui t’intéresse. Il n’est pas nécessaire de faire une nouvelle demande pour cette chanson.</li>
+   <li><strong>Consulte ton tour.</strong> La file affiche l’ordre prévu et les heures approximatives. L’ordre peut changer avec les nouveaux groupes et les règles d’équité. Le MC reste responsable du déroulement de la soirée.</li>
+   <li><strong>Pas encore prêt?</strong> Si tu participes avec ton compte Rockstar, utilise le bouton « Pas prêt » dans la file pour suspendre temporairement tes prestations à venir. Tu peux aussi activer les notifications pour être averti à l’approche de ton tour.</li>
+   <li><strong>Ton <a href="profil.html">profil Rockstar</a> est optionnel.</strong> Créer un compte permet notamment de conserver tes favoris, de retrouver tes participations et de débloquer des titres ou médailles.</li>
+   <li><strong>Une chanson manque au catalogue?</strong> Tu peux en demander l’ajout avec le bouton plus bas sur cette page. Il s’agit d’une suggestion pour enrichir la bibliothèque, et non d’une demande pour jouer immédiatement.</li>
+  </ol>
+  <p>Ce tutoriel est une <strong>version brouillon</strong> : certains détails pourront changer au fil de l’évolution du site.</p>
+ </div>
+</details>
+<details class="about-fold queue-rules" id="queueRules">
+    <summary>⚖️ Comment l’ordre des chansons est-il décidé ?</summary>
+    <div class="queue-rules-body"><p class="points-note">Les points personnels indiquent combien de temps de scène une Rockstar a déjà réservé en lançant ses propres chansons : +1 par seconde (4 min = +240), avec −1 au départ pour les Initiés. Rejoindre une autre chanson ne coûte aucun point personnel. Pour classer une demande, le système soustrait jusqu’à 90 points pour les coéquipiers et jusqu’à 900 points pour l’attente, après 30 minutes. Les chansons non lancées ne coûtent rien. Les exemples et les règles détaillées suivent juste en dessous.</p>
+      <h3>Avant tout : un système « shotgun » pour que tout le monde ait sa chance</h3>
+      <p class="queue-rules-intro">Le but de ce site, c’est de permettre à chaque Rockstar de <strong>réserver sa chanson ou sa place à un instrument sans avoir à se faire entendre plus fort que les autres</strong>. C’est notre système « shotgun » : <strong>les chansons et les places demandées sur le site ont toujours priorité sur les demandes faites spontanément pendant la soirée</strong>.</p>
+      <p>Les demandes « sur le fly » restent tout à fait les bienvenues! On peut toujours proposer une chanson au MC ou demander à jouer d’un instrument directement. Mais ces demandes ne passent <strong>jamais devant celles déjà faites sur le site</strong> : la file et les places réservées en ligne sont respectées en premier.</p>
+      <p>Pourquoi? Parce que certaines personnes préfèrent choisir leur chanson tranquillement, <strong>sans faire défiler le catalogue pendant plusieurs minutes devant tout le monde</strong>. Et parce que d’autres n’oseront pas interrompre une personne qui tient déjà une guitare, une basse, une batterie ou un micro pour lui demander sa place. <strong>Pas besoin d’être la personne la plus extravertie du party pour monter sur scène!</strong></p>
+      <p>Une fois les demandes faites sur le site, leur ordre n’est pas simplement « premier arrivé, premier servi » : le système combine les <strong>points de la Rockstar qui a fait la demande</strong>, l’attente, le nombre de personnes dans son groupe et la variété des prestations.</p>
+
+      <h3>1. Tes points personnels : qui a déjà eu son tour ?</h3>
+      <ul>
+        <li><strong>Au début de la soirée :</strong> chaque Rockstar commence à <strong>0 point</strong>, sauf les <strong>Initiés</strong>, qui commencent à <strong>−1 point</strong> pour avoir participé à une soirée précédente.</li>
+        <li><strong>Quand ta propre chanson commence :</strong> tu reçois <strong>+1 point par seconde</strong> de sa durée prévue. Une chanson de 2 min 30 s ajoute donc <strong>150 points</strong>; une de 4 min, <strong>240 points</strong>. Le coût est compté dès que le MC lance la prestation, pas quand elle se termine.</li>
+        <li><strong>Quand tu rejoins la chanson de quelqu’un d’autre :</strong> tu ne gagnes <strong>aucun point personnel</strong>. Tu peux donc accompagner d’autres Rockstars sans repousser tes propres demandes.</li>
+        <li><strong>Si une chanson est passée sans être lancée :</strong> elle n’ajoute aucun point. Si le MC remet une prestation jouée en file, ses points sont annulés ou recalculés selon la correction.</li>
+      </ul>
+      <p>En général, <strong>moins tu as de points personnels, plus tes demandes sont favorisées</strong>. Mais le classement ne s’arrête pas là.</p>
+
+      <h3>2. Le score de priorité de chaque chanson</h3>
+      <div class="queue-rule-formula"><strong>Score de la demande</strong><span>Points personnels de l’initiateur <strong>−</strong> bonus de groupe <strong>−</strong> bonus d’attente</span><small>Le score <strong>le plus bas</strong> passe avant les autres, sous réserve des règles de variété et des places déjà annoncées.</small></div>
+      <ul>
+        <li><strong>Bonus de groupe :</strong> chaque autre personne distincte qui participe à la demande fait baisser son score de <strong>30 points</strong>. Cela donne <strong>−30</strong> à deux personnes au total, <strong>−60</strong> à trois et <strong>−90</strong> à quatre ou plus (bonus plafonné à trois coéquipiers). Il s’agit d’un bonus pour <em>cette chanson</em>, pas d’une réduction des points personnels.</li>
+        <li><strong>Bonus d’attente :</strong> pendant les <strong>30 premières minutes</strong>, aucun bonus. Ensuite, la demande retire <strong>6 points par minute supplémentaire</strong>, jusqu’à <strong>−900 points</strong> au maximum. Par exemple : 45 minutes d’attente = <strong>−90</strong>; 60 minutes = <strong>−180</strong>. Les longues attentes finissent donc par remonter dans la file.</li>
+        <li><strong>Points anticipés :</strong> pour prévoir les chansons suivantes, le système simule les points que chaque Rockstar recevra en jouant ses demandes placées plus tôt. Le classement peut donc changer quand de nouvelles personnes ou chansons arrivent. Ces points anticipés ne deviennent de <em>vrais</em> points qu’au lancement des chansons concernées.</li>
+      </ul>
+      <div class="queue-rule-example"><strong>Exemple concret</strong>
+        <p>Alex a déjà lancé une chanson de 4 minutes : <strong>240 points personnels</strong>. Sa prochaine demande compte deux autres membres (<strong>−60</strong>) et attend depuis 45 minutes (<strong>−90</strong>).</p>
+        <p class="queue-rule-math"><strong>240 − 60 − 90 = 90 points de priorité</strong></p>
+        <p>Sam, qui n’a pas encore joué sa propre demande, est à <strong>0</strong> : sa demande a normalement la priorité sur celle d’Alex. Mais si Alex attend davantage ou rassemble un groupe plus nombreux, son score peut passer sous 0. <strong>Les 240 points personnels d’Alex, eux, ne changent pas.</strong></p>
+      </div>
+
+      <h3>3. Les règles qui peuvent modifier cet ordre</h3>
+      <ul>
+        <li><strong>Chanson en cours et prochaine annoncée :</strong> elles restent à leur place, même si les points ou les groupes changent.</li>
+        <li><strong>Variété avant tout :</strong> le système essaie d’éviter deux demandes consécutives de la même Rockstar ou deux chansons du même artiste lorsqu’il existe une autre demande admissible. C’est une <strong>préférence de classement</strong>, pas une interdiction absolue : si aucune bonne alternative n’est disponible, un enchaînement reste possible.</li>
+        <li><strong>Ordre de tes propres demandes :</strong> ta deuxième chanson ne passe pas devant ta première demande encore admissible.</li>
+        <li><strong>En cas d’égalité de score :</strong> la demande la plus ancienne est prioritaire, après application des autres règles.</li>
+        <li><strong>« Pas prêt » :</strong> une prestation en pause sort temporairement de l’ordre de passage et n’a plus d’heure prévue. Elle revient dans le classement dès qu’elle est remise en état « Prêt ».</li>
+        <li><strong>Pas de doublons :</strong> une chanson déjà demandée ou jouée durant la soirée ne peut pas être redemandée. Tu peux toutefois rejoindre son groupe si une place est libre.</li>
+      </ul>
+      <p class="queue-rules-footnote">La file est recalculée selon la situation du moment. Les heures affichées sont des estimations, pas des rendez-vous garantis : le MC conserve le contrôle du déroulement de la soirée.</p>
+    </div>
+  </details>
+<details class="about-fold" id="hallSection">
+ <summary>🏆 Hall of Fame — Soirées passées</summary>
+ <div class="about-body">
+  <p>Les soirées archivées, leurs setlists et les Rockstars qui sont montées sur scène.</p>
+  <div class="hall-list" id="hallOfFame"><div class="empty">Ouvre cette section pour consulter les archives.</div></div>
+ </div>
+</details>
+<div class="about-actions">
+ <button type="button" class="about-action" id="yargFeedbackOpen">💬 Suggestions, commentaires et bugs</button>
+ <a class="about-action song-add" href="demande.html">➕ Demander un ajout au catalogue</a>
+</div>
+<section class="host-info" aria-labelledby="host-title">
+ <h2 id="host-title">À propos de l’hôte</h2>
+ <p>Pour discuter avec la personne derrière Asteur On Jam, voici où me retrouver.</p>
+ <div class="contact-grid">
+  <div class="contact-item"><strong>Instagram</strong><span>Lien à venir</span></div>
+  <div class="contact-item"><strong>Discord</strong><span>Lien à venir</span></div>
+  <div class="contact-item"><strong>Courriel</strong><a href="mailto:asteur.on.joue@gmail.com">asteur.on.joue@gmail.com</a></div>
+ </div>
+</section>
+</main>
+<dialog id="yarg-feedback-dialog" aria-labelledby="yarg-feedback-title">
+ <div class="yarg-feedback-heading"><h2 id="yarg-feedback-title">💬 Tes idées et commentaires</h2><button type="button" id="yargFeedbackClose" aria-label="Fermer le formulaire">✕</button></div>
+ <p>Une suggestion, un commentaire ou un bug à signaler? Laisse-nous un mot! Aucun compte Rockstar nécessaire.</p>
+ <form id="yarg-feedback-form">
+  <label>Ton nom<input name="name" type="text" maxlength="80" minlength="2" placeholder="Comment on t'appelle?" autocomplete="name" required></label>
+  <label>Ton message<textarea name="comment" minlength="5" maxlength="3000" placeholder="Décris ton idée ou le problème rencontré…" required></textarea></label>
+  <button type="submit" id="yargFeedbackSubmit">Envoyer mon commentaire</button>
+ </form>
+ <p id="yarg-feedback-message" role="status" aria-live="polite"></p>
+</dialog>
+
+<script>
+'use strict';
+const SUPABASE_URL='https://xbhfjzurytdknbqvksjq.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const $=selector=>document.querySelector(selector);
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function formatDuration(sec){const n=Math.max(0,Number(sec)||0);return `${Math.floor(n/60)} min ${String(n%60).padStart(2,'0')} s`;}
+function renderHall(sessions){
+ const dest=$('#hallOfFame');
+ if(!Array.isArray(sessions)||!sessions.length){dest.innerHTML=`<div class="empty">Aucune ancienne soirée disponible pour le moment.</div>`;return;}
+ dest.innerHTML=sessions.map(session=>{
+  const songs=Array.isArray(session.setlist)?session.setlist:[];
+  const credits=new Map();let seconds=0;
+  function accountFor(entry){
+    const name=entry.account_name||entry.requester||'Rockstar';
+    const key=entry.account_key||'name:'+String(entry.requester||'Rockstar').trim().toLocaleLowerCase();
+    if(!credits.has(key))credits.set(key,{name,requests:0,played:0});
+    return credits.get(key);
+  }
+  for(const req of (Array.isArray(session.requests)?session.requests:[])){
+    accountFor(req).requests++;
+  }
+  for(const song of songs){
+    seconds+=Math.max(0,Number(song.seconds)||0);
+    accountFor(song).played++;
+  }
+  const stats=[...credits.values()].sort((a,b)=>b.requests-a.requests||b.played-a.played||a.name.localeCompare(b.name,'fr')).map(v=>
+    `<li><b>${esc(v.name)}</b> : ${v.requests} demande(s), ${v.played} jouée(s)</li>`).join('');
+  const setlist=songs.map((song,i)=>{
+    const players=[...new Set((Array.isArray(song.members)?song.members:[]).filter(Boolean))];
+    return `<li><strong>${esc(song.title)}</strong> — ${esc(song.artist||'')} · demande de ${esc(song.account_name||song.requester||'Rockstar')}${players.length?`<div class="hall-sub">Sur scène : ${esc(players.join(', '))}</div>`:''}</li>`;
+  }).join('');
+  const date=session.started_at?new Date(session.started_at).toLocaleDateString('fr-CA'):'';
+  return `<details class="hall-party"><summary>${esc(session.name||'Soirée YARG')}<span class="hall-sub">${esc(date)} · ${songs.length} chansons · ${formatDuration(seconds)}</span></summary>
+    <div class="hall-content"><h3>Statistiques des demandes</h3><ul>${stats||'<li>Aucune demande enregistrée</li>'}</ul><h3>Setlist</h3><ol>${setlist||'<li>Aucune chanson terminée</li>'}</ol></div></details>`;
+ }).join('');
+}
+async function loadHall(){
+ try{
+   const {data,error}=await sb.rpc('yarg_public_hall_of_fame');
+   if(error)throw error;
+   renderHall(data);
+ }catch(error){
+   console.warn('Archives non disponibles :',error);
+   $('#hallOfFame').innerHTML=`<div class="empty">Hall of Fame indisponible pour le moment.</div>`;
+ }
+}
+
+
+/* Feedback sans compte Rockstar — accessible aux invités de la file. */
+(()=>{
+ const dialog=document.getElementById('yarg-feedback-dialog');
+ const form=document.getElementById('yarg-feedback-form');
+ const message=document.getElementById('yarg-feedback-message');
+ const submit=document.getElementById('yargFeedbackSubmit');
+ document.getElementById('yargFeedbackOpen').addEventListener('click',()=>{
+  message.textContent='';message.removeAttribute('data-error');
+  dialog.showModal();form.elements.name.focus();
+ });
+ document.getElementById('yargFeedbackClose').addEventListener('click',()=>dialog.close());
+ dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const name=form.elements.name.value.trim(),comment=form.elements.comment.value.trim();
+  if(name.length<2||name.length>80||comment.length<5||comment.length>3000){
+   message.dataset.error='true';message.textContent='Vérifie ton nom (2 à 80 caractères) et ton message (5 à 3 000 caractères).';return;
+  }
+  submit.disabled=true;message.textContent='Envoi en cours…';message.removeAttribute('data-error');
+  try{
+   const {error}=await sb.from('yarg_site_feedback').insert({name,comment});
+   if(error)throw error;
+   form.reset();message.dataset.error='false';message.textContent='Merci! Ton message a été envoyé aux MC.';
+  }catch(error){
+   message.dataset.error='true';message.textContent='Impossible d’envoyer le message. Réessaie dans un instant.';
+   console.warn('YARG feedback submission failed:',error);
+  }finally{submit.disabled=false;}
+ });
+})();
+
+
+
+let hallLoaded=false;
+document.getElementById('hallSection').addEventListener('toggle',function(){
+ if(this.open&&!hallLoaded){hallLoaded=true;void loadHall();}
+});
+(async()=>{
+ try{
+  const {data:{user},error}=await sb.auth.getUser();
+  if(error||!user||user.is_anonymous)return;
+  const {data:allowed,error:checkError}=await sb.rpc('yarg_admin_whoami');
+  if(!checkError&&allowed===true)document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(a=>a.hidden=false);
+ }catch(e){console.warn('Accès Régie MC indisponible :',e);}
+})();
+</script>
+</body>
+</html>
