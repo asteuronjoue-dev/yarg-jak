@@ -69,6 +69,75 @@ main.wrap{padding:27px 0 70px}h1{font-size:clamp(1.8rem,4vw,2.6rem);margin:0 0 8
 #yarg-feedback-message{margin:12px 0 0;line-height:1.4}
 #yarg-feedback-message[data-error="true"]{color:#ffb3b7}
 #yarg-feedback-message[data-error="false"]{color:#adf1d7}
+
+/* Instrument guide uses the site's own fallback icons and clearly labelled diagrams. */
+#instrumentGuide .guide-intro{margin:0 0 15px;color:#c6d8df}
+.guide-sections{display:grid;gap:11px}
+.guide-section{background:#152027;border:1px solid #45616a;border-radius:12px;overflow:hidden}
+.guide-section>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;font-weight:900;font-size:1.05rem;color:#f4fafb}
+.guide-section>summary::-webkit-details-marker{display:none}
+.guide-section>summary::after{content:'⌄';font-size:1.35rem;line-height:1;margin-left:auto;color:#99e7de}
+.guide-section[open]>summary::after{content:'⌃'}
+.guide-section[open]>summary{border-bottom:1px solid #45616a;background:#203139}
+.guide-section>summary:hover,.guide-section>summary:focus-visible{background:#2b444c}
+.guide-summary-icons{display:inline-flex;align-items:center;gap:2px;flex-shrink:0}
+.guide-summary-icons img{width:39px;height:39px;object-fit:contain;filter:drop-shadow(0 1px 2px #0007)}
+.guide-summary-icons.is-multiple img{width:34px;height:34px}
+.guide-section-body{padding:16px 18px 20px;color:#e0e9ec;font-size:.93rem;line-height:1.55}
+.guide-section-body>p:first-child{margin-top:0}
+.guide-section-body h4{font-size:1.02rem;margin:21px 0 8px;color:#a8f1df}
+.guide-section-body strong{color:#fff}
+.guide-section-body ul{margin:7px 0 12px;padding-left:23px}
+.guide-section-body li{margin:7px 0}
+.guide-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0}
+.guide-icon-card{min-width:0;padding:13px 12px;border:1px solid #48636b;border-radius:12px;background:#23333b}
+.guide-icon-card img{display:block;width:74px;height:74px;object-fit:contain;margin:0 auto 7px}
+.guide-icon-card h4{margin:3px 0 5px;text-align:center;color:#fff}
+.guide-icon-card p{font-size:.87rem;line-height:1.5;margin:4px 0 0;color:#d7e6eb}
+.guide-note-diagram{border:1px solid #4b646b;background:#12242b;padding:12px 14px;border-radius:11px;margin:12px 0}
+.guide-note-diagram>strong{display:block;margin-bottom:10px}
+.guide-note-items{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap}
+.guide-note-item{flex:1 1 115px;display:flex;gap:8px;align-items:center;min-height:55px;border:1px solid #3e535e;border-radius:9px;background:#1e3038;padding:9px 10px}
+.guide-note-item span:last-child{font-size:.88rem;line-height:1.3}
+.guide-pad-shape,.guide-cymbal-shape,.guide-kick-shape,.guide-white-key,.guide-black-key{flex:none;display:inline-block;border:2px solid #fff}
+.guide-pad-shape{width:36px;height:27px;border-radius:3px;background:#d64d50}
+.guide-cymbal-shape{width:32px;height:32px;border-radius:50%;background:#e8bb4e;border-color:#fff;box-shadow:0 0 0 2px #81703c}
+.guide-kick-shape{width:44px;height:10px;border-radius:4px;background:#ffad4d}
+.guide-white-key{width:32px;height:35px;border-radius:3px;background:#f1f1eb;border-color:#698990}
+.guide-black-key{width:25px;height:25px;border-radius:3px;background:#111316;border-color:#e3d996}
+.guide-figure-caption{display:block;font-size:.78rem;line-height:1.4;color:#abc3ca;margin-top:9px}
+.guide-fivekeys{display:flex;gap:5px;margin-top:13px;flex-wrap:wrap}
+.guide-fivekeys span{min-width:49px;flex:1 1 0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;min-height:60px;background:#eee;color:#172027;border:2px solid #5f8891;border-top-width:7px;border-radius:5px;font-weight:900}
+.guide-fivekeys small{font-size:.73rem;font-weight:700}
+.guide-fivekeys span:nth-child(1){border-top-color:#4bbd65}
+.guide-fivekeys span:nth-child(2){border-top-color:#df5758}
+.guide-fivekeys span:nth-child(3){border-top-color:#e2c84f}
+.guide-fivekeys span:nth-child(4){border-top-color:#508ed6}
+.guide-fivekeys span:nth-child(5){border-top-color:#e2a04c}
+.guide-diff{width:100%;border-collapse:collapse;margin:13px 0;font-size:.88rem}
+.guide-diff th,.guide-diff td{border:1px solid #415c65;padding:9px 10px;text-align:left;vertical-align:top}
+.guide-diff th{background:#234148}
+.guide-diff tbody tr:nth-child(even){background:#1b2c33}
+.guide-medals{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px;margin-top:16px}
+.guide-medal{display:flex;min-width:0;align-items:center;flex-direction:column;text-align:center;gap:4px;background:#223239;border:1px solid #4b626d;border-radius:12px;padding:12px 5px;line-height:1.2}
+.guide-medal img{width:min(100%,92px);height:82px;object-fit:contain}
+.guide-medal strong{font-size:.87rem;overflow-wrap:anywhere}
+.guide-medal small{color:#c0d1d7;font-size:.78rem}
+.guide-tip{margin:12px 0;padding:11px 14px;border-left:3px solid #7be3d5;background:#1d3438;border-radius:7px}
+@media(max-width:780px){.guide-medals{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:540px){
+ .guide-card-grid{grid-template-columns:1fr;gap:8px}
+ .guide-icon-card{display:grid;grid-template-columns:62px minmax(0,1fr);gap:3px 12px;align-items:start}
+ .guide-icon-card img{grid-row:1 / span 2;width:62px;height:62px;margin:0}
+ .guide-icon-card h4{text-align:left;margin:3px 0}
+ .guide-icon-card p{grid-column:2;margin:0}
+ .guide-summary-icons img{width:32px;height:32px}
+ .guide-summary-icons.is-multiple img{width:28px;height:28px}
+ .guide-section>summary{gap:8px;font-size:.94rem;padding:12px}
+ .guide-section-body{padding:13px 12px}
+ .guide-medals{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .guide-medal img{height:80px}
+}
 </style>
 </head>
 <body>
@@ -102,6 +171,141 @@ main.wrap{padding:27px 0 70px}h1{font-size:clamp(1.8rem,4vw,2.6rem);margin:0 0 8
    <li><strong>Une chanson manque au catalogue?</strong> Tu peux en demander l’ajout avec le bouton plus bas sur cette page. Il s’agit d’une suggestion pour enrichir la bibliothèque, et non d’une demande pour jouer immédiatement.</li>
   </ol>
   <p>Ce tutoriel est une <strong>version brouillon</strong> : certains détails pourront changer au fil de l’évolution du site.</p>
+ </div>
+</details>
+
+<details class="about-fold" id="instrumentGuide">
+ <summary>🎸 Guide des instruments — Comment jouer?</summary>
+ <div class="about-body">
+  <p class="guide-intro">Première fois avec les instruments en plastique? Ouvre seulement les explications qui t'intéressent. Les images colorées sont les <strong>véritables icônes du site</strong>; les petites notes ci-dessous sont des schémas simplifiés pour comprendre le jeu, pas des captures d'écran.</p>
+  <div class="guide-sections">
+
+   <details class="guide-section" id="guide-vocals">
+    <summary><span class="guide-summary-icons is-multiple"><img src="assets/medals/vocals-fallback.png" alt=""><img src="assets/medals/vocals-harmony-2.png" alt=""><img src="assets/medals/vocals-harmony-3.png" alt=""></span><span>Chant — 1, 2 ou 3 voix</span></summary>
+    <div class="guide-section-body">
+     <div class="guide-card-grid">
+      <div class="guide-icon-card"><img src="assets/medals/vocals-fallback.png" alt="Icône Chant — 1 voix"><h4>1 voix</h4><p>Une seule ligne vocale dans la chanson. Suis la mélodie principale et les paroles.</p></div>
+      <div class="guide-icon-card"><img src="assets/medals/vocals-harmony-2.png" alt="Icône Chant — 2 voix"><h4>2 voix</h4><p>La mélodie principale <strong>et une deuxième partie</strong> : tu peux entendre deux hauteurs différentes chantées ensemble.</p></div>
+      <div class="guide-icon-card"><img src="assets/medals/vocals-harmony-3.png" alt="Icône Chant — 3 voix"><h4>3 voix</h4><p>Jusqu'à <strong>trois lignes distinctes</strong> : la voix principale et deux harmonies pour chanter à plusieurs.</p></div>
+     </div>
+     <h4>À quoi ça ressemble à l'écran?</h4>
+     <p>Les paroles défilent avec des <strong>lignes horizontales de hauteur</strong> (une couleur différente pour chaque partie). Ton micro détecte si tu chantes assez juste et au bon moment. La ligne monte ou descend selon la note à atteindre. Certaines phrases peuvent aussi être parlées ou scandées.</p>
+     <h4>Je chante l'harmonie 2 ou 3 : à quoi m'attendre?</h4>
+     <ul>
+      <li><strong>Deuxième voix :</strong> tu ne chantes pas forcément la mélodie que tout le monde connaît! C'est souvent une note plus aiguë ou plus grave qui se superpose au refrain; parfois, c'est une réplique ou une phrase différente.</li>
+      <li><strong>Troisième voix :</strong> encore une autre ligne pour compléter l'accord vocal. Elle peut être plus haute, plus basse ou n'apparaître que pendant certains bouts de la chanson.</li>
+      <li><strong>Pas besoin de chanter sans arrêt :</strong> si ta ligne n'a pas de notes à un moment donné, attends ton passage. Le chiffre indique le <em>nombre de parties disponibles</em>, pas leur difficulté.</li>
+     </ul>
+     <p class="guide-tip"><strong>Petit truc :</strong> écoute la voix d'accompagnement dans la chanson et suis <em>sa</em> ligne à l'écran, plutôt que de chanter automatiquement le refrain principal. Selon le mode d'harmonies, le jeu peut reconnaître une autre ligne disponible.</p>
+    </div>
+   </details>
+
+   <details class="guide-section" id="guide-guitars">
+    <summary><span class="guide-summary-icons is-multiple"><img src="assets/medals/guitar-fallback.png" alt=""><img src="assets/medals/rhythm_guitar-fallback.png" alt=""><img src="assets/medals/bass-fallback.png" alt=""></span><span>Guitares et basse — Comment gratter?</span></summary>
+    <div class="guide-section-body">
+     <div class="guide-card-grid">
+      <div class="guide-icon-card"><img src="assets/medals/guitar-fallback.png" alt="Icône Guitare"><h4>Guitare</h4><p>Riffs, mélodies, solos et parfois des <strong>accords</strong> : plusieurs boutons en même temps.</p></div>
+      <div class="guide-icon-card"><img src="assets/medals/rhythm_guitar-fallback.png" alt="Icône Guitare rythmique"><h4>Guitare rythmique</h4><p>Quand la chanson propose cette piste, tu accompagnes avec les rythmes, riffs ou accords de soutien.</p></div>
+      <div class="guide-icon-card"><img src="assets/medals/bass-fallback.png" alt="Icône Basse"><h4>Basse</h4><p>Tu suis la ligne de basse. Il y a <strong>beaucoup moins d'accords</strong> que sur les guitares : souvent une note à la fois.</p></div>
+     </div>
+     <h4>Le principe de la guitare en plastique</h4>
+     <ol>
+      <li><strong>Main gauche :</strong> maintiens les boutons colorés (<em>frettes</em>) qui correspondent aux notes arrivant à l'écran.</li>
+      <li><strong>Main droite :</strong> quand la note atteint la ligne de jeu, actionne la <strong>barre de grattage</strong> (<em>strum bar</em>) vers le haut ou vers le bas. Appuyer sur les frettes seulement ne suffit généralement pas.</li>
+      <li><strong>Deux ou trois notes collées ensemble?</strong> C'est un <em>accord</em> : maintiens tous les boutons indiqués et gratte une seule fois pour cet accord.</li>
+      <li><strong>Note longue?</strong> Garde les frettes enfoncées jusqu'au bout de la ligne qui suit la note. Sur les notes spéciales <em>hammer-on/pull-off</em>, tu pourras parfois jouer sans gratter chaque fois.</li>
+     </ol>
+     <h4>Whammy bar, Star Power et activation</h4>
+     <p>La <strong>barre de vibrato (whammy)</strong> est le petit bras mobile près de la barre de grattage. Bouge-le pendant une <strong>note longue tenue</strong> : ça fait varier le son et, pendant certaines phrases spéciales, ça peut remplir davantage ta jauge de Star Power.</p>
+     <p>Le <strong>Star Power</strong> (aussi appelé <em>Overdrive</em>) se gagne en réussissant des phrases de notes spéciales, souvent lumineuses. Une fois la jauge suffisamment remplie, <strong>lève le manche de la guitare</strong> ou appuie sur le bouton d'activation assigné à ton instrument. Tu obtiens temporairement un bonus de points.</p>
+     <p class="guide-tip">Pour commencer, essaie <strong>Facile</strong> : peu de couleurs à gérer et un rythme simplifié. <strong>Moyen</strong> introduit davantage de notes; <strong>Difficile</strong> utilise les cinq couleurs; <strong>Expert</strong> suit beaucoup plus fidèlement la vitesse et les accords du morceau. Les arrangements varient d'une chanson à l'autre.</p>
+    </div>
+   </details>
+
+   <details class="guide-section" id="guide-drums">
+    <summary><span class="guide-summary-icons"><img src="assets/medals/drums-fallback.png" alt=""></span><span>Batterie — 4-Lanes, Pro Drums et pédale</span></summary>
+    <div class="guide-section-body">
+     <p>Tu vois <strong>quatre pistes de couleur</strong> (rouge, jaune, bleu et vert). Frappe le pad correspondant avec une baguette lorsque la note arrive à la ligne de jeu. La <strong>pédale de grosse caisse</strong> se joue avec le pied, parfois en même temps que les mains.</p>
+     <div class="guide-note-diagram" role="img" aria-label="Schéma simplifié : une note rectangulaire correspond à un pad, une note ronde à une cymbale, et une longue barre horizontale à la grosse caisse">
+      <strong>À quoi ressemblent les notes?</strong>
+      <div class="guide-note-items">
+       <div class="guide-note-item"><span class="guide-pad-shape" aria-hidden="true"></span><span><strong>Rectangle / carré</strong> = frappe un pad</span></div>
+       <div class="guide-note-item"><span class="guide-cymbal-shape" aria-hidden="true"></span><span><strong>Rond</strong> = frappe une cymbale (en Pro)</span></div>
+       <div class="guide-note-item"><span class="guide-kick-shape" aria-hidden="true"></span><span><strong>Barre horizontale</strong> = pédale de grosse caisse (kick)</span></div>
+      </div>
+      <small class="guide-figure-caption">Schémas de forme, pas des captures d'écran. Les couleurs et contours peuvent varier selon le thème de YARG.</small>
+     </div>
+     <h4>Quelle différence entre 4-Lanes et Pro Drums?</h4>
+     <ul>
+      <li><strong>4-Lanes :</strong> les quatre couleurs correspondent aux <strong>quatre pads</strong>; tu ne dois pas distinguer une cymbale d'un tom. Les cymbales physiques ne sont pas nécessaires.</li>
+      <li><strong>Pro Drums :</strong> sur les pistes jaune, bleue et verte, certaines notes demandent une <strong>cymbale</strong> et d'autres un <strong>pad/tom</strong>. Les cymbales apparaissent généralement plus <strong>rondes</strong> que les notes carrées des pads. La piste rouge reste le pad de caisse claire.</li>
+      <li><strong>Kick :</strong> la barre de grosse caisse est indépendante des quatre couleurs. Appuie sur la pédale au bon moment, même si tu dois aussi frapper un pad.</li>
+     </ul>
+     <h4>À quoi t'attendre selon la difficulté?</h4>
+     <table class="guide-diff">
+      <thead><tr><th>Niveau</th><th>Ce que tu peux attendre</th></tr></thead>
+      <tbody>
+       <tr><th scope="row">Débutant</th><td>Quand disponible, une prise en main très simplifiée pour découvrir le timing.</td></tr>
+       <tr><th scope="row">Facile</th><td>Peu de frappes : surtout le rythme de base, quelques pads et coups de grosse caisse.</td></tr>
+       <tr><th scope="row">Moyen</th><td>Plus de caisse claire et de cymbales/toms, de coups de grosse caisse et de changements de rythme.</td></tr>
+       <tr><th scope="row">Difficile</th><td>Motifs plus rapides, davantage de combinaisons mains + pied et de passages complexes.</td></tr>
+       <tr><th scope="row">Expert</th><td>Partition proche du rythme complet du morceau, avec roulements, doubles frappes et passages chargés.</td></tr>
+      </tbody>
+     </table>
+     <p class="guide-tip">La difficulté dépend beaucoup de la chanson. Une chanson en Expert lente peut être plus facile qu'une autre en Moyen! Certaines versions « 2x Bass Pedal » sont prévues pour deux pédales.</p>
+    </div>
+   </details>
+
+   <details class="guide-section" id="guide-keys">
+    <summary><span class="guide-summary-icons"><img src="assets/medals/keys-fallback.png" alt=""></span><span>Clavier — 5-Lanes et Pro Keys</span></summary>
+    <div class="guide-section-body">
+     <h4>5-Lanes Keys — cinq touches, cinq couleurs</h4>
+     <p>C'est le mode le plus accessible. Il utilise les <strong>cinq touches blanches de Do à Sol (C, D, E, F, G)</strong>, les cinq premières touches blanches marquées sur le clavier Rock Band. Chacune correspond à une piste de couleur, comme sur une guitare en plastique. <strong>Tu appuies directement sur les touches</strong> quand les notes arrivent : pas besoin de gratter.</p>
+     <div class="guide-note-diagram">
+      <strong>Les cinq touches blanches de 5-Lanes</strong>
+      <div class="guide-fivekeys" aria-label="Do, Ré, Mi, Fa, Sol">
+       <span>Do <small>C</small></span><span>Ré <small>D</small></span><span>Mi <small>E</small></span><span>Fa <small>F</small></span><span>Sol <small>G</small></span>
+      </div>
+      <small class="guide-figure-caption">Les bordures colorées représentent les cinq pistes du jeu; ce sont bien des touches blanches sur le clavier physique.</small>
+     </div>
+     <h4>Pro Keys — un vrai clavier miniature</h4>
+     <p>En <strong>Pro Keys</strong>, le jeu demande de jouer les <strong>notes de musique précises</strong> avec les touches blanches <em>et</em> noires. L'écran affiche un clavier plus large, et tu dois parfois jouer plusieurs touches à la fois ou déplacer ta main dans une autre zone.</p>
+     <div class="guide-note-diagram" role="img" aria-label="Schéma simplifié des notes Pro Keys : les notes larges et claires correspondent aux touches blanches, les notes étroites et foncées aux touches noires">
+      <strong>Reconnaître les notes à l'écran</strong>
+      <div class="guide-note-items">
+       <div class="guide-note-item"><span class="guide-white-key" aria-hidden="true"></span><span><strong>Note large et claire</strong> = touche blanche</span></div>
+       <div class="guide-note-item"><span class="guide-black-key" aria-hidden="true"></span><span><strong>Note étroite et foncée</strong> = touche noire (dièse / bémol)</span></div>
+      </div>
+      <small class="guide-figure-caption">Illustration simplifiée : la présentation peut changer selon le thème et la version de YARG.</small>
+     </div>
+     <h4>Star Power, bande tactile et trémolo</h4>
+     <p>Réussis les phrases spéciales pour charger le <strong>Star Power</strong>. Sur le clavier Rock Band, active-le avec le <strong>bouton Overdrive</strong> près de la poignée (ou une pédale / commande configurée). Il augmente temporairement les points.</p>
+     <p>La <strong>bande tactile</strong> de la poignée agit un peu comme le whammy d'une guitare : en glissant ton doigt dessus, tu peux faire varier l'effet ou la hauteur du son sur certaines notes tenues (effet de vibrato/trémolo selon le réglage). Ce n'est pas une touche supplémentaire à jouer pour chaque note. Un <strong>trille</strong>, en revanche, est un passage musical où l'on alterne rapidement entre deux touches.</p>
+     <p class="guide-tip"><strong>Débutant ou Facile :</strong> peu de notes. <strong>Moyen :</strong> les motifs et changements de main deviennent plus complexes. <strong>Difficile / Expert :</strong> attention aux accords et à la vitesse, particulièrement en Pro Keys. Commence avec 5-Lanes si c'est ta première soirée!</p>
+    </div>
+   </details>
+
+   <details class="guide-section" id="guide-medals">
+    <summary><span class="guide-summary-icons"><img src="assets/medals/keys-10-champion.png" alt=""></span><span>Les médailles — Tous les rangs du clavier</span></summary>
+    <div class="guide-section-body">
+     <p>Le site récompense tes <strong>prestations avec chaque instrument</strong>. Voici les dix médailles possibles pour le <strong>clavier</strong>, présentées dans l'ordre. Les chiffres indiquent le nombre total de prestations requises avec cet instrument.</p>
+     <div class="guide-medals">
+      <div class="guide-medal"><img loading="lazy" src="assets/medals/keys-01-wood.png" alt="Médaille Clavier — En bois"><strong>En bois</strong><small>1 prestation</small></div>
+<div class="guide-medal"><img loading="lazy" src="assets/medals/keys-02-bronze.png" alt="Médaille Clavier — Bronze"><strong>Bronze</strong><small>5 prestations</small></div>
+<div class="guide-medal"><img loading="lazy" src="assets/medals/keys-03-silver.png" alt="Médaille Clavier — Argent"><strong>Argent</strong><small>15 prestations</small></div>
+<div class="guide-medal"><img loading="lazy" src="assets/medals/keys-04-gold.png" alt="Médaille Clavier — Or"><strong>Or</strong><small>25 prestations</small></div>
+<div class="guide-medal"><img loading="lazy" src="assets/medals/keys-05-platinum.png" alt="Médaille Clavier — Platine"><strong>Platine</strong><small>40 prestations</small></div>
+<div class="guide-medal"><img loading="lazy" src="assets/medals/keys-06-emerald.png" alt="Médaille Clavier — Émeraude"><strong>Émeraude</strong><small>60 prestations</small></div>
+<div class="guide-medal"><img loading="lazy" src="assets/medals/keys-07-diamond.png" alt="Médaille Clavier — Diamant"><strong>Diamant</strong><small>90 prestations</small></div>
+<div class="guide-medal"><img loading="lazy" src="assets/medals/keys-08-master.png" alt="Médaille Clavier — Maître"><strong>Maître</strong><small>120 prestations</small></div>
+<div class="guide-medal"><img loading="lazy" src="assets/medals/keys-09-grand-master.png" alt="Médaille Clavier — Grand Maître"><strong>Grand Maître</strong><small>150 prestations</small></div>
+<div class="guide-medal"><img loading="lazy" src="assets/medals/keys-10-champion.png" alt="Médaille Clavier — Champion"><strong>Champion</strong><small>200 prestations</small></div>
+     </div>
+     <p class="guide-tip"><strong>Pas seulement pour le clavier!</strong> Les voix, la guitare (y compris la guitare rythmique), la basse et la batterie possèdent une série équivalente. Les variantes 4-Lanes / Pro Drums et 5-Lanes / Pro Keys comptent dans la même famille de médailles.</p>
+     <p>Pour consulter tes médailles et leur progression, ouvre <a href="profil.html"><strong>Mon profil</strong></a>. Pendant une soirée, les icônes de médailles peuvent aussi apparaître à côté des Rockstars dans la <a href="file.html"><strong>File de la soirée</strong></a>; clique sur une médaille pour voir leur collection. Le catalogue peut également afficher tes médailles déverrouillées sur les filtres d'instruments.</p>
+    </div>
+   </details>
+  </div>
  </div>
 </details>
 <details class="about-fold queue-rules" id="queueRules">
