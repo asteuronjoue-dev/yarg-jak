@@ -260,9 +260,8 @@ async function loadHall(){
 
 
 
-let hallLoaded=false;
 document.getElementById('hallSection').addEventListener('toggle',function(){
- if(this.open&&!hallLoaded){hallLoaded=true;void loadHall();}
+ if(this.open)void loadHall();
 });
 (async()=>{
  try{
