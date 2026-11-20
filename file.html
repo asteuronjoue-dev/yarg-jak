@@ -549,7 +549,7 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
           </div>
         </div>
       </div>
-      <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html" aria-current="page">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a><a id="display-launch" href="file.html?affichage=1" target="_blank" rel="noopener" hidden>📺 Écran public</a></nav>
+      <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html" aria-current="page">File de la soirée</a><a href="profil.html">Mon profil</a><a href="a-propos.html">À Propos</a><a href="admin.html" hidden>Régie MC</a><a id="display-launch" href="file.html?affichage=1" target="_blank" rel="noopener" hidden>📺 Écran public</a></nav>
     </div>
   </div>
 </header>
@@ -574,12 +574,10 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
   <div class="error" id="errorBox"></div>
   <div class="join-slot-notice" id="joinSlotNotice" role="status" hidden></div>
 
-  <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div>
-    <details><summary>Comment fonctionnent les points?</summary><p class="points-note">Les points personnels indiquent combien de temps de scène une Rockstar a déjà réservé en lançant ses propres chansons : +1 par seconde (4 min = +240), avec −1 au départ pour les Initiés. Rejoindre une autre chanson ne coûte aucun point personnel. Pour classer une demande, le système soustrait jusqu’à 90 points pour les coéquipiers et jusqu’à 900 points pour l’attente, après 30 minutes. Les chansons non lancées ne coûtent rien. Pour la formule complète, les exemples et les règles de variété, consulte « Comment l’ordre des chansons est-il décidé ? » au bas de la page.</p></details></section>
+  <section class="pointbox" id="pointSection" hidden><h2 style="font-size:19px">⚖️ Points des ROCKSTARS (déjà joués)</h2><div id="pointBoard" class="pointgrid"></div></section>
   <div id="yarg-my-next-banner" class="yarg-my-next-banner" hidden role="status" aria-live="polite"></div>
   <div class="livebar" id="liveBar">⚡ Mise à jour de la file…</div>
   <div class="queue-user-actions" id="queueUserActions">
-  <div class="queue-feedback-action"><button class="queue-feedback-button" id="yargFeedbackOpen" type="button">💬 Suggestions / Commentaires / Bugs</button></div>
   <div id="notifyTop" class="queue-notify-top" hidden><button class="notify" id="notifyBtn">🔔 Préviens-moi quand mon tour approche</button></div>
   <div class="yarg-global-presence" id="yargGlobalPresence" hidden>
     <button type="button" id="yargPauseAll" class="yarg-pause-all">⏸️ Pas prêt — Mettre toutes mes prestations à venir en pause</button>
@@ -597,73 +595,13 @@ body.yarg-display-mode #yarg-my-next-banner{display:none!important}
     <div class="empty">🎤 La soirée n'est pas ouverte pour le moment. <a href="index.html">Consulte le catalogue</a> en attendant la prochaine!</div>
   </section>
 
-  <section id="hallSection">
-    <div class="section-head"><div>
-      <h2>🏆 Hall of Fame</h2>
-      <div class="hint">Les soirées passées, leurs setlists et les rockstars sur scène.</div>
-    </div></div>
-    <div class="cards" id="hallOfFame"><div class="empty">Chargement des archives…</div></div>
-  </section>
   <details id="historySection" class="history-fold" hidden>
     <summary>Historique <span class="hint">Prestations terminées pendant la soirée actuelle</span></summary>
     <div class="history-fold-body"><div class="cards" id="currentHistory"></div></div>
   </details>
 
-  <details class="queue-rules" id="queueRules">
-    <summary>⚖️ Comment l’ordre des chansons est-il décidé ?</summary>
-    <div class="queue-rules-body">
-      <h3>Avant tout : un système « shotgun » pour que tout le monde ait sa chance</h3>
-      <p class="queue-rules-intro">Le but de ce site, c’est de permettre à chaque Rockstar de <strong>réserver sa chanson ou sa place à un instrument sans avoir à se faire entendre plus fort que les autres</strong>. C’est notre système « shotgun » : <strong>les chansons et les places demandées sur le site ont toujours priorité sur les demandes faites spontanément pendant la soirée</strong>.</p>
-      <p>Les demandes « sur le fly » restent tout à fait les bienvenues! On peut toujours proposer une chanson au MC ou demander à jouer d’un instrument directement. Mais ces demandes ne passent <strong>jamais devant celles déjà faites sur le site</strong> : la file et les places réservées en ligne sont respectées en premier.</p>
-      <p>Pourquoi? Parce que certaines personnes préfèrent choisir leur chanson tranquillement, <strong>sans faire défiler le catalogue pendant plusieurs minutes devant tout le monde</strong>. Et parce que d’autres n’oseront pas interrompre une personne qui tient déjà une guitare, une basse, une batterie ou un micro pour lui demander sa place. <strong>Pas besoin d’être la personne la plus extravertie du party pour monter sur scène!</strong></p>
-      <p>Une fois les demandes faites sur le site, leur ordre n’est pas simplement « premier arrivé, premier servi » : le système combine les <strong>points de la Rockstar qui a fait la demande</strong>, l’attente, le nombre de personnes dans son groupe et la variété des prestations.</p>
-
-      <h3>1. Tes points personnels : qui a déjà eu son tour ?</h3>
-      <ul>
-        <li><strong>Au début de la soirée :</strong> chaque Rockstar commence à <strong>0 point</strong>, sauf les <strong>Initiés</strong>, qui commencent à <strong>−1 point</strong> pour avoir participé à une soirée précédente.</li>
-        <li><strong>Quand ta propre chanson commence :</strong> tu reçois <strong>+1 point par seconde</strong> de sa durée prévue. Une chanson de 2 min 30 s ajoute donc <strong>150 points</strong>; une de 4 min, <strong>240 points</strong>. Le coût est compté dès que le MC lance la prestation, pas quand elle se termine.</li>
-        <li><strong>Quand tu rejoins la chanson de quelqu’un d’autre :</strong> tu ne gagnes <strong>aucun point personnel</strong>. Tu peux donc accompagner d’autres Rockstars sans repousser tes propres demandes.</li>
-        <li><strong>Si une chanson est passée sans être lancée :</strong> elle n’ajoute aucun point. Si le MC remet une prestation jouée en file, ses points sont annulés ou recalculés selon la correction.</li>
-      </ul>
-      <p>En général, <strong>moins tu as de points personnels, plus tes demandes sont favorisées</strong>. Mais le classement ne s’arrête pas là.</p>
-
-      <h3>2. Le score de priorité de chaque chanson</h3>
-      <div class="queue-rule-formula"><strong>Score de la demande</strong><span>Points personnels de l’initiateur <strong>−</strong> bonus de groupe <strong>−</strong> bonus d’attente</span><small>Le score <strong>le plus bas</strong> passe avant les autres, sous réserve des règles de variété et des places déjà annoncées.</small></div>
-      <ul>
-        <li><strong>Bonus de groupe :</strong> chaque autre personne distincte qui participe à la demande fait baisser son score de <strong>30 points</strong>. Cela donne <strong>−30</strong> à deux personnes au total, <strong>−60</strong> à trois et <strong>−90</strong> à quatre ou plus (bonus plafonné à trois coéquipiers). Il s’agit d’un bonus pour <em>cette chanson</em>, pas d’une réduction des points personnels.</li>
-        <li><strong>Bonus d’attente :</strong> pendant les <strong>30 premières minutes</strong>, aucun bonus. Ensuite, la demande retire <strong>6 points par minute supplémentaire</strong>, jusqu’à <strong>−900 points</strong> au maximum. Par exemple : 45 minutes d’attente = <strong>−90</strong>; 60 minutes = <strong>−180</strong>. Les longues attentes finissent donc par remonter dans la file.</li>
-        <li><strong>Points anticipés :</strong> pour prévoir les chansons suivantes, le système simule les points que chaque Rockstar recevra en jouant ses demandes placées plus tôt. Le classement peut donc changer quand de nouvelles personnes ou chansons arrivent. Ces points anticipés ne deviennent de <em>vrais</em> points qu’au lancement des chansons concernées.</li>
-      </ul>
-      <div class="queue-rule-example"><strong>Exemple concret</strong>
-        <p>Alex a déjà lancé une chanson de 4 minutes : <strong>240 points personnels</strong>. Sa prochaine demande compte deux autres membres (<strong>−60</strong>) et attend depuis 45 minutes (<strong>−90</strong>).</p>
-        <p class="queue-rule-math"><strong>240 − 60 − 90 = 90 points de priorité</strong></p>
-        <p>Sam, qui n’a pas encore joué sa propre demande, est à <strong>0</strong> : sa demande a normalement la priorité sur celle d’Alex. Mais si Alex attend davantage ou rassemble un groupe plus nombreux, son score peut passer sous 0. <strong>Les 240 points personnels d’Alex, eux, ne changent pas.</strong></p>
-      </div>
-
-      <h3>3. Les règles qui peuvent modifier cet ordre</h3>
-      <ul>
-        <li><strong>Chanson en cours et prochaine annoncée :</strong> elles restent à leur place, même si les points ou les groupes changent.</li>
-        <li><strong>Variété avant tout :</strong> le système essaie d’éviter deux demandes consécutives de la même Rockstar ou deux chansons du même artiste lorsqu’il existe une autre demande admissible. C’est une <strong>préférence de classement</strong>, pas une interdiction absolue : si aucune bonne alternative n’est disponible, un enchaînement reste possible.</li>
-        <li><strong>Ordre de tes propres demandes :</strong> ta deuxième chanson ne passe pas devant ta première demande encore admissible.</li>
-        <li><strong>En cas d’égalité de score :</strong> la demande la plus ancienne est prioritaire, après application des autres règles.</li>
-        <li><strong>« Pas prêt » :</strong> une prestation en pause sort temporairement de l’ordre de passage et n’a plus d’heure prévue. Elle revient dans le classement dès qu’elle est remise en état « Prêt ».</li>
-        <li><strong>Pas de doublons :</strong> une chanson déjà demandée ou jouée durant la soirée ne peut pas être redemandée. Tu peux toutefois rejoindre son groupe si une place est libre.</li>
-      </ul>
-      <p class="queue-rules-footnote">La file est recalculée selon la situation du moment. Les heures affichées sont des estimations, pas des rendez-vous garantis : le MC conserve le contrôle du déroulement de la soirée.</p>
-    </div>
-  </details>
 </main>
 
-<dialog id="yarg-feedback-dialog" aria-labelledby="yarg-feedback-title">
- <div class="yarg-feedback-heading"><h2 id="yarg-feedback-title">💬 Tes idées et commentaires</h2><button type="button" id="yargFeedbackClose" aria-label="Fermer le formulaire">✕</button></div>
- <p>Une suggestion, un commentaire ou un bug à signaler? Laisse-nous un mot! Aucun compte Rockstar nécessaire.</p>
- <form id="yarg-feedback-form">
-  <label>Ton nom<input name="name" type="text" maxlength="80" minlength="2" placeholder="Comment on t'appelle?" autocomplete="name" required></label>
-  <label>Ton message<textarea name="comment" minlength="5" maxlength="3000" placeholder="Décris ton idée ou le problème rencontré…" required></textarea></label>
-  <button type="submit" id="yargFeedbackSubmit">Envoyer mon commentaire</button>
- </form>
- <p id="yarg-feedback-message" role="status" aria-live="polite"></p>
-</dialog>
 <div id="yarg-collection-overlay" class="yarg-collection-overlay" hidden>
  <section class="yarg-collection-dialog" role="dialog" aria-modal="true" aria-labelledby="yarg-collection-name" tabindex="-1">
   <div class="yarg-collection-top"><div><h2 id="yarg-collection-name">Collection Rockstar</h2><p class="hint">Titres et progression à vie</p></div><button type="button" id="yarg-collection-close" aria-label="Fermer la collection">Fermer</button></div>
@@ -715,37 +653,6 @@ if(IS_PUBLIC_DISPLAY){
 }
 const TURNOVER_SECONDS = 120;
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
-/* Feedback sans compte Rockstar — accessible aux invités de la file. */
-(()=>{
- const dialog=document.getElementById('yarg-feedback-dialog');
- const form=document.getElementById('yarg-feedback-form');
- const message=document.getElementById('yarg-feedback-message');
- const submit=document.getElementById('yargFeedbackSubmit');
- document.getElementById('yargFeedbackOpen').addEventListener('click',()=>{
-  message.textContent='';message.removeAttribute('data-error');
-  dialog.showModal();form.elements.name.focus();
- });
- document.getElementById('yargFeedbackClose').addEventListener('click',()=>dialog.close());
- dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
- form.addEventListener('submit',async event=>{
-  event.preventDefault();
-  const name=form.elements.name.value.trim(),comment=form.elements.comment.value.trim();
-  if(name.length<2||name.length>80||comment.length<5||comment.length>3000){
-   message.dataset.error='true';message.textContent='Vérifie ton nom (2 à 80 caractères) et ton message (5 à 3 000 caractères).';return;
-  }
-  submit.disabled=true;message.textContent='Envoi en cours…';message.removeAttribute('data-error');
-  try{
-   const {error}=await sb.from('yarg_site_feedback').insert({name,comment});
-   if(error)throw error;
-   form.reset();message.dataset.error='false';message.textContent='Merci! Ton message a été envoyé aux MC.';
-  }catch(error){
-   message.dataset.error='true';message.textContent='Impossible d’envoyer le message. Réessaie dans un instant.';
-   console.warn('YARG feedback submission failed:',error);
-  }finally{submit.disabled=false;}
- });
-})();
-
 
 const OWNED_REQUESTS_KEY = "yarg_owned_performance_requests";
 function ownedRequestIds(){
@@ -1523,47 +1430,6 @@ function render(){
   
 }
 
-function renderHall(sessions){
- const dest=$('#hallOfFame');
- if(!Array.isArray(sessions)||!sessions.length){dest.innerHTML=`<div class="empty">Aucune ancienne soirée disponible pour le moment.</div>`;return;}
- dest.innerHTML=sessions.map(session=>{
-  const songs=Array.isArray(session.setlist)?session.setlist:[];
-  const credits=new Map();let seconds=0;
-  function accountFor(entry){
-    const name=entry.account_name||entry.requester||'Rockstar';
-    const key=entry.account_key||'name:'+String(entry.requester||'Rockstar').trim().toLocaleLowerCase();
-    if(!credits.has(key))credits.set(key,{name,requests:0,played:0});
-    return credits.get(key);
-  }
-  for(const req of (Array.isArray(session.requests)?session.requests:[])){
-    accountFor(req).requests++;
-  }
-  for(const song of songs){
-    seconds+=Math.max(0,Number(song.seconds)||0);
-    accountFor(song).played++;
-  }
-  const stats=[...credits.values()].sort((a,b)=>b.requests-a.requests||b.played-a.played||a.name.localeCompare(b.name,'fr')).map(v=>
-    `<li><b>${esc(v.name)}</b> : ${v.requests} demande(s), ${v.played} jouée(s)</li>`).join('');
-  const setlist=songs.map((song,i)=>{
-    const players=[...new Set((Array.isArray(song.members)?song.members:[]).filter(Boolean))];
-    return `<li><strong>${esc(song.title)}</strong> — ${esc(song.artist||'')} · demande de ${esc(song.account_name||song.requester||'Rockstar')}${players.length?`<div class="hall-sub">Sur scène : ${esc(players.join(', '))}</div>`:''}</li>`;
-  }).join('');
-  const date=session.started_at?new Date(session.started_at).toLocaleDateString('fr-CA'):'';
-  return `<details class="hall-party"><summary>${esc(session.name||'Soirée YARG')}<span class="hall-sub">${esc(date)} · ${songs.length} chansons · ${formatDuration(seconds)}</span></summary>
-    <div class="hall-content"><h3>Statistiques des demandes</h3><ul>${stats||'<li>Aucune demande enregistrée</li>'}</ul><h3>Setlist</h3><ol>${setlist||'<li>Aucune chanson terminée</li>'}</ol></div></details>`;
- }).join('');
-}
-async function loadHall(){
- try{
-   const {data,error}=await sb.rpc('yarg_public_hall_of_fame');
-   if(error)throw error;
-   renderHall(data);
- }catch(error){
-   console.warn('Archives non disponibles :',error);
-   $('#hallOfFame').innerHTML=`<div class="empty">Hall of Fame indisponible pour le moment.</div>`;
- }
-}
-
 async function loadSettings(){
   const {data,error} = await sb.from("party_settings")
     .select("party_name,mc_name,performance_requests_enabled,current_session_id")
@@ -1941,7 +1807,7 @@ async function refresh(){
 
 async function startRealtime(){
   sb.channel("yarg-party-queue")
-    .on("postgres_changes",{event:"*",schema:"public",table:"performance_requests"},async()=>{flashLive();await loadQueue();await loadHall();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"performance_requests"},async()=>{flashLive();await loadQueue();})
     .on("postgres_changes",{event:"*",schema:"public",table:"performance_members"},async()=>{flashLive();await loadQueue();})
     .on("postgres_changes",{event:"UPDATE",schema:"public",table:"party_settings",filter:"id=eq.1"},async()=>{flashLive();await loadSettings();})
     .subscribe();
@@ -1962,7 +1828,7 @@ window.addEventListener('online',()=>{void refresh();});
 /* Refresh relative countdown text even if no database event occurs. */
 setInterval(()=>render(),30000);
 
-(async()=>{await refresh();await loadHall();await startRealtime();})();
+(async()=>{await refresh();await startRealtime();})();
 </script>
 <script>
 /* Afficher Régie MC uniquement aux comptes autorisés par Supabase. */
