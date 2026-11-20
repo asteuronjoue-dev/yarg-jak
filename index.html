@@ -881,7 +881,21 @@
 #song-suggestions .suggest-head { margin:6px 0 9px; }
 #song-suggestions:not([open]) { padding-bottom:11px; }
 .catalog-credits-controls select {max-width:100%;}
-.newbie-tips-index{position:relative;z-index:2;margin:12px auto;padding:13px 16px;max-width:1000px;color:#e8faf7;background:#163039;border:1px solid #398481;border-radius:12px;font:14px system-ui}.newbie-tips-index button{float:right;margin:0 0 8px 12px;background:#223b40;color:white;border:1px solid #4f7779;border-radius:8px;padding:5px 9px}.newbie-tips-index[hidden]{display:none!important}
+.newbie-tips-index{position:relative;z-index:2;margin:12px auto;padding:18px 20px;max-width:1000px;color:#e8faf7;background:#163039;border:1px solid #398481;border-radius:14px;font:14px/1.52 system-ui}
+.newbie-tips-index[hidden],.newbie-tips-index [hidden]{display:none!important}
+.newbie-tips-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.newbie-tips-head>strong{font-size:clamp(17px,2.5vw,22px);line-height:1.3;overflow-wrap:anywhere}
+.newbie-tips-index button{flex:0 0 auto;background:#29464d;color:white;border:1px solid #6e9ba0;border-radius:8px;padding:8px 11px;font-weight:800;cursor:pointer}
+.newbie-tips-index button:hover,.newbie-tips-index button:focus-visible{background:#39616a;border-color:#a4eae6}
+.newbie-tips-index p{margin:10px 0 0}
+.newbie-tips-alert{margin:16px 0 12px!important;padding:11px 13px;border:1px solid #8ad5c6;border-radius:10px;background:#235047;color:#fff;font-weight:950}
+.newbie-tips-list{margin:6px 0 3px;padding-left:23px;display:grid;gap:12px}
+.newbie-tips-list li{padding-left:3px;line-height:1.55}
+.newbie-tips-list li::marker{color:#82e6d2}
+.newbie-tips-index a{color:#a8f8e7;text-decoration:underline;text-underline-offset:3px;font-weight:900}
+.newbie-tips-signoff{margin:17px 0 0!important;font-weight:950;font-size:1.15rem;color:#fff}
+.newbie-tips-icon{white-space:nowrap;border:1px solid #78c7c2;border-radius:5px;padding:1px 5px;background:#244751;font-weight:900}
+@media(max-width:600px){.newbie-tips-index{margin:9px 10px;padding:14px}.newbie-tips-head{gap:8px}.newbie-tips-head>strong{font-size:18px}.newbie-tips-index button{padding:8px}.newbie-tips-list{gap:11px;padding-left:20px}}
 /* Catalogue discovery controls: explicit styling on desktop and mobile. */
 .catalog-credits-filter{display:block;min-width:0;margin:12px 0;padding:11px 13px;background:#171e22;border:1px solid #34424a;border-radius:14px;color:#e9eff2}
 .catalog-credits-heading{cursor:pointer;font-size:clamp(15px,3.8vw,18px);font-weight:800;line-height:1.4;list-style-position:inside;overflow-wrap:anywhere}
@@ -1358,12 +1372,42 @@ body.party-mode .yarg-catalog-heading{display:none}
 }
 </style>
 </head>
-<body><aside id="yarg-tips-index" class="newbie-tips-index"><button type="button" onclick="localStorage.setItem('yarg_tip_index_v1','1');this.parentElement.hidden=true">Compris!</button><strong id="yarg-tips-title">🎸 Prépare-toi pour la prochaine soirée!</strong><p id="yarg-tips-copy">Repère tes chansons préférées et crée un compte Rockstar pour les garder en favoris. Une chanson manque? Demande son ajout pour la prochaine soirée!</p></aside><script>
-function updateCatalogWelcome(requestsOpen){
-    document.getElementById('yarg-tips-title').textContent=requestsOpen?'🎸 Bienvenue! À toi de jouer!':'🎸 Prépare-toi pour la prochaine soirée!';
-    document.getElementById('yarg-tips-copy').textContent=requestsOpen?'Trouve une chanson, ouvre sa fiche et demande-la pour ce soir. Aucun compte requis. Amuse-toi!':'Repère tes chansons préférées et crée un compte Rockstar pour les garder en favoris. Une chanson manque? Demande son ajout pour la prochaine soirée!';
+<body><aside id="yarg-tips-index" class="newbie-tips-index" aria-label="Bienvenue sur Asteur On Jam">
+  <div class="newbie-tips-head"><strong id="yarg-tips-title">🎸 Prépare-toi pour la prochaine soirée!</strong><button type="button" id="yarg-tips-dismiss" onclick="dismissCatalogWelcome()">Compris!</button></div>
+  <p id="yarg-tips-copy">Repère tes chansons préférées et crée un compte Rockstar pour les garder en favoris. Une chanson manque? Demande son ajout pour la prochaine soirée!</p>
+  <div id="yarg-tips-party" hidden>
+    <p class="newbie-tips-alert">JE SAIS C'EST UN GROS BLOC DE TEXTE MAIS JE TE PROMETS QUE ÇA VA T'AIDER SI TU LE LIS :)</p>
+    <ul class="newbie-tips-list">
+      <li>Clique sur la chanson de ton choix pour ouvrir sa fiche et tu pourras composer ton band pour ta performance.</li>
+      <li>Je sais, il y a énormément de choix. <strong>Je t'invite à utiliser les playlists « Party Starters »</strong>, qui contiennent plein de hits qui sauront faire ton bonheur! ✨</li>
+      <li><strong>Tous les filtres et méthodes de recherche sont cumulatifs</strong> : tu peux choisir tes instruments puis fouiller dans une playlist et tu verras seulement les chansons qui satisfont tous tes filtres.</li>
+      <li>Si tu veux trouver une chanson qui convient à tous les gens avec lesquels tu veux jouer, tu as deux options. La plus simple, <strong>clique sur les icônes qui correspondent aux instruments que toi et tes amis voulez jouer</strong>. La plus avancée, c'est d'utiliser la fonction de recherche par difficulté : tu cliques sur <span class="newbie-tips-icon">🔍</span> et tu pourras entrer exactement les difficultés et instruments voulus pour chacun des membres de ton band.</li>
+      <li>Le <span class="newbie-tips-icon">❌</span> enlève tous les filtres en même temps.</li>
+      <li><strong>OPTIONNELLEMENT, crée-toi un compte</strong>. Tu pourras sauvegarder tes chansons favorites. Aussi, le site sauvegardera tes stats et tu pourras gagner des titres et des médailles, qui seront visibles par les autres participants de la soirée. Pis personnellement, je trouve ça pas mal cool. Mais en même temps, c'est moi qui ai fait le site web, fac je trouve toute cool.</li>
+      <li><strong>Si tu rencontres un bug, as des questions ou des commentaires</strong>, je t'invite à aller dans la section <a href="a-propos.html">À Propos</a>. Tu peux aussi aller voir un des MCs.</li>
+      <li>Fais attention à mon matériel : si tu brises, tu paies :)</li>
+    </ul>
+    <p class="newbie-tips-signoff">Asteur ON JAM!! 🤘</p>
+  </div>
+</aside><script>
+let catalogWelcomePartyOpen=false;
+const CATALOG_WELCOME_CLOSED_KEY='yarg_tip_index_v1';
+const CATALOG_WELCOME_PARTY_KEY='yarg_tip_index_party_v2';
+function catalogWelcomeDismissed(key){
+  try{return localStorage.getItem(key)==='1';}catch{return false;}
 }
-if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-index').hidden=true;
+function dismissCatalogWelcome(){
+  try{localStorage.setItem(catalogWelcomePartyOpen?CATALOG_WELCOME_PARTY_KEY:CATALOG_WELCOME_CLOSED_KEY,'1');}catch{}
+  document.getElementById('yarg-tips-index').hidden=true;
+}
+function updateCatalogWelcome(requestsOpen){
+  catalogWelcomePartyOpen=!!requestsOpen;
+  document.getElementById('yarg-tips-title').textContent=requestsOpen?"Bienvenue au party! 🎉 Tu vas t'amuser, je te le promets.":'🎸 Prépare-toi pour la prochaine soirée!';
+  document.getElementById('yarg-tips-copy').hidden=!!requestsOpen;
+  document.getElementById('yarg-tips-party').hidden=!requestsOpen;
+  document.getElementById('yarg-tips-index').hidden=catalogWelcomeDismissed(requestsOpen?CATALOG_WELCOME_PARTY_KEY:CATALOG_WELCOME_CLOSED_KEY);
+}
+document.getElementById('yarg-tips-index').hidden=catalogWelcomeDismissed(CATALOG_WELCOME_CLOSED_KEY);
 </script>
     <header>
         <div class="site-topline">
