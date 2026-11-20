@@ -1267,9 +1267,7 @@ body.party-mode .yarg-catalog-heading{display:none}
 }
 </style>
 <style>
-/* Song-addition request: readable, equal-sized mobile navigation tiles. */
-.counts-request-only{display:none!important}
-.yarg-navigation .nav-request-short{display:none}
+/* Readable, equal-sized mobile navigation tiles. */
 @media(max-width:680px){
   .yarg-navigation{align-items:stretch}
   .yarg-navigation a{
@@ -1283,8 +1281,6 @@ body.party-mode .yarg-catalog-heading{display:none}
     line-height:1.25;
     padding:.5rem .35rem;
   }
-  .yarg-navigation .nav-request-full{display:none}
-  .yarg-navigation .nav-request-short{display:inline}
 }
 </style>
 
@@ -1381,16 +1377,13 @@ if(localStorage.getItem('yarg_tip_index_v1'))document.getElementById('yarg-tips-
                     </div>
                 </div>
             </div>
-            <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html" aria-current="page">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="admin.html" hidden>Régie MC</a><a class="yarg-nav-request" href="demande.html" aria-label="Demander un ajout au catalogue"><span class="nav-request-full">➕ Demander un ajout au catalogue</span><span class="nav-request-short" aria-hidden="true">➕ Demander un ajout</span></a></nav>
+            <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html" aria-current="page">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="a-propos.html">À Propos</a><a href="admin.html" hidden>Régie MC</a></nav>
         </div>
         <button id="theme-toggle">
             <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
         <div id="yarg-up-next-shared" class="yarg-up-next-shared" role="status" aria-live="polite" hidden></div>
-        <div class="counts counts-request-only">
-            <a class="library-request-link" href="demande.html">➕ Demander l'ajout d'une chanson</a>
-        </div>
         <div class="catalog-search-toolbar">
         <div class="search-row">
             <div class="search-input-wrap">
