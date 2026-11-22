@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Soutenir le projet — Asteur On Jam</title>
+<meta name="description" content="Soutenir Asteur On Jam et contribuer à l'équipement des prochaines soirées.">
+<link rel="icon" type="image/png" href="assets/favicon-32.png?v=3">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#101214;--panel:#192328;--teal:#1fc8bd;--orange:#ff8a24;--muted:#b6c8cd}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:#f5f7f8;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:inherit}.wrap{width:min(1100px,calc(100% - 32px));margin:0 auto}
+header{border-bottom:1px solid #36434a;background:#151a1e}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:20px 0}
+.site-brand{display:flex;gap:12px;align-items:center}.site-brand img{width:50px;height:50px;object-fit:contain}
+.site-brand strong{font-size:1.35rem;font-weight:950}.site-brand small{display:block;color:var(--muted);margin-top:3px}
+.yarg-navigation{display:flex;align-items:center;justify-content:flex-end;gap:.4rem;flex-wrap:wrap}
+.yarg-navigation a{color:#eaf1f3;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #3b4b53;border-radius:10px;padding:.48rem .7rem;background:#1b2429;font-size:.85rem;font-weight:800;white-space:nowrap}
+.yarg-navigation a:hover,.yarg-navigation a:focus-visible{border-color:#1fc8bd;background:#263338}
+.yarg-navigation a[hidden]{display:none!important}
+main{padding:30px 0 70px}.back{display:inline-block;color:#a6e9e1;text-decoration:none;font-weight:750;margin-bottom:22px}.back:hover{text-decoration:underline}
+.hero{position:relative;overflow:hidden;padding:clamp(22px,4vw,42px);border-radius:19px;border:1px solid #527c73;background:radial-gradient(ellipse at 100% 0%,#22514a,transparent 65%),radial-gradient(ellipse at 0% 100%,#453024,transparent 65%),#1a272d}
+.hero h1{font-size:clamp(2rem,5vw,3.3rem);letter-spacing:-.035em;line-height:1.1;margin:0 0 14px;font-weight:950}
+.hero p{color:#deebed;line-height:1.65;max-width:720px;font-size:1.06rem;margin:0}
+.hero .eyebrow{font-size:.88rem;color:#b2f5e3;font-weight:900;margin-bottom:13px}
+.hero .action{margin-top:24px}.hero img{position:absolute;right:10px;bottom:5px;width:155px;opacity:.1;pointer-events:none}
+.action{display:inline-flex;align-items:center;justify-content:center;min-height:45px;padding:12px 16px;text-align:center;background:#243c41;border:1px solid #658883;border-radius:11px;color:#e8f9f8;text-decoration:none;font-weight:850;line-height:1.3}
+.action:hover,.action:focus-visible{background:#31515a;border-color:#a5eee2}
+.action.primary{background:#1fc8bd;border-color:#1fc8bd;color:#081918}
+.action.primary:hover{background:#8af3df}
+h2{font-size:clamp(1.4rem,3vw,1.85rem);margin:30px 0 6px}
+.lead{color:var(--muted);line-height:1.6;margin:0 0 17px;max-width:800px}
+.items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.item{min-width:0;padding:20px;border:1px solid #455e65;border-radius:15px;background:var(--panel);display:flex;flex-direction:column;gap:13px}
+.item-head{display:flex;align-items:center;gap:13px}
+.item-head img{height:72px;width:72px;object-fit:contain;flex:0 0 72px}
+.item h3{margin:0;font-size:1.13rem}.item .meta{color:#a6ddd3;font-size:.8rem;font-weight:850;margin-top:4px}
+.item p{font-size:.94rem;line-height:1.6;color:#d4e3e7;margin:0;flex:1 1 auto}
+.item .action{width:100%;font-size:.9rem}
+.note{margin:17px 0 0;border:1px solid #52696f;border-radius:13px;padding:17px;background:#1d2d32;line-height:1.65;color:#dce7eb}
+.note strong{color:#fff}.note a{color:#99eee2}
+details{margin:24px 0 0;border:1px solid #52656b;border-radius:13px;background:#17262b;overflow:hidden}
+details summary{padding:17px 20px;cursor:pointer;font-weight:900;color:#d5f9ee}
+details summary:hover{background:#263d42}
+.details-body{border-top:1px solid #52656b;padding:12px 20px 18px;color:#d5e3e7;line-height:1.65}
+.details-body li{margin:10px 0}
+.also{margin-top:28px;padding:23px;border:1px solid #477268;border-radius:15px;background:#1b2c2e}
+.also h2{margin:0 0 8px;font-size:1.35rem}.also p{line-height:1.6;margin:0 0 16px;color:#d6e4e7}
+.footnote{font-size:.84rem;color:#acbfc5;margin:20px 0 0;line-height:1.6}
+footer{border-top:1px solid #39474e;color:#b5c8cb;padding:20px 0 32px;font-size:.88rem}
+footer a{color:#9fecdf}
+@media(max-width:710px){
+ header .wrap{display:block}.yarg-navigation{margin-top:15px;width:100%;justify-content:stretch}
+ .yarg-navigation a{flex:1 1 calc(50% - .4rem);min-width:0;white-space:normal;text-align:center;font-size:.8rem;padding:.6rem .3rem}
+ .items{grid-template-columns:1fr}
+ .hero img{width:110px}
+ .item{padding:17px}
+ .item-head img{width:61px;height:61px;flex-basis:61px}
+ .also{padding:18px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+ <div class="site-brand"><img src="assets/favicon.png" alt="" width="50" height="50"><div><strong>Asteur On Jam</strong><small>Soutenir le projet</small></div></div>
+ <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="a-propos.html">À Propos</a><a href="admin.html" hidden>Régie MC</a></nav>
+</div></header>
+<main class="wrap">
+<a class="back" href="a-propos.html">← Retour à À Propos</a>
+<section class="hero">
+ <img src="assets/medals/guitar-fallback.png" alt="" aria-hidden="true">
+ <div class="eyebrow">✦ Un party à la fois</div>
+ <h1>Soutenir le projet 🤘</h1>
+ <p>Asteur On Jam, c'est du monde qui ose monter sur scène, un paquet d'instruments en plastique et beaucoup d'amour pour les soirées musicales. Si tu as envie de donner un coup de pouce, merci! Ça pourrait nous aider à entretenir et améliorer le matériel pour les prochains partys.</p>
+ <a class="action primary" href="#equipements">🎸 Découvrir les équipements</a>
+</section>
+<section id="equipements">
+<h2>À quoi aimerais-tu contribuer?</h2>
+<p class="lead">Choisis ce que tu aimerais encourager. Ce sont des idées d'équipements, sans montants cibles ni financement actif affichés pour le moment.</p>
+<div class="items">
+ <article class="item">
+  <div class="item-head"><img src="assets/medals/bass-fallback.png" alt="Icône de basse"><div><h3>Une basse pour les partys</h3><div class="meta">Instrument</div></div></div>
+  <p>Plus de choix pour monter son band et une basse dédiée aux soirées, pour ceux qui aiment faire groover tout le monde.</p>
+  <a class="action" href="mailto:asteur.on.joue@gmail.com?subject=Soutien%20Asteur%20On%20Jam%20-%20Basse&body=Salut%20!%0A%0AJ%27aimerais%20contribuer%20a%20la%20basse.%0A">Contribuer à la basse</a>
+ </article>
+ <article class="item">
+  <div class="item-head"><img src="assets/medals/drums-fallback.png" alt="Icône de batterie"><div><h3>Accessoires de batterie</h3><div class="meta">Pédales et adaptateurs</div></div></div>
+  <p>Une deuxième pédale, des adaptateurs et des pièces de rechange pour que la batterie Rock Band continue de suivre le rythme.</p>
+  <a class="action" href="mailto:asteur.on.joue@gmail.com?subject=Soutien%20Asteur%20On%20Jam%20-%20Batterie&body=Salut%20!%0A%0AJ%27aimerais%20contribuer%20aux%20accessoires%20de%20batterie.%0A">Contribuer à la batterie</a>
+ </article>
+ <article class="item">
+  <div class="item-head"><img src="assets/medals/vocals-fallback.png" alt="Icône de microphone"><div><h3>Microphones et accessoires</h3><div class="meta">Chant et harmonies</div></div></div>
+  <p>Pour chanter à plusieurs, remplacer le matériel fatigué et faire de la place à davantage de voix.</p>
+  <a class="action" href="mailto:asteur.on.joue@gmail.com?subject=Soutien%20Asteur%20On%20Jam%20-%20Microphones&body=Salut%20!%0A%0AJ%27aimerais%20contribuer%20aux%20micros.%0A">Contribuer aux microphones</a>
+ </article>
+ <article class="item">
+  <div class="item-head"><img src="assets/medals/guitar-fallback.png" alt="Icône de guitare"><div><h3>Entretien et réparations</h3><div class="meta">Équipement général</div></div></div>
+  <p>Câbles, pièces, adaptateurs, rangement et réparations : les petits trucs qui gardent tout le monde sur scène.</p>
+  <a class="action" href="mailto:asteur.on.joue@gmail.com?subject=Soutien%20Asteur%20On%20Jam%20-%20Entretien&body=Salut%20!%0A%0AJ%27aimerais%20contribuer%20a%20l%27entretien%20du%20materiel.%0A">Contribuer à l'entretien</a>
+ </article>
+</div>
+<div class="note"><strong>Pour l'instant, les boutons préparent un courriel</strong> indiquant à quel équipement tu aimerais contribuer. Aucun paiement n'est effectué sur cette page. Un lien PayPal pourra être ajouté lorsque l'adresse de paiement aura été confirmée.</div>
+</section>
+<details>
+ <summary>💡 Comment fonctionne le soutien?</summary>
+ <div class="details-body">
+ <ol>
+  <li><strong>Choisis un équipement</strong> ou une amélioration qui te parle.</li>
+  <li><strong>Écris-moi</strong> avec le bouton associé pour proposer une contribution ou offrir du matériel.</li>
+  <li><strong>On confirme les détails ensemble</strong> avant un transfert ou une remise de matériel.</li>
+ </ol>
+ <p>Contribuer est entièrement volontaire. Ça ne donne aucune priorité dans la file et ce n'est pas nécessaire pour participer aux soirées.</p>
+ </div>
+</details>
+<section class="also">
+ <h2>Pas besoin de sortir ton portefeuille 💚</h2>
+ <p>Faire découvrir le projet, venir jouer, partager une idée ou prêter un instrument, c'est aussi une façon de soutenir Asteur On Jam!</p>
+ <a class="action" href="mailto:asteur.on.joue@gmail.com?subject=Coup%20de%20main%20pour%20Asteur%20On%20Jam">✉️ Proposer un coup de main</a>
+</section>
+<p class="footnote">Cette page présente des possibilités de soutien, et non une collecte déjà ouverte. Les articles et les détails pourront évoluer avec le projet.</p>
+</main>
+<footer><div class="wrap">Asteur On Jam · <a href="a-propos.html">Retour à À Propos</a></div></footer>
+<script>
+(async()=>{
+ const adminLink=document.querySelector('.yarg-navigation a[href="admin.html"]');
+ if(!adminLink||!window.supabase)return;
+ try{
+  const client=window.supabase.createClient('https://xbhfjzurytdknbqvksjq.supabase.co','sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM');
+  const {data:{user},error:authError}=await client.auth.getUser();
+  if(authError||!user||user.is_anonymous)return;
+  const {data:allowed,error}=await client.rpc('yarg_admin_whoami');
+  if(!error&&allowed===true)adminLink.hidden=false;
+ }catch(error){console.warn('MC menu unavailable:',error);}
+})();
+</script>
+</body>
+</html>
