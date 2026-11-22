@@ -251,7 +251,7 @@ const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6Wb-cHEYLF1T8JMZYoAveQ_eDmCprlM';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 async function syncPartyMode(){try{const {data}=await sb.from('party_settings').select('performance_requests_enabled,party_mode_until').eq('id',1).maybeSingle();document.body.classList.toggle('party-mode',!!(data?.performance_requests_enabled && (!data.party_mode_until || new Date(data.party_mode_until).getTime()>Date.now())))}catch(e){console.warn('Party Mode indisponible',e)}}syncPartyMode();
 const $=id=>document.getElementById(id);
-const state={user:null,profile:null,progress:{},catalog:[],unlocked:new Set(),initie:false};
+const state={user:null,profile:null,progress:{},catalog:[],unlocked:new Set(),initie:false,supportAmount:0};
 let recoveryUserId=null;
 const RECOVERY_KEY='yarg_password_recovery_user';
 function openPasswordRecovery(userId){
@@ -284,6 +284,7 @@ const instrumentIconSources={
  vocals:'assets/medals/vocals-fallback.png'
 };
 const roleTitles=[{code:'role_admin',label:'✪ Admin',category:'secret',metric:'owner_only',threshold:1,sort_order:1},{code:'role_mc',label:'🎙 MC',category:'secret',metric:'owner_only',threshold:1,sort_order:2}];
+const supportRanks=[['bronze','Bronze',1],['silver','Argent',5],['gold','Or',10],['platinum','Platine',20],['emerald','Émeraude',50],['diamond','Diamant',80],['master','Maître',100],['grand_master','Grand maître',250],['champion','Champion',500]];
 const specialDescriptions={role_admin:'Titre exclusif réservé au propriétaire de YARG.',role_mc:'Titre réservé aux MC autorisés à gérer la soirée.',vieille_garde:'Vous étiez là au tout début.',initie:'Effet permanent : débute chaque soirée à −1 pt pour donner la priorité à ta première chanson.'};
 let pendingUnlocks=[],unlockActive=null,hasPresentedUnlocks=false;
 async function fetchProfile(){
@@ -312,6 +313,8 @@ async function fetchStats(){
  state.progress=Object.fromEntries((progress.data||[]).map(x=>[x.metric,Number(x.amount)||0]));
  state.catalog=catalog.data||[];
  state.unlocked=new Set((owned.data||[]).map(x=>x.title_code));
+ const {data:supportData,error:supportError}=await sb.from('yarg_support_contributions').select('amount_cad').eq('user_id',state.user.id).maybeSingle();
+ state.supportAmount=supportError?0:Number(supportData?.amount_cad||0);
  // Permission checks are authoritative: no secret title is offered on name alone.
  for(const t of roleTitles){
   const permitted=t.code==='role_admin'?isOwner:isMc;
@@ -363,13 +366,800 @@ function renderTitles(){
  init.append(titleNode('p','',state.initie?specialDescriptions.initie:'Effet permanent une fois débloqué. Participe à une soirée, puis reviens à la suivante pour devenir Initié.'));
  if(state.initie){const title=state.catalog.find(t=>t.code==='initie');if(title)init.append(titleEquipButton(title));}
  specialGrid.append(init);
- for(const t of state.catalog.filter(x=>x.category==='secret'&&x.code!=='initie'&&state.unlocked.has(x.code)).sort((a,b)=>Number(a.sort_order||0)-Number(b.sort_order||0))){
+ for(const t of state.catalog.filter(x=>x.category==='secret'&&x.code!=='initie'&&!x.code.startsWith('support_')&&state.unlocked.has(x.code)).sort((a,b)=>Number(a.sort_order||0)-Number(b.sort_order||0))){
   const box=titleNode('div','yarg-special'+(state.profile?.equipped_title===t.code?' yarg-active':''));
   box.append(titleNode('strong','',t.label));
   box.append(titleNode('p','',specialDescriptions[t.code]||'Titre spécial décerné à ton compte.'));
   box.append(titleEquipButton(t));specialGrid.append(box);
  }
  specials.append(specialGrid);parent.append(specials);
+
+ // Mécénat : progression saisie manuellement par le propriétaire, indépendante des statistiques de jeu.
+ const earnedSupport=supportRanks.filter(r=>state.supportAmount>=r[2]);
+ const supportCurrent=earnedSupport[earnedSupport.length-1];
+ const supportNext=supportRanks.find(r=>state.supportAmount<r[2]);
+ const supportCard=titleNode('div','yarg-tier-card'+(supportCurrent?' equipped':''));
+ const goal=supportNext?.[2]||500;
+ const pct=Math.min(100,Math.max(0,100*state.supportAmount/goal));
+ const supportRing=titleNode('div','yarg-tier-ring'+(!supportCurrent?' is-unearned':''));supportRing.style.setProperty('--value',String(pct));
+ const supportInside=titleNode('div','yarg-tier-inner');
+ supportInside.append(titleNode('span','yarg-tier-icon','💚'));
+ supportInside.append(titleNode('span','yarg-tier-count',Math.min(state.supportAmount,goal).toLocaleString('fr-CA')+'/'+goal+' 
+ const groups=new Map();
+ for(const t of state.catalog.filter(t=>t.category!=='secret'&&t.metric!=='past_parties')){
+  const key=String(t.category||'other')+'|'+String(t.metric||'');
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(t);
+ }
+ const grid=titleNode('div','yarg-title-grid');
+ for(const tiers of groups.values()){
+  tiers.sort((a,b)=>Number(a.threshold||0)-Number(b.threshold||0)||Number(a.sort_order||0)-Number(b.sort_order||0));
+  // Preserve upper ranks (Maître, Grand maître, Champion) for every achievement category.
+  const earned=tiers.filter(t=>state.unlocked.has(t.code)&&titleProgress(t).value>=Number(t.threshold||1));
+  const current=earned[earned.length-1],next=tiers.find(t=>!earned.includes(t));
+  const category=tiers[0].category;
+  const card=titleNode('div','yarg-tier-card'+(current?' equipped':''));
+  const progress=titleProgress(next||current||tiers[0]);
+  const medalLevel=current?tiers.indexOf(current)+1:1;
+  const isStagePillar=/pilier de la scène/i.test(current?.label||'');
+  const medalSrc=isStagePillar?'':medalIconUrl(category,medalLevel);
+  const ring=titleNode('div','yarg-tier-ring'+(medalSrc?' has-medal':'')+(!current?' is-unearned':''));ring.style.setProperty('--value',String(progress.pct));
+  const inside=titleNode('div','yarg-tier-inner');
+  const icon=titleNode('span','yarg-tier-icon');
+  if(medalSrc && category==='guitar'){
+   const duo=titleNode('span','yarg-guitar-medal-duo');
+   for(const artwork of ['guitar','rhythm_guitar']){
+    const img=document.createElement('img');img.alt='';img.className='yarg-rank-medal';
+    img.src=medalIconUrl(artwork,medalLevel);
+    img.onerror=()=>{img.onerror=null;img.src=instrumentIconSources[artwork]};
+    duo.append(img);
+   }
+   icon.append(duo);
+  }else if(medalSrc){
+   const img=document.createElement('img');img.alt='';img.className='yarg-rank-medal';img.src=medalSrc;
+   img.onerror=()=>{ring.classList.remove('has-medal','is-unearned');img.remove();if(instrumentIconSources[category]){const fallback=document.createElement('img');fallback.alt='';fallback.src=instrumentIconSources[category];fallback.onerror=()=>{fallback.remove();icon.textContent=titleIcons[category]||'🏆'};icon.append(fallback)}else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆')};
+   icon.append(img);
+  }else if(instrumentIconSources[category]){const img=document.createElement('img');img.alt='';img.src=instrumentIconSources[category];img.onerror=()=>{img.remove();icon.textContent=titleIcons[category]||'🏆'};icon.append(img)}
+  else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆');
+  inside.append(icon);
+  inside.append(titleNode('span','yarg-tier-count',Math.min(progress.value,progress.goal)+'/'+progress.goal));
+  ring.append(inside);card.append(ring);
+  const copy=titleNode('div','tier-copy');
+  copy.append(titleNode('div','hint',groupNames[category]||category));
+  copy.append(titleNode('h3','',current?.label||'Premier titre à débloquer'));
+  if(current)copy.append(titleEquipButton(current));
+  copy.append(titleNode('p','',next?'Prochain : '+next.label:current?'Tous les paliers débloqués !':'Ton prochain titre : '+tiers[0].label));
+  card.append(copy);grid.append(card);
+ }
+ parent.append(grid);
+}
+function showUnlockIfNeeded(){
+ if(unlockActive||!pendingUnlocks.length||!state.profile)return;
+ const code=pendingUnlocks.shift();
+ const title=state.catalog.find(t=>t.code===code);
+ if(!title){showUnlockIfNeeded();return;}
+ unlockActive=code;
+ $('yarg-unlock-heading').textContent=title.label;
+ const {goal}=titleProgress(title);
+ $('yarg-unlock-reason').textContent=specialDescriptions[code]||
+  ('Obtenu en atteignant '+goal+' '+(metrics[title.metric]||groupNames[title.category]||'exploits').toLowerCase()+'.');
+ $('yarg-unlock-equip').disabled=state.profile.equipped_title===code;
+ $('yarg-unlock-backdrop').hidden=false;
+}
+function closeUnlock(){
+ $('yarg-unlock-backdrop').hidden=true;unlockActive=null;showUnlockIfNeeded();
+}
+$('yarg-unlock-dismiss').addEventListener('click',closeUnlock);
+$('yarg-unlock-view').addEventListener('click',()=>{
+ document.querySelector('[data-profile-tab="achievements"]')?.click();
+ closeUnlock();
+});
+$('yarg-unlock-equip').addEventListener('click',async()=>{
+ if(!unlockActive)return;
+ const code=unlockActive;
+ await equip(code);
+ if(state.profile.equipped_title===code)closeUnlock();
+});
+
+function renderProfile(){
+ if(recoveryUserId)return;
+ const p=state.profile;$('profile').hidden=false;$('auth').hidden=true;
+ $('shown-name').textContent=p.rockstar_name;$('rockstar-name').value=p.rockstar_name;$('band-name').value=p.preferred_band_name||'';
+ $('initie-tag').textContent=state.initie?'✦ Initié':'Pas encore Initié';$('initie-tag').className='tag '+(state.initie?'yes':'no');
+ $('privilege-note').textContent='';
+ const equippedTitle=state.catalog.find(x=>x.code===p.equipped_title);
+ $('equipped-preview').textContent=equippedTitle&&(equippedTitle.category==='secret'||titleProgress(equippedTitle).value>=Number(equippedTitle.threshold||1))?equippedTitle.label:'Aucun titre équipé';
+ renderStats();renderTitles();showUnlockIfNeeded();
+}
+async function equip(code){
+ if(!state.unlocked.has(code))return;
+ const target=state.catalog.find(t=>t.code===code);
+ if(target&&target.category!=='secret'&&titleProgress(target).value<Number(target.threshold||1))return;
+ const {error}=await sb.from('rockstar_profiles').update({equipped_title:code,updated_at:new Date().toISOString()}).eq('user_id',state.user.id);
+ if(error){message(window.yargErrorMessage(error,'Impossible d’équiper ce titre. Recharge ton profil, puis réessaie.'),true);return}
+ state.profile.equipped_title=code;renderProfile();message('Titre équipé !');
+}
+$('profile-form').addEventListener('submit',async e=>{
+ e.preventDefault();const name=safeName($('rockstar-name').value);if(!name){message('Choisis un nom de Rockstar.',true);return}
+ const {error}=await sb.from('rockstar_profiles').update({rockstar_name:name,preferred_band_name:safeName($('band-name').value)||null,updated_at:new Date().toISOString()}).eq('user_id',state.user.id);
+ if(error){message(window.yargErrorMessage(error,'Ton profil n’a pas été enregistré. Réessaie dans un instant.'),true);return}
+ state.profile.rockstar_name=name;state.profile.preferred_band_name=safeName($('band-name').value);renderProfile();message('Profil enregistré !');
+});
+$('login').addEventListener('submit',async e=>{
+ e.preventDefault();const email=$('email').value.trim();const button=$('login').querySelector('button');button.disabled=true;
+ try{const {error}=await sb.auth.signInWithPassword({email,password:$('password').value});if(error)throw error;location.reload();}
+ catch(err){message(window.yargErrorMessage(err,'Connexion momentanément indisponible. Réessaie dans un instant.'),true)}finally{button.disabled=false}
+});
+const GUEST_UPGRADE_KEY='yarg_pending_guest_upgrade';
+$('register').onclick=async()=>{
+ const email=$('email').value.trim(),password=$('password').value;
+ if(!email){message('Entre ton adresse courriel.',true);return}
+ if(!$('email').reportValidity())return;
+ $('register').disabled=true;
+ try{
+  const {data:{user},error:identityError}=await sb.auth.getUser();
+  if(identityError&&identityError.name!=='AuthSessionMissingError')throw identityError;
+  if(user?.is_anonymous){
+   const {error}=await sb.auth.updateUser({email},{emailRedirectTo:location.origin+location.pathname});
+   if(error)throw error;
+   localStorage.setItem(GUEST_UPGRADE_KEY,user.id);
+   message('Confirme ton courriel depuis ce même appareil. Tu choisiras ensuite ton mot de passe dans Mon profil.');
+  }else{
+   if(password.length<8){message('Choisis un mot de passe de 8 caractères minimum.',true);return}
+   const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
+   if(error)throw error;
+   message(data.session?'Compte créé !':'Compte créé ! Confirme ton courriel, puis connecte-toi.');
+   if(data.session)location.reload();
+  }
+ }catch(err){message(window.yargErrorMessage(err,'Impossible de créer ton compte pour le moment. Réessaie plus tard; si le problème persiste, préviens Jak.'),true)}
+ finally{$('register').disabled=false}
+};
+$('finish-guest-signup').addEventListener('submit',async event=>{
+ event.preventDefault();const password=$('guest-new-password').value;
+ if(password.length<8){message('Mot de passe trop court.',true);return}
+ const button=event.currentTarget.querySelector('button');button.disabled=true;
+ try{
+  const {error}=await sb.auth.updateUser({password});if(error)throw error;
+  localStorage.removeItem(GUEST_UPGRADE_KEY);$('finish-guest-signup').hidden=true;$('guest-new-password').value='';
+  message('Ton compte Rockstar est prêt !');
+ }catch(err){message(window.yargErrorMessage(err,'Ton mot de passe n’a pas été enregistré. Réessaie dans un instant.'),true)}
+ finally{button.disabled=false}
+});
+$('recover').onclick=async()=>{
+ const email=$('email').value.trim();
+ if(!email){message('Entre ton courriel pour recevoir un lien de réinitialisation.',true);return}
+ if(!$('email').reportValidity())return;
+ $('recover').disabled=true;
+ try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;message('Si ce compte existe, tu recevras un lien pour choisir un nouveau mot de passe. Vérifie aussi tes courriels indésirables.')}
+ catch(err){message(window.yargErrorMessage(err,'Impossible d’envoyer le lien de réinitialisation. Réessaie plus tard; si le problème persiste, préviens Jak.'),true)}
+ finally{$('recover').disabled=false}
+};
+// Keep the auth callback synchronous; submit password changes from the form.
+sb.auth.onAuthStateChange((event,session)=>{
+ if(event==='PASSWORD_RECOVERY'&&session?.user){
+  recoveryUserId=session.user.id;
+  setTimeout(()=>openPasswordRecovery(session.user.id),0);
+ }
+});
+$('recovery-form').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const password=$('recovery-password').value;
+ if(password.length<8){message('Choisis un mot de passe de 8 caractères minimum.',true);return}
+ if(password!==$('recovery-confirm').value){message('Les deux mots de passe ne correspondent pas.',true);$('recovery-confirm').focus();return}
+ const button=event.currentTarget.querySelector('button');button.disabled=true;
+ try{
+  const {error}=await sb.auth.updateUser({password});if(error)throw error;
+  try{sessionStorage.removeItem(RECOVERY_KEY);localStorage.removeItem(GUEST_UPGRADE_KEY)}catch(e){}
+  recoveryUserId=null;$('password-recovery').hidden=true;
+  $('recovery-password').value='';$('recovery-confirm').value='';
+  message('Ton nouveau mot de passe est enregistré !');
+  await initialize();
+ }catch(err){message(window.yargErrorMessage(err,'Ton mot de passe n’a pas été modifié. Réessaie ou clique sur « Demander un autre lien ».'),true)}
+ finally{button.disabled=false}
+});
+$('recovery-restart').onclick=()=>{
+ recoveryUserId=null;try{sessionStorage.removeItem(RECOVERY_KEY)}catch(e){}
+ $('password-recovery').hidden=true;$('auth').hidden=false;
+ $('email').value=state.user?.email||$('email').value;
+ $('email').focus();message('Vérifie ton courriel, puis clique sur « Mot de passe oublié ? ».');
+};
+$('logout').addEventListener('click',async()=>{try{if(window.YargPush)await window.YargPush.disable();}catch(e){console.warn('Désactivation Web Push à la déconnexion :',e);}const {error}=await sb.auth.signOut();if(error){message(window.yargErrorMessage(error,'Impossible de te déconnecter. Réessaie dans un instant.'),true);return}location.reload()});
+async function initialize(){
+ try{
+  const {data:sessionData,error:sessionError}=await sb.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!sessionData.session){$('guest-account-info').hidden=false;$('auth').hidden=false;return}
+  const {data:{user},error}=await sb.auth.getUser();if(error)throw error;
+  state.user=user;
+  let savedRecovery=null;try{savedRecovery=sessionStorage.getItem(RECOVERY_KEY)}catch(e){}
+  if(isRegistered(user)&&(recoveryUserId===user.id||savedRecovery===user.id)){
+   openPasswordRecovery(user.id);return;
+  }
+  if(!isRegistered(user)){
+   $('guest-account-info').hidden=false;
+   $('auth').hidden=false;
+   if(user?.is_anonymous){
+    // Un visiteur invité peut se connecter à un compte existant OU créer son compte.
+    // Ne jamais masquer le mot de passe ni le bouton « Se connecter » ici.
+    $('auth').querySelector('p').textContent='Déjà un compte? Connecte-toi. Pour créer ton compte, entre ton courriel et clique sur « Créer un compte ». Tu choisiras ton mot de passe après la confirmation.';
+   }
+   return;
+  }
+  // Afficher la Régie MC seulement pour un Rockstar autorisé.
+  // Utilise le client authentifié déjà présent sur la page.
+  try{
+   const {data:allowed,error:mcError}=await sb.rpc('yarg_admin_whoami');
+   if(mcError)console.warn('Vérification des droits MC indisponible',mcError);
+   document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(link=>{
+    link.hidden=!(mcError==null && allowed===true);
+   });
+  }catch(mcError){console.warn('Vérification des droits MC impossible',mcError)}
+  await fetchProfile();
+  if(!state.profile){
+   const suggested=String(user.user_metadata?.rockstar_name||user.email?.split('@')[0]||'Rockstar').slice(0,60);
+   const {error:saveError}=await sb.from('rockstar_profiles').insert({user_id:user.id,rockstar_name:suggested});if(saveError)throw saveError;
+   await fetchProfile();
+  }
+  const {error:claimError}=await sb.rpc('yarg_claim_my_guest_solo_requests');
+  if(claimError)console.warn('Rattachement des demandes invité indisponible (SQL requis) :',claimError.message);
+  await fetchStats();renderProfile();
+  if(localStorage.getItem(GUEST_UPGRADE_KEY)===user.id && user.email_confirmed_at){
+   $('finish-guest-signup').hidden=false;
+   message('Courriel confirmé ! Choisis maintenant ton mot de passe.');
+  }
+ }catch(err){$('guest-account-info').hidden=false;$('auth').hidden=false;message(window.yargErrorMessage(err,'Impossible de charger ton profil. Recharge la page; si le problème persiste, préviens Jak.'),true)}
+}
+// Navigation des onglets, sans perdre les données du profil.
+document.querySelectorAll('[data-profile-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+ document.querySelectorAll('[data-profile-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===btn)));
+ document.querySelectorAll('.profile-panel').forEach(panel=>panel.hidden=panel.id!==btn.dataset.profileTab+'-panel');
+ if(btn.dataset.profileTab==='favorites')loadProfileFavorites();
+  if(btn.dataset.profileTab==='notifications'&&window.YargPush)window.dispatchEvent(new Event('yarg-notifications-tab-open'));
+}));
+let favoritesLoading=false;
+const favSlug=s=>String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,150)||'song';
+async function loadProfileFavorites(){
+ if(favoritesLoading||!state.user)return;favoritesLoading=true;
+ const status=$('favorites-status'),host=$('profile-favorites');status.textContent='Chargement de tes favoris…';host.replaceChildren();
+ try{
+  const {data,error}=await sb.from('yarg_song_favorites').select('song_id').eq('user_id',state.user.id);
+  if(error)throw error;const ids=new Set((data||[]).map(x=>String(x.song_id)));
+  if(!ids.size){status.textContent='Aucun favori pour le moment. Ajoutes-en depuis le catalogue !';return}
+  // Même identifiant stable que le catalogue : artiste, titre, album, année, durée.
+  let matches=new Map();
+  try{
+   const response=await fetch('songs.json',{cache:'no-cache'});if(!response.ok)throw Error('Catalogue indisponible');
+   const songs=await response.json(),ordered=songs.map(x=>({raw:x,base:favSlug([x.Artist||'',x.Name||'',x.Album||'',/^\d{4}$/.test(String(x.Year||''))?Number(x.Year):'',Math.floor(Number(x.songlength||0)/1000)].join('|'))}));
+   ordered.sort((a,b)=>a.base.localeCompare(b.base)||(String(a.raw.Charter||'')+'|'+String(a.raw.Playlist||'')+'|'+String(a.raw.chartsAvailable||'')).localeCompare(String(b.raw.Charter||'')+'|'+String(b.raw.Playlist||'')+'|'+String(b.raw.chartsAvailable||'')));
+   const counts=new Map();for(const x of ordered){const n=(counts.get(x.base)||0)+1;counts.set(x.base,n);matches.set('yarg-'+x.base+(n>1?'-'+n:''),x.raw)}
+  }catch(e){console.warn('Métadonnées des favoris indisponibles',e)}
+  status.textContent=`${ids.size} chanson${ids.size>1?'s':''} dans tes favoris Rockstar.`;
+  for(const id of ids){const song=matches.get(id);const card=document.createElement('div');card.className='fav-profile-song';
+   const text=document.createElement('div'),title=document.createElement('strong'),artist=document.createElement('small');
+   title.textContent=song?.Name||'Favori enregistré';artist.textContent=song?.Artist||'Cette chanson n’est pas reconnue dans la version actuelle du catalogue.';
+   const remove=document.createElement('button');remove.type='button';remove.className='remove-favorite';remove.textContent='♥ Retirer des favoris';
+   remove.setAttribute('aria-label','Retirer '+(song?.Name||'ce morceau')+' des favoris');
+   remove.addEventListener('click',async()=>{
+    if(!confirm('Retirer « '+(song?.Name||'ce morceau')+' » de tes favoris ?'))return;
+    remove.disabled=true;remove.textContent='Suppression…';
+    try{
+     const {data,error}=await sb.from('yarg_song_favorites').delete().eq('user_id',state.user.id).eq('song_id',id).select('song_id');
+     if(error)throw error;
+     // Si aucune ligne n'a été supprimée (ex. RLS), ne pas prétendre que l'opération a réussi.
+     if(!data?.length)throw Error('Aucun favori supprimé. Vérifie tes droits d’accès.');
+     ids.delete(id);card.remove();
+     status.textContent=ids.size?`${ids.size} chanson${ids.size>1?'s':''} dans tes favoris Rockstar.`:'Aucun favori pour le moment. Ajoutes-en depuis le catalogue !';
+    }catch(err){message(window.yargErrorMessage(err,'Ce favori n’a pas été retiré. Réessaie dans un instant.'),true);remove.disabled=false;remove.textContent='♥ Retirer des favoris'}
+   });
+   text.append(title,artist);card.append(text,remove);host.append(card)}
+ }catch(e){status.textContent=window.yargErrorMessage(e,'Impossible de charger tes favoris. Réessaie dans un instant.')}
+ finally{favoritesLoading=false}
+}
+
+initialize();
+
+document.addEventListener('yarg-band-invitation-responded',async()=>{
+ try{
+  if(!state.user || !state.profile)return;
+  await fetchStats();
+  renderStats();
+ }catch(error){console.warn('Statistiques Rockstar après invitation :',error);}
+});
+
+</script>
+
+<script>
+/* Install without asking for push permission or downloading an APK. */
+(() => {
+ 'use strict';
+ let installEvent=null;
+ const button=document.getElementById('install-app-button');
+ const status=document.getElementById('install-app-status');
+ const panel=document.getElementById('app-install-panel');
+ if(!button||!status||!panel)return;
+ const standalone=()=>Boolean(window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true);
+ const onIOS=()=>/iPad|iPhone|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ function instructions(){
+  if(onIOS())return 'Sur iPhone ou iPad : ouvre le site dans Safari, touche Partager, puis « Sur l’écran d’accueil » et « Ajouter ». Ouvre ensuite l’application depuis son icône pour activer les notifications.';
+  if(/Android/i.test(navigator.userAgent))return 'Dans Chrome sur Android, ouvre le menu ⋮ puis « Installer l’application » ou « Ajouter à l’écran d’accueil ». L’option dépend du navigateur.';
+  return 'Ouvre le menu de ton navigateur et cherche « Installer Asteur On Jam » ou « Installer la page en tant qu’application ». L’option dépend du navigateur.';
+ }
+ function refresh(){
+  panel.hidden=standalone();
+  if(standalone()){
+   button.hidden=true;
+   status.textContent='L’application est déjà installée sur cet appareil.';
+  }else{
+   button.hidden=false;
+   status.textContent=installEvent?'Prêt à installer l’application sur cet appareil.':instructions();
+  }
+ }
+ window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();
+  installEvent=event;
+  refresh();
+ });
+ window.addEventListener('appinstalled',()=>{
+  installEvent=null;
+  panel.hidden=true;
+  button.hidden=true;
+  status.textContent='Application installée ! Ouvre-la depuis ton écran d’accueil.';
+ });
+ button.addEventListener('click',async()=>{
+  if(standalone()){refresh();return;}
+  const prompt=installEvent;
+  if(!prompt){status.textContent=instructions();return;}
+  installEvent=null;
+  button.disabled=true;
+  try{
+   await prompt.prompt();
+   const result=await prompt.userChoice;
+   status.textContent=result?.outcome==='accepted'
+    ?'Installation demandée au navigateur. Vérifie ton écran d’accueil.'
+    :instructions();
+  }catch(error){
+   status.textContent=instructions();
+   console.warn('Installation PWA indisponible :',error);
+  }finally{button.disabled=false;}
+ });
+ // Reuse the existing push worker; registration does not subscribe or request permission.
+ if('serviceWorker' in navigator&&window.isSecureContext){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./yarg-notifications-sw.js')
+   .catch(error=>console.warn('Service worker YARG :',error)));
+ }
+ refresh();
+})();
+</script>
+<script src="yarg-push.js" defer></script>
+<script>
+(function(){
+ const activate=document.getElementById('push-enable'),deactivate=document.getElementById('push-disable'),status=document.getElementById('push-status'),tag=document.getElementById('push-connection-tag');
+ async function sync(){
+  if(!window.YargPush)return;
+  try{
+   const result=await window.YargPush.status();
+   activate.hidden=result.subscribed;
+   deactivate.hidden=!result.subscribed;
+   tag.textContent=!result.supported?'Indisponibles':result.subscribed?'Activées':'Désactivées';
+   tag.classList.toggle('yes',!!result.subscribed);
+   tag.classList.toggle('no',!result.subscribed);
+   status.textContent=!result.supported?'Web Push non disponible. Sur iPhone, installe le site à l’écran d’accueil et ouvre-le depuis là.':result.subscribed?'Notifications activées sur cet appareil.':'Notifications non activées sur cet appareil.';
+  }catch(e){tag.textContent='À vérifier';tag.classList.remove('yes');tag.classList.add('no');status.textContent=window.yargErrorMessage(e,'Impossible de vérifier tes notifications. Recharge la page, puis réessaie.');}
+ }
+ activate.addEventListener('click',async()=>{
+  activate.disabled=true;status.textContent='Activation des notifications…';
+  try{await window.YargPush.enable();await sync();}
+  catch(e){status.textContent=window.yargErrorMessage(e,'Impossible d’activer les notifications. Réessaie; si le problème persiste, préviens le MC.');}
+  finally{activate.disabled=false;}
+ });
+ deactivate.addEventListener('click',async()=>{
+  deactivate.disabled=true;status.textContent='Désactivation…';
+  try{await window.YargPush.disable();await sync();}
+  catch(e){status.textContent=window.yargErrorMessage(e,'Impossible de désactiver les notifications. Réessaie dans un instant.');}
+  finally{deactivate.disabled=false;}
+ });
+ window.addEventListener('load',sync);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});
+})();
+</script>
+<script src="yarg-stage-response.js" defer></script><script src="yarg-band-invitations.js" defer></script></body></html>
+));
+ supportRing.append(supportInside);supportCard.append(supportRing);
+ const supportCopy=titleNode('div','tier-copy');
+ supportCopy.append(titleNode('div','hint','Soutien au projet · Ajustement manuel'));
+ supportCopy.append(titleNode('h3','',supportCurrent?'Mécène '+supportCurrent[1]:'Premier titre à débloquer'));
+ if(supportCurrent){
+  const code='support_'+supportCurrent[0];
+  const title=state.catalog.find(t=>t.code===code);
+  if(title&&state.unlocked.has(code))supportCopy.append(titleEquipButton(title));
+ }
+ supportCopy.append(titleNode('p','',supportNext?'Prochain : '+supportNext[1]+' à '+supportNext[2]+' 
+ const groups=new Map();
+ for(const t of state.catalog.filter(t=>t.category!=='secret'&&t.metric!=='past_parties')){
+  const key=String(t.category||'other')+'|'+String(t.metric||'');
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(t);
+ }
+ const grid=titleNode('div','yarg-title-grid');
+ for(const tiers of groups.values()){
+  tiers.sort((a,b)=>Number(a.threshold||0)-Number(b.threshold||0)||Number(a.sort_order||0)-Number(b.sort_order||0));
+  // Preserve upper ranks (Maître, Grand maître, Champion) for every achievement category.
+  const earned=tiers.filter(t=>state.unlocked.has(t.code)&&titleProgress(t).value>=Number(t.threshold||1));
+  const current=earned[earned.length-1],next=tiers.find(t=>!earned.includes(t));
+  const category=tiers[0].category;
+  const card=titleNode('div','yarg-tier-card'+(current?' equipped':''));
+  const progress=titleProgress(next||current||tiers[0]);
+  const medalLevel=current?tiers.indexOf(current)+1:1;
+  const isStagePillar=/pilier de la scène/i.test(current?.label||'');
+  const medalSrc=isStagePillar?'':medalIconUrl(category,medalLevel);
+  const ring=titleNode('div','yarg-tier-ring'+(medalSrc?' has-medal':'')+(!current?' is-unearned':''));ring.style.setProperty('--value',String(progress.pct));
+  const inside=titleNode('div','yarg-tier-inner');
+  const icon=titleNode('span','yarg-tier-icon');
+  if(medalSrc && category==='guitar'){
+   const duo=titleNode('span','yarg-guitar-medal-duo');
+   for(const artwork of ['guitar','rhythm_guitar']){
+    const img=document.createElement('img');img.alt='';img.className='yarg-rank-medal';
+    img.src=medalIconUrl(artwork,medalLevel);
+    img.onerror=()=>{img.onerror=null;img.src=instrumentIconSources[artwork]};
+    duo.append(img);
+   }
+   icon.append(duo);
+  }else if(medalSrc){
+   const img=document.createElement('img');img.alt='';img.className='yarg-rank-medal';img.src=medalSrc;
+   img.onerror=()=>{ring.classList.remove('has-medal','is-unearned');img.remove();if(instrumentIconSources[category]){const fallback=document.createElement('img');fallback.alt='';fallback.src=instrumentIconSources[category];fallback.onerror=()=>{fallback.remove();icon.textContent=titleIcons[category]||'🏆'};icon.append(fallback)}else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆')};
+   icon.append(img);
+  }else if(instrumentIconSources[category]){const img=document.createElement('img');img.alt='';img.src=instrumentIconSources[category];img.onerror=()=>{img.remove();icon.textContent=titleIcons[category]||'🏆'};icon.append(img)}
+  else icon.textContent=isStagePillar?'🤘':(titleIcons[category]||'🏆');
+  inside.append(icon);
+  inside.append(titleNode('span','yarg-tier-count',Math.min(progress.value,progress.goal)+'/'+progress.goal));
+  ring.append(inside);card.append(ring);
+  const copy=titleNode('div','tier-copy');
+  copy.append(titleNode('div','hint',groupNames[category]||category));
+  copy.append(titleNode('h3','',current?.label||'Premier titre à débloquer'));
+  if(current)copy.append(titleEquipButton(current));
+  copy.append(titleNode('p','',next?'Prochain : '+next.label:current?'Tous les paliers débloqués !':'Ton prochain titre : '+tiers[0].label));
+  card.append(copy);grid.append(card);
+ }
+ parent.append(grid);
+}
+function showUnlockIfNeeded(){
+ if(unlockActive||!pendingUnlocks.length||!state.profile)return;
+ const code=pendingUnlocks.shift();
+ const title=state.catalog.find(t=>t.code===code);
+ if(!title){showUnlockIfNeeded();return;}
+ unlockActive=code;
+ $('yarg-unlock-heading').textContent=title.label;
+ const {goal}=titleProgress(title);
+ $('yarg-unlock-reason').textContent=specialDescriptions[code]||
+  ('Obtenu en atteignant '+goal+' '+(metrics[title.metric]||groupNames[title.category]||'exploits').toLowerCase()+'.');
+ $('yarg-unlock-equip').disabled=state.profile.equipped_title===code;
+ $('yarg-unlock-backdrop').hidden=false;
+}
+function closeUnlock(){
+ $('yarg-unlock-backdrop').hidden=true;unlockActive=null;showUnlockIfNeeded();
+}
+$('yarg-unlock-dismiss').addEventListener('click',closeUnlock);
+$('yarg-unlock-view').addEventListener('click',()=>{
+ document.querySelector('[data-profile-tab="achievements"]')?.click();
+ closeUnlock();
+});
+$('yarg-unlock-equip').addEventListener('click',async()=>{
+ if(!unlockActive)return;
+ const code=unlockActive;
+ await equip(code);
+ if(state.profile.equipped_title===code)closeUnlock();
+});
+
+function renderProfile(){
+ if(recoveryUserId)return;
+ const p=state.profile;$('profile').hidden=false;$('auth').hidden=true;
+ $('shown-name').textContent=p.rockstar_name;$('rockstar-name').value=p.rockstar_name;$('band-name').value=p.preferred_band_name||'';
+ $('initie-tag').textContent=state.initie?'✦ Initié':'Pas encore Initié';$('initie-tag').className='tag '+(state.initie?'yes':'no');
+ $('privilege-note').textContent='';
+ const equippedTitle=state.catalog.find(x=>x.code===p.equipped_title);
+ $('equipped-preview').textContent=equippedTitle&&(equippedTitle.category==='secret'||titleProgress(equippedTitle).value>=Number(equippedTitle.threshold||1))?equippedTitle.label:'Aucun titre équipé';
+ renderStats();renderTitles();showUnlockIfNeeded();
+}
+async function equip(code){
+ if(!state.unlocked.has(code))return;
+ const target=state.catalog.find(t=>t.code===code);
+ if(target&&target.category!=='secret'&&titleProgress(target).value<Number(target.threshold||1))return;
+ const {error}=await sb.from('rockstar_profiles').update({equipped_title:code,updated_at:new Date().toISOString()}).eq('user_id',state.user.id);
+ if(error){message(window.yargErrorMessage(error,'Impossible d’équiper ce titre. Recharge ton profil, puis réessaie.'),true);return}
+ state.profile.equipped_title=code;renderProfile();message('Titre équipé !');
+}
+$('profile-form').addEventListener('submit',async e=>{
+ e.preventDefault();const name=safeName($('rockstar-name').value);if(!name){message('Choisis un nom de Rockstar.',true);return}
+ const {error}=await sb.from('rockstar_profiles').update({rockstar_name:name,preferred_band_name:safeName($('band-name').value)||null,updated_at:new Date().toISOString()}).eq('user_id',state.user.id);
+ if(error){message(window.yargErrorMessage(error,'Ton profil n’a pas été enregistré. Réessaie dans un instant.'),true);return}
+ state.profile.rockstar_name=name;state.profile.preferred_band_name=safeName($('band-name').value);renderProfile();message('Profil enregistré !');
+});
+$('login').addEventListener('submit',async e=>{
+ e.preventDefault();const email=$('email').value.trim();const button=$('login').querySelector('button');button.disabled=true;
+ try{const {error}=await sb.auth.signInWithPassword({email,password:$('password').value});if(error)throw error;location.reload();}
+ catch(err){message(window.yargErrorMessage(err,'Connexion momentanément indisponible. Réessaie dans un instant.'),true)}finally{button.disabled=false}
+});
+const GUEST_UPGRADE_KEY='yarg_pending_guest_upgrade';
+$('register').onclick=async()=>{
+ const email=$('email').value.trim(),password=$('password').value;
+ if(!email){message('Entre ton adresse courriel.',true);return}
+ if(!$('email').reportValidity())return;
+ $('register').disabled=true;
+ try{
+  const {data:{user},error:identityError}=await sb.auth.getUser();
+  if(identityError&&identityError.name!=='AuthSessionMissingError')throw identityError;
+  if(user?.is_anonymous){
+   const {error}=await sb.auth.updateUser({email},{emailRedirectTo:location.origin+location.pathname});
+   if(error)throw error;
+   localStorage.setItem(GUEST_UPGRADE_KEY,user.id);
+   message('Confirme ton courriel depuis ce même appareil. Tu choisiras ensuite ton mot de passe dans Mon profil.');
+  }else{
+   if(password.length<8){message('Choisis un mot de passe de 8 caractères minimum.',true);return}
+   const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
+   if(error)throw error;
+   message(data.session?'Compte créé !':'Compte créé ! Confirme ton courriel, puis connecte-toi.');
+   if(data.session)location.reload();
+  }
+ }catch(err){message(window.yargErrorMessage(err,'Impossible de créer ton compte pour le moment. Réessaie plus tard; si le problème persiste, préviens Jak.'),true)}
+ finally{$('register').disabled=false}
+};
+$('finish-guest-signup').addEventListener('submit',async event=>{
+ event.preventDefault();const password=$('guest-new-password').value;
+ if(password.length<8){message('Mot de passe trop court.',true);return}
+ const button=event.currentTarget.querySelector('button');button.disabled=true;
+ try{
+  const {error}=await sb.auth.updateUser({password});if(error)throw error;
+  localStorage.removeItem(GUEST_UPGRADE_KEY);$('finish-guest-signup').hidden=true;$('guest-new-password').value='';
+  message('Ton compte Rockstar est prêt !');
+ }catch(err){message(window.yargErrorMessage(err,'Ton mot de passe n’a pas été enregistré. Réessaie dans un instant.'),true)}
+ finally{button.disabled=false}
+});
+$('recover').onclick=async()=>{
+ const email=$('email').value.trim();
+ if(!email){message('Entre ton courriel pour recevoir un lien de réinitialisation.',true);return}
+ if(!$('email').reportValidity())return;
+ $('recover').disabled=true;
+ try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;message('Si ce compte existe, tu recevras un lien pour choisir un nouveau mot de passe. Vérifie aussi tes courriels indésirables.')}
+ catch(err){message(window.yargErrorMessage(err,'Impossible d’envoyer le lien de réinitialisation. Réessaie plus tard; si le problème persiste, préviens Jak.'),true)}
+ finally{$('recover').disabled=false}
+};
+// Keep the auth callback synchronous; submit password changes from the form.
+sb.auth.onAuthStateChange((event,session)=>{
+ if(event==='PASSWORD_RECOVERY'&&session?.user){
+  recoveryUserId=session.user.id;
+  setTimeout(()=>openPasswordRecovery(session.user.id),0);
+ }
+});
+$('recovery-form').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const password=$('recovery-password').value;
+ if(password.length<8){message('Choisis un mot de passe de 8 caractères minimum.',true);return}
+ if(password!==$('recovery-confirm').value){message('Les deux mots de passe ne correspondent pas.',true);$('recovery-confirm').focus();return}
+ const button=event.currentTarget.querySelector('button');button.disabled=true;
+ try{
+  const {error}=await sb.auth.updateUser({password});if(error)throw error;
+  try{sessionStorage.removeItem(RECOVERY_KEY);localStorage.removeItem(GUEST_UPGRADE_KEY)}catch(e){}
+  recoveryUserId=null;$('password-recovery').hidden=true;
+  $('recovery-password').value='';$('recovery-confirm').value='';
+  message('Ton nouveau mot de passe est enregistré !');
+  await initialize();
+ }catch(err){message(window.yargErrorMessage(err,'Ton mot de passe n’a pas été modifié. Réessaie ou clique sur « Demander un autre lien ».'),true)}
+ finally{button.disabled=false}
+});
+$('recovery-restart').onclick=()=>{
+ recoveryUserId=null;try{sessionStorage.removeItem(RECOVERY_KEY)}catch(e){}
+ $('password-recovery').hidden=true;$('auth').hidden=false;
+ $('email').value=state.user?.email||$('email').value;
+ $('email').focus();message('Vérifie ton courriel, puis clique sur « Mot de passe oublié ? ».');
+};
+$('logout').addEventListener('click',async()=>{try{if(window.YargPush)await window.YargPush.disable();}catch(e){console.warn('Désactivation Web Push à la déconnexion :',e);}const {error}=await sb.auth.signOut();if(error){message(window.yargErrorMessage(error,'Impossible de te déconnecter. Réessaie dans un instant.'),true);return}location.reload()});
+async function initialize(){
+ try{
+  const {data:sessionData,error:sessionError}=await sb.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!sessionData.session){$('guest-account-info').hidden=false;$('auth').hidden=false;return}
+  const {data:{user},error}=await sb.auth.getUser();if(error)throw error;
+  state.user=user;
+  let savedRecovery=null;try{savedRecovery=sessionStorage.getItem(RECOVERY_KEY)}catch(e){}
+  if(isRegistered(user)&&(recoveryUserId===user.id||savedRecovery===user.id)){
+   openPasswordRecovery(user.id);return;
+  }
+  if(!isRegistered(user)){
+   $('guest-account-info').hidden=false;
+   $('auth').hidden=false;
+   if(user?.is_anonymous){
+    // Un visiteur invité peut se connecter à un compte existant OU créer son compte.
+    // Ne jamais masquer le mot de passe ni le bouton « Se connecter » ici.
+    $('auth').querySelector('p').textContent='Déjà un compte? Connecte-toi. Pour créer ton compte, entre ton courriel et clique sur « Créer un compte ». Tu choisiras ton mot de passe après la confirmation.';
+   }
+   return;
+  }
+  // Afficher la Régie MC seulement pour un Rockstar autorisé.
+  // Utilise le client authentifié déjà présent sur la page.
+  try{
+   const {data:allowed,error:mcError}=await sb.rpc('yarg_admin_whoami');
+   if(mcError)console.warn('Vérification des droits MC indisponible',mcError);
+   document.querySelectorAll('.yarg-navigation a[href="admin.html"]').forEach(link=>{
+    link.hidden=!(mcError==null && allowed===true);
+   });
+  }catch(mcError){console.warn('Vérification des droits MC impossible',mcError)}
+  await fetchProfile();
+  if(!state.profile){
+   const suggested=String(user.user_metadata?.rockstar_name||user.email?.split('@')[0]||'Rockstar').slice(0,60);
+   const {error:saveError}=await sb.from('rockstar_profiles').insert({user_id:user.id,rockstar_name:suggested});if(saveError)throw saveError;
+   await fetchProfile();
+  }
+  const {error:claimError}=await sb.rpc('yarg_claim_my_guest_solo_requests');
+  if(claimError)console.warn('Rattachement des demandes invité indisponible (SQL requis) :',claimError.message);
+  await fetchStats();renderProfile();
+  if(localStorage.getItem(GUEST_UPGRADE_KEY)===user.id && user.email_confirmed_at){
+   $('finish-guest-signup').hidden=false;
+   message('Courriel confirmé ! Choisis maintenant ton mot de passe.');
+  }
+ }catch(err){$('guest-account-info').hidden=false;$('auth').hidden=false;message(window.yargErrorMessage(err,'Impossible de charger ton profil. Recharge la page; si le problème persiste, préviens Jak.'),true)}
+}
+// Navigation des onglets, sans perdre les données du profil.
+document.querySelectorAll('[data-profile-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+ document.querySelectorAll('[data-profile-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===btn)));
+ document.querySelectorAll('.profile-panel').forEach(panel=>panel.hidden=panel.id!==btn.dataset.profileTab+'-panel');
+ if(btn.dataset.profileTab==='favorites')loadProfileFavorites();
+  if(btn.dataset.profileTab==='notifications'&&window.YargPush)window.dispatchEvent(new Event('yarg-notifications-tab-open'));
+}));
+let favoritesLoading=false;
+const favSlug=s=>String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,150)||'song';
+async function loadProfileFavorites(){
+ if(favoritesLoading||!state.user)return;favoritesLoading=true;
+ const status=$('favorites-status'),host=$('profile-favorites');status.textContent='Chargement de tes favoris…';host.replaceChildren();
+ try{
+  const {data,error}=await sb.from('yarg_song_favorites').select('song_id').eq('user_id',state.user.id);
+  if(error)throw error;const ids=new Set((data||[]).map(x=>String(x.song_id)));
+  if(!ids.size){status.textContent='Aucun favori pour le moment. Ajoutes-en depuis le catalogue !';return}
+  // Même identifiant stable que le catalogue : artiste, titre, album, année, durée.
+  let matches=new Map();
+  try{
+   const response=await fetch('songs.json',{cache:'no-cache'});if(!response.ok)throw Error('Catalogue indisponible');
+   const songs=await response.json(),ordered=songs.map(x=>({raw:x,base:favSlug([x.Artist||'',x.Name||'',x.Album||'',/^\d{4}$/.test(String(x.Year||''))?Number(x.Year):'',Math.floor(Number(x.songlength||0)/1000)].join('|'))}));
+   ordered.sort((a,b)=>a.base.localeCompare(b.base)||(String(a.raw.Charter||'')+'|'+String(a.raw.Playlist||'')+'|'+String(a.raw.chartsAvailable||'')).localeCompare(String(b.raw.Charter||'')+'|'+String(b.raw.Playlist||'')+'|'+String(b.raw.chartsAvailable||'')));
+   const counts=new Map();for(const x of ordered){const n=(counts.get(x.base)||0)+1;counts.set(x.base,n);matches.set('yarg-'+x.base+(n>1?'-'+n:''),x.raw)}
+  }catch(e){console.warn('Métadonnées des favoris indisponibles',e)}
+  status.textContent=`${ids.size} chanson${ids.size>1?'s':''} dans tes favoris Rockstar.`;
+  for(const id of ids){const song=matches.get(id);const card=document.createElement('div');card.className='fav-profile-song';
+   const text=document.createElement('div'),title=document.createElement('strong'),artist=document.createElement('small');
+   title.textContent=song?.Name||'Favori enregistré';artist.textContent=song?.Artist||'Cette chanson n’est pas reconnue dans la version actuelle du catalogue.';
+   const remove=document.createElement('button');remove.type='button';remove.className='remove-favorite';remove.textContent='♥ Retirer des favoris';
+   remove.setAttribute('aria-label','Retirer '+(song?.Name||'ce morceau')+' des favoris');
+   remove.addEventListener('click',async()=>{
+    if(!confirm('Retirer « '+(song?.Name||'ce morceau')+' » de tes favoris ?'))return;
+    remove.disabled=true;remove.textContent='Suppression…';
+    try{
+     const {data,error}=await sb.from('yarg_song_favorites').delete().eq('user_id',state.user.id).eq('song_id',id).select('song_id');
+     if(error)throw error;
+     // Si aucune ligne n'a été supprimée (ex. RLS), ne pas prétendre que l'opération a réussi.
+     if(!data?.length)throw Error('Aucun favori supprimé. Vérifie tes droits d’accès.');
+     ids.delete(id);card.remove();
+     status.textContent=ids.size?`${ids.size} chanson${ids.size>1?'s':''} dans tes favoris Rockstar.`:'Aucun favori pour le moment. Ajoutes-en depuis le catalogue !';
+    }catch(err){message(window.yargErrorMessage(err,'Ce favori n’a pas été retiré. Réessaie dans un instant.'),true);remove.disabled=false;remove.textContent='♥ Retirer des favoris'}
+   });
+   text.append(title,artist);card.append(text,remove);host.append(card)}
+ }catch(e){status.textContent=window.yargErrorMessage(e,'Impossible de charger tes favoris. Réessaie dans un instant.')}
+ finally{favoritesLoading=false}
+}
+
+initialize();
+
+document.addEventListener('yarg-band-invitation-responded',async()=>{
+ try{
+  if(!state.user || !state.profile)return;
+  await fetchStats();
+  renderStats();
+ }catch(error){console.warn('Statistiques Rockstar après invitation :',error);}
+});
+
+</script>
+
+<script>
+/* Install without asking for push permission or downloading an APK. */
+(() => {
+ 'use strict';
+ let installEvent=null;
+ const button=document.getElementById('install-app-button');
+ const status=document.getElementById('install-app-status');
+ const panel=document.getElementById('app-install-panel');
+ if(!button||!status||!panel)return;
+ const standalone=()=>Boolean(window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true);
+ const onIOS=()=>/iPad|iPhone|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ function instructions(){
+  if(onIOS())return 'Sur iPhone ou iPad : ouvre le site dans Safari, touche Partager, puis « Sur l’écran d’accueil » et « Ajouter ». Ouvre ensuite l’application depuis son icône pour activer les notifications.';
+  if(/Android/i.test(navigator.userAgent))return 'Dans Chrome sur Android, ouvre le menu ⋮ puis « Installer l’application » ou « Ajouter à l’écran d’accueil ». L’option dépend du navigateur.';
+  return 'Ouvre le menu de ton navigateur et cherche « Installer Asteur On Jam » ou « Installer la page en tant qu’application ». L’option dépend du navigateur.';
+ }
+ function refresh(){
+  panel.hidden=standalone();
+  if(standalone()){
+   button.hidden=true;
+   status.textContent='L’application est déjà installée sur cet appareil.';
+  }else{
+   button.hidden=false;
+   status.textContent=installEvent?'Prêt à installer l’application sur cet appareil.':instructions();
+  }
+ }
+ window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();
+  installEvent=event;
+  refresh();
+ });
+ window.addEventListener('appinstalled',()=>{
+  installEvent=null;
+  panel.hidden=true;
+  button.hidden=true;
+  status.textContent='Application installée ! Ouvre-la depuis ton écran d’accueil.';
+ });
+ button.addEventListener('click',async()=>{
+  if(standalone()){refresh();return;}
+  const prompt=installEvent;
+  if(!prompt){status.textContent=instructions();return;}
+  installEvent=null;
+  button.disabled=true;
+  try{
+   await prompt.prompt();
+   const result=await prompt.userChoice;
+   status.textContent=result?.outcome==='accepted'
+    ?'Installation demandée au navigateur. Vérifie ton écran d’accueil.'
+    :instructions();
+  }catch(error){
+   status.textContent=instructions();
+   console.warn('Installation PWA indisponible :',error);
+  }finally{button.disabled=false;}
+ });
+ // Reuse the existing push worker; registration does not subscribe or request permission.
+ if('serviceWorker' in navigator&&window.isSecureContext){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./yarg-notifications-sw.js')
+   .catch(error=>console.warn('Service worker YARG :',error)));
+ }
+ refresh();
+})();
+</script>
+<script src="yarg-push.js" defer></script>
+<script>
+(function(){
+ const activate=document.getElementById('push-enable'),deactivate=document.getElementById('push-disable'),status=document.getElementById('push-status'),tag=document.getElementById('push-connection-tag');
+ async function sync(){
+  if(!window.YargPush)return;
+  try{
+   const result=await window.YargPush.status();
+   activate.hidden=result.subscribed;
+   deactivate.hidden=!result.subscribed;
+   tag.textContent=!result.supported?'Indisponibles':result.subscribed?'Activées':'Désactivées';
+   tag.classList.toggle('yes',!!result.subscribed);
+   tag.classList.toggle('no',!result.subscribed);
+   status.textContent=!result.supported?'Web Push non disponible. Sur iPhone, installe le site à l’écran d’accueil et ouvre-le depuis là.':result.subscribed?'Notifications activées sur cet appareil.':'Notifications non activées sur cet appareil.';
+  }catch(e){tag.textContent='À vérifier';tag.classList.remove('yes');tag.classList.add('no');status.textContent=window.yargErrorMessage(e,'Impossible de vérifier tes notifications. Recharge la page, puis réessaie.');}
+ }
+ activate.addEventListener('click',async()=>{
+  activate.disabled=true;status.textContent='Activation des notifications…';
+  try{await window.YargPush.enable();await sync();}
+  catch(e){status.textContent=window.yargErrorMessage(e,'Impossible d’activer les notifications. Réessaie; si le problème persiste, préviens le MC.');}
+  finally{activate.disabled=false;}
+ });
+ deactivate.addEventListener('click',async()=>{
+  deactivate.disabled=true;status.textContent='Désactivation…';
+  try{await window.YargPush.disable();await sync();}
+  catch(e){status.textContent=window.yargErrorMessage(e,'Impossible de désactiver les notifications. Réessaie dans un instant.');}
+  finally{deactivate.disabled=false;}
+ });
+ window.addEventListener('load',sync);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});
+})();
+</script>
+<script src="yarg-stage-response.js" defer></script><script src="yarg-band-invitations.js" defer></script></body></html>
+:'Champion — tous les paliers débloqués!'));
+ supportCard.append(supportCopy);
+ const supportSection=titleNode('section');
+ supportSection.append(titleNode('h3','sectionlabel','Titres de soutien exclusifs'));
+ supportSection.append(titleNode('p','yarg-title-intro','Progression attribuée manuellement par l’hôte. Aucun paiement n’est effectué ici.'));
+ const supportGrid=titleNode('div','yarg-title-grid');supportGrid.append(supportCard);supportSection.append(supportGrid);
+ parent.append(supportSection);
+
  const groups=new Map();
  for(const t of state.catalog.filter(t=>t.category!=='secret'&&t.metric!=='past_parties')){
   const key=String(t.category||'other')+'|'+String(t.metric||'');
