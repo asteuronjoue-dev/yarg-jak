@@ -19,7 +19,7 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 .yarg-navigation{display:flex;align-items:center;justify-content:flex-end;gap:.4rem;flex-wrap:wrap}
 .yarg-navigation a{color:#eaf1f3;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #3b4b53;border-radius:10px;padding:.48rem .7rem;background:#1b2429;font-size:.85rem;font-weight:800;white-space:nowrap}
 .yarg-navigation a:hover,.yarg-navigation a:focus-visible{border-color:#1fc8bd;background:#263338}
-.yarg-navigation a[hidden]{display:none!important}
+.yarg-navigation a[hidden]{display:none!important}\n.yarg-navigation a[aria-current="location"]{background:var(--orange);color:#111;border-color:var(--orange)}
 main{padding:30px 0 70px}.back{display:inline-block;color:#a6e9e1;text-decoration:none;font-weight:750;margin-bottom:22px}.back:hover{text-decoration:underline}
 .hero{position:relative;overflow:hidden;padding:clamp(22px,4vw,42px);border-radius:19px;border:1px solid #527c73;background:radial-gradient(ellipse at 100% 0%,#22514a,transparent 65%),radial-gradient(ellipse at 0% 100%,#453024,transparent 65%),#1a272d}
 .hero h1{font-size:clamp(2rem,5vw,3.3rem);letter-spacing:-.035em;line-height:1.1;margin:0 0 14px;font-weight:950}
@@ -66,10 +66,10 @@ footer a{color:#9fecdf}
 <body>
 <header><div class="wrap">
  <div class="site-brand"><img src="assets/favicon.png" alt="" width="50" height="50"><div><strong>Asteur On Jam</strong><small>Soutenir le projet</small></div></div>
- <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="a-propos.html">À Propos</a><a href="admin.html" hidden>Régie MC</a></nav>
+ <nav class="yarg-navigation" aria-label="Navigation principale"><a href="index.html">Catalogue</a><a href="file.html">File de la soirée</a><a href="profil.html">Mon profil</a><a href="a-propos.html" aria-current="location">À Propos</a><a href="admin.html" hidden>Régie MC</a></nav>
 </div></header>
 <main class="wrap">
-<a class="back" href="a-propos.html">← Retour à À Propos</a>
+<a class="back" href="a-propos.html">← Retour à la page À Propos</a>
 <section class="hero">
  <img src="assets/medals/guitar-fallback.png" alt="" aria-hidden="true">
  <div class="eyebrow">✦ Un party à la fois</div>
@@ -122,7 +122,7 @@ footer a{color:#9fecdf}
 </section>
 <p class="footnote">Cette page présente des possibilités de soutien, et non une collecte déjà ouverte. Les articles et les détails pourront évoluer avec le projet.</p>
 </main>
-<footer><div class="wrap">Asteur On Jam · <a href="a-propos.html">Retour à À Propos</a></div></footer>
+<footer><div class="wrap">Asteur On Jam · <a href="a-propos.html">Retour à la page À Propos</a></div></footer>
 <script>
 (async()=>{
  const adminLink=document.querySelector('.yarg-navigation a[href="admin.html"]');
