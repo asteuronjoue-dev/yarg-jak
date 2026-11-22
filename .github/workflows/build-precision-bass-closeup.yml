@@ -1,0 +1,43 @@
+name: Build Precision Bass dual-strum close-up
+on:
+  push:
+    paths:
+      - .github/workflows/build-precision-bass-closeup.yml
+permissions:
+  contents: write
+jobs:
+  create-crop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download actual controller photo and crop just the split strum bars
+        run: |
+          python -m pip install --quiet pillow requests
+          python - <<'PY'
+          from io import BytesIO
+          from pathlib import Path
+          import requests
+          from PIL import Image, ImageOps
+          url = "https://i.ebayimg.com/images/g/D10AAeSw~XVpWAPM/s-l1200.jpg"
+          response=requests.get(url,headers={"User-Agent":"Mozilla/5.0"},timeout=25)
+          response.raise_for_status()
+          im=Image.open(BytesIO(response.content)).convert("RGB")
+          w,h=im.size
+          print("Image dimensions:", w, h)
+          # Verified against the complete product image: the split white strum bars
+          # are centered at 236, 186 on a 512px-square thumbnail.
+          # Crop includes the black pickguard, excludes neck, floor and accessories.
+          # Use independent x/y normalization to preserve source aspect.
+          box=tuple(map(int,(w*147/512,h*134/512,w*334/512,h*242/512)))
+          closeup=im.crop(box)
+          closeup=ImageOps.contain(closeup,(1200,760),Image.Resampling.LANCZOS)
+          Path("assets").mkdir(exist_ok=True)
+          closeup.save("assets/precision-bass-dual-strum-closeup.jpg",quality=91,optimize=True)
+          print("Crop:", box,"Output:",closeup.size)
+          PY
+      - name: Save cropped close-up
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/precision-bass-dual-strum-closeup.jpg
+          git diff --cached --quiet || (git commit -m "Add real tightly cropped Precision Bass split-strum photo" && git push)
