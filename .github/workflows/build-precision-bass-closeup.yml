@@ -24,6 +24,7 @@ jobs:
           im=Image.open(BytesIO(response.content)).convert("RGB")
           w,h=im.size
           print("Image dimensions:", w, h)
+          im.save("assets/precision-bass-full-reference.jpg",quality=87)
           # Verified against the complete product image: the split white strum bars
           # are centered at 236, 186 on a 512px-square thumbnail.
           # Crop includes the black pickguard, excludes neck, floor and accessories.
@@ -39,5 +40,5 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/precision-bass-dual-strum-closeup.jpg
+          git add assets/precision-bass-dual-strum-closeup.jpg assets/precision-bass-full-reference.jpg
           git diff --cached --quiet || (git commit -m "Add real tightly cropped Precision Bass split-strum photo" && git push)
