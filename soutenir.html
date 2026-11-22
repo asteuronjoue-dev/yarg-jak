@@ -115,14 +115,18 @@ footer a{color:#9fecdf}
 /* Vue détaillée des commandes de grattage. */
 .bass-photo-frame{position:relative;display:block;aspect-ratio:1/1;overflow:hidden;background:#f4f6f4}
 .bass-gallery-detail .bass-photo-frame{aspect-ratio:2/1}
-.bass-split-strum-closeup{background-image:var(--source);background-repeat:no-repeat;background-size:500% auto;background-position:40% 40%}
+
 /* Photo commune horizontale : deux finitions officielles, cadrage central. */
 .bass-gallery-colors{grid-column:1/-1}
 .bass-two-colors{width:100%;display:grid;place-items:center;aspect-ratio:1/1;background:#fff}
 .bass-two-colors img{position:static;width:100%;height:100%;object-fit:contain;object-position:center;max-width:470px;margin:auto}
 .bass-gallery-colors figcaption{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
 .bass-color-separator{color:#8fada7}
-.bass-split-strum-closeup{background-position:40% 40%;background-size:500% auto}
+
+
+/* Image de détail: véritable photo recadrée, pas de zoom par CSS. */
+.bass-gallery-detail .bass-strum-photo{aspect-ratio:auto;display:block;background:#e5e7e8}
+.bass-strum-photo img{display:block;width:100%;height:auto;object-fit:contain;object-position:center;transition:none}
 </style>
 </head>
 <body>
@@ -148,7 +152,9 @@ footer a{color:#9fecdf}
     <figcaption><span>Hot Rod Red</span> <span class="bass-color-separator" aria-hidden="true">·</span> <span>Sea Foam Green</span></figcaption>
   </figure>
   <figure class="bass-gallery-tile bass-gallery-detail">
-    <div class="bass-photo-frame bass-split-strum-closeup" role="img" aria-label="Gros plan de la double barre de grattage blanche sur la plaque noire d’une Fender Precision Bass Rock Band" style="--source:url('https://i.ebayimg.com/images/g/D10AAeSw~XVpWAPM/s-l1200.jpg')"></div>
+    <div class="bass-photo-frame bass-strum-photo">
+      <img src="assets/precision-bass-dual-strum-closeup.jpg" alt="Gros plan des deux barres de grattage blanches, côte à côte, sur la plaque noire de la Fender Precision Bass Rock Band" width="1130" height="690" loading="lazy">
+    </div>
     <figcaption><strong>Double barres de grattage!</strong></figcaption>
   </figure>
 </div>
