@@ -91,11 +91,11 @@ footer a{color:#9fecdf}
 @media(max-width:680px){.support-levels{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 
-.don-intro{margin:26px 0 34px;padding:clamp(18px,3vw,28px);border:1px solid #54847a;border-radius:16px;background:#1c2d31;scroll-margin-top:18px}
-.don-intro h2{margin:0 0 12px}
-.don-intro p{max-width:750px;line-height:1.65;color:#d7e6e8}
-.don-intro .action{margin:6px 0}
-.don-intro .don-small{font-size:.83rem;color:#b2c9cc;margin-bottom:0}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:24px;position:relative;z-index:1}
+.hero .hero-actions .action{margin-top:0;flex:0 1 230px}
+.hero .hero-note{font-size:.83rem;line-height:1.5;color:#bbcfcd;max-width:750px;margin-top:17px;position:relative;z-index:1}
+.hero .hero-note a{color:#b2f5e3;text-underline-offset:2px}
+@media(max-width:520px){.hero .hero-actions .action{flex:1 1 100%}}
 </style>
 </head>
 <body>
@@ -105,19 +105,16 @@ footer a{color:#9fecdf}
 </div></header>
 <main class="wrap">
 <a class="back" href="a-propos.html">← Retour à la page À Propos</a>
-<section class="hero">
+<section class="hero" id="faire-un-don">
  <img src="assets/medals/guitar-fallback.png" alt="" aria-hidden="true">
  <div class="eyebrow">✦ Un party à la fois</div>
  <h1>Soutenir le projet 🤘</h1>
- <p>Asteur On Jam, c'est du monde qui ose monter sur scène, un paquet d'instruments en plastique et beaucoup d'amour pour les soirées musicales. Si tu as envie de donner un coup de pouce, merci! Ça pourrait nous aider à entretenir et améliorer le matériel pour les prochains partys.</p>
- <a class="action primary" href="https://www.paypal.com/ncp/payment/SS7376H6U5TPY" target="_blank" rel="noopener noreferrer">💚 Faire un don</a>
-</section>
-<section class="don-intro" id="faire-un-don" aria-labelledby="don-heading">
- <h2 id="don-heading">💚 Faire un don à Asteur On Jam</h2>
- <p>Tu veux aider le projet à acheter et entretenir son matériel? Merci! Les contributions sont entièrement volontaires; les options de paiement et le montant applicable sont indiqués sur PayPal.</p>
- <p>Tu peux contribuer directement sur une page de paiement sécurisée hébergée par PayPal. Le site Asteur On Jam ne recueille aucune information bancaire.</p>
- <a class="action primary" href="https://www.paypal.com/ncp/payment/SS7376H6U5TPY" target="_blank" rel="noopener noreferrer">💚 Faire un don avec PayPal</a>
- <p class="don-small">Le paiement s’effectue chez PayPal, et non sur ce site. Aucune priorité dans la file ni aucun reçu fiscal n’est offert. Pour faire attribuer ton titre de mécène, <a href="mailto:asteur.on.joue@gmail.com?subject=Titre%20de%20m%C3%A9c%C3%A8ne%20Asteur%20On%20Jam">écris-nous avec ton nom de Rockstar</a> après ta contribution : les titres sont attribués manuellement.</p>
+ <p>Asteur On Jam, c'est du monde qui ose monter sur scène, un paquet d'instruments en plastique et beaucoup d'amour pour les soirées musicales. Tu peux donner un coup de pouce au projet ou nous inviter pour un party Rock Band / karaoké chez toi!</p>
+ <div class="hero-actions">
+  <a class="action primary" href="https://www.paypal.com/ncp/payment/SS7376H6U5TPY" target="_blank" rel="noopener noreferrer">💚 Faire un don</a>
+  <a class="action" href="mailto:asteur.on.joue@gmail.com?subject=Invitation%20%C3%A0%20une%20soir%C3%A9e%20priv%C3%A9e%20%E2%80%94%20Asteur%20On%20Jam&amp;body=Salut!%0A%0AJ'aimerais%20inviter%20Asteur%20On%20Jam%20pour%20un%20party%20Rock%20Band%20%2F%20karaok%C3%A9%20chez%20nous!%0A%0ADate%20souhait%C3%A9e%20%3A%0AHeure%20de%20d%C3%A9but%20et%20dur%C3%A9e%20approximative%20%3A%0AVille%20%2F%20endroit%20(adresse%20compl%C3%A8te%20%C3%A0%20confirmer)%20%3A%0ANombre%20de%20personnes%20attendues%20%3A%0A%0A%C3%89quipement%20d%C3%A9j%C3%A0%20disponible%20sur%20place%20(t%C3%A9l%C3%A9viseur%20ou%20projecteur%2C%20haut-parleurs%2C%20etc.)%20%3A%0A%C3%89quipement%20que%20vous%20devriez%20apporter%20(instruments%2C%20micros%2C%20syst%C3%A8me%20de%20son%2C%20%C3%A9clairage%2C%20%C3%A9cran...)%20%3A%0A%0AAcc%C3%A8s%20et%20installation%20(stationnement%2C%20escaliers%2C%20espace%20disponible%2C%20prises%20%C3%A9lectriques)%20%3A%0ADemandes%20particuli%C3%A8res%20(ambiance%2C%20chansons%2C%20contraintes%20de%20bruit%2C%20etc.)%20%3A%0A%0AMon%20nom%20et%20la%20meilleure%20fa%C3%A7on%20de%20me%20joindre%20%3A%0A%0AMerci!">🏠 Viens chez nous!</a>
+ </div>
+ <p class="hero-note">Les dons se font sur PayPal, sans paiement sur ce site. Les titres de mécène sont attribués manuellement : <a href="mailto:asteur.on.joue@gmail.com?subject=Titre%20de%20m%C3%A9c%C3%A8ne%20Asteur%20On%20Jam">écris-nous avec ton nom de Rockstar</a> après ton don. Aucune priorité dans la file ni aucun reçu fiscal.</p>
 </section>
 <section id="equipements"><h2>Équipements du projet</h2><p class="lead">Les équipements qu’on aimerait encore ajouter aux prochaines soirées, ainsi que quelques achats déjà réalisés. Les montants des articles à financer sont approximatifs, en dollars canadiens, et peuvent changer selon la disponibilité et la livraison.</p><section class="wish-group"><h2>🥁 Améliorations de la batterie</h2><p class="lead">Une batterie plus agréable à jouer : une deuxième pédale de grosse caisse et un vrai siège réglable pour le batteur.</p><div class="wish-grid"><article class="wish-card"><div class="wish-card-top"><img src="assets/medals/drums-fallback.png" alt="" loading="lazy"><div><h3>Deuxième pédale de grosse caisse</h3><strong class="wish-price">Environ 70 $ CA</strong></div></div><p>Pour découvrir le jeu à deux pédales sur les chansons qui le permettent et donner plus de possibilités aux batteurs. Compatibilité de la pédale et de l’adaptateur à confirmer.</p><a href="https://www.ebay.ca/itm/134567209330" class="wish-source" target="_blank" rel="noopener noreferrer">Voir l’article et ses photos ↗</a><a href="mailto:asteur.on.joue@gmail.com?subject=Soutenir%20Asteur%20On%20Jam%20%E2%80%94%20Deuxi%C3%A8me%20p%C3%A9dale%20de%20grosse%20caisse&amp;body=Salut!%0A%0AJ'aimerais%20contribuer%20%C3%A0%20%3A%20Deuxi%C3%A8me%20p%C3%A9dale%20de%20grosse%20caisse.%0A%0A" class="action">💚 Contribuer à cet équipement</a></article>
 
