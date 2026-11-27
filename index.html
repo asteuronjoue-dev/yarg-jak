@@ -2222,6 +2222,7 @@ document.getElementById('yarg-tips-index').hidden=catalogWelcomeDismissed(CATALO
           const normalizeName=s=>normOfficial(s);
           const getArt=name=>{
             const n=normalizeName(name);
+            if(n.includes('shrek'))return 'shrek.png';
             if(n.includes('disney')&&n.includes('pixar'))return 'disney-pixar.png';
             if(n.includes('francophone'))return 'francophone.png';
             if((n.includes('party starters')&&n.includes('rock'))||(n.includes('rockers')&&n.includes('rise up')))return 'party-starters-rock.png';
