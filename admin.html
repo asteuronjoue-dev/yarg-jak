@@ -609,7 +609,7 @@ function yargReplyFor(r,name,userId){
 function mcDifficulty(level){return ({beginner:'Débutant',easy:'Facile',medium:'Moyen',hard:'Difficile',expert:'Expert',any:'Au choix'})[level]||level||'Non précisée'}
 
 const mcFallbackIcons={vocals:'assets/medals/vocals-fallback.png',vocal2:'assets/medals/vocals-harmony-2.png',vocal3:'assets/medals/vocals-harmony-3.png',guitar:'assets/medals/guitar-fallback.png',rhythm_guitar:'assets/medals/rhythm_guitar-fallback.png',bass:'assets/medals/bass-fallback.png',drums:'assets/medals/drums-fallback.png',keys:'assets/medals/keys-fallback.png'};
-const mcPhysicalGuitars={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png'};
+const mcPhysicalGuitars={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png','precision-bass':'assets/precision-bass.png'};
 function mcInstrumentIcon(mode){const key=['drums','drums_4lane','pro_drums'].includes(mode)?'drums':['keys','pro_keys'].includes(mode)?'keys':mode;return mcFallbackIcons[key]||null;}
 function mcVocalIcon(harmony){const n=Number(harmony)||1;return mcFallbackIcons[n===2?'vocal2':n===3?'vocal3':'vocals'];}
 function mcIcon(src,label){return src?`<img class="mc-performer-icon" src="${esc(src)}" alt="${esc(label)}" title="${esc(label)}" loading="lazy">`:'';}
@@ -650,7 +650,9 @@ function mcBandSummary(r,entries){
  const drumCount=entries.filter(m=>['drums','drums_4lane','pro_drums'].includes(m.instrument_mode||m.instrument)).length;
  const keyCount=entries.filter(m=>['keys','pro_keys'].includes(m.instrument_mode||m.instrument)).length;
  const flexCount=entries.filter(m=>(m.instrument_mode||m.instrument)==='flex').length;
- const freeMic=Math.max(0,micCapacity-micCount),freeGuitar=Math.max(0,(roles.length?3:0)-guitarCount);
+ const guitarCapacity=roles.includes('bass')?4:roles.length?3:0;
+ const freeMic=Math.max(0,micCapacity-micCount),freeGuitar=Math.max(0,guitarCapacity-guitarCount);
+ const nonBassCount=entries.filter(m=>['guitar','rhythm_guitar'].includes(m.instrument_mode||m.instrument)).length;
  let freeDrums=parts.includes('drums')?Math.max(0,1-drumCount):0;
  let freeKeys=parts.includes('keys')?Math.max(0,1-keyCount):0;
  // A Flex player reserves one slot without choosing its instrument. Do not guess which type it will use.
@@ -659,12 +661,13 @@ function mcBandSummary(r,entries){
  add(mcVocalIcon(freeMic),freeMic===1?'Micro libre':'Micros libres',freeMic);
  if(freeGuitar>0){
   const filled=new Set(entries.map(m=>m.instrument_mode||m.instrument).filter(mode=>roles.includes(mode)));
-  const missing=roles.filter(role=>!filled.has(role));
+  const playableRoles=nonBassCount>=3?roles.filter(role=>role==='bass'):roles;
+  const missing=playableRoles.filter(role=>!filled.has(role));
   for(const role of missing.slice(0,freeGuitar))add(mcFallbackIcons[role],part(role),1);
   if(freeGuitar>missing.length){
-   const choices=roles.map(part).join(' / ');
+   const choices=playableRoles.map(part).join(' / ');
    const requirement=missing.length?' après avoir rempli les pistes libres ('+missing.map(part).join(', ')+')':'';
-   slots.push({icons:roles.map(role=>mcFallbackIcons[role]),label:'Doublon '+choices+requirement,
+   slots.push({icons:playableRoles.map(role=>mcFallbackIcons[role]),label:'Doublon '+choices+requirement,
     count:freeGuitar-missing.length,repeatIcons:true,caption:missing.length?'Après les pistes libres':'Doublon au choix',conditional:missing.length>0});
   }
  }
