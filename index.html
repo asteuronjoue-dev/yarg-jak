@@ -2247,7 +2247,7 @@ document.getElementById('yarg-tips-index').hidden=catalogWelcomeDismissed(CATALO
             }
             btn.addEventListener('click',onClick);playlistCardsGrid.appendChild(btn);
           }
-          addCard('Mes Favoris',signedInRockstar?'Mes chansons préférées':'Connexion Rockstar requise',null,state.favoritesOnly,()=>{if(!signedInRockstar){location.href='profil.html';return}favFilterButton.click()},true);
+          addCard('Mes Favoris',signedInRockstar?'Mes chansons préférées':'Connexion Rockstar requise','mes-favoris.webp',state.favoritesOnly,()=>{if(!signedInRockstar){location.href='profil.html';return}favFilterButton.click()},true);
           const playlistSort=p=>{
             const n=normalizeName(p.name);
             if(n.includes('party starters')&&n.includes('rock'))return 0;
