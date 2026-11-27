@@ -1632,7 +1632,7 @@ function bandEditFormHtml(r){
  <label>Instrument<select name="instrument">${instrumentsHtml}</select></label>
  <label data-mode-field ${family==='drums'||family==='keys'?'':'hidden'}>Mode de jeu<select name="instrument_mode">${variantHtml}</select></label>
  <label data-edit-difficulty>Difficulté<select name="difficulty">${chartOptions(r,current,difficulty)}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${yargDifficultyCategory(current)?'':'hidden'}>${esc([yargInstrumentDescription(current),yargDifficultyDescription(current,difficulty)].filter(Boolean).join(' '))}</small></label>
- <label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.filter(([id])=>id!=='precision-bass'||family==='bass').map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+ <label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
  <label data-edit-mic><input type="checkbox" name="microphone" ${m.microphone?'checked':''}> Chanter aussi</label>
  <label data-edit-harmony>Harmonie<select name="harmony">${harmonyOptions(r).replace(`value="${m.vocal_harmony}"`,`value="${m.vocal_harmony}" selected`)}</select></label>
  <button type="submit">Enregistrer</button><button type="button" data-band-cancel>Annuler</button><div class="join-message" role="status"></div></form>`;
