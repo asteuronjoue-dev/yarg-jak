@@ -157,7 +157,7 @@ body.yarg-unified-page fieldset{background:#1b2024;border-color:#354047}
  .instrument-choice.extra-vocals-choice{margin-left:0;width:auto;max-width:none;min-width:0;min-height:clamp(88px,24vw,118px);height:auto;flex:1 1 0;padding:8px;gap:7px}
  .instrument-choice.extra-vocals-choice img{width:clamp(60px,19vw,88px);height:clamp(60px,19vw,88px);flex:0 0 clamp(60px,19vw,88px)}
  .extra-vocals-label{font-size:clamp(1rem,4.2vw,1.3rem);font-weight:950;line-height:1.16;text-align:center;max-width:none;white-space:pre-line}
- .member .guitar-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .member .guitar-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
  .member .guitar-tile{min-height:72px;font-size:.67rem}
  .member .guitar-tile img{height:36px}
  .member .vocal-row{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -357,9 +357,9 @@ function applyMemberPreferences(m){
  // A physical guitar is optional: default to « Peu importe » rather than restoring a previous reservation.
 }
 
-const guitarNames=[['','Peu importe — je prendrai une guitare restante'],['osp uze','OSPUZE - Rockband'],['crkd','Blue Guitar - CRKD'],['sunburst','Sunburst - Guitar Hero']];
-function normalizeGuitarChoice(value){const key=String(value||'').trim().toLowerCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ');return key==='ospuze'||key==='osp uze'?'osp uze':key==='crkd'||key==='sunburst'?key:''}
-const guitarPhotos={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png'};
+const guitarNames=[['','Peu importe — je prendrai une guitare restante'],['osp uze','OSPUZE - Rockband'],['crkd','Blue Guitar - CRKD'],['sunburst','Sunburst - Guitar Hero'],['precision-bass','Fender Precision Bass (basse seulement)']];
+function normalizeGuitarChoice(value){const key=String(value||'').trim().toLowerCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ');return key==='ospuze'||key==='osp uze'?'osp uze':key==='crkd'||key==='sunburst'?key:key==='precision bass'?'precision-bass':''}
+const guitarPhotos={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png','precision-bass':'assets/precision-bass.png'};
 function showGuitarPhoto(m,card){
  const img=card.querySelector('[data-guitar-photo]');
  if(!img)return;
@@ -415,7 +415,8 @@ async function prefillSignedInRockstar(){
 const instrumentFamily=mode=>!mode?'':mode==='flex'?'flex':['guitar','rhythm_guitar','bass'].includes(mode)?'guitar':mode==='vocals'?'vocals':mode.startsWith('drums_')||mode==='pro_drums'?'drums':'keys';
 function model(){return {id:++nextId,name:'',guestName:'',mode:options[0]?.[0]||'',difficulty:'',microphone:false,harmony:1,profileId:'',guitarChoice:'',instrumentInfoOpen:false}}
 function counts(){return {guitars:members.filter(m=>instrumentFamily(m.mode)==='guitar').length,drums:members.filter(m=>instrumentFamily(m.mode)==='drums').length,keys:members.filter(m=>instrumentFamily(m.mode)==='keys').length,mics:members.filter(m=>m.mode==='vocals'||m.microphone).length,flex:members.filter(m=>m.mode==='flex').length}}
-const limits={guitars:availableGuitarRoles.length?3:0,drums:hasDrums?1:0,keys:hasKeys?1:0,mics:hasVocals?3:0};
+// Three standard controllers + the bass-only Precision Bass, if the song has a bass chart.
+const limits={guitars:availableGuitarRoles.includes('bass')?4:availableGuitarRoles.length?3:0,drums:hasDrums?1:0,keys:hasKeys?1:0,mics:hasVocals?3:0};
 function freeInstrumentCapacity(c){return (limits.guitars-c.guitars)+(limits.drums-c.drums)+(limits.keys-c.keys)+(limits.mics-c.mics)-c.flex}
 function allowed(m,mode){
  const others=members.filter(x=>x!==m), fam=instrumentFamily(mode);
@@ -423,7 +424,8 @@ function allowed(m,mode){
  if(freeInstrumentCapacity(occupied)<1)return false;
  if(fam==='drums'&&others.some(x=>instrumentFamily(x.mode)==='drums'))return false;
  if(fam==='keys'&&others.some(x=>instrumentFamily(x.mode)==='keys'))return false;
- if(fam==='guitar'&&others.filter(x=>instrumentFamily(x.mode)==='guitar').length>=3)return false;
+ if(fam==='guitar'&&others.filter(x=>instrumentFamily(x.mode)==='guitar').length>=limits.guitars)return false;
+ if(fam==='guitar'&&mode!=='bass'&&others.filter(x=>x.mode==='guitar'||x.mode==='rhythm_guitar').length>=3)return false;
  if(fam==='guitar'&&others.some(x=>x.mode===mode)){
    const filled=new Set(others.filter(x=>instrumentFamily(x.mode)==='guitar').map(x=>x.mode));
    if(availableGuitarRoles.some(role=>!filled.has(role)))return false;
@@ -585,11 +587,11 @@ function render(){
   }
   if(['guitar','rhythm_guitar','bass'].includes(m.mode)){
     const otherGuitars=new Set(members.filter(other=>other!==m&&instrumentFamily(other.mode)==='guitar').map(other=>normalizeGuitarChoice(other.guitarChoice)).filter(Boolean));
-    m.guitarChoice=normalizeGuitarChoice(m.guitarChoice);if(m.guitarChoice&&otherGuitars.has(m.guitarChoice))m.guitarChoice='';
+    m.guitarChoice=normalizeGuitarChoice(m.guitarChoice);if(m.guitarChoice&&(otherGuitars.has(m.guitarChoice)||(m.guitarChoice==='precision-bass'&&m.mode!=='bass')))m.guitarChoice='';
     const choose=document.createElement('div');choose.className='guitar-chooser';
     const title=document.createElement('span');title.className='guitar-label';title.textContent='Choix de guitare (facultatif)';choose.append(title);
     const tiles=document.createElement('div');tiles.className='guitar-tiles';
-    for(const [value,label] of guitarNames){
+    for(const [value,label] of guitarNames.filter(([id])=>id!=='precision-bass'||m.mode==='bass')){
       const tile=document.createElement('button');tile.type='button';tile.className='guitar-tile';tile.setAttribute('aria-pressed',String(m.guitarChoice===value));
       tile.disabled=Boolean(value&&otherGuitars.has(value));
       if(tile.disabled)tile.title=label+' — déjà réservée par un autre Rockstar';
@@ -637,6 +639,7 @@ function validate(){
  if(m.profileId){if(usedProfiles.has(m.profileId))return 'Le même compte Rockstar ne peut pas occuper deux places dans le groupe.';usedProfiles.add(m.profileId)}
  if(m.mode!=='vocals'&&m.mode!=='flex'&&!availableDifficulties(m.mode).includes(m.difficulty))return 'Cette difficulté n’existe pas pour cet instrument dans cette chanson.';
  if(instrumentFamily(m.mode)==='guitar'){
+   if(m.guitarChoice==='precision-bass'&&m.mode!=='bass')return 'La Fender Precision Bass est réservée à la partie basse.';
    if(members.some(other=>other!==m&&instrumentFamily(other.mode)==='guitar'&&m.guitarChoice&&normalizeGuitarChoice(other.guitarChoice)===normalizeGuitarChoice(m.guitarChoice)))return 'Cette guitare est déjà réservée par un autre membre de ton groupe.';
    if(used.has(m.mode)&&availableGuitarRoles.some(role=>!used.has(role)))return 'Toutes les parties Guitare / Rythmique / Basse disponibles doivent être remplies avant un doublon.';
    used.add(m.mode);
