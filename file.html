@@ -1061,7 +1061,7 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
  const myRow=owned || (!IS_PUBLIC_DISPLAY && !!profileId && !!myAuthId && String(profileId)===String(myAuthId));
  const sings=instrument==='vocals'||!!microphone;
  const isGuitar=['guitar','bass','rhythm_guitar'].includes(instrument);
- const guitarLabel=({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero'})[preferredGuitar]||'';
+ const guitarLabel=({'osp uze':'OSPUZE - Rockband',crkd:'Blue Guitar - CRKD',sunburst:'Sunburst - Guitar Hero','precision-bass':'Fender Precision Bass'})[preferredGuitar]||'';
  const guitarSrc=isGuitar?joinGuitarPhotos[preferredGuitar]:null;
  const guitarThumbnail=guitarSrc?`<img class="yarg-guitar-thumbnail" src="${esc(guitarSrc)}" alt="Guitare choisie : ${esc(guitarLabel)}" title="${esc(guitarLabel)}" loading="lazy" onerror="this.hidden=true">`:'';
  const harmonyNumber=Number(harmony)||0;
@@ -1087,15 +1087,18 @@ function memberLine(name,instrument,difficulty,microphone,harmony,preferredGuita
 }
 function instrumentFamily(i){return ['drums','drums_4lane','pro_drums'].includes(i)?'drums':['keys','pro_keys'].includes(i)?'keys':i;}
 function isGuitarChart(i){return ['guitar','bass','rhythm_guitar'].includes(i)}
-// Three plastic guitars; every free chart must be filled before duplicating a chart.
+// Three standard controllers and a bass-only Precision Bass; fill distinct charts before duplicates.
 function availableGuitarCharts(r,choices,players){
  const roles=r.available_guitar_roles;
  const charts=[...new Set((choices||[]).filter(i=>isGuitarChart(i)&&
    (!Array.isArray(roles)||roles.includes(i))&&chartDifficulties(r,i).length>0))];
  const occupied=(players||[]).map(activeChartMode).filter(isGuitarChart);
- if(occupied.length>=3)return [];
- const free=charts.filter(i=>!occupied.includes(i));
- return free.length?free:charts;
+ const maxGuitars=(Array.isArray(roles)&&roles.includes('bass'))?4:roles?.length?3:0;
+ if(occupied.length>=maxGuitars)return [];
+ // A fourth musician must play bass, since the Precision Bass cannot play guitar charts.
+ const playable=occupied.filter(i=>i!=='bass').length>=3?charts.filter(i=>i==='bass'):charts;
+ const free=playable.filter(i=>!occupied.includes(i));
+ return free.length?free:playable;
 }
 function joinModes(choices,instrument){
  const family=instrumentFamily(instrument);
@@ -1129,7 +1132,7 @@ function freeInstrumentsForPlayers(r,players,editableChoices=null){
  const singers=players.filter(m=>m.instrument==='vocals'||m.microphone).length;
  const capacity=Number(r.vocal_parts)>0?3:0;
  const guitarRoles=r.available_guitar_roles||[];
- const maxGuitars=guitarRoles.length?3:0;
+ const maxGuitars=guitarRoles.includes('bass')?4:guitarRoles.length?3:0;
  const maxDrums=(r.available_parts||[]).includes('drums')?1:0;
  const maxKeys=(r.available_parts||[]).includes('keys')?1:0;
  const offered=editableChoices===null?[...(r.fillable_instruments||[]),...guitarRoles]:editableChoices;
@@ -1162,7 +1165,8 @@ function publicDisplayAvailableInstruments(r,slots){
  const occupiedGuitars=players.map(activeChartMode).filter(isGuitarChart);
  const guitarChoices=slots.filter(isGuitarChart);
  const openGuitarCharts=guitarChoices.filter(mode=>!occupiedGuitars.includes(mode));
- const sharedGuitarSpots=guitarChoices.length?3-occupiedGuitars.length-openGuitarCharts.length:0;
+ const guitarCapacity=(r.available_guitar_roles||[]).includes('bass')?4:(r.available_guitar_roles||[]).length?3:0;
+ const sharedGuitarSpots=guitarChoices.length?Math.max(0,guitarCapacity-occupiedGuitars.length-openGuitarCharts.length):0;
  const singers=players.filter(m=>m.instrument==='vocals'||m.microphone).length;
  const voiceCount=Math.max(0,3-singers); // Même limite de micros que freeInstrumentsForPlayers().
  const options=[
@@ -1219,13 +1223,14 @@ function harmonyOptions(r){
  const count=Math.max(1,Math.min(3,Number(r.vocal_parts)||1));
  return Array.from({length:count},(_,i)=>`<option value="${i+1}">Harmonie ${i+1}${i===0?" (chant principal)":""}</option>`).join("");
 }
-const joinGuitars=[['','Peu importe — je prendrai une guitare restante'],['osp uze','OSPUZE - Rockband'],['crkd','Blue Guitar - CRKD'],['sunburst','Sunburst - Guitar Hero']];
-const joinGuitarPhotos={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png'};
-function joinGuitarChoices(r){
+const joinGuitars=[['','Peu importe — je prendrai une guitare restante'],['osp uze','OSPUZE - Rockband'],['crkd','Blue Guitar - CRKD'],['sunburst','Sunburst - Guitar Hero'],['precision-bass','Fender Precision Bass (basse seulement)']];
+const joinGuitarPhotos={'osp uze':'assets/ospuze-rockband.png',crkd:'assets/blue-guitar-crkd.png',sunburst:'assets/sunburst-guitar-hero.png','precision-bass':'assets/precision-bass.png'};
+function joinGuitarChoices(r,instrument){
  const taken=new Set(membersFor(r.id).map(m=>m.preferred_guitar).filter(Boolean));
  const saved=joinPrefs().guitar||'';
- const preferred=!taken.has(saved)&&joinGuitars.some(([id])=>id===saved)?saved:'';
- const tiles=joinGuitars.map(([id,name])=>{
+ const guitars=joinGuitars.filter(([id])=>id!=='precision-bass'||instrument==='bass');
+ const preferred=!taken.has(saved)&&guitars.some(([id])=>id===saved)?saved:'';
+ const tiles=guitars.map(([id,name])=>{
   const reserved=taken.has(id);
   return `<label class="join-guitar-tile">
    <input type="radio" name="preferred_guitar" value="${esc(id)}" ${id===preferred?'checked':''} ${reserved?'disabled':''}>
@@ -1264,7 +1269,7 @@ function joinFormHtml(r){
  <label>Nom pour cette prestation <input name="rockstar" maxlength="60" required value="${esc(myRockstarName)}" placeholder="Nom de scène" autocomplete="off"><small>Ton compte, tes points et tes statistiques restent associés à ton profil Rockstar.</small></label>
  ${modeChoice}
  ${vocals||instrument==="flex"?"":`<label>Difficulté <select name="difficulty">${chartOptions(r,defaultMode,chosenDifficulty)}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${difficultyDescription?"":"hidden"}>${esc(difficultyDescription)}</small> </label>`}
- ${["guitar","bass","rhythm_guitar"].includes(instrument)?joinGuitarChoices(r):""}
+ ${["guitar","bass","rhythm_guitar"].includes(instrument)?joinGuitarChoices(r,instrument):""}
  ${vocals||instrument==="flex"?"":`<label class="join-mic-choice"><input type="checkbox" name="microphone" ${canSing?"":"disabled"}> Je veux aussi chanter au micro</label>`}
  <label class="join-harmony" ${vocals?"":"hidden"}>Partie vocale (difficulté Moyen)<select name="harmony">${harmonyOptions(r)}</select></label>
  <button class="join-submit" type="submit" ${pendingJoins.has(String(r.id))?"disabled":""}>Confirmer ma place 🤘</button><button type="button" class="join-cancel">Annuler</button>
@@ -1528,9 +1533,12 @@ async function loadEquippedTitles(){
 function isGuitarInstrument(i){return ['guitar','rhythm_guitar','bass'].includes(i)}
 function syncBandEditGuitar(form){
  const field=form?.querySelector('[data-guitar-field]');if(!field)return;
- const applicable=isGuitarInstrument(form.elements.instrument.value);
+ const instrument=form.elements.instrument.value;
+ const applicable=isGuitarInstrument(instrument);
  field.hidden=!applicable;field.querySelector('select').disabled=!applicable;
- if(!applicable)field.querySelector('select').value='';
+ const precision=field.querySelector('select option[value="precision-bass"]');
+ if(precision)precision.disabled=instrument!=='bass';
+ if(!applicable||(instrument!=='bass'&&field.querySelector('select').value==='precision-bass'))field.querySelector('select').value='';
 }
 // Rockstar-wide presence: one action applies to every future participation.
 document.getElementById('yargPauseAll').addEventListener('click',async function(){
@@ -1624,7 +1632,7 @@ function bandEditFormHtml(r){
  <label>Instrument<select name="instrument">${instrumentsHtml}</select></label>
  <label data-mode-field ${family==='drums'||family==='keys'?'':'hidden'}>Mode de jeu<select name="instrument_mode">${variantHtml}</select></label>
  <label data-edit-difficulty>Difficulté<select name="difficulty">${chartOptions(r,current,difficulty)}</select><small class="yarg-difficulty-guide" data-difficulty-guide aria-live="polite" ${yargDifficultyCategory(current)?'':'hidden'}>${esc([yargInstrumentDescription(current),yargDifficultyDescription(current,difficulty)].filter(Boolean).join(' '))}</small></label>
- <label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+ <label data-guitar-field>Guitare physique<select name="preferred_guitar">${joinGuitars.filter(([id])=>id!=='precision-bass'||family==='bass').map(([id,label])=>`<option value="${esc(id)}" ${m.preferred_guitar===id?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
  <label data-edit-mic><input type="checkbox" name="microphone" ${m.microphone?'checked':''}> Chanter aussi</label>
  <label data-edit-harmony>Harmonie<select name="harmony">${harmonyOptions(r).replace(`value="${m.vocal_harmony}"`,`value="${m.vocal_harmony}" selected`)}</select></label>
  <button type="submit">Enregistrer</button><button type="button" data-band-cancel>Annuler</button><div class="join-message" role="status"></div></form>`;
@@ -1697,7 +1705,7 @@ async function refreshAfterJoinConflict(attempt,message){
 function joinConflictMessage(error){
  const text=String(error?.message||'');
  if(error?.code==='PGRST116'||/chanson introuvable|ne peut plus être rejointe|inscriptions fermées/i.test(text))return songClosedMessage;
- if(/groupe complet|instrument déjà (pris|occupé)|trois (guitares|microphones)|partie de guitare ou basse encore libre|guitare réservée/i.test(text))return slotTakenMessage;
+ if(/groupe complet|instrument déjà (pris|occupé)|(?:trois|quatre) (guitares|microphones)|partie de guitare ou basse encore libre|guitare réservée/i.test(text))return slotTakenMessage;
  return '';
 }
 document.addEventListener("submit",async e=>{
@@ -1738,7 +1746,7 @@ document.addEventListener("submit",async e=>{
     if(singing&&(harmony<1||harmony>Math.max(1,Math.min(3,Number(request.vocal_parts)||1)))){
       message.textContent="Cette harmonie n’est pas disponible.";return;
     }
-    if(preferredGuitar&&(!joinGuitarPhotos[preferredGuitar]||currentPlayers.some(m=>m.preferred_guitar===preferredGuitar))){
+    if(preferredGuitar&&(!joinGuitarPhotos[preferredGuitar]||(preferredGuitar==='precision-bass'&&instrument!=='bass')||currentPlayers.some(m=>m.preferred_guitar===preferredGuitar))){
       await refreshAfterJoinConflict(attempt,'Cette guitare vient d’être réservée. Choisis-en une autre ou « Peu importe ».');return;
     }
     const difficulty=instrument==="vocals"?"medium":instrument==="flex"?"any":form.elements.difficulty.value;
